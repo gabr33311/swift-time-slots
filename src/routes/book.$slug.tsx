@@ -216,18 +216,8 @@ function BookPage() {
   return (
     <main className="animate-enter mx-auto max-w-2xl px-5 pb-24 pt-8">
       <header className="mb-8">
-        {business.cover_url && (
-          <img
-            src={business.cover_url}
-            alt={`Imagem de ${business.name}`}
-            className="mb-5 h-36 w-full rounded-2xl object-cover ring-1 ring-border sm:h-48"
-          />
-        )}
         <div className="flex items-center gap-4">
-          <div
-            className="flex size-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white"
-            style={{ backgroundColor: business.brand_color }}
-          >
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-lg font-bold text-primary-foreground">
             {business.logo_url ? (
               <img
                 src={business.logo_url}
