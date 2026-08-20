@@ -166,6 +166,12 @@ function BookPage() {
   }
 
   if (done) {
+    const startsAt =
+      time && service ? zonedToUtc(date, timeToMinutes(time), business.timezone) : null;
+    const endsAt =
+      startsAt && service
+        ? new Date(startsAt.getTime() + service.duration_minutes * 60000)
+        : null;
     return (
       <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-5 py-12">
         <div className="surface p-8 text-center">
@@ -190,10 +196,22 @@ function BookPage() {
           >
             Ver a minha marcação
           </Link>
+          {startsAt && endsAt && service && (
+            <AddToCalendar
+              event={{
+                title: `${service.name} · ${business.name}`,
+                description: `Marcação em ${business.name}.`,
+                location: [business.address, business.city].filter(Boolean).join(", "),
+                startIso: startsAt.toISOString(),
+                endIso: endsAt.toISOString(),
+              }}
+            />
+          )}
         </div>
       </main>
     );
   }
+
 
   return (
     <main className="animate-enter mx-auto max-w-2xl px-5 pb-24 pt-8">
