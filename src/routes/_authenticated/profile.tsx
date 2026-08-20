@@ -91,11 +91,10 @@ const GROUPS: { title: string; items: SectionItem[] }[] = [
       },
     ],
   },
-] as const;
+];
 
 const SECTIONS = GROUPS.flatMap((g) => g.items);
 
-type SectionId = (typeof GROUPS)[number]["items"][number]["id"];
 
 function ProfilePage() {
   const [section, setSection] = useState<SectionId | null>(null);
