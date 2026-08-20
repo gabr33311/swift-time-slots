@@ -123,13 +123,6 @@ function Dashboard() {
         />
       </div>
 
-      <div className="mt-4">
-        <Link to="/share">
-          <Button variant="outline" size="sm">
-            <Share2 className="mr-2 size-4" /> Partilhar página
-          </Button>
-        </Link>
-      </div>
 
       <InstallPrompt />
 
