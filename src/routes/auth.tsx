@@ -158,6 +158,55 @@ function AuthPage() {
     }
   }
 
+  async function resendConfirmation() {
+    if (!confirmSent) return;
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: confirmSent,
+        options: { emailRedirectTo: `${window.location.origin}/onboarding` },
+      });
+      if (error) throw error;
+      toast.success("Email de confirmação reenviado.");
+    } catch {
+      toast.error("Não foi possível reenviar agora. Tenta daqui a pouco.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (confirmSent) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
+        <div className="surface animate-enter w-full max-w-sm p-7 text-center">
+          <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
+            <MailCheck className="size-7" strokeWidth={2.5} />
+          </div>
+          <h1 className="text-xl font-semibold">Confirma o teu email</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Enviámos um link de confirmação para <span className="font-medium">{confirmSent}</span>.
+            Abre o email e clica no link — depois disso segues logo para a criação do teu negócio.
+          </p>
+          <div className="mt-6 flex flex-col gap-2">
+            <Button onClick={resendConfirmation} disabled={busy} variant="outline">
+              {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
+              Reenviar email
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setConfirmSent(null);
+                setMode("login");
+              }}
+            >
+              Voltar a entrar
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
