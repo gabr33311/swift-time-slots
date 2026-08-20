@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { STATUS_LABELS } from "@/lib/format";
@@ -76,18 +77,34 @@ export function StatCard({
   label,
   value,
   hint,
+  to,
+  search,
 }: {
   label: string;
   value: ReactNode;
   hint?: string;
+  to?: string;
+  search?: Record<string, unknown>;
 }) {
-  return (
-    <div className="surface p-4">
+  const inner = (
+    <>
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="mt-2 text-2xl font-semibold tabular-nums">{value}</p>
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
-    </div>
+    </>
   );
+  if (to) {
+    return (
+      <Link
+        to={to as never}
+        search={search as never}
+        className="surface block p-4 transition-transform hover:-translate-y-0.5 active:scale-[0.98]"
+      >
+        {inner}
+      </Link>
+    );
+  }
+  return <div className="surface p-4">{inner}</div>;
 }
 
 export function LoadingRows({ rows = 3 }: { rows?: number }) {

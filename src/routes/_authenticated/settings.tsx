@@ -16,7 +16,7 @@ import { useMyBusiness } from "@/hooks/use-business";
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [
-      { title: "Definições — Marca" },
+      { title: "Definições — Schedivo" },
       { name: "description", content: "Dados do negócio, contactos e regras de cancelamento." },
       { name: "robots", content: "noindex" },
     ],

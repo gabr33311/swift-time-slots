@@ -14,7 +14,7 @@ import { Users, Ban, ShieldCheck } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/customers")({
   head: () => ({
     meta: [
-      { title: "Clientes — Marca" },
+      { title: "Clientes — Schedivo" },
       { name: "description", content: "A tua base de clientes, com histórico e contactos." },
       { name: "robots", content: "noindex" },
     ],
@@ -26,6 +26,26 @@ function CustomersPage() {
   const { business } = useMyBusiness();
   const qc = useQueryClient();
   const [term, setTerm] = useState("");
+  const [tab, setTab] = useState<"all" | "cancelled" | "blocked">("all");
+
+  const { data: cancelledMap } = useQuery({
+    queryKey: ["customers-cancelled", business?.id],
+    enabled: !!business,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("appointments")
+        .select("customer_id")
+        .eq("business_id", business!.id)
+        .eq("status", "cancelled")
+        .not("customer_id", "is", null)
+        .limit(1000);
+      const map: Record<string, number> = {};
+      for (const row of data ?? []) {
+        if (row.customer_id) map[row.customer_id] = (map[row.customer_id] ?? 0) + 1;
+      }
+      return map;
+    },
+  });
 
   const { data, isLoading } = useQuery({
     queryKey: ["customers", business?.id, term],
@@ -43,6 +63,14 @@ function CustomersPage() {
       return data ?? [];
     },
   });
+
+  const rows = (data ?? []).filter((c) =>
+    tab === "cancelled"
+      ? (cancelledMap?.[c.id] ?? 0) > 0
+      : tab === "blocked"
+        ? c.is_blocked
+        : true,
+  );
 
   async function toggleBlock(id: string, blocked: boolean) {
     const { error } = await supabase.from("customers").update({ is_blocked: !blocked }).eq("id", id);
@@ -66,12 +94,39 @@ function CustomersPage() {
         className="mb-4 max-w-sm"
       />
 
+      <div className="mb-4 flex flex-wrap gap-2">
+        {(
+          [
+            ["all", "Todos"],
+            ["cancelled", "Cancelaram"],
+            ["blocked", "Bloqueados"],
+          ] as const
+        ).map(([value, label]) => (
+          <Button
+            key={value}
+            size="sm"
+            variant={tab === value ? "default" : "outline"}
+            onClick={() => setTab(value)}
+          >
+            {label}
+          </Button>
+        ))}
+      </div>
+
       {isLoading ? (
         <LoadingRows />
-      ) : (data?.length ?? 0) === 0 ? (
+      ) : rows.length === 0 ? (
         <EmptyState
           icon={<Users className="size-6" />}
-          title={term ? "Sem resultados." : "Ainda sem clientes."}
+          title={
+            tab === "cancelled"
+              ? "Ninguém cancelou por agora."
+              : tab === "blocked"
+                ? "Sem clientes bloqueados."
+                : term
+                  ? "Sem resultados."
+                  : "Ainda sem clientes."
+          }
           description={
             term
               ? "Tenta outro nome ou número."
@@ -79,8 +134,8 @@ function CustomersPage() {
           }
         />
       ) : (
-        <ul className="space-y-2">
-          {data!.map((c) => (
+        <ul className="animate-enter space-y-2">
+          {rows.map((c) => (
             <li key={c.id} className="surface flex items-center gap-3 p-4">
               <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground">
                 {initials(c.name)}
@@ -89,6 +144,11 @@ function CustomersPage() {
                 <p className="truncate text-sm font-medium">{c.name}</p>
                 <p className="truncate text-sm text-muted-foreground">
                   {c.phone ?? c.email ?? "Sem contacto"}
+                  {(cancelledMap?.[c.id] ?? 0) > 0 && (
+                    <span className="ml-2 text-destructive">
+                      {cancelledMap![c.id]} cancelamento{cancelledMap![c.id]! > 1 ? "s" : ""}
+                    </span>
+                  )}
                 </p>
               </div>
               <Button

@@ -45,6 +45,15 @@ export const getPublicBusiness = createServerFn({ method: "GET" })
     return await loadPublicBusiness(data.slug);
   });
 
+export const checkSlugAvailable = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => slugSchema.parse(d))
+  .handler(async ({ data }) => {
+    const clean = data.slug.toLowerCase();
+    if (!/^[a-z0-9-]{3,48}$/.test(clean)) return { available: false, invalid: true };
+    const { slugTaken } = await import("./booking.server");
+    return { available: !(await slugTaken(clean)), invalid: false };
+  });
+
 export const getAvailableSlots = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => slotsSchema.parse(d))
   .handler(async ({ data }) => {

@@ -11,13 +11,24 @@ import { BUSINESS_TYPES, businessType } from "@/lib/business-types";
 import { slugify } from "@/lib/format";
 import { WEEKDAYS_PT } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { Check, Loader2, ArrowRight, ArrowLeft, Copy, ExternalLink, Trash2 } from "lucide-react";
+import {
+  Check,
+  Loader2,
+  ArrowRight,
+  ArrowLeft,
+  Copy,
+  ExternalLink,
+  Trash2,
+  CircleCheck,
+  CircleX,
+} from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { checkSlugAvailable } from "@/lib/booking.functions";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
     meta: [
-      { title: "Configurar o teu negócio — Marca" },
+      { title: "Configurar o teu negócio — Schedivo" },
       { name: "description", content: "Configura o teu negócio e cria a tua página de marcações." },
       { name: "robots", content: "noindex" },
     ],
@@ -100,6 +111,56 @@ function Onboarding() {
         if (data && data.length > 0) navigate({ to: "/dashboard" });
       });
   }, [navigate]);
+
+  const [slugCheck, setSlugCheck] = useState<
+    { state: "idle" | "checking" | "free" | "taken" | "invalid"; slug: string }
+  >({ state: "idle", slug: "" });
+
+  useEffect(() => {
+    const clean = slug.trim().toLowerCase();
+    if (clean.length < 3) {
+      setSlugCheck({ state: "invalid", slug: clean });
+      return;
+    }
+    setSlugCheck({ state: "checking", slug: clean });
+    const id = setTimeout(async () => {
+      try {
+        const res = await checkSlugAvailable({ data: { slug: clean } });
+        setSlugCheck({
+          state: res.invalid ? "invalid" : res.available ? "free" : "taken",
+          slug: clean,
+        });
+      } catch {
+        setSlugCheck({ state: "idle", slug: clean });
+      }
+    }, 450);
+    return () => clearTimeout(id);
+  }, [slug]);
+
+  const step1Valid =
+    name.trim().length >= 2 &&
+    description.trim().length >= 10 &&
+    city.trim().length >= 2 &&
+    address.trim().length >= 4 &&
+    slugCheck.state === "free";
+  const step2Valid = services.some((s) => s.name.trim().length > 0 && s.duration >= 5);
+  const step3Valid = staff.some((s) => s.name.trim().length > 0);
+  const step4Valid =
+    hours.some((h) => h.open) &&
+    hours.every(
+      (h) =>
+        !h.open ||
+        (h.start < h.end &&
+          (!h.lunch || (h.start < h.lunchStart && h.lunchStart < h.lunchEnd && h.lunchEnd < h.end))),
+    );
+  const stepValid = [step1Valid, step2Valid, step3Valid, step4Valid, true][step - 1] ?? true;
+  const stepHint = !step1Valid
+    ? "Preenche todos os campos obrigatórios e escolhe um link disponível."
+    : !step2Valid
+      ? "Adiciona pelo menos um serviço com nome e duração."
+      : !step3Valid
+        ? "Adiciona pelo menos um profissional."
+        : "Confirma os horários (e o almoço dentro do horário de trabalho).";
 
   const bookingUrl =
     typeof window !== "undefined" && createdSlug
@@ -323,7 +384,7 @@ function Onboarding() {
       </div>
 
       {step === 1 && (
-        <div className="surface space-y-5 p-6">
+        <div key={step} className="surface animate-slide-in space-y-5 p-6">
           <div>
             <h1 className="text-xl font-semibold">O teu negócio</h1>
             <p className="mt-1 text-sm text-muted-foreground">Só o essencial para começar.</p>
@@ -357,7 +418,7 @@ function Onboarding() {
                       : "border-border hover:bg-muted",
                   )}
                 >
-                  <span className="mr-1.5">{t.emoji}</span>
+                  <t.icon className="mr-1.5 inline size-4 align-[-3px]" strokeWidth={2.5} />
                   {t.label}
                 </button>
               ))}
@@ -379,7 +440,25 @@ function Onboarding() {
                 className="border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
                 placeholder="barbearia-do-gabriel"
               />
+              {slugCheck.state === "checking" && (
+                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+              )}
+              {slugCheck.state === "free" && <CircleCheck className="size-4 text-success" />}
+              {(slugCheck.state === "taken" || slugCheck.state === "invalid") && (
+                <CircleX className="size-4 text-destructive" />
+              )}
             </div>
+            <p className="text-xs text-muted-foreground">
+              {slugCheck.state === "free" && (
+                <span className="text-success">Disponível — este link é teu.</span>
+              )}
+              {slugCheck.state === "taken" && (
+                <span className="text-destructive">Já está ocupado. Escolhe outro.</span>
+              )}
+              {slugCheck.state === "invalid" &&
+                "Usa 3 a 48 caracteres: letras minúsculas, números e hífens."}
+              {slugCheck.state === "checking" && "A verificar disponibilidade…"}
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="desc" className="font-semibold">
@@ -443,7 +522,7 @@ function Onboarding() {
       )}
 
       {step === 2 && (
-        <div className="surface space-y-4 p-6">
+        <div key={step} className="surface animate-slide-in space-y-4 p-6">
           <div>
             <h1 className="text-xl font-semibold">Os teus serviços</h1>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -514,7 +593,7 @@ function Onboarding() {
       )}
 
       {step === 3 && (
-        <div className="surface space-y-4 p-6">
+        <div key={step} className="surface animate-slide-in space-y-4 p-6">
           <div>
             <h1 className="text-xl font-semibold">Quem atende?</h1>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -571,7 +650,7 @@ function Onboarding() {
       )}
 
       {step === 4 && (
-        <div className="surface space-y-3 p-6">
+        <div key={step} className="surface animate-slide-in space-y-3 p-6">
           <div>
             <h1 className="text-xl font-semibold">Define quando estás disponível.</h1>
             <p className="mt-1 text-sm text-muted-foreground">Podes ajustar depois.</p>
@@ -677,7 +756,7 @@ function Onboarding() {
       )}
 
       {step === 5 && (
-        <div className="surface space-y-4 p-6">
+        <div key={step} className="surface animate-slide-in space-y-4 p-6">
           <h1 className="text-xl font-semibold">Confirma e cria a tua página</h1>
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between gap-4">
@@ -709,9 +788,12 @@ function Onboarding() {
           <ArrowLeft className="mr-2 size-4" /> Voltar
         </Button>
         {step < 5 ? (
-          <Button onClick={() => setStep((s) => s + 1)}>
-            Continuar <ArrowRight className="ml-2 size-4" />
-          </Button>
+          <div className="flex flex-col items-end gap-1.5">
+            <Button onClick={() => setStep((s) => s + 1)} disabled={!stepValid}>
+              Continuar <ArrowRight className="ml-2 size-4" />
+            </Button>
+            {!stepValid && <p className="text-xs text-muted-foreground">{stepHint}</p>}
+          </div>
         ) : (
           <Button onClick={finish} disabled={busy}>
             {busy && <Loader2 className="mr-2 size-4 animate-spin" />}

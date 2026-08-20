@@ -9,7 +9,7 @@ import { formatPrice } from "@/lib/format";
 export const Route = createFileRoute("/_authenticated/analytics")({
   head: () => ({
     meta: [
-      { title: "Relatórios — Marca" },
+      { title: "Relatórios — Schedivo" },
       { name: "description", content: "Receita, ocupação e serviços mais procurados." },
       { name: "robots", content: "noindex" },
     ],

@@ -25,7 +25,7 @@ import { Scissors, Pencil, Trash2 } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/services")({
   head: () => ({
     meta: [
-      { title: "Serviços — Marca" },
+      { title: "Serviços — Schedivo" },
       { name: "description", content: "Cria e gere os serviços que os clientes podem marcar." },
       { name: "robots", content: "noindex" },
     ],

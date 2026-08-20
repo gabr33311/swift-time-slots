@@ -13,7 +13,7 @@ import {
   Menu,
   Plus,
   LogOut,
-  Bell,
+  Clock3,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,13 +57,13 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
             to={item.to}
             onClick={onNavigate}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all hover:translate-x-0.5",
               active
                 ? "bg-accent text-accent-foreground"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            <item.icon className="size-4" strokeWidth={2} />
+            <item.icon className="size-4" strokeWidth={2.5} />
             {item.label}
           </Link>
         );
@@ -100,10 +100,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const brand = (
     <div className="flex items-center gap-2.5">
       <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground">
-        {business ? initials(business.name) : "M"}
+        {business ? initials(business.name) : "S"}
       </div>
       <div className="min-w-0">
-        <p className="truncate text-sm font-semibold">{business?.name ?? "Marca"}</p>
+        <p className="truncate text-sm font-semibold">{business?.name ?? "Schedivo"}</p>
         <p className="truncate text-xs text-muted-foreground">
           {business ? `/${business.slug}` : "A carregar…"}
         </p>
@@ -151,7 +151,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="ml-auto flex items-center gap-1">
             <Link to="/appointments" aria-label="Notificações">
               <Button variant="ghost" size="icon" className="relative">
-                <Bell className="size-5" />
+                <Clock3 className="size-5" />
                 {(unread ?? 0) > 0 && (
                   <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-primary" />
                 )}
@@ -165,7 +165,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 lg:pb-12">{children}</main>
+        <main key={pathname} className="animate-enter mx-auto w-full max-w-6xl px-4 pb-28 pt-6 lg:pb-12">
+            {children}
+          </main>
       </div>
 
       <Link
@@ -189,7 +191,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 active ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <item.icon className="size-5" />
+              <item.icon className="size-5" strokeWidth={2.5} />
               {item.label}
             </Link>
           );
