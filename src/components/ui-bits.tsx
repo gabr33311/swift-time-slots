@@ -16,8 +16,10 @@ export function PageHeader({
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
+        <h1 className="font-display text-[28px] font-bold leading-tight tracking-tight">{title}</h1>
+        {subtitle && (
+          <p className="mt-1 text-sm font-normal text-muted-foreground">{subtitle}</p>
+        )}
       </div>
       {action}
     </div>
@@ -36,15 +38,17 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="surface flex flex-col items-center justify-center px-6 py-14 text-center">
+    <div className="surface flex flex-col items-center justify-center px-6 py-12 text-center">
       {icon && (
-        <div className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
+        <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-accent text-primary">
           {icon}
         </div>
       )}
-      <p className="text-base font-bold">{title}</p>
+      <p className="font-display text-base font-bold">{title}</p>
       {description && (
-        <p className="mt-1 max-w-sm text-sm text-muted-foreground">{description}</p>
+        <p className="mt-1.5 max-w-sm text-sm font-normal leading-relaxed text-muted-foreground">
+          {description}
+        </p>
       )}
       {action && <div className="mt-5">{action}</div>}
     </div>
@@ -52,20 +56,20 @@ export function EmptyState({
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  pending: "bg-warning/15 text-warning-foreground",
-  confirmed: "bg-primary/10 text-primary",
-  completed: "bg-success/15 text-success",
-  cancelled: "bg-muted text-muted-foreground",
-  no_show: "bg-destructive/10 text-destructive",
-  expired: "bg-muted text-muted-foreground",
+  pending: "bg-warning/15 text-warning-foreground ring-warning/25",
+  confirmed: "bg-success/12 text-success ring-success/25",
+  completed: "bg-primary/10 text-primary ring-primary/20",
+  cancelled: "bg-destructive/10 text-destructive ring-destructive/20",
+  no_show: "bg-destructive/10 text-destructive ring-destructive/20",
+  expired: "bg-muted text-muted-foreground ring-border",
 };
 
 export function StatusBadge({ status }: { status: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-        STATUS_STYLES[status] ?? "bg-muted text-muted-foreground",
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold ring-1 ring-inset",
+        STATUS_STYLES[status] ?? "bg-muted text-muted-foreground ring-border",
       )}
     >
       {STATUS_LABELS[status] ?? status}
@@ -97,33 +101,38 @@ export function StatCard({
         {icon && (
           <span
             className={cn(
-              "flex size-7 shrink-0 items-center justify-center rounded-lg",
-              dimmed ? "bg-muted text-muted-foreground" : "bg-accent text-accent-foreground",
+              "flex size-8 shrink-0 items-center justify-center rounded-xl",
+              dimmed ? "bg-muted text-muted-foreground" : "bg-accent text-primary",
             )}
           >
             {icon}
           </span>
         )}
-        <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
+        <p className="min-w-0 flex-1 whitespace-normal break-words text-[10px] font-bold uppercase leading-tight tracking-[0.05em] text-muted-foreground">
+          {label}
+        </p>
       </div>
       <p
         className={cn(
-          "mt-2 text-2xl font-bold tabular-nums",
-          dimmed && "text-muted-foreground/70",
+          "font-display mt-3 text-[30px] font-bold leading-none tabular-nums tracking-tight",
+          dimmed && "text-muted-foreground/60",
         )}
       >
         {value}
       </p>
-      {hint && <p className="mt-1 text-xs font-medium text-muted-foreground">{hint}</p>}
+      {hint && <p className="mt-1.5 text-xs font-normal text-muted-foreground">{hint}</p>}
     </>
   );
-  const base = cn("surface p-4", dimmed && "opacity-70 shadow-none");
+  const base = cn("surface p-5", dimmed && "bg-muted/40 shadow-none");
   if (to) {
     return (
       <Link
         to={to as never}
         search={search as never}
-        className={cn(base, "block transition-transform hover:-translate-y-0.5 active:scale-[0.98]")}
+        className={cn(
+          base,
+          "block transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lift active:scale-[0.985]",
+        )}
       >
         {inner}
       </Link>

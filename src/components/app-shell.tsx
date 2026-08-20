@@ -49,13 +49,13 @@ function NavList() {
             key={item.to}
             to={item.to}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-bold transition-all hover:translate-x-0.5",
+              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all duration-200",
               active
-                ? "bg-accent text-accent-foreground"
+                ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            <PopIcon Icon={item.icon} className="size-4" />
+            <PopIcon Icon={item.icon} className="size-[18px]" />
             {item.label}
           </Link>
         );
@@ -111,12 +111,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="lg:pl-64">
-        <main className="animate-enter mx-auto w-full max-w-6xl px-4 pb-28 pt-6 lg:pb-12">
+        <main className="animate-enter mx-auto w-full max-w-5xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6 sm:px-5 lg:pb-12">
           {children}
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-background/95 backdrop-blur lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
         {MOBILE_NAV.map((item) => {
           const active = pathname.startsWith(item.to);
           return (
@@ -124,11 +124,18 @@ export function AppShell({ children }: { children: ReactNode }) {
               key={item.to}
               to={item.to}
               className={cn(
-                "flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-bold",
+                "flex min-h-[58px] flex-1 flex-col items-center justify-center gap-1 pb-2 pt-2.5 text-[10.5px] font-bold tracking-tight transition-colors duration-200",
                 active ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <PopIcon Icon={item.icon} className="size-5" />
+              <span
+                className={cn(
+                  "flex h-7 w-12 items-center justify-center rounded-full transition-colors duration-200",
+                  active && "bg-primary/12",
+                )}
+              >
+                <PopIcon Icon={item.icon} className="size-[19px]" />
+              </span>
               {item.label}
             </Link>
           );

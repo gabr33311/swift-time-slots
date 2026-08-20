@@ -272,46 +272,61 @@ export function PublicPagePanel() {
           </a>
         </div>
 
-        <div className="mx-auto mt-4 w-full max-w-xs overflow-hidden rounded-2xl border border-border bg-card">
-          {coverUrl ? (
-            <img src={coverUrl} alt="" className="h-20 w-full object-cover" />
-          ) : (
-            <div className="h-20 w-full" style={{ backgroundColor: color }} />
-          )}
-          <div className="p-4">
-            <div className="flex items-center gap-3">
-              <span
-                className="flex size-10 items-center justify-center overflow-hidden rounded-xl text-sm font-bold text-white"
+        <div className="mx-auto mt-5 w-full max-w-[17rem] rounded-[2rem] border border-border bg-muted/50 p-2 shadow-lift">
+          <div className="overflow-hidden rounded-[1.6rem] bg-card">
+            <div className="relative">
+              {coverUrl ? (
+                <img src={coverUrl} alt="" className="h-24 w-full object-cover" />
+              ) : (
+                <div className="h-24 w-full" style={{ backgroundColor: color }} />
+              )}
+              <span className="absolute left-1/2 top-2 h-1.5 w-14 -translate-x-1/2 rounded-full bg-black/25" />
+            </div>
+            <div className="p-4">
+              <div className="-mt-9 flex items-end gap-3">
+                <span
+                  className="flex size-14 items-center justify-center overflow-hidden rounded-2xl text-base font-bold text-white ring-4 ring-card"
+                  style={{ backgroundColor: color }}
+                >
+                  {logoUrl ? (
+                    <img src={logoUrl} alt="" className="size-full object-cover" />
+                  ) : (
+                    initials(business?.name ?? "S")
+                  )}
+                </span>
+              </div>
+              <p className="mt-2.5 truncate text-[15px] font-bold leading-tight">
+                {business?.name}
+              </p>
+              {showContacts && business?.city && (
+                <p className="truncate text-[11px] font-medium text-muted-foreground">
+                  {business.city}
+                </p>
+              )}
+              {description && (
+                <p className="mt-2 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
+                  {description}
+                </p>
+              )}
+              <div className="mt-3.5 space-y-1.5">
+                {(services ?? []).slice(0, 3).map((s) => (
+                  <div
+                    key={s.id}
+                    className="flex items-center justify-between gap-2 rounded-xl border border-border px-3 py-2"
+                  >
+                    <span className="min-w-0 truncate text-[11px] font-bold">{s.name}</span>
+                    <span className="shrink-0 text-[11px] font-bold tabular-nums text-muted-foreground">
+                      {Math.round((s as { duration_min?: number }).duration_min ?? 30)} min
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div
+                className="mt-3.5 rounded-full py-2.5 text-center text-[11px] font-bold text-white"
                 style={{ backgroundColor: color }}
               >
-                {logoUrl ? (
-                  <img src={logoUrl} alt="" className="size-full object-cover" />
-                ) : (
-                  initials(business?.name ?? "S")
-                )}
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-bold">{business?.name}</p>
-                {showContacts && business?.city && (
-                  <p className="truncate text-xs text-muted-foreground">{business.city}</p>
-                )}
+                Marcar agora
               </div>
-            </div>
-            {description && (
-              <p className="mt-3 line-clamp-2 text-xs text-muted-foreground">{description}</p>
-            )}
-            <div className="mt-3 space-y-1.5">
-              {(services ?? []).slice(0, 3).map((s) => (
-                <div key={s.id} className="rounded-lg bg-muted px-3 py-2 text-xs font-bold">
-                  {s.name}
-                </div>
-              ))}
-            </div>
-            <div
-              className="mt-3 rounded-lg py-2 text-center text-xs font-bold text-white"
-              style={{ backgroundColor: color }}
-            >
-              Marcar
             </div>
           </div>
         </div>

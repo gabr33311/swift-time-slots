@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMyBusiness } from "@/hooks/use-business";
 import { initials } from "@/lib/format";
-import { Users, Ban, ShieldCheck } from "lucide-react";
+import { Users, Ban, ShieldCheck, Search } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -97,7 +98,18 @@ function CustomersPage() {
     <AppShell>
       <PageHeader title="Clientes" subtitle="Quem já passou pelo teu negócio." />
 
-      <div className="mb-4 flex items-center gap-2">
+      <div className="relative mb-3">
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={term}
+          onChange={(e) => setTerm(e.target.value)}
+          placeholder="Procurar por nome ou telemóvel"
+          maxLength={60}
+          className="pl-10"
+        />
+      </div>
+
+      <div className="mb-4 flex items-center gap-1.5 rounded-full bg-muted p-1">
         {(
           [
             ["all", "Todos"],
@@ -105,24 +117,22 @@ function CustomersPage() {
             ["blocked", "Bloqueados"],
           ] as const
         ).map(([value, label]) => (
-          <Button
+          <button
             key={value}
-            size="sm"
-            variant={tab === value ? "default" : "outline"}
             onClick={() => setTab(value)}
-            className="shrink-0 px-2.5 text-xs sm:px-3 sm:text-sm"
+            className={cn(
+              "h-9 flex-1 rounded-full text-[13px] font-bold transition-all duration-200",
+              tab === value
+                ? "bg-card text-primary shadow-soft"
+                : "text-muted-foreground hover:text-foreground",
+            )}
           >
             {label}
-          </Button>
+          </button>
         ))}
-        <Input
-          value={term}
-          onChange={(e) => setTerm(e.target.value)}
-          placeholder="Procurar"
-          maxLength={60}
-          className="h-9 min-w-0 flex-1"
-        />
       </div>
+
+
 
 
       {isLoading ? (
@@ -146,32 +156,43 @@ function CustomersPage() {
           }
         />
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-2.5">
           {rows.map((c) => (
-            <li key={c.id} className="surface flex items-center gap-3 p-4">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground">
+            <li key={c.id} className="surface surface-hover flex items-center gap-3.5 p-4">
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-bold text-primary">
                 {initials(c.name)}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{c.name}</p>
-                <p className="truncate text-sm text-muted-foreground">
+                <p className="truncate text-[15px] font-bold leading-snug">{c.name}</p>
+                <p className="truncate text-sm font-normal leading-snug text-muted-foreground">
                   {c.phone ?? c.email ?? "Sem contacto"}
                   {(cancelledMap?.[c.id] ?? 0) > 0 && (
-                    <span className="ml-2 text-destructive">
+                    <span className="ml-2 font-semibold text-destructive">
                       {cancelledMap![c.id]} cancelamento{cancelledMap![c.id]! > 1 ? "s" : ""}
                     </span>
                   )}
                 </p>
               </div>
               {c.is_blocked ? (
-                <Button variant="ghost" size="sm" onClick={() => toggleBlock(c.id, true)}>
-                  <ShieldCheck className="mr-1.5 size-4" /> Desbloquear
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="shrink-0 text-success hover:bg-success/10 hover:text-success"
+                  onClick={() => toggleBlock(c.id, true)}
+                >
+                  <ShieldCheck className="size-4" />
+                  <span className="hidden sm:inline">Desbloquear</span>
                 </Button>
               ) : (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <Ban className="mr-1.5 size-4" /> Bloquear
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Bloquear ${c.name}`}
+                      className="size-9 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Ban className="size-4" />
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
