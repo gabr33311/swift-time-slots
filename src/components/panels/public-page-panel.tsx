@@ -1,18 +1,15 @@
 import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useMyBusiness } from "@/hooks/use-business";
 import { useLogoUrl } from "@/hooks/use-logo";
 import { initials } from "@/lib/format";
-import { Pencil, Save, X, ImagePlus, ExternalLink, ArrowUp, ArrowDown } from "lucide-react";
-
-const COLORS = ["#7c3aed", "#4f46e5", "#0ea5e9", "#059669", "#e11d48", "#f59e0b", "#111827"];
+import { Pencil, Save, X, ExternalLink, ArrowUp, ArrowDown } from "lucide-react";
 
 export function PublicPagePanel() {
   const { business } = useMyBusiness();
@@ -20,17 +17,13 @@ export function PublicPagePanel() {
   const [edit, setEdit] = useState(false);
   const [busy, setBusy] = useState(false);
   const [description, setDescription] = useState("");
-  const [color, setColor] = useState(COLORS[0]!);
   const [showTeam, setShowTeam] = useState(true);
   const [showContacts, setShowContacts] = useState(true);
-  const coverRef = useRef<HTMLInputElement>(null);
   const logoUrl = useLogoUrl(business?.logo_url);
-  const coverUrl = useLogoUrl(business?.cover_url ?? null);
 
   function hydrate() {
     if (!business) return;
     setDescription(business.description ?? "");
-    setColor(business.brand_color);
     setShowTeam(business.show_team);
     setShowContacts(business.show_contacts);
   }
@@ -49,32 +42,6 @@ export function PublicPagePanel() {
       return data ?? [];
     },
   });
-
-  async function uploadCover(file: File) {
-    if (!business) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("Escolhe um ficheiro de imagem.");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("A imagem tem de ter menos de 5 MB.");
-      return;
-    }
-    setBusy(true);
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-    const path = `${business.id}/cover-${Date.now()}.${ext}`;
-    const { error: upErr } = await supabase.storage
-      .from("business-logos")
-      .upload(path, file, { upsert: true });
-    if (!upErr) {
-      await supabase.from("businesses").update({ cover_url: path }).eq("id", business.id);
-      qc.invalidateQueries({ queryKey: ["my-business"] });
-      toast.success("Imagem de capa actualizada.");
-    } else {
-      toast.error("Não foi possível enviar a imagem.");
-    }
-    setBusy(false);
-  }
 
   async function move(index: number, dir: -1 | 1) {
     const list = services ?? [];
@@ -96,7 +63,6 @@ export function PublicPagePanel() {
       .from("businesses")
       .update({
         description: description.trim() || null,
-        brand_color: color,
         show_team: showTeam,
         show_contacts: showContacts,
       })
@@ -145,40 +111,6 @@ export function PublicPagePanel() {
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label className="font-bold">Imagem de capa</Label>
-          {coverUrl ? (
-            <img
-              src={coverUrl}
-              alt="Capa da página pública"
-              className="h-32 w-full rounded-xl object-cover ring-1 ring-border"
-            />
-          ) : (
-            <div className="flex h-32 w-full items-center justify-center rounded-xl bg-muted text-sm text-muted-foreground">
-              Sem imagem de capa
-            </div>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={busy}
-            onClick={() => coverRef.current?.click()}
-          >
-            <ImagePlus className="mr-2 size-4" /> Carregar capa
-          </Button>
-          <input
-            ref={coverRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) uploadCover(f);
-              e.target.value = "";
-            }}
-          />
-        </div>
-
         <div className="space-y-1.5">
           <Label htmlFor="ppd" className="font-bold">
             Descrição
@@ -190,26 +122,6 @@ export function PublicPagePanel() {
             maxLength={300}
             disabled={!edit}
           />
-        </div>
-
-        <div className="space-y-2">
-          <Label className="font-bold">Cor principal</Label>
-          <div className="flex flex-wrap gap-2">
-            {COLORS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                disabled={!edit}
-                onClick={() => setColor(c)}
-                aria-label={`Cor ${c}`}
-                className={
-                  "size-8 rounded-full ring-offset-2 ring-offset-background transition-transform " +
-                  (color === c ? "ring-2 ring-foreground" : "hover:scale-105")
-                }
-                style={{ backgroundColor: c }}
-              />
-            ))}
-          </div>
         </div>
 
         <div className="divide-y divide-border rounded-xl border border-border">
@@ -274,20 +186,12 @@ export function PublicPagePanel() {
 
         <div className="mx-auto mt-5 w-full max-w-[17rem] rounded-[2rem] border border-border bg-muted/50 p-2 shadow-lift">
           <div className="overflow-hidden rounded-[1.6rem] bg-card">
-            <div className="relative">
-              {coverUrl ? (
-                <img src={coverUrl} alt="" className="h-24 w-full object-cover" />
-              ) : (
-                <div className="h-24 w-full" style={{ backgroundColor: color }} />
-              )}
-              <span className="absolute left-1/2 top-2 h-1.5 w-14 -translate-x-1/2 rounded-full bg-black/25" />
+            <div className="relative h-14 bg-muted">
+              <span className="absolute left-1/2 top-2 h-1.5 w-14 -translate-x-1/2 rounded-full bg-foreground/15" />
             </div>
             <div className="p-4">
               <div className="-mt-9 flex items-end gap-3">
-                <span
-                  className="flex size-14 items-center justify-center overflow-hidden rounded-2xl text-base font-bold text-white ring-4 ring-card"
-                  style={{ backgroundColor: color }}
-                >
+                <span className="flex size-14 items-center justify-center overflow-hidden rounded-2xl bg-primary text-base font-bold text-primary-foreground ring-4 ring-card">
                   {logoUrl ? (
                     <img src={logoUrl} alt="" className="size-full object-cover" />
                   ) : (
@@ -321,10 +225,7 @@ export function PublicPagePanel() {
                   </div>
                 ))}
               </div>
-              <div
-                className="mt-3.5 rounded-full py-2.5 text-center text-[11px] font-bold text-white"
-                style={{ backgroundColor: color }}
-              >
+              <div className="mt-3.5 rounded-full bg-primary py-2.5 text-center text-[11px] font-bold text-primary-foreground">
                 Marcar agora
               </div>
             </div>
