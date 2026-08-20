@@ -101,6 +101,7 @@ function Dashboard() {
           value={cancelled}
           hint="hoje"
           to="/calendar"
+          dimmed={cancelled === 0}
           icon={<CalendarX className="size-4" />}
         />
         <StatCard
@@ -108,6 +109,7 @@ function Dashboard() {
           value={<WaitlistCount businessId={business?.id} />}
           hint="clientes à espera"
           to="/waitlist"
+          dimmed={waiting === 0}
           icon={<Hourglass className="size-4" />}
         />
         <StatCard
@@ -115,16 +117,22 @@ function Dashboard() {
           value={formatPrice(revenue, business?.currency ?? "EUR")}
           hint="receita do dia"
           to="/analytics"
+          dimmed={revenue === 0}
           icon={<BarChart3 className="size-4" />}
         />
       </div>
 
-      <section className="mt-6">
-        <h2 className="mb-3 text-lg font-bold">Partilhar</h2>
-        <SharePanel compact />
-      </section>
+      <div className="mt-4">
+        <Link to="/share">
+          <Button variant="outline" size="sm">
+            <Share2 className="mr-2 size-4" /> Partilhar página
+          </Button>
+        </Link>
+      </div>
 
       <InstallPrompt />
+
+
 
 
       <section className="mt-8">
