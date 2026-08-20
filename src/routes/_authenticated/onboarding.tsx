@@ -230,12 +230,18 @@ function Onboarding() {
             hours
               .map((h, weekday) => ({ h, weekday }))
               .filter(({ h }) => h.open)
-              .map(({ h, weekday }) => ({
+              .flatMap(({ h, weekday }) =>
+                h.lunch
+                  ? [
+                      { start_time: h.start, end_time: h.lunchStart },
+                      { start_time: h.lunchEnd, end_time: h.end },
+                    ]
+                  : [{ start_time: h.start, end_time: h.end }],
+              ).map((range) => ({
                 business_id: business.id,
                 staff_id: st.id,
-                weekday,
-                start_time: h.start,
-                end_time: h.end,
+                weekday: 0,
+                ...range,
               })),
           ),
         );
