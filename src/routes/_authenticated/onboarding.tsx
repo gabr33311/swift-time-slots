@@ -453,7 +453,7 @@ function Onboarding() {
           {services.map((s, i) => (
             <div key={i} className="grid grid-cols-[1fr_auto_auto_auto] items-end gap-2">
               <div className="space-y-1.5">
-                <Label className="text-xs">Nome</Label>
+                <Label className="text-xs font-semibold">Nome do serviço</Label>
                 <Input
                   value={s.name}
                   onChange={(e) =>
