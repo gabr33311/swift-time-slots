@@ -159,19 +159,25 @@ function Dashboard() {
           />
         ) : (
           <ul className="space-y-2">
-            {dayData!.upcoming.map((a) => (
-              <li key={a.id} className="surface flex items-center gap-4 p-4">
-                <span className="w-14 text-sm font-bold tabular-nums">
+            {dayData!.upcoming.map((a, i) => (
+              <li key={a.id} className="surface flex items-start gap-3 p-4">
+                <span className="w-12 shrink-0 text-sm font-bold tabular-nums">
                   {formatTime(a.starts_at, business!.timezone)}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold">{a.customer_name}</p>
-                  <p className="truncate text-sm text-muted-foreground">{a.service_name}</p>
+                  <p className="text-sm font-bold leading-snug break-words">
+                    {displayCustomerName(a.customer_name, null, i + 1)}
+                  </p>
+                  <p className="text-sm leading-snug text-muted-foreground break-words">
+                    {a.service_name}
+                  </p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-bold tabular-nums">
+                      {formatPrice(a.price_cents, business!.currency)}
+                    </span>
+                    <StatusBadge status={a.status} />
+                  </div>
                 </div>
-                <span className="text-sm font-bold tabular-nums">
-                  {formatPrice(a.price_cents, business!.currency)}
-                </span>
-                <StatusBadge status={a.status} />
               </li>
             ))}
           </ul>
