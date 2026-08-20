@@ -63,6 +63,12 @@ const SECTIONS = [
     icon: Share2,
   },
   {
+    id: "public",
+    label: "Personalizar página",
+    description: "Capa, cor, descrição, equipa e ordem dos serviços.",
+    icon: Palette,
+  },
+  {
     id: "analytics",
     label: "Estatísticas",
     description: "Receita, cancelamentos e serviços mais rentáveis.",
