@@ -2,7 +2,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { QRCodeCanvas } from "qrcode.react";
-import { Copy, ExternalLink, Share2, QrCode, Download } from "lucide-react";
+import { Copy, ExternalLink, Share2, Download } from "lucide-react";
 
 export function SharePanel({ compact = false }: { compact?: boolean }) {
   const { business } = useMyBusiness();
@@ -34,50 +34,35 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <section className="surface p-5">
-      <div className="flex items-center gap-2">
-        <Share2 className="size-4 text-primary" />
-        <h2 className="text-sm font-bold">Página de marcações</h2>
-      </div>
-      <p className="mt-3 break-all rounded-lg bg-muted px-3 py-2 text-sm font-bold">{url}</p>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Button
-          onClick={() => {
-            navigator.clipboard.writeText(url);
-            toast.success("Link copiado.");
-          }}
-        >
-          <Copy className="mr-2 size-4" /> Copiar link
-        </Button>
-        <Button variant="outline" onClick={share}>
-          <Share2 className="mr-2 size-4" /> Partilhar
-        </Button>
-        <a href={url} target="_blank" rel="noreferrer">
-          <Button variant="outline">
-            <ExternalLink className="mr-2 size-4" /> Ver página
-          </Button>
-        </a>
+    <section className="surface flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
+      <div className="shrink-0 self-center rounded-xl bg-card p-2 ring-1 ring-border">
+        {url && (
+          <QRCodeCanvas id="booking-qr" value={url} size={compact ? 92 : 108} level="M" />
+        )}
       </div>
 
-      <div className="mt-6 border-t border-border pt-5">
-        <div className="flex items-center gap-2">
-          <QrCode className="size-4 text-primary" />
-          <h3 className="text-sm font-bold">Código QR</h3>
-        </div>
-        <div className="mt-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-          <div className="rounded-2xl bg-card p-4 ring-1 ring-border">
-            {url && (
-              <QRCodeCanvas
-                id="booking-qr"
-                value={url}
-                size={compact ? 132 : 168}
-                level="M"
-                includeMargin
-              />
-            )}
-          </div>
-          <Button variant="outline" onClick={downloadQr}>
-            <Download className="mr-2 size-4" /> Transferir PNG
+      <div className="min-w-0 flex-1">
+        <p className="truncate rounded-lg bg-muted px-3 py-2 text-sm font-bold">{url}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            onClick={() => {
+              navigator.clipboard.writeText(url);
+              toast.success("Link copiado.");
+            }}
+          >
+            <Copy className="mr-1.5 size-4" /> Copiar link
+          </Button>
+          <Button size="sm" variant="outline" onClick={share}>
+            <Share2 className="mr-1.5 size-4" /> Partilhar
+          </Button>
+          <a href={url} target="_blank" rel="noreferrer">
+            <Button size="sm" variant="outline">
+              <ExternalLink className="mr-1.5 size-4" /> Ver página
+            </Button>
+          </a>
+          <Button size="sm" variant="outline" onClick={downloadQr}>
+            <Download className="mr-1.5 size-4" /> Transferir PNG
           </Button>
         </div>
       </div>

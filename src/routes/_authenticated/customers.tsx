@@ -86,15 +86,7 @@ function CustomersPage() {
     <AppShell>
       <PageHeader title="Clientes" subtitle="Quem já passou pelo teu negócio." />
 
-      <Input
-        value={term}
-        onChange={(e) => setTerm(e.target.value)}
-        placeholder="Procurar por nome ou telemóvel"
-        maxLength={60}
-        className="mb-4 max-w-sm"
-      />
-
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         {(
           [
             ["all", "Todos"],
@@ -111,6 +103,13 @@ function CustomersPage() {
             {label}
           </Button>
         ))}
+        <Input
+          value={term}
+          onChange={(e) => setTerm(e.target.value)}
+          placeholder="Procurar cliente"
+          maxLength={60}
+          className="h-9 w-full max-w-56 sm:ml-auto"
+        />
       </div>
 
       {isLoading ? (
