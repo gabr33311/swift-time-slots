@@ -1,8 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { AppShell } from "@/components/app-shell";
-import { PageHeader } from "@/components/ui-bits";
-import { SharePanel } from "@/components/panels/share-panel";
-import { SettingsPanel } from "@/components/panels/settings-panel";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/booking-page")({
   head: () => ({
