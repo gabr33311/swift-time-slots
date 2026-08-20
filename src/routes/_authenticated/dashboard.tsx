@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +21,6 @@ import {
   BarChart3,
 } from "lucide-react";
 import { SharePanel } from "@/components/panels/share-panel";
-import { toast } from "sonner";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -78,11 +77,6 @@ function Dashboard() {
   );
   const revenue = active.reduce((sum, a) => sum + a.price_cents, 0);
   const cancelled = (dayData?.appts ?? []).filter((a) => a.status === "cancelled").length;
-
-  const bookingUrl =
-    typeof window !== "undefined" && business
-      ? `${window.location.origin}/book/${business.slug}`
-      : "";
 
   return (
     <AppShell>
@@ -155,21 +149,9 @@ function Dashboard() {
             title="Sem marcações para já."
             description="Quando os teus clientes marcarem, vais vê-las aqui."
             action={
-              <div className="flex flex-wrap justify-center gap-2">
-                <Button
-                  onClick={() => {
-                    navigator.clipboard.writeText(bookingUrl);
-                    toast.success("Link copiado.");
-                  }}
-                >
-                  <Copy className="mr-2 size-4" /> Copiar link de marcações
-                </Button>
-                <Link to="/booking-page">
-                  <Button variant="outline">
-                    <Share2 className="mr-2 size-4" /> Partilhar página
-                  </Button>
-                </Link>
-              </div>
+              <Button onClick={() => setNewOpen(true)}>
+                <CalendarCheck className="mr-2 size-4" /> Nova marcação
+              </Button>
             }
           />
         ) : (

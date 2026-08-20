@@ -57,7 +57,7 @@ function CenteredMessage({ title, body }: { title: string; body: string }) {
   return (
     <main className="flex min-h-screen items-center justify-center px-6 text-center">
       <div>
-        <h1 className="text-xl font-semibold">{title}</h1>
+        <h1 className="text-xl font-bold">{title}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{body}</p>
         <Link to="/" className="mt-6 inline-block text-sm font-medium text-primary underline">
           Voltar ao início
@@ -154,7 +154,7 @@ function BookPage() {
           <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-success/15 text-success">
             <Check className="size-7" />
           </div>
-          <h1 className="text-xl font-semibold">
+          <h1 className="text-xl font-bold">
             {done.status === "pending" ? "Pedido enviado" : "Marcação confirmada"}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -168,7 +168,7 @@ function BookPage() {
           <Link
             to="/booking/$token"
             params={{ token: done.token }}
-            className="mt-6 inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
+            className="mt-6 inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground"
           >
             Ver a minha marcação
           </Link>
@@ -178,11 +178,11 @@ function BookPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-5 pb-24 pt-8">
+    <main className="animate-enter mx-auto max-w-2xl px-5 pb-24 pt-8">
       <header className="mb-8">
         <div className="flex items-center gap-4">
           <div
-            className="flex size-14 shrink-0 items-center justify-center rounded-2xl text-lg font-semibold text-white"
+            className="flex size-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white"
             style={{ backgroundColor: business.brand_color }}
           >
             {business.logo_url ? (
@@ -196,7 +196,7 @@ function BookPage() {
             )}
           </div>
           <div className="min-w-0">
-            <h1 className="truncate text-2xl font-semibold tracking-tight">{business.name}</h1>
+            <h1 className="truncate text-2xl font-bold tracking-tight">{business.name}</h1>
             {business.description && (
               <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
                 {business.description}
@@ -230,12 +230,12 @@ function BookPage() {
                 setTime(null);
               }}
               className={cn(
-                "surface flex items-center justify-between gap-4 p-4 text-left transition-colors",
+                "surface surface-hover flex items-center justify-between gap-4 p-4 text-left transition-all",
                 serviceId === s.id && "ring-2 ring-primary",
               )}
             >
               <span className="min-w-0">
-                <span className="block text-sm font-medium">{s.name}</span>
+                <span className="block text-sm font-bold">{s.name}</span>
                 {s.description && (
                   <span className="mt-0.5 block truncate text-sm text-muted-foreground">
                     {s.description}
@@ -245,7 +245,7 @@ function BookPage() {
                   <Clock className="size-3.5" /> {formatDuration(s.duration_minutes)}
                 </span>
               </span>
-              <span className="shrink-0 text-sm font-semibold tabular-nums">
+              <span className="shrink-0 text-sm font-bold tabular-nums">
                 {formatPrice(s.price_cents, business.currency)}
               </span>
             </button>
@@ -298,7 +298,7 @@ function BookPage() {
                       timeZone: business.timezone,
                     }).format(dt)}
                   </span>
-                  <span className="text-base font-semibold tabular-nums">
+                  <span className="text-base font-bold tabular-nums">
                     {new Intl.DateTimeFormat("pt-PT", {
                       day: "2-digit",
                       timeZone: business.timezone,
@@ -319,7 +319,7 @@ function BookPage() {
             ) : (slots?.length ?? 0) === 0 ? (
               <div className="surface flex flex-col items-center gap-2 p-8 text-center">
                 <CalendarDays className="size-5 text-muted-foreground" />
-                <p className="text-sm font-medium">Sem horários neste dia.</p>
+                <p className="text-sm font-bold">Sem horários neste dia.</p>
                 <p className="text-sm text-muted-foreground">Experimenta outro dia.</p>
               </div>
             ) : (
@@ -329,7 +329,7 @@ function BookPage() {
                     key={s.time}
                     onClick={() => setTime(s.time)}
                     className={cn(
-                      "rounded-lg border border-border py-2.5 text-sm font-medium tabular-nums transition-colors",
+                      "rounded-lg border border-border py-2.5 text-sm font-bold tabular-nums transition-colors",
                       time === s.time
                         ? "border-primary bg-primary text-primary-foreground"
                         : "hover:bg-accent",
@@ -426,9 +426,9 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="mb-8">
-      <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-        <span className="flex size-5 items-center justify-center rounded-full bg-foreground text-[11px] text-background">
+    <section className="animate-enter mb-8">
+      <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">
+        <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
           {step}
         </span>
         {title}
@@ -451,7 +451,7 @@ function ChoiceChip({
     <button
       onClick={onClick}
       className={cn(
-        "rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors",
+        "rounded-full border border-border px-4 py-2 text-sm font-bold transition-colors",
         active ? "border-primary bg-primary text-primary-foreground" : "hover:bg-accent",
       )}
     >
