@@ -1,18 +1,20 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { getPublicBusiness, getAvailableSlots, createPublicBooking } from "@/lib/booking.functions";
+import { trackPageView } from "@/lib/analytics.functions";
+import { AddToCalendar } from "@/components/add-to-calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDuration, formatPrice, formatDateLong, initials } from "@/lib/format";
-import { addDays, todayIn } from "@/lib/time";
+import { addDays, todayIn, zonedToUtc, timeToMinutes } from "@/lib/time";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, CalendarDays, Check, Clock, MapPin, Phone } from "lucide-react";
+import { ArrowLeft, CalendarDays, Check, Clock, Instagram, MapPin, Phone } from "lucide-react";
 
 export const Route = createFileRoute("/book/$slug")({
   loader: async ({ params }) => {
