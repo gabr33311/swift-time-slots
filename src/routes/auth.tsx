@@ -3,12 +3,16 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CalendarCheck, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    mode: search["mode"] === "register" ? ("register" as const) : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Entrar — Marca" },
@@ -32,7 +36,8 @@ const schema = z.object({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
+  const { mode: initialMode } = Route.useSearch();
+  const [mode, setMode] = useState<"login" | "register" | "forgot">(initialMode ?? "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -43,6 +48,26 @@ function AuthPage() {
       if (data.session) navigate({ to: "/dashboard" });
     });
   }, [navigate]);
+
+  async function signInWithGoogle() {
+    setBusy(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        toast.error("Não foi possível entrar com o Google.");
+        return;
+      }
+      if (result.redirected) return;
+      navigate({ to: "/dashboard" });
+    } catch {
+      toast.error("Não foi possível entrar com o Google.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -70,7 +95,7 @@ function AuthPage() {
       }
 
       if (mode === "register") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: parsed.data.email,
           password: parsed.data.password,
           options: {
@@ -79,6 +104,14 @@ function AuthPage() {
           },
         });
         if (error) throw error;
+        if (!data.session) {
+          // Fallback caso a confirmação por email esteja activa.
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: parsed.data.email,
+            password: parsed.data.password,
+          });
+          if (signInError) throw signInError;
+        }
         toast.success("Conta criada. Vamos configurar o teu negócio.");
         navigate({ to: "/onboarding" });
       } else {
@@ -93,15 +126,22 @@ function AuthPage() {
       const message = err instanceof Error ? err.message : "";
       if (message.includes("Invalid login credentials")) {
         toast.error("Email ou palavra-passe incorrectos.");
-      } else if (message.includes("already registered")) {
-        toast.error("Já existe uma conta com este email.");
+      } else if (message.includes("already registered") || message.includes("User already")) {
+        toast.error("Já existe uma conta com este email. Entra em vez de criar conta.");
+      } else if (message.includes("Email not confirmed")) {
+        toast.error("Esta conta ainda não foi confirmada. Cria uma nova ou confirma o email.");
+      } else if (message.toLowerCase().includes("weak password")) {
+        toast.error("Palavra-passe demasiado fraca. Escolhe outra.");
+      } else if (message.includes("rate limit") || message.includes("after")) {
+        toast.error("Demasiadas tentativas. Espera alguns segundos.");
       } else {
-        toast.error("Não foi possível concluir. Tenta novamente.");
+        toast.error(message || "Não foi possível concluir. Tenta novamente.");
       }
     } finally {
       setBusy(false);
     }
   }
+
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
@@ -171,6 +211,42 @@ function AuthPage() {
             {mode === "forgot" && "Enviar email"}
           </Button>
         </form>
+
+        {mode !== "forgot" && (
+          <>
+            <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />
+              ou
+              <span className="h-px flex-1 bg-border" />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={busy}
+              onClick={signInWithGoogle}
+            >
+              <svg className="mr-2 size-4" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="#4285F4"
+                  d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.7v3h3.9c2.3-2.1 3.5-5.2 3.5-8.9z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0 0 12 24z"
+                />
+                <path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 0 1 0-4.6V6.7H1.4a12 12 0 0 0 0 10.8l4-3.1z" />
+                <path
+                  fill="#EA4335"
+                  d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4C17.9 1.2 15.2 0 12 0A12 12 0 0 0 1.4 6.7l4 3.1C6.3 6.9 8.9 4.8 12 4.8z"
+                />
+              </svg>
+              Continuar com Google
+            </Button>
+          </>
+        )}
+
+
 
         <div className="mt-5 space-y-2 text-center text-sm">
           {mode === "login" && (

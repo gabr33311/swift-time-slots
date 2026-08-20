@@ -62,7 +62,7 @@ function Landing() {
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-6">
         <span className="text-lg font-semibold tracking-tight">Marca</span>
-        <Link to="/auth">
+        <Link to="/auth" search={{ mode: undefined }}>
           <Button variant="outline" size="sm">
             Entrar
           </Button>
@@ -82,10 +82,10 @@ function Landing() {
             horário. Tu ficas com a agenda organizada.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link to="/auth">
+            <Link to="/auth" search={{ mode: "register" }}>
               <Button size="lg">Criar a minha página</Button>
             </Link>
-            <Link to="/auth">
+            <Link to="/auth" search={{ mode: undefined }}>
               <Button size="lg" variant="outline">
                 Já tenho conta
               </Button>
@@ -112,7 +112,7 @@ function Landing() {
           <p className="mt-3 text-sm text-muted-foreground">
             Sem cartão de crédito. Sem instalações.
           </p>
-          <Link to="/auth" className="mt-6 inline-block">
+          <Link to="/auth" search={{ mode: "register" }} className="mt-6 inline-block">
             <Button size="lg">Começar agora</Button>
           </Link>
         </section>
