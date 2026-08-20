@@ -24,13 +24,29 @@ export const Route = createFileRoute("/_authenticated/availability")({
   component: AvailabilityPage,
 });
 
-type DayState = { enabled: boolean; start: string; end: string };
+type DayState = {
+  enabled: boolean;
+  start: string;
+  end: string;
+  lunch: boolean;
+  lunchStart: string;
+  lunchEnd: string;
+};
+
+const DEFAULT_DAY: DayState = {
+  enabled: false,
+  start: "09:00",
+  end: "18:00",
+  lunch: false,
+  lunchStart: "13:00",
+  lunchEnd: "14:00",
+};
 
 function AvailabilityPage() {
   const { business } = useMyBusiness();
   const qc = useQueryClient();
   const [days, setDays] = useState<DayState[]>(
-    Array.from({ length: 7 }, () => ({ enabled: false, start: "09:00", end: "18:00" })),
+    Array.from({ length: 7 }, () => ({ ...DEFAULT_DAY })),
   );
   const [busy, setBusy] = useState(false);
   const [blockFrom, setBlockFrom] = useState("");
@@ -61,16 +77,26 @@ function AvailabilityPage() {
 
   useEffect(() => {
     if (!data) return;
-    const next: DayState[] = Array.from({ length: 7 }, () => ({
-      enabled: false,
-      start: "09:00",
-      end: "18:00",
-    }));
+    const next: DayState[] = Array.from({ length: 7 }, () => ({ ...DEFAULT_DAY }));
+    const byDay: Record<number, { start: string; end: string }[]> = {};
     for (const h of data.hours) {
-      next[h.weekday] = {
-        enabled: true,
+      (byDay[h.weekday] ??= []).push({
         start: h.start_time.slice(0, 5),
         end: h.end_time.slice(0, 5),
+      });
+    }
+    for (const [weekday, ranges] of Object.entries(byDay)) {
+      const i = Number(weekday);
+      const sorted = ranges.sort((a, b) => a.start.localeCompare(b.start));
+      const first = sorted[0]!;
+      const last = sorted[sorted.length - 1]!;
+      next[i] = {
+        enabled: true,
+        start: first.start,
+        end: last.end,
+        lunch: sorted.length > 1,
+        lunchStart: sorted.length > 1 ? first.end : DEFAULT_DAY.lunchStart,
+        lunchEnd: sorted.length > 1 ? last.start : DEFAULT_DAY.lunchEnd,
       };
     }
     setDays(next);
@@ -88,12 +114,34 @@ function AvailabilityPage() {
       const rows = days
         .map((d, weekday) => ({ ...d, weekday }))
         .filter((d) => d.enabled && d.start < d.end)
-        .map((d) => ({
-          business_id: business.id,
-          weekday: d.weekday,
-          start_time: d.start,
-          end_time: d.end,
-        }));
+        .flatMap((d) => {
+          const hasLunch =
+            d.lunch && d.start < d.lunchStart && d.lunchStart < d.lunchEnd && d.lunchEnd < d.end;
+          if (!hasLunch) {
+            return [
+              {
+                business_id: business.id,
+                weekday: d.weekday,
+                start_time: d.start,
+                end_time: d.end,
+              },
+            ];
+          }
+          return [
+            {
+              business_id: business.id,
+              weekday: d.weekday,
+              start_time: d.start,
+              end_time: d.lunchStart,
+            },
+            {
+              business_id: business.id,
+              weekday: d.weekday,
+              start_time: d.lunchEnd,
+              end_time: d.end,
+            },
+          ];
+        });
       if (rows.length) await supabase.from("working_hours").insert(rows);
       toast.success("Horários guardados.");
       qc.invalidateQueries({ queryKey: ["availability"] });
@@ -140,11 +188,12 @@ function AvailabilityPage() {
         <LoadingRows rows={4} />
       ) : (
         <>
-          <section className="surface p-5">
+          <section className="surface animate-enter p-5">
             <h2 className="text-base font-semibold">Horário semanal</h2>
             <div className="mt-4 space-y-3">
               {days.map((d, i) => (
-                <div key={i} className="flex flex-wrap items-center gap-3">
+                <div key={i} className="rounded-xl border border-border p-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <Switch
                     checked={d.enabled}
                     onCheckedChange={(v) =>
@@ -176,6 +225,42 @@ function AvailabilityPage() {
                     }
                     className="w-32"
                   />
+                </div>
+                {d.enabled && (
+                  <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-border pt-3">
+                    <Switch
+                      checked={d.lunch}
+                      onCheckedChange={(v) =>
+                        setDays((prev) => prev.map((x, j) => (j === i ? { ...x, lunch: v } : x)))
+                      }
+                      aria-label={`Almoço ${WEEKDAYS_PT[i]}`}
+                    />
+                    <span className="w-24 text-sm font-medium">Almoço</span>
+                    <Input
+                      type="time"
+                      value={d.lunchStart}
+                      disabled={!d.lunch}
+                      onChange={(e) =>
+                        setDays((prev) =>
+                          prev.map((x, j) => (j === i ? { ...x, lunchStart: e.target.value } : x)),
+                        )
+                      }
+                      className="w-32"
+                    />
+                    <span className="text-sm text-muted-foreground">até</span>
+                    <Input
+                      type="time"
+                      value={d.lunchEnd}
+                      disabled={!d.lunch}
+                      onChange={(e) =>
+                        setDays((prev) =>
+                          prev.map((x, j) => (j === i ? { ...x, lunchEnd: e.target.value } : x)),
+                        )
+                      }
+                      className="w-32"
+                    />
+                  </div>
+                )}
                 </div>
               ))}
             </div>
