@@ -62,7 +62,7 @@ function Landing() {
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-6">
         <span className="text-lg font-semibold tracking-tight">Marca</span>
-        <Link to="/auth" search={{}}>
+        <Link to="/auth" search={{ mode: undefined }}>
           <Button variant="outline" size="sm">
             Entrar
           </Button>
@@ -85,7 +85,7 @@ function Landing() {
             <Link to="/auth" search={{ mode: "register" }}>
               <Button size="lg">Criar a minha página</Button>
             </Link>
-            <Link to="/auth" search={{}}>
+            <Link to="/auth" search={{ mode: undefined }}>
               <Button size="lg" variant="outline">
                 Já tenho conta
               </Button>
