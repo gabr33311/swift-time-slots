@@ -27,16 +27,32 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
 
 type DraftService = { name: string; duration: number; price: number };
 type DraftStaff = { name: string; specialty: string };
-type DayHours = { open: boolean; start: string; end: string };
+type DayHours = {
+  open: boolean;
+  start: string;
+  end: string;
+  lunch: boolean;
+  lunchStart: string;
+  lunchEnd: string;
+};
+
+const day = (open: boolean, start: string, end: string, lunch = open): DayHours => ({
+  open,
+  start,
+  end,
+  lunch,
+  lunchStart: "13:00",
+  lunchEnd: "14:00",
+});
 
 const DEFAULT_HOURS: DayHours[] = [
-  { open: false, start: "09:00", end: "18:00" },
-  { open: true, start: "09:00", end: "18:00" },
-  { open: true, start: "09:00", end: "18:00" },
-  { open: true, start: "09:00", end: "18:00" },
-  { open: true, start: "09:00", end: "18:00" },
-  { open: true, start: "09:00", end: "18:00" },
-  { open: false, start: "09:00", end: "13:00" },
+  day(false, "09:00", "18:00", false),
+  day(true, "09:00", "18:00"),
+  day(true, "09:00", "18:00"),
+  day(true, "09:00", "18:00"),
+  day(true, "09:00", "18:00"),
+  day(true, "09:00", "18:00"),
+  day(false, "09:00", "13:00", false),
 ];
 
 function Onboarding() {
@@ -100,9 +116,12 @@ function Onboarding() {
           .min(3, "O link precisa de pelo menos 3 caracteres.")
           .max(48)
           .regex(/^[a-z0-9-]+$/, "O link só pode ter letras minúsculas, números e hífens."),
+        description: z.string().trim().min(10, "Escreve uma descrição curta do negócio.").max(280),
+        city: z.string().trim().min(2, "Indica a cidade.").max(60),
+        address: z.string().trim().min(4, "Indica a morada.").max(140),
         phone: z.string().trim().max(24).optional(),
       })
-      .safeParse({ name, slug, phone });
+      .safeParse({ name, slug, description, city, address, phone });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Verifica os dados.");
       setStep(1);
@@ -122,6 +141,17 @@ function Onboarding() {
     }
     if (!hours.some((h) => h.open)) {
       toast.error("Escolhe pelo menos um dia de trabalho.");
+      setStep(4);
+      return;
+    }
+    const badLunch = hours.some(
+      (h) =>
+        h.open &&
+        h.lunch &&
+        !(h.start < h.lunchStart && h.lunchStart < h.lunchEnd && h.lunchEnd < h.end),
+    );
+    if (badLunch) {
+      toast.error("O horário de almoço tem de estar dentro do horário de trabalho.");
       setStep(4);
       return;
     }
@@ -200,13 +230,20 @@ function Onboarding() {
             hours
               .map((h, weekday) => ({ h, weekday }))
               .filter(({ h }) => h.open)
-              .map(({ h, weekday }) => ({
-                business_id: business.id,
-                staff_id: st.id,
-                weekday,
-                start_time: h.start,
-                end_time: h.end,
-              })),
+              .flatMap(({ h, weekday }) =>
+                (h.lunch
+                  ? [
+                      { start_time: h.start, end_time: h.lunchStart },
+                      { start_time: h.lunchEnd, end_time: h.end },
+                    ]
+                  : [{ start_time: h.start, end_time: h.end }]
+                ).map((range) => ({
+                  business_id: business.id,
+                  staff_id: st.id,
+                  weekday,
+                  ...range,
+                })),
+              ),
           ),
         );
       }
@@ -292,7 +329,9 @@ function Onboarding() {
             <p className="mt-1 text-sm text-muted-foreground">Só o essencial para começar.</p>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="bname">Nome do negócio</Label>
+            <Label htmlFor="bname" className="font-semibold">
+              Nome do negócio <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="bname"
               value={name}
@@ -302,7 +341,9 @@ function Onboarding() {
             />
           </div>
           <div className="space-y-2">
-            <Label>Tipo de negócio</Label>
+            <Label className="font-semibold">
+              Tipo de negócio <span className="text-destructive">*</span>
+            </Label>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {BUSINESS_TYPES.map((t) => (
                 <button
@@ -323,7 +364,9 @@ function Onboarding() {
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="slug">O teu link</Label>
+            <Label htmlFor="slug" className="font-semibold">
+              O teu link (nome de utilizador) <span className="text-destructive">*</span>
+            </Label>
             <div className="flex items-center gap-1 rounded-lg border border-input bg-muted/40 px-3">
               <span className="text-sm text-muted-foreground">/book/</span>
               <Input
@@ -339,7 +382,9 @@ function Onboarding() {
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="desc">Descrição curta</Label>
+            <Label htmlFor="desc" className="font-semibold">
+              Descrição curta <span className="text-destructive">*</span>
+            </Label>
             <Textarea
               id="desc"
               value={description}
@@ -350,11 +395,16 @@ function Onboarding() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="city">Cidade</Label>
+              <Label htmlFor="city" className="font-semibold">
+                Cidade <span className="text-destructive">*</span>
+              </Label>
               <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} maxLength={60} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="phone">Telemóvel</Label>
+              <Label htmlFor="phone" className="font-semibold">
+                Telemóvel{" "}
+                <span className="font-normal text-muted-foreground">(opcional, recomendado)</span>
+              </Label>
               <Input
                 id="phone"
                 value={phone}
@@ -366,7 +416,9 @@ function Onboarding() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="addr">Morada</Label>
+              <Label htmlFor="addr" className="font-semibold">
+                Morada <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="addr"
                 value={address}
@@ -375,7 +427,9 @@ function Onboarding() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ig">Instagram</Label>
+              <Label htmlFor="ig" className="font-semibold">
+                Instagram <span className="font-normal text-muted-foreground">(opcional)</span>
+              </Label>
               <Input
                 id="ig"
                 value={instagram}
@@ -399,7 +453,7 @@ function Onboarding() {
           {services.map((s, i) => (
             <div key={i} className="grid grid-cols-[1fr_auto_auto_auto] items-end gap-2">
               <div className="space-y-1.5">
-                <Label className="text-xs">Nome</Label>
+                <Label className="text-xs font-semibold">Nome do serviço</Label>
                 <Input
                   value={s.name}
                   onChange={(e) =>
@@ -410,8 +464,8 @@ function Onboarding() {
                   maxLength={60}
                 />
               </div>
-              <div className="w-20 space-y-1.5">
-                <Label className="text-xs">Min</Label>
+              <div className="w-32 space-y-1.5">
+                <Label className="text-xs font-semibold">Tempo (minutos)</Label>
                 <Input
                   type="number"
                   min={5}
@@ -427,7 +481,7 @@ function Onboarding() {
                 />
               </div>
               <div className="w-24 space-y-1.5">
-                <Label className="text-xs">Preço €</Label>
+                <Label className="text-xs font-semibold">Preço (€)</Label>
                 <Input
                   type="number"
                   min={0}
@@ -470,7 +524,9 @@ function Onboarding() {
           {staff.map((s, i) => (
             <div key={i} className="grid grid-cols-[1fr_1fr_auto] items-end gap-2">
               <div className="space-y-1.5">
-                <Label className="text-xs">Nome</Label>
+                <Label className="text-xs font-semibold">
+                  Nome <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   value={s.name}
                   onChange={(e) =>
@@ -482,7 +538,9 @@ function Onboarding() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Especialidade</Label>
+                <Label className="text-xs font-semibold">
+                  Especialidade <span className="font-normal text-muted-foreground">(opcional)</span>
+                </Label>
                 <Input
                   value={s.specialty}
                   onChange={(e) =>
@@ -519,45 +577,99 @@ function Onboarding() {
             <p className="mt-1 text-sm text-muted-foreground">Podes ajustar depois.</p>
           </div>
           {hours.map((h, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() =>
-                  setHours((prev) => prev.map((x, j) => (i === j ? { ...x, open: !x.open } : x)))
-                }
-                className={cn(
-                  "w-28 rounded-lg border px-3 py-2 text-left text-sm font-medium",
-                  h.open ? "border-primary bg-accent text-accent-foreground" : "border-border text-muted-foreground",
+            <div key={i} className="rounded-xl border border-border p-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setHours((prev) => prev.map((x, j) => (i === j ? { ...x, open: !x.open } : x)))
+                  }
+                  className={cn(
+                    "w-28 rounded-lg border px-3 py-2 text-left text-sm font-semibold",
+                    h.open
+                      ? "border-primary bg-accent text-accent-foreground"
+                      : "border-border text-muted-foreground",
+                  )}
+                >
+                  {WEEKDAYS_PT[i]}
+                </button>
+                {h.open ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="time"
+                      value={h.start}
+                      onChange={(e) =>
+                        setHours((prev) =>
+                          prev.map((x, j) => (i === j ? { ...x, start: e.target.value } : x)),
+                        )
+                      }
+                      className="w-32"
+                    />
+                    <span className="text-muted-foreground">–</span>
+                    <Input
+                      type="time"
+                      value={h.end}
+                      onChange={(e) =>
+                        setHours((prev) =>
+                          prev.map((x, j) => (i === j ? { ...x, end: e.target.value } : x)),
+                        )
+                      }
+                      className="w-32"
+                    />
+                  </div>
+                ) : (
+                  <span className="text-sm text-muted-foreground">Fechado</span>
                 )}
-              >
-                {WEEKDAYS_PT[i]}
-              </button>
-              {h.open ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="time"
-                    value={h.start}
-                    onChange={(e) =>
+              </div>
+
+              {h.open && (
+                <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-border pt-3">
+                  <button
+                    type="button"
+                    onClick={() =>
                       setHours((prev) =>
-                        prev.map((x, j) => (i === j ? { ...x, start: e.target.value } : x)),
+                        prev.map((x, j) => (i === j ? { ...x, lunch: !x.lunch } : x)),
                       )
                     }
-                    className="w-32"
-                  />
-                  <span className="text-muted-foreground">–</span>
-                  <Input
-                    type="time"
-                    value={h.end}
-                    onChange={(e) =>
-                      setHours((prev) =>
-                        prev.map((x, j) => (i === j ? { ...x, end: e.target.value } : x)),
-                      )
-                    }
-                    className="w-32"
-                  />
+                    className={cn(
+                      "w-28 rounded-lg border px-3 py-2 text-left text-xs font-semibold",
+                      h.lunch
+                        ? "border-primary bg-accent text-accent-foreground"
+                        : "border-border text-muted-foreground",
+                    )}
+                  >
+                    Almoço
+                  </button>
+                  {h.lunch ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="time"
+                        value={h.lunchStart}
+                        onChange={(e) =>
+                          setHours((prev) =>
+                            prev.map((x, j) =>
+                              i === j ? { ...x, lunchStart: e.target.value } : x,
+                            ),
+                          )
+                        }
+                        className="w-32"
+                      />
+                      <span className="text-muted-foreground">–</span>
+                      <Input
+                        type="time"
+                        value={h.lunchEnd}
+                        onChange={(e) =>
+                          setHours((prev) =>
+                            prev.map((x, j) => (i === j ? { ...x, lunchEnd: e.target.value } : x)),
+                          )
+                        }
+                        className="w-32"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Sem pausa de almoço</span>
+                  )}
                 </div>
-              ) : (
-                <span className="text-sm text-muted-foreground">Fechado</span>
               )}
             </div>
           ))}
