@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useMyBusiness } from "@/hooks/use-business";
 import { QRCodeCanvas } from "qrcode.react";
-import { Copy, ExternalLink, MessageCircle, QrCode, Download } from "lucide-react";
+import { Copy, ExternalLink, Share2, QrCode, Download } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/booking-page")({
   head: () => ({
@@ -44,6 +44,19 @@ function BookingPageSettings() {
       return;
     }
     qc.invalidateQueries({ queryKey: ["my-business"] });
+  }
+
+  async function share() {
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title: business?.name ?? "Marcações", url });
+        return;
+      } catch {
+        return;
+      }
+    }
+    await navigator.clipboard.writeText(url);
+    toast.success("Link copiado.");
   }
 
   function downloadQr() {
