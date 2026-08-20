@@ -401,7 +401,10 @@ function Onboarding() {
               <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} maxLength={60} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="phone">Telemóvel</Label>
+              <Label htmlFor="phone" className="font-semibold">
+                Telemóvel{" "}
+                <span className="font-normal text-muted-foreground">(opcional, recomendado)</span>
+              </Label>
               <Input
                 id="phone"
                 value={phone}
