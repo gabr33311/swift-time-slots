@@ -11,7 +11,7 @@ import { CalendarCheck, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>) => ({
-    mode: search.mode === "register" ? ("register" as const) : undefined,
+    mode: search["mode"] === "register" ? ("register" as const) : undefined,
   }),
   head: () => ({
     meta: [
