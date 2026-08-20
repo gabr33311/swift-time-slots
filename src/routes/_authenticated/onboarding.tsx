@@ -573,45 +573,99 @@ function Onboarding() {
             <p className="mt-1 text-sm text-muted-foreground">Podes ajustar depois.</p>
           </div>
           {hours.map((h, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() =>
-                  setHours((prev) => prev.map((x, j) => (i === j ? { ...x, open: !x.open } : x)))
-                }
-                className={cn(
-                  "w-28 rounded-lg border px-3 py-2 text-left text-sm font-medium",
-                  h.open ? "border-primary bg-accent text-accent-foreground" : "border-border text-muted-foreground",
+            <div key={i} className="rounded-xl border border-border p-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setHours((prev) => prev.map((x, j) => (i === j ? { ...x, open: !x.open } : x)))
+                  }
+                  className={cn(
+                    "w-28 rounded-lg border px-3 py-2 text-left text-sm font-semibold",
+                    h.open
+                      ? "border-primary bg-accent text-accent-foreground"
+                      : "border-border text-muted-foreground",
+                  )}
+                >
+                  {WEEKDAYS_PT[i]}
+                </button>
+                {h.open ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="time"
+                      value={h.start}
+                      onChange={(e) =>
+                        setHours((prev) =>
+                          prev.map((x, j) => (i === j ? { ...x, start: e.target.value } : x)),
+                        )
+                      }
+                      className="w-32"
+                    />
+                    <span className="text-muted-foreground">–</span>
+                    <Input
+                      type="time"
+                      value={h.end}
+                      onChange={(e) =>
+                        setHours((prev) =>
+                          prev.map((x, j) => (i === j ? { ...x, end: e.target.value } : x)),
+                        )
+                      }
+                      className="w-32"
+                    />
+                  </div>
+                ) : (
+                  <span className="text-sm text-muted-foreground">Fechado</span>
                 )}
-              >
-                {WEEKDAYS_PT[i]}
-              </button>
-              {h.open ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="time"
-                    value={h.start}
-                    onChange={(e) =>
+              </div>
+
+              {h.open && (
+                <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-border pt-3">
+                  <button
+                    type="button"
+                    onClick={() =>
                       setHours((prev) =>
-                        prev.map((x, j) => (i === j ? { ...x, start: e.target.value } : x)),
+                        prev.map((x, j) => (i === j ? { ...x, lunch: !x.lunch } : x)),
                       )
                     }
-                    className="w-32"
-                  />
-                  <span className="text-muted-foreground">–</span>
-                  <Input
-                    type="time"
-                    value={h.end}
-                    onChange={(e) =>
-                      setHours((prev) =>
-                        prev.map((x, j) => (i === j ? { ...x, end: e.target.value } : x)),
-                      )
-                    }
-                    className="w-32"
-                  />
+                    className={cn(
+                      "w-28 rounded-lg border px-3 py-2 text-left text-xs font-semibold",
+                      h.lunch
+                        ? "border-primary bg-accent text-accent-foreground"
+                        : "border-border text-muted-foreground",
+                    )}
+                  >
+                    Almoço
+                  </button>
+                  {h.lunch ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="time"
+                        value={h.lunchStart}
+                        onChange={(e) =>
+                          setHours((prev) =>
+                            prev.map((x, j) =>
+                              i === j ? { ...x, lunchStart: e.target.value } : x,
+                            ),
+                          )
+                        }
+                        className="w-32"
+                      />
+                      <span className="text-muted-foreground">–</span>
+                      <Input
+                        type="time"
+                        value={h.lunchEnd}
+                        onChange={(e) =>
+                          setHours((prev) =>
+                            prev.map((x, j) => (i === j ? { ...x, lunchEnd: e.target.value } : x)),
+                          )
+                        }
+                        className="w-32"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Sem pausa de almoço</span>
+                  )}
                 </div>
-              ) : (
-                <span className="text-sm text-muted-foreground">Fechado</span>
               )}
             </div>
           ))}
