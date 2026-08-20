@@ -5,13 +5,13 @@ import { CalendarCheck, Clock, Share2, ShieldCheck, Sparkles, Users } from "luci
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Marca — Marcações online para o teu negócio" },
+      { title: "Schedivo — Marcações online para o teu negócio" },
       {
         name: "description",
         content:
           "Cria a tua página de marcações em minutos. Agenda, clientes e lembretes num só sítio, feito para negócios em Portugal.",
       },
-      { property: "og:title", content: "Marca — Marcações online para o teu negócio" },
+      { property: "og:title", content: "Schedivo — Marcações online para o teu negócio" },
       {
         property: "og:description",
         content:

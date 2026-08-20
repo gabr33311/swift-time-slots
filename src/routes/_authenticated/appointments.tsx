@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/appointments")({
   validateSearch: z.object({ new: z.boolean().optional() }),
   head: () => ({
     meta: [
-      { title: "Marcações — Marca" },
+      { title: "Marcações — Schedivo" },
       { name: "description", content: "Todas as marcações do teu negócio num só lugar." },
       { name: "robots", content: "noindex" },
     ],

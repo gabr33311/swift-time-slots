@@ -25,7 +25,7 @@ import { UserRound, Pencil, Trash2 } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/team")({
   head: () => ({
     meta: [
-      { title: "Equipa — Marca" },
+      { title: "Equipa — Schedivo" },
       { name: "description", content: "Gere os profissionais e os serviços que cada um faz." },
       { name: "robots", content: "noindex" },
     ],

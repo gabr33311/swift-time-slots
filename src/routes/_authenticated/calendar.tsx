@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
     meta: [
-      { title: "Agenda — Marca" },
+      { title: "Agenda — Schedivo" },
       { name: "description", content: "A agenda diária da tua equipa, hora a hora." },
       { name: "robots", content: "noindex" },
     ],

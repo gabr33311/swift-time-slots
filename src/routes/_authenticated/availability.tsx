@@ -16,7 +16,7 @@ import { Trash2 } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/availability")({
   head: () => ({
     meta: [
-      { title: "Horários — Marca" },
+      { title: "Horários — Schedivo" },
       { name: "description", content: "Define os horários de funcionamento e as folgas." },
       { name: "robots", content: "noindex" },
     ],

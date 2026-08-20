@@ -16,7 +16,7 @@ import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Painel — Marca" },
+      { title: "Painel — Schedivo" },
       { name: "description", content: "O resumo do teu dia: marcações, receita prevista e clientes." },
       { name: "robots", content: "noindex" },
     ],

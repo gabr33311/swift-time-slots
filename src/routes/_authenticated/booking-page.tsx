@@ -13,7 +13,7 @@ import { Copy, ExternalLink, MessageCircle } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/booking-page")({
   head: () => ({
     meta: [
-      { title: "Página pública — Marca" },
+      { title: "Página pública — Schedivo" },
       { name: "description", content: "Partilha o teu link de marcações com os clientes." },
       { name: "robots", content: "noindex" },
     ],

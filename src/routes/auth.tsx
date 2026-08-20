@@ -15,12 +15,12 @@ export const Route = createFileRoute("/auth")({
   }),
   head: () => ({
     meta: [
-      { title: "Entrar — Marca" },
+      { title: "Entrar — Schedivo" },
       {
         name: "description",
-        content: "Entra na tua conta Marca para gerir marcações, clientes e a tua página pública.",
+        content: "Entra na tua conta Schedivo para gerir marcações, clientes e a tua página pública.",
       },
-      { property: "og:title", content: "Entrar — Marca" },
+      { property: "og:title", content: "Entrar — Schedivo" },
       { property: "og:description", content: "Gere as tuas marcações num só lugar." },
       { name: "robots", content: "noindex" },
     ],

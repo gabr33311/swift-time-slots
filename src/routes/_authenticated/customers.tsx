@@ -14,7 +14,7 @@ import { Users, Ban, ShieldCheck } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/customers")({
   head: () => ({
     meta: [
-      { title: "Clientes — Marca" },
+      { title: "Clientes — Schedivo" },
       { name: "description", content: "A tua base de clientes, com histórico e contactos." },
       { name: "robots", content: "noindex" },
     ],
