@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
@@ -115,22 +115,31 @@ function ProfilePage() {
       />
 
       {!active ? (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {SECTIONS.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => setSection(s.id)}
-              className="surface surface-hover flex items-center gap-4 p-5 text-left"
-            >
-              <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
-                <s.icon className="size-5" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-bold">{s.label}</span>
-                <span className="block text-sm text-muted-foreground">{s.description}</span>
-              </span>
-              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-            </button>
+        <div className="space-y-7">
+          {GROUPS.map((group) => (
+            <section key={group.title}>
+              <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                {group.title}
+              </h2>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {group.items.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => setSection(s.id)}
+                    className="surface surface-hover flex items-center gap-4 p-5 text-left"
+                  >
+                    <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
+                      <s.icon className="size-5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-bold">{s.label}</span>
+                      <span className="block text-sm text-muted-foreground">{s.description}</span>
+                    </span>
+                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                  </button>
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       ) : (
@@ -139,8 +148,6 @@ function ProfilePage() {
           {section === "services" && <ServicesPanel />}
           {section === "team" && <TeamPanel />}
           {section === "availability" && <AvailabilityPanel />}
-          {section === "booking" && <SharePanel />}
-          {section === "public" && <PublicPagePanel />}
           {section === "analytics" && <AnalyticsPanel />}
           {section === "settings" && <SettingsPanel />}
         </div>
