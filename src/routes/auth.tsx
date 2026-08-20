@@ -117,18 +117,15 @@ function AuthPage() {
           email: parsed.data.email,
           password: parsed.data.password,
           options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`,
+            emailRedirectTo: `${window.location.origin}/onboarding`,
             data: { full_name: name.trim() },
           },
         });
         if (error) throw error;
         if (!data.session) {
-          // Fallback caso a confirmação por email esteja activa.
-          const { error: signInError } = await supabase.auth.signInWithPassword({
-            email: parsed.data.email,
-            password: parsed.data.password,
-          });
-          if (signInError) throw signInError;
+          setConfirmSent(parsed.data.email);
+          toast.success("Conta criada. Confirma o email para continuar.");
+          return;
         }
         toast.success("Conta criada. Vamos configurar o teu negócio.");
         navigate({ to: "/onboarding" });
