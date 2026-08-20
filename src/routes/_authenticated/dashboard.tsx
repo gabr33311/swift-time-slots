@@ -77,6 +77,7 @@ function Dashboard() {
   );
   const revenue = active.reduce((sum, a) => sum + a.price_cents, 0);
   const cancelled = (dayData?.appts ?? []).filter((a) => a.status === "cancelled").length;
+  const waiting = useWaitlistCount(business?.id);
 
   return (
     <AppShell>
