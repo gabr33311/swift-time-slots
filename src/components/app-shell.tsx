@@ -72,7 +72,7 @@ function NavList() {
 export function AppShell({ children }: { children: ReactNode }) {
   const { business } = useMyBusiness();
   const logoUrl = useLogoUrl(business?.logo_url);
-  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
