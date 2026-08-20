@@ -28,11 +28,28 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+const passwordSchema = z
+  .string()
+  .min(8, { message: "A palavra-passe precisa de pelo menos 8 caracteres." })
+  .max(72)
+  .regex(/[A-Z]/, { message: "A palavra-passe precisa de uma letra maiúscula." })
+  .regex(/[a-z]/, { message: "A palavra-passe precisa de uma letra minúscula." })
+  .regex(/[0-9]/, { message: "A palavra-passe precisa de um número." })
+  .regex(/[^A-Za-z0-9]/, { message: "A palavra-passe precisa de um símbolo (ex.: !?@#)." });
+
 const schema = z.object({
   email: z.string().trim().email({ message: "Introduz um email válido." }).max(255),
-  password: z.string().min(8, { message: "A palavra-passe precisa de pelo menos 8 caracteres." }),
+  password: passwordSchema,
   name: z.string().trim().max(80).optional(),
 });
+
+const PASSWORD_RULES = [
+  { label: "Pelo menos 8 caracteres", test: (v: string) => v.length >= 8 },
+  { label: "Uma letra maiúscula", test: (v: string) => /[A-Z]/.test(v) },
+  { label: "Uma letra minúscula", test: (v: string) => /[a-z]/.test(v) },
+  { label: "Um número", test: (v: string) => /[0-9]/.test(v) },
+  { label: "Um símbolo", test: (v: string) => /[^A-Za-z0-9]/.test(v) },
+];
 
 function AuthPage() {
   const navigate = useNavigate();
@@ -42,6 +59,7 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmSent, setConfirmSent] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
