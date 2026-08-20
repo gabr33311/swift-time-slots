@@ -98,7 +98,7 @@ function Dashboard() {
           icon={<CalendarDays className="size-4" />}
         />
         <StatCard
-          label="Cancelamentos"
+          label="Cancelados"
           value={cancelled}
           hint="hoje"
           to="/calendar"
@@ -106,7 +106,7 @@ function Dashboard() {
           icon={<CalendarX className="size-4" />}
         />
         <StatCard
-          label="Lista de espera"
+          label="Em espera"
           value={waiting}
           hint="clientes à espera"
           to="/waitlist"
