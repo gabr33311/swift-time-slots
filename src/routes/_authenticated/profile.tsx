@@ -10,6 +10,7 @@ import { AvailabilityPanel } from "@/components/panels/availability-panel";
 import { AnalyticsPanel } from "@/components/panels/analytics-panel";
 import { SharePanel } from "@/components/panels/share-panel";
 import { SettingsPanel } from "@/components/panels/settings-panel";
+import { PublicPagePanel } from "@/components/panels/public-page-panel";
 import {
   Building2,
   Scissors,
@@ -19,6 +20,7 @@ import {
   ArrowLeft,
   BarChart3,
   Share2,
+  Palette,
   Settings,
 } from "lucide-react";
 

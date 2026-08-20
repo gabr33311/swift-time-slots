@@ -117,6 +117,8 @@ function Dashboard() {
         <SharePanel compact />
       </section>
 
+      <InstallPrompt />
+
 
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between">
