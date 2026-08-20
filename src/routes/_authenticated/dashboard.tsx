@@ -185,7 +185,7 @@ function Dashboard() {
   );
 }
 
-function WaitlistCount({ businessId }: { businessId: string | undefined }) {
+function useWaitlistCount(businessId: string | undefined) {
   const { data } = useQuery({
     queryKey: ["waitlist-count", businessId],
     enabled: !!businessId,
@@ -198,6 +198,6 @@ function WaitlistCount({ businessId }: { businessId: string | undefined }) {
       return count ?? 0;
     },
   });
-  return <>{data ?? 0}</>;
+  return data ?? 0;
 }
 
