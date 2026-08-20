@@ -49,7 +49,9 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate rounded-lg bg-muted px-3 py-2 text-sm font-bold">{url}</p>
+        <p className="break-all rounded-lg bg-muted px-3 py-2 text-sm font-bold">
+          {url.replace(/^https?:\/\//, "")}
+        </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <Button
             size="sm"
