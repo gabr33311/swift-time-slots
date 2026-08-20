@@ -101,6 +101,56 @@ function Onboarding() {
       });
   }, [navigate]);
 
+  const [slugCheck, setSlugCheck] = useState<
+    { state: "idle" | "checking" | "free" | "taken" | "invalid"; slug: string }
+  >({ state: "idle", slug: "" });
+
+  useEffect(() => {
+    const clean = slug.trim().toLowerCase();
+    if (clean.length < 3) {
+      setSlugCheck({ state: "invalid", slug: clean });
+      return;
+    }
+    setSlugCheck({ state: "checking", slug: clean });
+    const id = setTimeout(async () => {
+      try {
+        const res = await checkSlugAvailable({ data: { slug: clean } });
+        setSlugCheck({
+          state: res.invalid ? "invalid" : res.available ? "free" : "taken",
+          slug: clean,
+        });
+      } catch {
+        setSlugCheck({ state: "idle", slug: clean });
+      }
+    }, 450);
+    return () => clearTimeout(id);
+  }, [slug]);
+
+  const step1Valid =
+    name.trim().length >= 2 &&
+    description.trim().length >= 10 &&
+    city.trim().length >= 2 &&
+    address.trim().length >= 4 &&
+    slugCheck.state === "free";
+  const step2Valid = services.some((s) => s.name.trim().length > 0 && s.duration >= 5);
+  const step3Valid = staff.some((s) => s.name.trim().length > 0);
+  const step4Valid =
+    hours.some((h) => h.open) &&
+    hours.every(
+      (h) =>
+        !h.open ||
+        (h.start < h.end &&
+          (!h.lunch || (h.start < h.lunchStart && h.lunchStart < h.lunchEnd && h.lunchEnd < h.end))),
+    );
+  const stepValid = [step1Valid, step2Valid, step3Valid, step4Valid, true][step - 1] ?? true;
+  const stepHint = !step1Valid
+    ? "Preenche todos os campos obrigatórios e escolhe um link disponível."
+    : !step2Valid
+      ? "Adiciona pelo menos um serviço com nome e duração."
+      : !step3Valid
+        ? "Adiciona pelo menos um profissional."
+        : "Confirma os horários (e o almoço dentro do horário de trabalho).";
+
   const bookingUrl =
     typeof window !== "undefined" && createdSlug
       ? `${window.location.origin}/book/${createdSlug}`
