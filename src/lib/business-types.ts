@@ -1,7 +1,25 @@
+import type { LucideIcon } from "lucide-react";
+import {
+  Scissors,
+  Sparkle,
+  Hand,
+  Eye,
+  Sparkles,
+  Leaf,
+  PenTool,
+  Dumbbell,
+  Camera,
+  PawPrint,
+  BookOpen,
+  Briefcase,
+  Car,
+  CalendarDays,
+} from "lucide-react";
+
 export type BusinessTypeDef = {
   value: string;
   label: string;
-  emoji: string;
+  icon: LucideIcon;
   sampleServices: { name: string; duration: number; price: number }[];
 };
 
@@ -9,7 +27,7 @@ export const BUSINESS_TYPES: BusinessTypeDef[] = [
   {
     value: "barbershop",
     label: "Barbearia",
-    emoji: "💈",
+    icon: Scissors,
     sampleServices: [
       { name: "Corte", duration: 30, price: 1500 },
       { name: "Corte + Barba", duration: 45, price: 2000 },
@@ -19,7 +37,7 @@ export const BUSINESS_TYPES: BusinessTypeDef[] = [
   {
     value: "hair",
     label: "Cabeleireiro",
-    emoji: "💇",
+    icon: Sparkle,
     sampleServices: [
       { name: "Corte", duration: 45, price: 2000 },
       { name: "Coloração", duration: 90, price: 4500 },
@@ -29,7 +47,7 @@ export const BUSINESS_TYPES: BusinessTypeDef[] = [
   {
     value: "nails",
     label: "Manicure / Nail art",
-    emoji: "💅",
+    icon: Hand,
     sampleServices: [
       { name: "Manicure", duration: 45, price: 1800 },
       { name: "Pedicure", duration: 60, price: 2200 },
@@ -39,7 +57,7 @@ export const BUSINESS_TYPES: BusinessTypeDef[] = [
   {
     value: "lashes",
     label: "Pestanas & Sobrancelhas",
-    emoji: "👁️",
+    icon: Eye,
     sampleServices: [
       { name: "Extensões de pestanas", duration: 90, price: 4000 },
       { name: "Design de sobrancelhas", duration: 30, price: 1200 },
@@ -48,7 +66,7 @@ export const BUSINESS_TYPES: BusinessTypeDef[] = [
   {
     value: "beauty",
     label: "Estética",
-    emoji: "✨",
+    icon: Sparkles,
     sampleServices: [
       { name: "Limpeza de pele", duration: 60, price: 3500 },
       { name: "Depilação perna inteira", duration: 45, price: 2500 },
@@ -57,7 +75,7 @@ export const BUSINESS_TYPES: BusinessTypeDef[] = [
   {
     value: "massage",
     label: "Massagens",
-    emoji: "🌿",
+    icon: Leaf,
     sampleServices: [
       { name: "Massagem relaxante", duration: 60, price: 4000 },
       { name: "Massagem desportiva", duration: 45, price: 3500 },
@@ -66,7 +84,7 @@ export const BUSINESS_TYPES: BusinessTypeDef[] = [
   {
     value: "tattoo",
     label: "Tatuagens & Piercings",
-    emoji: "🖋️",
+    icon: PenTool,
     sampleServices: [
       { name: "Sessão de tatuagem", duration: 120, price: 12000 },
       { name: "Piercing", duration: 30, price: 3000 },
@@ -75,7 +93,7 @@ export const BUSINESS_TYPES: BusinessTypeDef[] = [
   {
     value: "fitness",
     label: "Personal trainer",
-    emoji: "🏋️",
+    icon: Dumbbell,
     sampleServices: [
       { name: "Treino individual", duration: 60, price: 3000 },
       { name: "Avaliação física", duration: 45, price: 2500 },
@@ -84,7 +102,7 @@ export const BUSINESS_TYPES: BusinessTypeDef[] = [
   {
     value: "photo",
     label: "Fotografia",
-    emoji: "📷",
+    icon: Camera,
     sampleServices: [
       { name: "Sessão retrato", duration: 90, price: 12000 },
       { name: "Sessão família", duration: 120, price: 18000 },
@@ -93,7 +111,7 @@ export const BUSINESS_TYPES: BusinessTypeDef[] = [
   {
     value: "pets",
     label: "Pet grooming",
-    emoji: "🐾",
+    icon: PawPrint,
     sampleServices: [
       { name: "Banho e tosquia", duration: 90, price: 3000 },
       { name: "Banho", duration: 45, price: 1800 },
@@ -102,7 +120,7 @@ export const BUSINESS_TYPES: BusinessTypeDef[] = [
   {
     value: "tutoring",
     label: "Explicações",
-    emoji: "📚",
+    icon: BookOpen,
     sampleServices: [
       { name: "Explicação individual", duration: 60, price: 1500 },
     ],
@@ -110,13 +128,13 @@ export const BUSINESS_TYPES: BusinessTypeDef[] = [
   {
     value: "consulting",
     label: "Consultoria",
-    emoji: "💼",
+    icon: Briefcase,
     sampleServices: [{ name: "Sessão de consultoria", duration: 60, price: 7500 }],
   },
   {
     value: "auto",
     label: "Oficina / Detailing",
-    emoji: "🚗",
+    icon: Car,
     sampleServices: [
       { name: "Lavagem completa", duration: 90, price: 4500 },
       { name: "Polimento", duration: 180, price: 15000 },
@@ -125,7 +143,7 @@ export const BUSINESS_TYPES: BusinessTypeDef[] = [
   {
     value: "other",
     label: "Outro",
-    emoji: "🗓️",
+    icon: CalendarDays,
     sampleServices: [{ name: "Serviço", duration: 60, price: 3000 }],
   },
 ];
