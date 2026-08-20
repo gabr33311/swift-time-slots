@@ -144,6 +144,17 @@ function Onboarding() {
       setStep(4);
       return;
     }
+    const badLunch = hours.some(
+      (h) =>
+        h.open &&
+        h.lunch &&
+        !(h.start < h.lunchStart && h.lunchStart < h.lunchEnd && h.lunchEnd < h.end),
+    );
+    if (badLunch) {
+      toast.error("O horário de almoço tem de estar dentro do horário de trabalho.");
+      setStep(4);
+      return;
+    }
 
     setBusy(true);
     try {
