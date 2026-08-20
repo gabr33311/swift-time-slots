@@ -104,21 +104,34 @@ function CalendarPage() {
             if (items.length === 0) return null;
             return (
               <section key={member.id}>
-                <h2 className="mb-2 text-sm font-semibold text-muted-foreground">{member.name}</h2>
+                <h2 className="mb-2 inline-flex items-center gap-2 rounded-lg bg-accent px-3 py-1.5 text-sm font-bold text-accent-foreground">
+                  {member.name}
+                  <span className="rounded-full bg-background/60 px-2 text-xs font-bold tabular-nums">
+                    {items.length}
+                  </span>
+                </h2>
                 <ul className="space-y-2">
-                  {items.map((a) => (
-                    <li key={a.id} className={cn("surface flex items-center gap-4 p-4")}>
-                      <span className="w-24 text-sm font-semibold tabular-nums">
-                        {formatTime(a.starts_at, tz)}–{formatTime(a.ends_at, tz)}
+                  {items.map((a, i) => (
+                    <li key={a.id} className={cn("surface flex items-start gap-3 p-4")}>
+                      <span className="w-[4.5rem] shrink-0 text-sm font-bold leading-snug tabular-nums">
+                        {formatTime(a.starts_at, tz)}
+                        <br />
+                        <span className="text-muted-foreground">{formatTime(a.ends_at, tz)}</span>
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{a.customer_name}</p>
-                        <p className="truncate text-sm text-muted-foreground">{a.service_name}</p>
+                        <p className="text-sm font-bold leading-snug break-words">
+                          {displayCustomerName(a.customer_name, null, i + 1)}
+                        </p>
+                        <p className="text-sm leading-snug text-muted-foreground break-words">
+                          {a.service_name}
+                        </p>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-bold tabular-nums">
+                            {formatPrice(a.price_cents, business!.currency)}
+                          </span>
+                          <StatusBadge status={a.status} />
+                        </div>
                       </div>
-                      <span className="text-sm font-medium tabular-nums">
-                        {formatPrice(a.price_cents, business!.currency)}
-                      </span>
-                      <StatusBadge status={a.status} />
                     </li>
                   ))}
                 </ul>
