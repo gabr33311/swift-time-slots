@@ -1,11 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { AppShell } from "@/components/app-shell";
-import { EmptyState, LoadingRows, PageHeader } from "@/components/ui-bits";
+import { EmptyState, LoadingRows } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,18 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { useMyBusiness } from "@/hooks/use-business";
 import { formatDuration, formatPrice } from "@/lib/format";
-import { Scissors, Pencil, Trash2 } from "lucide-react";
-
-export const Route = createFileRoute("/_authenticated/services")({
-  head: () => ({
-    meta: [
-      { title: "Serviços — Schedivo" },
-      { name: "description", content: "Cria e gere os serviços que os clientes podem marcar." },
-      { name: "robots", content: "noindex" },
-    ],
-  }),
-  component: ServicesPage,
-});
+import { Scissors, Pencil, Trash2, Plus } from "lucide-react";
 
 type ServiceRow = {
   id: string;
@@ -52,7 +39,7 @@ const schema = z.object({
   description: z.string().trim().max(300),
 });
 
-function ServicesPage() {
+export function ServicesPanel() {
   const { business } = useMyBusiness();
   const qc = useQueryClient();
   const [editing, setEditing] = useState<ServiceRow | null>(null);
@@ -89,21 +76,17 @@ function ServicesPage() {
   }
 
   return (
-    <AppShell>
-      <PageHeader
-        title="Serviços"
-        subtitle="O que os clientes podem marcar."
-        action={
-          <Button
-            onClick={() => {
-              setEditing(null);
-              setOpen(true);
-            }}
-          >
-            Novo serviço
-          </Button>
-        }
-      />
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button
+          onClick={() => {
+            setEditing(null);
+            setOpen(true);
+          }}
+        >
+          <Plus className="mr-2 size-4" /> Novo serviço
+        </Button>
+      </div>
 
       {isLoading ? (
         <LoadingRows />
@@ -112,16 +95,6 @@ function ServicesPage() {
           icon={<Scissors className="size-6" />}
           title="Ainda sem serviços."
           description="Adiciona o primeiro para começares a receber marcações."
-          action={
-            <Button
-              onClick={() => {
-                setEditing(null);
-                setOpen(true);
-              }}
-            >
-              Adicionar serviço
-            </Button>
-          }
         />
       ) : (
         <ul className="space-y-2">
@@ -130,7 +103,8 @@ function ServicesPage() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{s.name}</p>
                 <p className="truncate text-sm text-muted-foreground">
-                  {formatDuration(s.duration_minutes)} · {formatPrice(s.price_cents, business!.currency)}
+                  {formatDuration(s.duration_minutes)} ·{" "}
+                  {formatPrice(s.price_cents, business!.currency)}
                   {s.buffer_minutes ? ` · +${s.buffer_minutes} min de intervalo` : ""}
                 </p>
               </div>
@@ -165,7 +139,7 @@ function ServicesPage() {
         open={open}
         onOpenChange={setOpen}
       />
-    </AppShell>
+    </div>
   );
 }
 
@@ -236,11 +210,15 @@ function ServiceDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="sname">Nome</Label>
+            <Label htmlFor="sname" className="font-semibold">
+              Nome
+            </Label>
             <Input id="sname" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="sdesc">Descrição</Label>
+            <Label htmlFor="sdesc" className="font-semibold">
+              Descrição
+            </Label>
             <Textarea
               id="sdesc"
               value={description}
@@ -250,22 +228,45 @@ function ServiceDialog({
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="sprice">Preço (€)</Label>
-              <Input id="sprice" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />
+              <Label htmlFor="sprice" className="font-semibold">
+                Preço (€)
+              </Label>
+              <Input
+                id="sprice"
+                inputMode="decimal"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="sdur">Minutos</Label>
-              <Input id="sdur" inputMode="numeric" value={duration} onChange={(e) => setDuration(e.target.value)} />
+              <Label htmlFor="sdur" className="font-semibold">
+                Tempo (minutos)
+              </Label>
+              <Input
+                id="sdur"
+                inputMode="numeric"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="sbuf">Intervalo</Label>
-              <Input id="sbuf" inputMode="numeric" value={buffer} onChange={(e) => setBuffer(e.target.value)} />
+              <Label htmlFor="sbuf" className="font-semibold">
+                Intervalo
+              </Label>
+              <Input
+                id="sbuf"
+                inputMode="numeric"
+                value={buffer}
+                onChange={(e) => setBuffer(e.target.value)}
+              />
             </div>
           </div>
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <div>
               <p className="text-sm font-medium">Exigir confirmação</p>
-              <p className="text-xs text-muted-foreground">As marcações ficam pendentes até aprovares.</p>
+              <p className="text-xs text-muted-foreground">
+                As marcações ficam pendentes até aprovares.
+              </p>
             </div>
             <Switch checked={requiresConfirmation} onCheckedChange={setRequiresConfirmation} />
           </div>

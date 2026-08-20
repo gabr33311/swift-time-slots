@@ -1,11 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { AppShell } from "@/components/app-shell";
-import { EmptyState, LoadingRows, PageHeader } from "@/components/ui-bits";
+import { EmptyState, LoadingRows } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,18 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { useMyBusiness } from "@/hooks/use-business";
 import { initials } from "@/lib/format";
-import { UserRound, Pencil, Trash2 } from "lucide-react";
-
-export const Route = createFileRoute("/_authenticated/team")({
-  head: () => ({
-    meta: [
-      { title: "Equipa — Schedivo" },
-      { name: "description", content: "Gere os profissionais e os serviços que cada um faz." },
-      { name: "robots", content: "noindex" },
-    ],
-  }),
-  component: TeamPage,
-});
+import { UserRound, Pencil, Trash2, Plus } from "lucide-react";
 
 type StaffRow = {
   id: string;
@@ -41,7 +28,7 @@ type StaffRow = {
   service_ids: string[];
 };
 
-function TeamPage() {
+export function TeamPanel() {
   const { business } = useMyBusiness();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -89,21 +76,17 @@ function TeamPage() {
   }
 
   return (
-    <AppShell>
-      <PageHeader
-        title="Equipa"
-        subtitle="Quem atende os clientes."
-        action={
-          <Button
-            onClick={() => {
-              setEditing(null);
-              setOpen(true);
-            }}
-          >
-            Adicionar profissional
-          </Button>
-        }
-      />
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button
+          onClick={() => {
+            setEditing(null);
+            setOpen(true);
+          }}
+        >
+          <Plus className="mr-2 size-4" /> Adicionar profissional
+        </Button>
+      </div>
 
       {isLoading ? (
         <LoadingRows />
@@ -126,7 +109,11 @@ function TeamPage() {
                   {s.specialty ?? `${s.service_ids.length} serviços`}
                 </p>
               </div>
-              <Switch checked={s.is_active} onCheckedChange={() => toggleActive(s)} aria-label="Activo" />
+              <Switch
+                checked={s.is_active}
+                onCheckedChange={() => toggleActive(s)}
+                aria-label="Activo"
+              />
               <Button
                 variant="ghost"
                 size="icon"
@@ -154,7 +141,7 @@ function TeamPage() {
         open={open}
         onOpenChange={setOpen}
       />
-    </AppShell>
+    </div>
   );
 }
 
@@ -179,7 +166,9 @@ function StaffDialog({
   const qc = useQueryClient();
   const [name, setName] = useState(staff?.name ?? "");
   const [specialty, setSpecialty] = useState(staff?.specialty ?? "");
-  const [selected, setSelected] = useState<string[]>(staff?.service_ids ?? services.map((s) => s.id));
+  const [selected, setSelected] = useState<string[]>(
+    staff?.service_ids ?? services.map((s) => s.id),
+  );
   const [busy, setBusy] = useState(false);
 
   async function save() {
@@ -210,15 +199,13 @@ function StaffDialog({
       }
       await supabase.from("staff_services").delete().eq("staff_id", staffId!);
       if (selected.length) {
-        await supabase
-          .from("staff_services")
-          .insert(
-            selected.map((sid) => ({
-              staff_id: staffId!,
-              service_id: sid,
-              business_id: businessId,
-            })),
-          );
+        await supabase.from("staff_services").insert(
+          selected.map((sid) => ({
+            staff_id: staffId!,
+            service_id: sid,
+            business_id: businessId,
+          })),
+        );
       }
       toast.success("Profissional guardado.");
       qc.invalidateQueries({ queryKey: ["team"] });
@@ -239,11 +226,15 @@ function StaffDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="pname">Nome</Label>
+            <Label htmlFor="pname" className="font-semibold">
+              Nome
+            </Label>
             <Input id="pname" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="pspec">Especialidade</Label>
+            <Label htmlFor="pspec" className="font-semibold">
+              Especialidade
+            </Label>
             <Input
               id="pspec"
               value={specialty}
@@ -253,7 +244,7 @@ function StaffDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label>Serviços</Label>
+            <Label className="font-semibold">Serviços</Label>
             {services.map((s) => (
               <label key={s.id} className="flex items-center gap-2.5 text-sm">
                 <Checkbox

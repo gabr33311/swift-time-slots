@@ -3,13 +3,11 @@ import {
   LayoutDashboard,
   CalendarDays,
   Users,
-  Scissors,
   UserRound,
   Clock,
   ListPlus,
   BarChart3,
   Share2,
-  Settings,
   Menu,
   Plus,
   LogOut,
@@ -22,6 +20,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
 import { useMyBusiness } from "@/hooks/use-business";
+import { useLogoUrl } from "@/hooks/use-logo";
 import { useQuery } from "@tanstack/react-query";
 
 const NAV = [
@@ -29,20 +28,17 @@ const NAV = [
   { to: "/calendar", label: "Agenda", icon: CalendarDays },
   { to: "/appointments", label: "Marcações", icon: Clock },
   { to: "/customers", label: "Clientes", icon: Users },
-  { to: "/services", label: "Serviços", icon: Scissors },
-  { to: "/team", label: "Equipa", icon: UserRound },
-  { to: "/availability", label: "Disponibilidade", icon: Clock },
   { to: "/waitlist", label: "Lista de espera", icon: ListPlus },
   { to: "/analytics", label: "Estatísticas", icon: BarChart3 },
   { to: "/booking-page", label: "Partilhar", icon: Share2 },
-  { to: "/settings", label: "Definições", icon: Settings },
+  { to: "/profile", label: "Perfil", icon: UserRound },
 ] as const;
 
 const MOBILE_NAV = [
   { to: "/dashboard", label: "Hoje", icon: LayoutDashboard },
   { to: "/calendar", label: "Agenda", icon: CalendarDays },
   { to: "/customers", label: "Clientes", icon: Users },
-  { to: "/booking-page", label: "Partilhar", icon: Share2 },
+  { to: "/profile", label: "Perfil", icon: UserRound },
 ] as const;
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
@@ -74,6 +70,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { business } = useMyBusiness();
+  const logoUrl = useLogoUrl(business?.logo_url);
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -99,9 +96,17 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const brand = (
     <div className="flex items-center gap-2.5">
-      <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground">
-        {business ? initials(business.name) : "S"}
-      </div>
+      {logoUrl ? (
+        <img
+          src={logoUrl}
+          alt={`Foto de ${business?.name ?? "perfil"}`}
+          className="size-9 rounded-xl object-cover ring-1 ring-border"
+        />
+      ) : (
+        <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground">
+          {business ? initials(business.name) : "S"}
+        </div>
+      )}
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold">{business?.name ?? "Schedivo"}</p>
         <p className="truncate text-xs text-muted-foreground">
