@@ -94,9 +94,17 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const brand = (
     <div className="flex items-center gap-2.5">
-      <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground">
-        {business ? initials(business.name) : "S"}
-      </div>
+      {logoUrl ? (
+        <img
+          src={logoUrl}
+          alt={`Foto de ${business?.name ?? "perfil"}`}
+          className="size-9 rounded-xl object-cover ring-1 ring-border"
+        />
+      ) : (
+        <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground">
+          {business ? initials(business.name) : "S"}
+        </div>
+      )}
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold">{business?.name ?? "Schedivo"}</p>
         <p className="truncate text-xs text-muted-foreground">
