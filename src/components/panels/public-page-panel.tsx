@@ -102,7 +102,10 @@ export function PublicPagePanel() {
       })
       .eq("id", business.id);
     setBusy(false);
-    if (error) return toast.error("Não foi possível guardar.");
+    if (error) {
+      toast.error("Não foi possível guardar.");
+      return;
+    }
     toast.success("Página actualizada.");
     setEdit(false);
     qc.invalidateQueries({ queryKey: ["my-business"] });
