@@ -151,7 +151,7 @@ function Dashboard() {
   );
 }
 
-function ClientCount({ businessId }: { businessId?: string }) {
+function ClientCount({ businessId }: { businessId: string | undefined }) {
   const { data } = useQuery({
     queryKey: ["customer-count", businessId],
     enabled: !!businessId,
