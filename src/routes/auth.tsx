@@ -267,6 +267,29 @@ function AuthPage() {
                 autoComplete={mode === "login" ? "current-password" : "new-password"}
                 required
               />
+              {mode === "register" && (
+                <ul className="mt-2 space-y-1">
+                  {PASSWORD_RULES.map((r) => {
+                    const ok = r.test(password);
+                    return (
+                      <li
+                        key={r.label}
+                        className={cn(
+                          "flex items-center gap-1.5 text-xs transition-colors",
+                          ok ? "text-success" : "text-muted-foreground",
+                        )}
+                      >
+                        {ok ? (
+                          <Check className="size-3.5" strokeWidth={3} />
+                        ) : (
+                          <X className="size-3.5" strokeWidth={3} />
+                        )}
+                        {r.label}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
           )}
           <Button type="submit" className="w-full" disabled={busy}>
