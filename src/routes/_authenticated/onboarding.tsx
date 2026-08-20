@@ -116,9 +116,12 @@ function Onboarding() {
           .min(3, "O link precisa de pelo menos 3 caracteres.")
           .max(48)
           .regex(/^[a-z0-9-]+$/, "O link só pode ter letras minúsculas, números e hífens."),
+        description: z.string().trim().min(10, "Escreve uma descrição curta do negócio.").max(280),
+        city: z.string().trim().min(2, "Indica a cidade.").max(60),
+        address: z.string().trim().min(4, "Indica a morada.").max(140),
         phone: z.string().trim().max(24).optional(),
       })
-      .safeParse({ name, slug, phone });
+      .safeParse({ name, slug, description, city, address, phone });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Verifica os dados.");
       setStep(1);
