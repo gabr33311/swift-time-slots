@@ -11,6 +11,7 @@ import { formatPrice, formatTime, greetingPt } from "@/lib/format";
 import { zonedToUtc, todayIn } from "@/lib/time";
 import { CalendarCheck, CalendarDays, CalendarX, Hourglass, BarChart3 } from "lucide-react";
 import { SharePanel } from "@/components/panels/share-panel";
+import { InstallPrompt } from "@/components/install-prompt";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
