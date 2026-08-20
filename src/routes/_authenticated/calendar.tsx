@@ -74,17 +74,33 @@ function CalendarPage() {
         }
       />
 
-      <div className="mb-5 flex items-center gap-2">
-        <Button variant="outline" size="icon" onClick={() => setDate(addDays(date, -1))} aria-label="Dia anterior">
+      <div className="surface mb-5 flex items-center gap-1 p-1.5">
+        <button
+          onClick={() => setDate(addDays(date, -1))}
+          aria-label="Dia anterior"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
           <ChevronLeft className="size-4" />
-        </Button>
-        <Button variant="outline" size="icon" onClick={() => setDate(addDays(date, 1))} aria-label="Dia seguinte">
+        </button>
+        <p className="min-w-0 flex-1 truncate text-center text-sm font-bold capitalize">{label}</p>
+        <button
+          onClick={() => setDate(addDays(date, 1))}
+          aria-label="Dia seguinte"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
           <ChevronRight className="size-4" />
-        </Button>
-        <p className="ml-1 text-sm font-medium capitalize">{label}</p>
-        <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setDate(todayIn(tz))}>
+        </button>
+        <button
+          onClick={() => setDate(todayIn(tz))}
+          className={cn(
+            "ml-0.5 h-9 shrink-0 rounded-full px-3.5 text-[13px] font-bold transition-colors",
+            date === todayIn(tz)
+              ? "bg-primary/10 text-primary"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground",
+          )}
+        >
           Hoje
-        </Button>
+        </button>
       </div>
 
       {isLoading ? (
@@ -104,33 +120,34 @@ function CalendarPage() {
             if (items.length === 0) return null;
             return (
               <section key={member.id}>
-                <h2 className="mb-2 inline-flex items-center gap-2 rounded-lg bg-accent px-3 py-1.5 text-sm font-bold text-accent-foreground">
+                <h2 className="font-display mb-2.5 flex items-center gap-2 px-1 text-sm font-bold uppercase tracking-[0.06em] text-muted-foreground">
                   {member.name}
-                  <span className="rounded-full bg-background/60 px-2 text-xs font-bold tabular-nums">
+                  <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold tabular-nums text-primary">
                     {items.length}
                   </span>
                 </h2>
-                <ul className="space-y-2">
+                <ul className="space-y-2.5">
                   {items.map((a, i) => (
-                    <li key={a.id} className={cn("surface flex items-start gap-3 p-4")}>
-                      <span className="w-[4.5rem] shrink-0 text-sm font-bold leading-snug tabular-nums">
+                    <li key={a.id} className={cn("surface surface-hover flex items-center gap-3.5 p-4")}>
+                      <span className="flex w-14 shrink-0 flex-col items-center rounded-xl bg-accent px-2 py-2 text-sm font-bold leading-tight tabular-nums text-primary">
                         {formatTime(a.starts_at, tz)}
-                        <br />
-                        <span className="text-muted-foreground">{formatTime(a.ends_at, tz)}</span>
+                        <span className="text-[11px] font-medium text-muted-foreground">
+                          {formatTime(a.ends_at, tz)}
+                        </span>
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold leading-snug break-words">
+                        <p className="truncate text-[15px] font-bold leading-snug">
                           {displayCustomerName(a.customer_name, null, i + 1)}
                         </p>
-                        <p className="text-sm leading-snug text-muted-foreground break-words">
+                        <p className="truncate text-sm font-normal leading-snug text-muted-foreground">
                           {a.service_name}
                         </p>
-                        <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-bold tabular-nums">
-                            {formatPrice(a.price_cents, business!.currency)}
-                          </span>
-                          <StatusBadge status={a.status} />
-                        </div>
+                      </div>
+                      <div className="flex shrink-0 flex-col items-end gap-1.5">
+                        <span className="text-sm font-bold tabular-nums">
+                          {formatPrice(a.price_cents, business!.currency)}
+                        </span>
+                        <StatusBadge status={a.status} />
                       </div>
                     </li>
                   ))}

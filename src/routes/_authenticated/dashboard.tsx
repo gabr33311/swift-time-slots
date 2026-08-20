@@ -82,11 +82,11 @@ function Dashboard() {
   return (
     <AppShell>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">
+        <h1 className="font-display text-[28px] font-bold leading-tight tracking-tight">
           {greetingPt()}
           {user?.user_metadata?.["full_name"] ? `, ${user.user_metadata["full_name"]}` : ""}
         </h1>
-        <p className="mt-1 text-sm font-medium text-muted-foreground">Aqui está o teu dia.</p>
+        <p className="mt-1 text-sm font-normal text-muted-foreground">Aqui está o teu dia.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -130,10 +130,10 @@ function Dashboard() {
 
 
       <section className="mt-8">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-bold">Próximas marcações</h2>
-          <Button size="sm" variant="outline" onClick={() => setNewOpen(true)}>
-            Nova marcação
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="font-display text-lg font-bold tracking-tight">Próximas marcações</h2>
+          <Button size="sm" onClick={() => setNewOpen(true)}>
+            <CalendarCheck className="size-4" /> Nova marcação
           </Button>
         </div>
 
@@ -151,25 +151,25 @@ function Dashboard() {
             }
           />
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-2.5">
             {dayData!.upcoming.map((a, i) => (
-              <li key={a.id} className="surface flex items-start gap-3 p-4">
-                <span className="w-12 shrink-0 text-sm font-bold tabular-nums">
+              <li key={a.id} className="surface surface-hover flex items-center gap-3.5 p-4">
+                <span className="flex w-14 shrink-0 flex-col items-center rounded-xl bg-accent px-2 py-2 text-sm font-bold tabular-nums text-primary">
                   {formatTime(a.starts_at, business!.timezone)}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold leading-snug break-words">
+                  <p className="truncate text-[15px] font-bold leading-snug">
                     {displayCustomerName(a.customer_name, null, i + 1)}
                   </p>
-                  <p className="text-sm leading-snug text-muted-foreground break-words">
+                  <p className="truncate text-sm font-normal leading-snug text-muted-foreground">
                     {a.service_name}
                   </p>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-bold tabular-nums">
-                      {formatPrice(a.price_cents, business!.currency)}
-                    </span>
-                    <StatusBadge status={a.status} />
-                  </div>
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-1.5">
+                  <span className="text-sm font-bold tabular-nums">
+                    {formatPrice(a.price_cents, business!.currency)}
+                  </span>
+                  <StatusBadge status={a.status} />
                 </div>
               </li>
             ))}
