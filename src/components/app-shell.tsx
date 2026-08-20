@@ -27,7 +27,7 @@ function PopIcon({
   Icon,
   className,
 }: {
-  Icon: ComponentType<{ className?: string; strokeWidth?: number }>;
+  Icon: ComponentType<{ className?: string | undefined; strokeWidth?: number | undefined }>;
   className?: string;
 }) {
   const [popping, setPopping] = useState(false);
