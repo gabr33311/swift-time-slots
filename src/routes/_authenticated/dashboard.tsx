@@ -7,7 +7,7 @@ import { EmptyState, LoadingRows, StatCard, StatusBadge } from "@/components/ui-
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { useAuth } from "@/hooks/use-auth";
-import { formatPrice, formatTime, greetingPt } from "@/lib/format";
+import { displayCustomerName, formatPrice, formatTime, greetingPt } from "@/lib/format";
 import { zonedToUtc, todayIn } from "@/lib/time";
 import { CalendarCheck, CalendarDays, CalendarX, Hourglass, BarChart3 } from "lucide-react";
 import { SharePanel } from "@/components/panels/share-panel";
