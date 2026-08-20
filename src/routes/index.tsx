@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { CalendarCheck, Clock, Share2, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { PrefsToggles } from "@/components/prefs-toggles";
+import { usePrefs } from "@/lib/prefs";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -25,64 +27,40 @@ export const Route = createFileRoute("/")({
 });
 
 const FEATURES = [
-  {
-    icon: Share2,
-    title: "Um link, marcações a entrar",
-    body: "Partilha a tua página no Instagram ou WhatsApp e recebe marcações 24 horas por dia.",
-  },
-  {
-    icon: CalendarCheck,
-    title: "Agenda sempre certa",
-    body: "Nunca há dois clientes no mesmo horário — o sistema bloqueia sobreposições automaticamente.",
-  },
-  {
-    icon: Users,
-    title: "Clientes organizados",
-    body: "Cada marcação cria a ficha do cliente, com histórico, contactos e notas.",
-  },
-  {
-    icon: Clock,
-    title: "Horários à tua medida",
-    body: "Define horários por dia, folgas e intervalos entre serviços.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Dados protegidos",
-    body: "Cada negócio só vê os seus dados. Cancelamentos com regras que tu defines.",
-  },
-  {
-    icon: Sparkles,
-    title: "Pronto em minutos",
-    body: "Escolhe o teu sector e começamos com serviços e horários já sugeridos.",
-  },
-];
+  { icon: Share2, key: "f1" },
+  { icon: CalendarCheck, key: "f2" },
+  { icon: Users, key: "f3" },
+  { icon: Clock, key: "f4" },
+  { icon: ShieldCheck, key: "f5" },
+  { icon: Sparkles, key: "f6" },
+] as const;
 
 function Landing() {
+  const { t } = usePrefs();
+
   return (
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-6">
         <span className="text-lg font-bold tracking-tight">Schedivo</span>
+        <PrefsToggles />
       </header>
 
       <main>
         <section className="animate-enter mx-auto max-w-3xl px-5 pb-16 pt-12 text-center sm:pt-20">
           <p className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
-            Para barbearias, salões, clínicas e estúdios
+            {t("home.eyebrow")}
           </p>
-          <h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">
-            As tuas marcações, sem telefonemas nem confusão.
-          </h1>
+          <h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">{t("home.title")}</h1>
           <p className="mx-auto mt-5 max-w-xl text-base font-medium text-muted-foreground">
-            Cria a tua página de marcações, partilha o link e deixa os clientes escolherem o
-            horário. Tu ficas com a agenda organizada.
+            {t("home.subtitle")}
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link to="/auth" search={{ mode: "register" }}>
-              <Button size="lg">Criar a minha página</Button>
+              <Button size="lg">{t("home.cta.create")}</Button>
             </Link>
             <Link to="/auth" search={{ mode: undefined }}>
               <Button size="lg" variant="outline">
-                Já tenho conta
+                {t("home.cta.have")}
               </Button>
             </Link>
           </div>
@@ -91,10 +69,12 @@ function Landing() {
         <section className="mx-auto max-w-5xl px-5 pb-20">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f) => (
-              <article key={f.title} className="surface surface-hover animate-enter p-6">
+              <article key={f.key} className="surface surface-hover animate-enter p-6">
                 <f.icon className="size-5 text-primary" />
-                <h2 className="mt-4 text-base font-bold">{f.title}</h2>
-                <p className="mt-1.5 text-sm font-medium text-muted-foreground">{f.body}</p>
+                <h2 className="mt-4 text-base font-bold">{t(`${f.key}.title`)}</h2>
+                <p className="mt-1.5 text-sm font-medium text-muted-foreground">
+                  {t(`${f.key}.body`)}
+                </p>
               </article>
             ))}
           </div>
@@ -102,13 +82,13 @@ function Landing() {
 
         <section className="mx-auto max-w-3xl px-5 pb-24 text-center animate-enter">
           <Link to="/auth" search={{ mode: "register" }} className="inline-block">
-            <Button size="lg">Começar agora</Button>
+            <Button size="lg">{t("home.cta.start")}</Button>
           </Link>
         </section>
       </main>
 
       <footer className="border-t border-border px-5 py-8 text-center text-sm font-medium text-muted-foreground">
-        Schedivo · Marcações online para negócios em Portugal
+        {t("home.footer")}
       </footer>
     </div>
   );
