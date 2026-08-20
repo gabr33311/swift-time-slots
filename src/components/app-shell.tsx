@@ -20,6 +20,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
 import { useMyBusiness } from "@/hooks/use-business";
+import { useLogoUrl } from "@/hooks/use-logo";
 import { useQuery } from "@tanstack/react-query";
 
 const NAV = [
@@ -37,7 +38,7 @@ const MOBILE_NAV = [
   { to: "/dashboard", label: "Hoje", icon: LayoutDashboard },
   { to: "/calendar", label: "Agenda", icon: CalendarDays },
   { to: "/customers", label: "Clientes", icon: Users },
-  { to: "/booking-page", label: "Partilhar", icon: Share2 },
+  { to: "/profile", label: "Perfil", icon: UserRound },
 ] as const;
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
@@ -69,6 +70,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { business } = useMyBusiness();
+  const logoUrl = useLogoUrl(business?.logo_url);
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
