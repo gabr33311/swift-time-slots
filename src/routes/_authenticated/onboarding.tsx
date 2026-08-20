@@ -357,7 +357,7 @@ function Onboarding() {
                 <ExternalLink className="mr-2 size-4" /> Ver página
               </a>
             </Button>
-            <Button variant="ghost" onClick={() => navigate({ to: "/dashboard" })}>
+            <Button variant="outline" onClick={() => navigate({ to: "/dashboard" })}>
               Ir para o painel
             </Button>
           </div>
