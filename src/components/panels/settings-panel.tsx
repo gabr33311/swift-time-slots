@@ -9,6 +9,7 @@ export function SettingsPanel() {
   const { business } = useMyBusiness();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
+  const { theme, setTheme, lang, setLang, t } = usePrefs();
 
   async function toggle(field: "is_published" | "seo_indexable", value: boolean) {
     if (!business) return;
