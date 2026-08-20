@@ -73,7 +73,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { business } = useMyBusiness();
   const logoUrl = useLogoUrl(business?.logo_url);
   const navigate = useNavigate();
-  const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const { data: unread } = useQuery({
