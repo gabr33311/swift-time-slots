@@ -95,7 +95,7 @@ function AuthPage() {
       }
 
       if (mode === "register") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: parsed.data.email,
           password: parsed.data.password,
           options: {
@@ -104,6 +104,14 @@ function AuthPage() {
           },
         });
         if (error) throw error;
+        if (!data.session) {
+          // Fallback caso a confirmação por email esteja activa.
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: parsed.data.email,
+            password: parsed.data.password,
+          });
+          if (signInError) throw signInError;
+        }
         toast.success("Conta criada. Vamos configurar o teu negócio.");
         navigate({ to: "/onboarding" });
       } else {
@@ -118,15 +126,22 @@ function AuthPage() {
       const message = err instanceof Error ? err.message : "";
       if (message.includes("Invalid login credentials")) {
         toast.error("Email ou palavra-passe incorrectos.");
-      } else if (message.includes("already registered")) {
-        toast.error("Já existe uma conta com este email.");
+      } else if (message.includes("already registered") || message.includes("User already")) {
+        toast.error("Já existe uma conta com este email. Entra em vez de criar conta.");
+      } else if (message.includes("Email not confirmed")) {
+        toast.error("Esta conta ainda não foi confirmada. Cria uma nova ou confirma o email.");
+      } else if (message.toLowerCase().includes("weak password")) {
+        toast.error("Palavra-passe demasiado fraca. Escolhe outra.");
+      } else if (message.includes("rate limit") || message.includes("after")) {
+        toast.error("Demasiadas tentativas. Espera alguns segundos.");
       } else {
-        toast.error("Não foi possível concluir. Tenta novamente.");
+        toast.error(message || "Não foi possível concluir. Tenta novamente.");
       }
     } finally {
       setBusy(false);
     }
   }
+
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
