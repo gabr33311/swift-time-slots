@@ -216,6 +216,13 @@ function BookPage() {
   return (
     <main className="animate-enter mx-auto max-w-2xl px-5 pb-24 pt-8">
       <header className="mb-8">
+        {business.cover_url && (
+          <img
+            src={business.cover_url}
+            alt={`Imagem de ${business.name}`}
+            className="mb-5 h-36 w-full rounded-2xl object-cover ring-1 ring-border sm:h-48"
+          />
+        )}
         <div className="flex items-center gap-4">
           <div
             className="flex size-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white"
@@ -240,19 +247,51 @@ function BookPage() {
             )}
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
-          {business.address && (
-            <span className="inline-flex items-center gap-1.5">
-              <MapPin className="size-4" /> {business.address}
-              {business.city ? `, ${business.city}` : ""}
-            </span>
-          )}
-          {business.phone && (
-            <a href={`tel:${business.phone}`} className="inline-flex items-center gap-1.5">
-              <Phone className="size-4" /> {business.phone}
-            </a>
-          )}
-        </div>
+        {business.show_contacts && (
+          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
+            {business.address && (
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin className="size-4" /> {business.address}
+                {business.city ? `, ${business.city}` : ""}
+              </span>
+            )}
+            {business.phone && (
+              <a href={`tel:${business.phone}`} className="inline-flex items-center gap-1.5">
+                <Phone className="size-4" /> {business.phone}
+              </a>
+            )}
+            {business.instagram && (
+              <a
+                href={`https://instagram.com/${business.instagram.replace("@", "")}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5"
+              >
+                <Instagram className="size-4" /> {business.instagram}
+              </a>
+            )}
+          </div>
+        )}
+
+        {business.show_team && staff.length > 0 && (
+          <div className="mt-5 flex flex-wrap gap-2">
+            {staff.map((p) => (
+              <span
+                key={p.id}
+                className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs font-bold"
+              >
+                <span className="flex size-6 items-center justify-center rounded-full bg-accent text-[10px] text-accent-foreground">
+                  {initials(p.name)}
+                </span>
+                {p.name}
+                {p.specialty && (
+                  <span className="font-normal text-muted-foreground">· {p.specialty}</span>
+                )}
+              </span>
+            ))}
+          </div>
+        )}
+
       </header>
 
       <Section step={1} title="Escolhe o serviço">
