@@ -11,8 +11,6 @@ import { formatPrice, formatTime, greetingPt } from "@/lib/format";
 import { zonedToUtc, todayIn } from "@/lib/time";
 import {
   CalendarCheck,
-  Share2,
-  Copy,
   CalendarDays,
   Euro,
   CalendarX,
