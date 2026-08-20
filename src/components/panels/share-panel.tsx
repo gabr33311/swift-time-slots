@@ -4,12 +4,19 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { QRCodeCanvas } from "qrcode.react";
 import { Copy, ExternalLink, Share2, Download } from "lucide-react";
 
+/** Clean, shareable domain — preview/localhost hosts are never shown to clients. */
+const PUBLIC_ORIGIN = "https://swift-time-slots.lovable.app";
+
+function publicOrigin(): string {
+  if (typeof window === "undefined") return PUBLIC_ORIGIN;
+  const host = window.location.hostname;
+  const isPreview = host.includes("id-preview") || host === "localhost" || host.endsWith(".local");
+  return isPreview ? PUBLIC_ORIGIN : window.location.origin;
+}
+
 export function SharePanel({ compact = false }: { compact?: boolean }) {
   const { business } = useMyBusiness();
-  const url =
-    typeof window !== "undefined" && business
-      ? `${window.location.origin}/book/${business.slug}`
-      : "";
+  const url = business ? `${publicOrigin()}/book/${business.slug}` : "";
 
   async function share() {
     if (typeof navigator !== "undefined" && navigator.share) {
@@ -42,7 +49,9 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate rounded-lg bg-muted px-3 py-2 text-sm font-bold">{url}</p>
+        <p className="break-all rounded-lg bg-muted px-3 py-2 text-sm font-bold">
+          {url.replace(/^https?:\/\//, "")}
+        </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <Button
             size="sm"

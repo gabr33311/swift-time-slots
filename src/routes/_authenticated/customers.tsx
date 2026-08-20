@@ -10,6 +10,17 @@ import { Input } from "@/components/ui/input";
 import { useMyBusiness } from "@/hooks/use-business";
 import { initials } from "@/lib/format";
 import { Users, Ban, ShieldCheck } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/customers")({
   head: () => ({
@@ -150,24 +161,39 @@ function CustomersPage() {
                   )}
                 </p>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleBlock(c.id, c.is_blocked)}
-                aria-label={c.is_blocked ? "Desbloquear" : "Bloquear"}
-              >
-                {c.is_blocked ? (
-                  <>
-                    <ShieldCheck className="mr-1.5 size-4" /> Desbloquear
-                  </>
-                ) : (
-                  <>
-                    <Ban className="mr-1.5 size-4" /> Bloquear
-                  </>
-                )}
-              </Button>
+              {c.is_blocked ? (
+                <Button variant="ghost" size="sm" onClick={() => toggleBlock(c.id, true)}>
+                  <ShieldCheck className="mr-1.5 size-4" /> Desbloquear
+                </Button>
+              ) : (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <Ban className="mr-1.5 size-4" /> Bloquear
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Bloquear {c.name}?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Este cliente deixa de poder fazer marcações na tua página. Podes
+                        desbloquear a qualquer momento.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => toggleBlock(c.id, false)}>
+                        Bloquear
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </li>
           ))}
+          <li className="py-6 text-center text-sm font-medium text-muted-foreground">
+            Não há mais clientes a mostrar.
+          </li>
         </ul>
       )}
     </AppShell>

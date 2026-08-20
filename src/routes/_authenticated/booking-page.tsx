@@ -1,28 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { AppShell } from "@/components/app-shell";
-import { PageHeader } from "@/components/ui-bits";
-import { SharePanel } from "@/components/panels/share-panel";
-import { SettingsPanel } from "@/components/panels/settings-panel";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/booking-page")({
-  head: () => ({
-    meta: [
-      { title: "Página pública — Schedivo" },
-      { name: "description", content: "Partilha o teu link de marcações com os clientes." },
-      { name: "robots", content: "noindex" },
-    ],
-  }),
-  component: BookingPageSettings,
+  beforeLoad: () => {
+    throw redirect({ to: "/share" });
+  },
+  component: () => null,
 });
-
-function BookingPageSettings() {
-  return (
-    <AppShell>
-      <PageHeader title="Página de marcações" subtitle="O link que dás aos teus clientes." />
-      <SharePanel />
-      <div className="mt-6">
-        <SettingsPanel />
-      </div>
-    </AppShell>
-  );
-}

@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, CalendarDays, Users, Store, LogOut } from "lucide-react";
+import { LayoutDashboard, CalendarDays, Users, Store, LogOut, Share2 } from "lucide-react";
 import { useState, type ComponentType, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,16 +12,12 @@ const NAV = [
   { to: "/dashboard", label: "Hoje", icon: LayoutDashboard },
   { to: "/calendar", label: "Agenda", icon: CalendarDays },
   { to: "/customers", label: "Clientes", icon: Users },
+  { to: "/share", label: "Partilhar", icon: Share2 },
   { to: "/profile", label: "Perfil", icon: Store },
 ] as const;
 
-// Bottom bar order requested: Clientes, Agenda, Hoje, Perfil
-const MOBILE_NAV = [
-  NAV[2],
-  NAV[1],
-  NAV[0],
-  NAV[3],
-] as const;
+// Bottom bar: Hoje first, then Agenda, Clientes, Partilhar, Perfil
+const MOBILE_NAV = NAV;
 
 function PopIcon({
   Icon,

@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,10 +7,16 @@ import { EmptyState, LoadingRows, StatCard, StatusBadge } from "@/components/ui-
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { useAuth } from "@/hooks/use-auth";
-import { formatPrice, formatTime, greetingPt } from "@/lib/format";
+import { displayCustomerName, formatPrice, formatTime, greetingPt } from "@/lib/format";
 import { zonedToUtc, todayIn } from "@/lib/time";
-import { CalendarCheck, CalendarDays, CalendarX, Hourglass, BarChart3 } from "lucide-react";
-import { SharePanel } from "@/components/panels/share-panel";
+import {
+  CalendarCheck,
+  CalendarDays,
+  CalendarX,
+  Hourglass,
+  BarChart3,
+  Share2,
+} from "lucide-react";
 import { InstallPrompt } from "@/components/install-prompt";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 
@@ -71,6 +77,7 @@ function Dashboard() {
   );
   const revenue = active.reduce((sum, a) => sum + a.price_cents, 0);
   const cancelled = (dayData?.appts ?? []).filter((a) => a.status === "cancelled").length;
+  const waiting = useWaitlistCount(business?.id);
 
   return (
     <AppShell>
@@ -95,13 +102,15 @@ function Dashboard() {
           value={cancelled}
           hint="hoje"
           to="/calendar"
+          dimmed={cancelled === 0}
           icon={<CalendarX className="size-4" />}
         />
         <StatCard
           label="Lista de espera"
-          value={<WaitlistCount businessId={business?.id} />}
+          value={waiting}
           hint="clientes à espera"
           to="/waitlist"
+          dimmed={waiting === 0}
           icon={<Hourglass className="size-4" />}
         />
         <StatCard
@@ -109,16 +118,22 @@ function Dashboard() {
           value={formatPrice(revenue, business?.currency ?? "EUR")}
           hint="receita do dia"
           to="/analytics"
+          dimmed={revenue === 0}
           icon={<BarChart3 className="size-4" />}
         />
       </div>
 
-      <section className="mt-6">
-        <h2 className="mb-3 text-lg font-bold">Partilhar</h2>
-        <SharePanel compact />
-      </section>
+      <div className="mt-4">
+        <Link to="/share">
+          <Button variant="outline" size="sm">
+            <Share2 className="mr-2 size-4" /> Partilhar página
+          </Button>
+        </Link>
+      </div>
 
       <InstallPrompt />
+
+
 
 
       <section className="mt-8">
@@ -144,19 +159,25 @@ function Dashboard() {
           />
         ) : (
           <ul className="space-y-2">
-            {dayData!.upcoming.map((a) => (
-              <li key={a.id} className="surface flex items-center gap-4 p-4">
-                <span className="w-14 text-sm font-bold tabular-nums">
+            {dayData!.upcoming.map((a, i) => (
+              <li key={a.id} className="surface flex items-start gap-3 p-4">
+                <span className="w-12 shrink-0 text-sm font-bold tabular-nums">
                   {formatTime(a.starts_at, business!.timezone)}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold">{a.customer_name}</p>
-                  <p className="truncate text-sm text-muted-foreground">{a.service_name}</p>
+                  <p className="text-sm font-bold leading-snug break-words">
+                    {displayCustomerName(a.customer_name, null, i + 1)}
+                  </p>
+                  <p className="text-sm leading-snug text-muted-foreground break-words">
+                    {a.service_name}
+                  </p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-bold tabular-nums">
+                      {formatPrice(a.price_cents, business!.currency)}
+                    </span>
+                    <StatusBadge status={a.status} />
+                  </div>
                 </div>
-                <span className="text-sm font-bold tabular-nums">
-                  {formatPrice(a.price_cents, business!.currency)}
-                </span>
-                <StatusBadge status={a.status} />
               </li>
             ))}
           </ul>
@@ -170,7 +191,7 @@ function Dashboard() {
   );
 }
 
-function WaitlistCount({ businessId }: { businessId: string | undefined }) {
+function useWaitlistCount(businessId: string | undefined) {
   const { data } = useQuery({
     queryKey: ["waitlist-count", businessId],
     enabled: !!businessId,
@@ -183,6 +204,6 @@ function WaitlistCount({ businessId }: { businessId: string | undefined }) {
       return count ?? 0;
     },
   });
-  return <>{data ?? 0}</>;
+  return data ?? 0;
 }
 

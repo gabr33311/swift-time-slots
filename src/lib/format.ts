@@ -85,3 +85,22 @@ export const STATUS_LABELS: Record<string, string> = {
   no_show: "Não compareceu",
   expired: "Expirada",
 };
+
+const UUID_LIKE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Never surface technical IDs as a customer name. */
+export function displayCustomerName(
+  name?: string | null,
+  phone?: string | null,
+  fallbackIndex?: number,
+): string {
+  const clean = (name ?? "").trim();
+  const looksTechnical =
+    !clean ||
+    UUID_LIKE.test(clean) ||
+    (clean.length > 18 && !clean.includes(" ") && /\d/.test(clean) && /[a-f0-9-]{16,}/i.test(clean));
+  if (!looksTechnical) return clean;
+  const tel = (phone ?? "").trim();
+  if (tel) return tel;
+  return `Cliente${fallbackIndex ? ` #${fallbackIndex}` : ""}`;
+}
