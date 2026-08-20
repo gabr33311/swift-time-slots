@@ -80,6 +80,7 @@ export function StatCard({
   to,
   search,
   icon,
+  dimmed = false,
 }: {
   label: string;
   value: ReactNode;
@@ -87,33 +88,48 @@ export function StatCard({
   to?: string;
   search?: Record<string, unknown>;
   icon?: ReactNode;
+  /** Secondary/quieter styling for empty (zero) values. */
+  dimmed?: boolean;
 }) {
   const inner = (
     <>
       <div className="flex items-center gap-2">
         {icon && (
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+          <span
+            className={cn(
+              "flex size-7 shrink-0 items-center justify-center rounded-lg",
+              dimmed ? "bg-muted text-muted-foreground" : "bg-accent text-accent-foreground",
+            )}
+          >
             {icon}
           </span>
         )}
         <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
       </div>
-      <p className="mt-2 text-2xl font-bold tabular-nums">{value}</p>
+      <p
+        className={cn(
+          "mt-2 text-2xl font-bold tabular-nums",
+          dimmed && "text-muted-foreground/70",
+        )}
+      >
+        {value}
+      </p>
       {hint && <p className="mt-1 text-xs font-medium text-muted-foreground">{hint}</p>}
     </>
   );
+  const base = cn("surface p-4", dimmed && "opacity-70 shadow-none");
   if (to) {
     return (
       <Link
         to={to as never}
         search={search as never}
-        className="surface block p-4 transition-transform hover:-translate-y-0.5 active:scale-[0.98]"
+        className={cn(base, "block transition-transform hover:-translate-y-0.5 active:scale-[0.98]")}
       >
         {inner}
       </Link>
     );
   }
-  return <div className="surface p-4">{inner}</div>;
+  return <div className={base}>{inner}</div>;
 }
 
 export function LoadingRows({ rows = 3 }: { rows?: number }) {
