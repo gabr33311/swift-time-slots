@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { useMyBusiness } from "@/hooks/use-business";
+import { usePrefs } from "@/lib/prefs";
 
 export function SettingsPanel() {
   const { business } = useMyBusiness();
