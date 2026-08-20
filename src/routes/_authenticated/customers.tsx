@@ -33,7 +33,7 @@ function CustomersPage() {
     queryFn: async () => {
       let q = supabase
         .from("customers")
-        .select("id, name, phone, email, notes, is_blocked, no_show_count, created_at")
+        .select("id, name, phone, email, notes, is_blocked, created_at")
         .eq("business_id", business!.id)
         .order("created_at", { ascending: false })
         .limit(100);
@@ -89,7 +89,6 @@ function CustomersPage() {
                 <p className="truncate text-sm font-medium">{c.name}</p>
                 <p className="truncate text-sm text-muted-foreground">
                   {c.phone ?? c.email ?? "Sem contacto"}
-                  {c.no_show_count ? ` · ${c.no_show_count} faltas` : ""}
                 </p>
               </div>
               <Button

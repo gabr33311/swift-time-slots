@@ -212,7 +212,13 @@ function StaffDialog({
       if (selected.length) {
         await supabase
           .from("staff_services")
-          .insert(selected.map((sid) => ({ staff_id: staffId!, service_id: sid })));
+          .insert(
+            selected.map((sid) => ({
+              staff_id: staffId!,
+              service_id: sid,
+              business_id: businessId,
+            })),
+          );
       }
       toast.success("Profissional guardado.");
       qc.invalidateQueries({ queryKey: ["team"] });
