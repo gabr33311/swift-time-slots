@@ -87,14 +87,28 @@ export async function loadPublicBusiness(slug: string): Promise<{
     db.from("staff_services").select("staff_id, service_id").eq("business_id", business.id),
   ]);
 
+  const [logo_url, cover_url] = await Promise.all([
+    signedImage(business.logo_url),
+    signedImage(business.cover_url),
+  ]);
+
   return {
-    business: business as PublicBusiness,
+    business: { ...business, logo_url, cover_url } as PublicBusiness,
     services: (services ?? []) as PublicService[],
     staff: (staff ?? []).map((s) => ({
       ...s,
       service_ids: (links ?? []).filter((l) => l.staff_id === s.id).map((l) => l.service_id),
     })),
   };
+}
+
+/** Storage paths are private; hand the browser a short-lived signed URL. */
+async function signedImage(path: string | null): Promise<string | null> {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  const db = await admin();
+  const { data } = await db.storage.from("business-logos").createSignedUrl(path, 60 * 60 * 12);
+  return data?.signedUrl ?? null;
 }
 
 export type SlotOption = { time: string; staffId: string; startsAt: string; endsAt: string };
