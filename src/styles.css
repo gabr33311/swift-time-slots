@@ -63,17 +63,15 @@
   --color-sidebar-ring: var(--sidebar-ring);
 
   --shadow-soft:
-    0 1px 2px oklch(0.28 0.09 295 / 0.06), 0 6px 16px oklch(0.28 0.09 295 / 0.08),
-    0 18px 40px oklch(0.28 0.09 295 / 0.08);
+    0 1px 2px oklch(0.28 0.04 295 / 0.04), 0 4px 10px oklch(0.28 0.04 295 / 0.05);
   --shadow-lift:
-    0 2px 6px oklch(0.28 0.09 295 / 0.09), 0 14px 30px oklch(0.28 0.09 295 / 0.14),
-    0 30px 60px oklch(0.28 0.09 295 / 0.12);
+    0 2px 4px oklch(0.28 0.04 295 / 0.05), 0 8px 20px oklch(0.28 0.04 295 / 0.08);
 }
 
 :root {
   --radius: 0.875rem;
 
-  --background: oklch(0.985 0.006 300);
+  --background: oklch(0.987 0.003 300);
   --foreground: oklch(0.2 0.03 295);
 
   --card: oklch(1 0 0);
@@ -81,17 +79,17 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.2 0.03 295);
 
-  --primary: oklch(0.52 0.2 295);
+  --primary: oklch(0.52 0.16 295);
   --primary-foreground: oklch(0.99 0.005 300);
 
-  --secondary: oklch(0.955 0.015 300);
+  --secondary: oklch(0.962 0.008 300);
   --secondary-foreground: oklch(0.3 0.05 295);
 
-  --muted: oklch(0.958 0.012 300);
+  --muted: oklch(0.965 0.006 300);
   --muted-foreground: oklch(0.53 0.03 295);
 
-  --accent: oklch(0.94 0.04 297);
-  --accent-foreground: oklch(0.34 0.11 295);
+  --accent: oklch(0.955 0.018 297);
+  --accent-foreground: oklch(0.34 0.08 295);
 
   --destructive: oklch(0.577 0.21 22);
   --destructive-foreground: oklch(0.99 0.005 300);
@@ -103,9 +101,9 @@
   --info: oklch(0.6 0.12 265);
   --info-foreground: oklch(0.99 0.005 300);
 
-  --border: oklch(0.915 0.012 300);
-  --input: oklch(0.915 0.012 300);
-  --ring: oklch(0.52 0.2 295);
+  --border: oklch(0.92 0.006 300);
+  --input: oklch(0.92 0.006 300);
+  --ring: oklch(0.52 0.16 295);
 
   --chart-1: oklch(0.52 0.2 295);
   --chart-2: oklch(0.68 0.14 300);
@@ -115,12 +113,12 @@
 
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.2 0.03 295);
-  --sidebar-primary: oklch(0.52 0.2 295);
+  --sidebar-primary: oklch(0.52 0.16 295);
   --sidebar-primary-foreground: oklch(0.99 0.005 300);
-  --sidebar-accent: oklch(0.96 0.018 300);
+  --sidebar-accent: oklch(0.965 0.008 300);
   --sidebar-accent-foreground: oklch(0.3 0.05 295);
-  --sidebar-border: oklch(0.93 0.012 300);
-  --sidebar-ring: oklch(0.52 0.2 295);
+  --sidebar-border: oklch(0.93 0.006 300);
+  --sidebar-ring: oklch(0.52 0.16 295);
 }
 
 .dark {
@@ -211,12 +209,6 @@
       background-color 160ms ease,
       color 160ms ease,
       box-shadow 200ms ease;
-  }
-
-  button:active svg.lucide,
-  a:active svg.lucide,
-  [role="button"]:active svg.lucide {
-    animation: icon-pop 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   button:active,
