@@ -395,7 +395,9 @@ function Onboarding() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="city">Cidade</Label>
+              <Label htmlFor="city" className="font-semibold">
+                Cidade <span className="text-destructive">*</span>
+              </Label>
               <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} maxLength={60} />
             </div>
             <div className="space-y-1.5">
