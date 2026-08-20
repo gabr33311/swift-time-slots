@@ -15,7 +15,7 @@ import {
   CalendarX,
   Hourglass,
   BarChart3,
-  Share2,
+
 } from "lucide-react";
 import { InstallPrompt } from "@/components/install-prompt";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
