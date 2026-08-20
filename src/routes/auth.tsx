@@ -7,7 +7,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CalendarCheck, Loader2 } from "lucide-react";
+import { CalendarCheck, Loader2, MailCheck, Check, X } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -217,7 +217,7 @@ function AuthPage() {
         Schedivo
       </Link>
 
-      <div className="surface w-full max-w-sm p-6">
+      <div className="surface animate-enter w-full max-w-sm p-6">
         <h1 className="text-xl font-semibold">
           {mode === "login" && "Entrar"}
           {mode === "register" && "Criar conta"}
