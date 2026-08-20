@@ -130,28 +130,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <div className="lg:pl-64">
         <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur">
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Abrir menu">
-                <Menu className="size-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-72 p-4">
-              <SheetTitle className="sr-only">Navegação</SheetTitle>
-              <div className="pb-4">{brand}</div>
-              <NavList onNavigate={() => setOpen(false)} />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mt-4 w-full justify-start gap-3"
-                onClick={signOut}
-              >
-                <LogOut className="size-4" /> Terminar sessão
-              </Button>
-            </SheetContent>
-          </Sheet>
-
           <div className="lg:hidden">{brand}</div>
+
 
           <div className="ml-auto flex items-center gap-1">
             <Link to="/appointments" aria-label="Notificações">
