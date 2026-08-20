@@ -8,9 +8,7 @@ import { ServicesPanel } from "@/components/panels/services-panel";
 import { TeamPanel } from "@/components/panels/team-panel";
 import { AvailabilityPanel } from "@/components/panels/availability-panel";
 import { AnalyticsPanel } from "@/components/panels/analytics-panel";
-import { SharePanel } from "@/components/panels/share-panel";
 import { SettingsPanel } from "@/components/panels/settings-panel";
-import { PublicPagePanel } from "@/components/panels/public-page-panel";
 import {
   Building2,
   Scissors,
@@ -19,8 +17,6 @@ import {
   ChevronRight,
   ArrowLeft,
   BarChart3,
-  Share2,
-  Palette,
   Settings,
 } from "lucide-react";
 
