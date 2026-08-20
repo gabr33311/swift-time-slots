@@ -1,18 +1,20 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { getPublicBusiness, getAvailableSlots, createPublicBooking } from "@/lib/booking.functions";
+import { trackPageView } from "@/lib/analytics.functions";
+import { AddToCalendar } from "@/components/add-to-calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDuration, formatPrice, formatDateLong, initials } from "@/lib/format";
-import { addDays, todayIn } from "@/lib/time";
+import { addDays, todayIn, zonedToUtc, timeToMinutes } from "@/lib/time";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, CalendarDays, Check, Clock, MapPin, Phone } from "lucide-react";
+import { ArrowLeft, CalendarDays, Check, Clock, Instagram, MapPin, Phone } from "lucide-react";
 
 export const Route = createFileRoute("/book/$slug")({
   loader: async ({ params }) => {
@@ -115,6 +117,19 @@ function BookPage() {
       }),
   });
 
+  // One view per browser session (refreshes don't count again).
+  useEffect(() => {
+    let sid = sessionStorage.getItem("schedivo-sid");
+    if (!sid) {
+      sid = crypto.randomUUID();
+      sessionStorage.setItem("schedivo-sid", sid);
+    }
+    const key = `schedivo-view-${business.id}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    void trackPageView({ data: { businessId: business.id, sessionId: sid } }).catch(() => {});
+  }, [business.id]);
+
   async function submit() {
     const parsed = formSchema.safeParse({ name, phone, email, notes });
     if (!parsed.success) {
@@ -151,6 +166,12 @@ function BookPage() {
   }
 
   if (done) {
+    const startsAt =
+      time && service ? zonedToUtc(date, timeToMinutes(time), business.timezone) : null;
+    const endsAt =
+      startsAt && service
+        ? new Date(startsAt.getTime() + service.duration_minutes * 60000)
+        : null;
     return (
       <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-5 py-12">
         <div className="surface p-8 text-center">
@@ -175,14 +196,33 @@ function BookPage() {
           >
             Ver a minha marcação
           </Link>
+          {startsAt && endsAt && service && (
+            <AddToCalendar
+              event={{
+                title: `${service.name} · ${business.name}`,
+                description: `Marcação em ${business.name}.`,
+                location: [business.address, business.city].filter(Boolean).join(", "),
+                startIso: startsAt.toISOString(),
+                endIso: endsAt.toISOString(),
+              }}
+            />
+          )}
         </div>
       </main>
     );
   }
 
+
   return (
     <main className="animate-enter mx-auto max-w-2xl px-5 pb-24 pt-8">
       <header className="mb-8">
+        {business.cover_url && (
+          <img
+            src={business.cover_url}
+            alt={`Imagem de ${business.name}`}
+            className="mb-5 h-36 w-full rounded-2xl object-cover ring-1 ring-border sm:h-48"
+          />
+        )}
         <div className="flex items-center gap-4">
           <div
             className="flex size-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white"
@@ -207,19 +247,51 @@ function BookPage() {
             )}
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
-          {business.address && (
-            <span className="inline-flex items-center gap-1.5">
-              <MapPin className="size-4" /> {business.address}
-              {business.city ? `, ${business.city}` : ""}
-            </span>
-          )}
-          {business.phone && (
-            <a href={`tel:${business.phone}`} className="inline-flex items-center gap-1.5">
-              <Phone className="size-4" /> {business.phone}
-            </a>
-          )}
-        </div>
+        {business.show_contacts && (
+          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
+            {business.address && (
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin className="size-4" /> {business.address}
+                {business.city ? `, ${business.city}` : ""}
+              </span>
+            )}
+            {business.phone && (
+              <a href={`tel:${business.phone}`} className="inline-flex items-center gap-1.5">
+                <Phone className="size-4" /> {business.phone}
+              </a>
+            )}
+            {business.instagram && (
+              <a
+                href={`https://instagram.com/${business.instagram.replace("@", "")}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5"
+              >
+                <Instagram className="size-4" /> {business.instagram}
+              </a>
+            )}
+          </div>
+        )}
+
+        {business.show_team && staff.length > 0 && (
+          <div className="mt-5 flex flex-wrap gap-2">
+            {staff.map((p) => (
+              <span
+                key={p.id}
+                className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs font-bold"
+              >
+                <span className="flex size-6 items-center justify-center rounded-full bg-accent text-[10px] text-accent-foreground">
+                  {initials(p.name)}
+                </span>
+                {p.name}
+                {p.specialty && (
+                  <span className="font-normal text-muted-foreground">· {p.specialty}</span>
+                )}
+              </span>
+            ))}
+          </div>
+        )}
+
       </header>
 
       <Section step={1} title="Escolhe o serviço">

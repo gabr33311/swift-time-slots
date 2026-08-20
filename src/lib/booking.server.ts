@@ -20,6 +20,8 @@ export type PublicBusiness = {
   cancellation_hours: number;
   slot_interval_minutes: number;
   seo_indexable: boolean;
+  show_team: boolean;
+  show_contacts: boolean;
 };
 
 export type PublicService = {
@@ -43,7 +45,7 @@ export type PublicStaff = {
 };
 
 const BUSINESS_FIELDS =
-  "id, slug, name, description, business_type, address, city, phone, email, website, instagram, logo_url, cover_url, brand_color, timezone, currency, cancellation_hours, slot_interval_minutes, seo_indexable";
+  "id, slug, name, description, business_type, address, city, phone, email, website, instagram, logo_url, cover_url, brand_color, timezone, currency, cancellation_hours, slot_interval_minutes, seo_indexable, show_team, show_contacts";
 
 async function admin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -85,14 +87,28 @@ export async function loadPublicBusiness(slug: string): Promise<{
     db.from("staff_services").select("staff_id, service_id").eq("business_id", business.id),
   ]);
 
+  const [logo_url, cover_url] = await Promise.all([
+    signedImage(business.logo_url),
+    signedImage(business.cover_url),
+  ]);
+
   return {
-    business: business as PublicBusiness,
+    business: { ...business, logo_url, cover_url } as PublicBusiness,
     services: (services ?? []) as PublicService[],
     staff: (staff ?? []).map((s) => ({
       ...s,
       service_ids: (links ?? []).filter((l) => l.staff_id === s.id).map((l) => l.service_id),
     })),
   };
+}
+
+/** Storage paths are private; hand the browser a short-lived signed URL. */
+async function signedImage(path: string | null): Promise<string | null> {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  const db = await admin();
+  const { data } = await db.storage.from("business-logos").createSignedUrl(path, 60 * 60 * 12);
+  return data?.signedUrl ?? null;
 }
 
 export type SlotOption = { time: string; staffId: string; startsAt: string; endsAt: string };

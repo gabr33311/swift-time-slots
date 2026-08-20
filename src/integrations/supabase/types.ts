@@ -321,6 +321,8 @@ export type Database = {
           onboarding_completed: boolean
           phone: string | null
           seo_indexable: boolean
+          show_contacts: boolean
+          show_team: boolean
           slot_interval_minutes: number
           slug: string
           timezone: string
@@ -349,6 +351,8 @@ export type Database = {
           onboarding_completed?: boolean
           phone?: string | null
           seo_indexable?: boolean
+          show_contacts?: boolean
+          show_team?: boolean
           slot_interval_minutes?: number
           slug: string
           timezone?: string
@@ -377,6 +381,8 @@ export type Database = {
           onboarding_completed?: boolean
           phone?: string | null
           seo_indexable?: boolean
+          show_contacts?: boolean
+          show_team?: boolean
           slot_interval_minutes?: number
           slug?: string
           timezone?: string
@@ -470,6 +476,35 @@ export type Database = {
           },
           {
             foreignKeyName: "notifications_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      page_views: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          session_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          session_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_views_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"

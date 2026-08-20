@@ -10,6 +10,7 @@ import { AvailabilityPanel } from "@/components/panels/availability-panel";
 import { AnalyticsPanel } from "@/components/panels/analytics-panel";
 import { SharePanel } from "@/components/panels/share-panel";
 import { SettingsPanel } from "@/components/panels/settings-panel";
+import { PublicPagePanel } from "@/components/panels/public-page-panel";
 import {
   Building2,
   Scissors,
@@ -19,6 +20,7 @@ import {
   ArrowLeft,
   BarChart3,
   Share2,
+  Palette,
   Settings,
 } from "lucide-react";
 
@@ -61,6 +63,12 @@ const SECTIONS = [
     label: "Página de marcações",
     description: "Link público, partilha e código QR.",
     icon: Share2,
+  },
+  {
+    id: "public",
+    label: "Personalizar página",
+    description: "Capa, cor, descrição, equipa e ordem dos serviços.",
+    icon: Palette,
   },
   {
     id: "analytics",
@@ -122,6 +130,7 @@ function ProfilePage() {
           {section === "team" && <TeamPanel />}
           {section === "availability" && <AvailabilityPanel />}
           {section === "booking" && <SharePanel />}
+          {section === "public" && <PublicPagePanel />}
           {section === "analytics" && <AnalyticsPanel />}
           {section === "settings" && <SettingsPanel />}
         </div>
