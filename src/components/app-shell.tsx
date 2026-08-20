@@ -172,11 +172,15 @@ export function AppShell({ children }: { children: ReactNode }) {
               key={item.to}
               to={item.to}
               className={cn(
-                "flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium",
+                "flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-bold",
                 active ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <item.icon className="size-5" strokeWidth={2.5} />
+              <item.icon
+                key={active ? `${item.to}-on` : `${item.to}-off`}
+                className={cn("size-5", active && "animate-icon-pop")}
+                strokeWidth={2.5}
+              />
               {item.label}
             </Link>
           );
