@@ -9,7 +9,18 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { useAuth } from "@/hooks/use-auth";
 import { formatPrice, formatTime, greetingPt } from "@/lib/format";
 import { zonedToUtc, todayIn } from "@/lib/time";
-import { CalendarCheck, Share2, Copy } from "lucide-react";
+import {
+  CalendarCheck,
+  Share2,
+  Copy,
+  CalendarDays,
+  Euro,
+  CalendarX,
+  Users,
+  Hourglass,
+  BarChart3,
+} from "lucide-react";
+import { SharePanel } from "@/components/panels/share-panel";
 import { toast } from "sonner";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 
@@ -80,23 +91,51 @@ function Dashboard() {
           {greetingPt()}
           {user?.user_metadata?.["full_name"] ? `, ${user.user_metadata["full_name"]}` : ""}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">Aqui está o teu dia.</p>
+        <p className="mt-1 text-sm font-medium text-muted-foreground">Aqui está o teu dia.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="Hoje" value={active.length} hint="marcações" to="/appointments" />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+        <StatCard
+          label="Hoje"
+          value={active.length}
+          hint="marcações"
+          to="/calendar"
+          icon={<CalendarDays className="size-4" />}
+        />
         <StatCard
           label="Previsto"
           value={formatPrice(revenue, business?.currency ?? "EUR")}
+          hint="receita do dia"
           to="/analytics"
+          icon={<Euro className="size-4" />}
         />
-        <StatCard label="Cancelamentos" value={cancelled} to="/appointments" />
-        <StatCard label="Clientes" value={<ClientCount businessId={business?.id} />} to="/customers" />
+        <StatCard
+          label="Cancelamentos"
+          value={cancelled}
+          hint="hoje"
+          to="/calendar"
+          icon={<CalendarX className="size-4" />}
+        />
+        <StatCard
+          label="Clientes"
+          value={<ClientCount businessId={business?.id} />}
+          hint="na tua base"
+          to="/customers"
+          icon={<Users className="size-4" />}
+        />
         <StatCard
           label="Lista de espera"
           value={<WaitlistCount businessId={business?.id} />}
           hint="clientes à espera"
           to="/waitlist"
+          icon={<Hourglass className="size-4" />}
+        />
+        <StatCard
+          label="Estatísticas"
+          value="Ver"
+          hint="receita e desempenho"
+          to="/analytics"
+          icon={<BarChart3 className="size-4" />}
         />
       </div>
 
@@ -137,14 +176,14 @@ function Dashboard() {
           <ul className="space-y-2">
             {dayData!.upcoming.map((a) => (
               <li key={a.id} className="surface flex items-center gap-4 p-4">
-                <span className="w-14 text-sm font-semibold tabular-nums">
+                <span className="w-14 text-sm font-bold tabular-nums">
                   {formatTime(a.starts_at, business!.timezone)}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{a.customer_name}</p>
+                  <p className="truncate text-sm font-bold">{a.customer_name}</p>
                   <p className="truncate text-sm text-muted-foreground">{a.service_name}</p>
                 </div>
-                <span className="text-sm font-medium tabular-nums">
+                <span className="text-sm font-bold tabular-nums">
                   {formatPrice(a.price_cents, business!.currency)}
                 </span>
                 <StatusBadge status={a.status} />
@@ -153,6 +192,10 @@ function Dashboard() {
           </ul>
         )}
       </section>
+
+      <div className="mt-8">
+        <SharePanel compact />
+      </div>
 
       {business && (
         <NewAppointmentDialog business={business} open={newOpen} onOpenChange={setNewOpen} />
