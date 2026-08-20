@@ -29,13 +29,10 @@ const NAV = [
   { to: "/calendar", label: "Agenda", icon: CalendarDays },
   { to: "/appointments", label: "Marcações", icon: Clock },
   { to: "/customers", label: "Clientes", icon: Users },
-  { to: "/services", label: "Serviços", icon: Scissors },
-  { to: "/team", label: "Equipa", icon: UserRound },
-  { to: "/availability", label: "Disponibilidade", icon: Clock },
   { to: "/waitlist", label: "Lista de espera", icon: ListPlus },
   { to: "/analytics", label: "Estatísticas", icon: BarChart3 },
   { to: "/booking-page", label: "Partilhar", icon: Share2 },
-  { to: "/settings", label: "Definições", icon: Settings },
+  { to: "/profile", label: "Perfil", icon: UserRound },
 ] as const;
 
 const MOBILE_NAV = [
