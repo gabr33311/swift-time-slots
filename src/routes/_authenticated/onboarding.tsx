@@ -357,7 +357,7 @@ function Onboarding() {
                       : "border-border hover:bg-muted",
                   )}
                 >
-                  <span className="mr-1.5">{t.emoji}</span>
+                  <t.icon className="mr-1.5 inline size-4 align-[-3px]" strokeWidth={2.5} />
                   {t.label}
                 </button>
               ))}
