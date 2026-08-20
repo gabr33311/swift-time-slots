@@ -464,8 +464,8 @@ function Onboarding() {
                   maxLength={60}
                 />
               </div>
-              <div className="w-20 space-y-1.5">
-                <Label className="text-xs">Min</Label>
+              <div className="w-32 space-y-1.5">
+                <Label className="text-xs font-semibold">Tempo (minutos)</Label>
                 <Input
                   type="number"
                   min={5}
