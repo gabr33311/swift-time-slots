@@ -61,11 +61,11 @@ function Landing() {
   return (
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-6">
-        <span className="text-lg font-semibold tracking-tight">Marca</span>
+        <span className="text-lg font-semibold tracking-tight">Schedivo</span>
       </header>
 
       <main>
-        <section className="mx-auto max-w-3xl px-5 pb-16 pt-12 text-center sm:pt-20">
+        <section className="animate-enter mx-auto max-w-3xl px-5 pb-16 pt-12 text-center sm:pt-20">
           <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
             Para barbearias, salões, clínicas e estúdios
           </p>
@@ -91,7 +91,7 @@ function Landing() {
         <section className="mx-auto max-w-5xl px-5 pb-20">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f) => (
-              <article key={f.title} className="surface p-6">
+              <article key={f.title} className="surface surface-hover animate-enter p-6">
                 <f.icon className="size-5 text-primary" />
                 <h2 className="mt-4 text-base font-semibold">{f.title}</h2>
                 <p className="mt-1.5 text-sm text-muted-foreground">{f.body}</p>
@@ -100,21 +100,16 @@ function Landing() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-3xl px-5 pb-24 text-center">
-          <h2 className="text-2xl font-semibold tracking-tight">
-            Leva menos de cinco minutos a começar.
-          </h2>
-          <p className="mt-3 text-sm text-muted-foreground">
-            Sem cartão de crédito. Sem instalações.
-          </p>
-          <Link to="/auth" search={{ mode: "register" }} className="mt-6 inline-block">
+        <section className="mx-auto max-w-3xl px-5 pb-24 text-center animate-enter">
+          <Link to="/auth" search={{ mode: "register" }} className="inline-block">
             <Button size="lg">Começar agora</Button>
           </Link>
         </section>
+
       </main>
 
       <footer className="border-t border-border px-5 py-8 text-center text-sm text-muted-foreground">
-        Marca · Marcações online para negócios em Portugal
+        Schedivo · Marcações online para negócios em Portugal
       </footer>
     </div>
   );

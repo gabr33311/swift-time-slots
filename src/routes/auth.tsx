@@ -149,7 +149,7 @@ function AuthPage() {
         <span className="flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground">
           <CalendarCheck className="size-4" />
         </span>
-        Marca
+        Schedivo
       </Link>
 
       <div className="surface w-full max-w-sm p-6">
