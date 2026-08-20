@@ -134,7 +134,7 @@ function CustomersPage() {
           }
         />
       ) : (
-        <ul className="animate-enter space-y-2">
+        <ul className="space-y-2">
           {rows.map((c) => (
             <li key={c.id} className="surface flex items-center gap-3 p-4">
               <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground">
