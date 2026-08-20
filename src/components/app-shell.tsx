@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, CalendarDays, Users, Store, LogOut } from "lucide-react";
+import { LayoutDashboard, CalendarDays, Users, Store, LogOut, Share2 } from "lucide-react";
 import { useState, type ComponentType, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
