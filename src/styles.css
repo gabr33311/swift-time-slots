@@ -5,8 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design system — "Marca" booking platform.
- * Light, calm, premium. Deep teal accent. Inter typography.
+ * Design system — "Schedivo" booking platform.
+ * Light, calm, premium. Violet accent. Inter typography.
  * All colours are oklch semantic tokens. Never hardcode colours in components.
  */
 
