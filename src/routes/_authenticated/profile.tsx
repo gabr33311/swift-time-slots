@@ -34,53 +34,53 @@ export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
 });
 
-const SECTIONS = [
+const GROUPS = [
   {
-    id: "business",
-    label: "Negócio",
-    description: "Nome, foto, contactos e regras de cancelamento.",
-    icon: Building2,
+    title: "Negócio",
+    items: [
+      {
+        id: "business",
+        label: "Negócio",
+        description: "Nome, foto, contactos e regras de cancelamento.",
+        icon: Building2,
+      },
+      {
+        id: "services",
+        label: "Serviços",
+        description: "O que os clientes podem marcar.",
+        icon: Scissors,
+      },
+      { id: "team", label: "Equipa", description: "Quem atende os clientes.", icon: UserRound },
+      {
+        id: "availability",
+        label: "Disponibilidade",
+        description: "Horário semanal, almoço e folgas.",
+        icon: Clock,
+      },
+    ],
   },
   {
-    id: "services",
-    label: "Serviços",
-    description: "O que os clientes podem marcar.",
-    icon: Scissors,
-  },
-  { id: "team", label: "Equipa", description: "Quem atende os clientes.", icon: UserRound },
-  {
-    id: "availability",
-    label: "Disponibilidade",
-    description: "Horário semanal, almoço e folgas.",
-    icon: Clock,
-  },
-  {
-    id: "booking",
-    label: "Página de marcações",
-    description: "Link público, partilha e código QR.",
-    icon: Share2,
-  },
-  {
-    id: "public",
-    label: "Personalizar página",
-    description: "Capa, cor, descrição, equipa e ordem dos serviços.",
-    icon: Palette,
-  },
-  {
-    id: "analytics",
-    label: "Estatísticas",
-    description: "Receita, cancelamentos e serviços mais rentáveis.",
-    icon: BarChart3,
-  },
-  {
-    id: "settings",
-    label: "Definições",
-    description: "Publicação da página e visibilidade no Google.",
-    icon: Settings,
+    title: "Gestão",
+    items: [
+      {
+        id: "analytics",
+        label: "Estatísticas",
+        description: "Receita, cancelamentos e serviços mais rentáveis.",
+        icon: BarChart3,
+      },
+      {
+        id: "settings",
+        label: "Definições",
+        description: "Publicação da página, tema e idioma.",
+        icon: Settings,
+      },
+    ],
   },
 ] as const;
 
-type SectionId = (typeof SECTIONS)[number]["id"];
+const SECTIONS = GROUPS.flatMap((g) => g.items);
+
+type SectionId = (typeof GROUPS)[number]["items"][number]["id"];
 
 function ProfilePage() {
   const [section, setSection] = useState<SectionId | null>(null);
