@@ -2,7 +2,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { QRCodeCanvas } from "qrcode.react";
-import { Copy, ExternalLink, Share2, Download } from "lucide-react";
+import { Copy, Share2, Download } from "lucide-react";
 
 /** Clean, shareable domain — preview/localhost hosts are never shown to clients. */
 const PUBLIC_ORIGIN = "https://swift-time-slots.lovable.app";
@@ -41,18 +41,18 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <section className="surface flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
-      <div className="shrink-0 self-center rounded-xl bg-card p-2 ring-1 ring-border">
+    <section className="surface flex flex-row items-center gap-4 p-4">
+      <div className="shrink-0 rounded-xl bg-card p-2 ring-1 ring-border">
         {url && (
           <QRCodeCanvas id="booking-qr" value={url} size={compact ? 92 : 108} level="M" />
         )}
       </div>
 
-      <div className="min-w-0 flex-1">
-        <p className="break-all rounded-lg bg-muted px-3 py-2 text-sm font-bold">
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-3">
+        <p className="break-all rounded-lg bg-muted px-3 py-2 text-xs font-bold sm:text-sm">
           {url.replace(/^https?:\/\//, "")}
         </p>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
             onClick={() => {
@@ -65,11 +65,6 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
           <Button size="sm" variant="outline" onClick={share}>
             <Share2 className="mr-1.5 size-4" /> Partilhar
           </Button>
-          <a href={url} target="_blank" rel="noreferrer">
-            <Button size="sm" variant="outline">
-              <ExternalLink className="mr-1.5 size-4" /> Ver página
-            </Button>
-          </a>
           <Button size="sm" variant="outline" onClick={downloadQr}>
             <Download className="mr-1.5 size-4" /> Transferir PNG
           </Button>
@@ -78,3 +73,4 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
     </section>
   );
 }
+

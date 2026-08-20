@@ -144,7 +144,7 @@ function CalendarPage() {
       <button
         onClick={() => setNewOpen(true)}
         aria-label="Nova marcação"
-        className="fixed bottom-24 right-4 z-40 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 lg:hidden"
+        className="fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 lg:hidden"
       >
         <Plus className="size-6" strokeWidth={2.6} />
       </button>

@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +15,7 @@ import {
   CalendarX,
   Hourglass,
   BarChart3,
-  Share2,
+
 } from "lucide-react";
 import { InstallPrompt } from "@/components/install-prompt";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
@@ -123,13 +123,6 @@ function Dashboard() {
         />
       </div>
 
-      <div className="mt-4">
-        <Link to="/share">
-          <Button variant="outline" size="sm">
-            <Share2 className="mr-2 size-4" /> Partilhar página
-          </Button>
-        </Link>
-      </div>
 
       <InstallPrompt />
 
