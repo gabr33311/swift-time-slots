@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { STATUS_LABELS } from "@/lib/format";
@@ -95,7 +96,7 @@ export function StatCard({
   if (to) {
     return (
       <Link
-        to={to}
+        to={to as never}
         search={search as never}
         className="surface block p-4 transition-transform hover:-translate-y-0.5 active:scale-[0.98]"
       >
