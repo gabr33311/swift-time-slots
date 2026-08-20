@@ -538,7 +538,9 @@ function Onboarding() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Especialidade</Label>
+                <Label className="text-xs font-semibold">
+                  Especialidade <span className="font-normal text-muted-foreground">(opcional)</span>
+                </Label>
                 <Input
                   value={s.specialty}
                   onChange={(e) =>
