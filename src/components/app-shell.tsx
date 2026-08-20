@@ -150,9 +150,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main key={pathname} className="animate-enter mx-auto w-full max-w-6xl px-4 pb-28 pt-6 lg:pb-12">
-            {children}
-          </main>
+        <main className="animate-enter mx-auto w-full max-w-6xl px-4 pb-28 pt-6 lg:pb-12">
+          {children}
+        </main>
       </div>
 
       <Link
