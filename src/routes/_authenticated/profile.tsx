@@ -130,6 +130,7 @@ function ProfilePage() {
           {section === "team" && <TeamPanel />}
           {section === "availability" && <AvailabilityPanel />}
           {section === "booking" && <SharePanel />}
+          {section === "public" && <PublicPagePanel />}
           {section === "analytics" && <AnalyticsPanel />}
           {section === "settings" && <SettingsPanel />}
         </div>
