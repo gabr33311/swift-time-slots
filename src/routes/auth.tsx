@@ -3,12 +3,16 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CalendarCheck, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    mode: search.mode === "register" ? ("register" as const) : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Entrar — Marca" },
@@ -32,7 +36,8 @@ const schema = z.object({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
+  const { mode: initialMode } = Route.useSearch();
+  const [mode, setMode] = useState<"login" | "register" | "forgot">(initialMode ?? "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -43,6 +48,26 @@ function AuthPage() {
       if (data.session) navigate({ to: "/dashboard" });
     });
   }, [navigate]);
+
+  async function signInWithGoogle() {
+    setBusy(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        toast.error("Não foi possível entrar com o Google.");
+        return;
+      }
+      if (result.redirected) return;
+      navigate({ to: "/dashboard" });
+    } catch {
+      toast.error("Não foi possível entrar com o Google.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
