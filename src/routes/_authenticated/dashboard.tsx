@@ -89,7 +89,7 @@ function Dashboard() {
         <p className="mt-1 text-sm font-medium text-muted-foreground">Aqui está o teu dia.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
           label="Hoje"
           value={active.length}
@@ -98,25 +98,11 @@ function Dashboard() {
           icon={<CalendarDays className="size-4" />}
         />
         <StatCard
-          label="Previsto"
-          value={formatPrice(revenue, business?.currency ?? "EUR")}
-          hint="receita do dia"
-          to="/analytics"
-          icon={<Euro className="size-4" />}
-        />
-        <StatCard
           label="Cancelamentos"
           value={cancelled}
           hint="hoje"
           to="/calendar"
           icon={<CalendarX className="size-4" />}
-        />
-        <StatCard
-          label="Clientes"
-          value={<ClientCount businessId={business?.id} />}
-          hint="na tua base"
-          to="/customers"
-          icon={<Users className="size-4" />}
         />
         <StatCard
           label="Lista de espera"
@@ -127,12 +113,18 @@ function Dashboard() {
         />
         <StatCard
           label="Estatísticas"
-          value="Ver"
-          hint="receita e desempenho"
+          value={formatPrice(revenue, business?.currency ?? "EUR")}
+          hint="receita do dia"
           to="/analytics"
           icon={<BarChart3 className="size-4" />}
         />
       </div>
+
+      <section className="mt-6">
+        <h2 className="mb-3 text-lg font-bold">Partilhar</h2>
+        <SharePanel compact />
+      </section>
+
 
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between">
