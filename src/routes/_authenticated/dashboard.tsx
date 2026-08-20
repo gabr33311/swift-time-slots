@@ -9,15 +9,7 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { useAuth } from "@/hooks/use-auth";
 import { formatPrice, formatTime, greetingPt } from "@/lib/format";
 import { zonedToUtc, todayIn } from "@/lib/time";
-import {
-  CalendarCheck,
-  CalendarDays,
-  Euro,
-  CalendarX,
-  Users,
-  Hourglass,
-  BarChart3,
-} from "lucide-react";
+import { CalendarCheck, CalendarDays, CalendarX, Hourglass, BarChart3 } from "lucide-react";
 import { SharePanel } from "@/components/panels/share-panel";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 
