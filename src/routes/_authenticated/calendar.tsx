@@ -6,7 +6,7 @@ import { AppShell } from "@/components/app-shell";
 import { EmptyState, LoadingRows, PageHeader, StatusBadge } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
-import { formatPrice, formatTime } from "@/lib/format";
+import { displayCustomerName, formatPrice, formatTime } from "@/lib/format";
 import { addDays, todayIn, zonedToUtc } from "@/lib/time";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus } from "lucide-react";
@@ -144,7 +144,7 @@ function CalendarPage() {
       <button
         onClick={() => setNewOpen(true)}
         aria-label="Nova marcação"
-        className="fixed bottom-20 right-5 z-40 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 lg:hidden"
+        className="fixed bottom-24 right-4 z-40 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 lg:hidden"
       >
         <Plus className="size-6" strokeWidth={2.6} />
       </button>
