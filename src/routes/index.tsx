@@ -61,18 +61,18 @@ function Landing() {
   return (
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-6">
-        <span className="text-lg font-semibold tracking-tight">Schedivo</span>
+        <span className="text-lg font-bold tracking-tight">Schedivo</span>
       </header>
 
       <main>
         <section className="animate-enter mx-auto max-w-3xl px-5 pb-16 pt-12 text-center sm:pt-20">
-          <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
             Para barbearias, salões, clínicas e estúdios
           </p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
+          <h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">
             As tuas marcações, sem telefonemas nem confusão.
           </h1>
-          <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground">
+          <p className="mx-auto mt-5 max-w-xl text-base font-medium text-muted-foreground">
             Cria a tua página de marcações, partilha o link e deixa os clientes escolherem o
             horário. Tu ficas com a agenda organizada.
           </p>
@@ -93,8 +93,8 @@ function Landing() {
             {FEATURES.map((f) => (
               <article key={f.title} className="surface surface-hover animate-enter p-6">
                 <f.icon className="size-5 text-primary" />
-                <h2 className="mt-4 text-base font-semibold">{f.title}</h2>
-                <p className="mt-1.5 text-sm text-muted-foreground">{f.body}</p>
+                <h2 className="mt-4 text-base font-bold">{f.title}</h2>
+                <p className="mt-1.5 text-sm font-medium text-muted-foreground">{f.body}</p>
               </article>
             ))}
           </div>
@@ -105,10 +105,9 @@ function Landing() {
             <Button size="lg">Começar agora</Button>
           </Link>
         </section>
-
       </main>
 
-      <footer className="border-t border-border px-5 py-8 text-center text-sm text-muted-foreground">
+      <footer className="border-t border-border px-5 py-8 text-center text-sm font-medium text-muted-foreground">
         Schedivo · Marcações online para negócios em Portugal
       </footer>
     </div>

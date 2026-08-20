@@ -79,18 +79,27 @@ export function StatCard({
   hint,
   to,
   search,
+  icon,
 }: {
   label: string;
   value: ReactNode;
   hint?: string;
   to?: string;
   search?: Record<string, unknown>;
+  icon?: ReactNode;
 }) {
   const inner = (
     <>
-      <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <div className="flex items-center gap-2">
+        {icon && (
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+            {icon}
+          </span>
+        )}
+        <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
+      </div>
       <p className="mt-2 text-2xl font-bold tabular-nums">{value}</p>
-      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+      {hint && <p className="mt-1 text-xs font-medium text-muted-foreground">{hint}</p>}
     </>
   );
   if (to) {

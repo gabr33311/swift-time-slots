@@ -1,0 +1,69 @@
+import { useState } from "react";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Switch } from "@/components/ui/switch";
+import { useMyBusiness } from "@/hooks/use-business";
+
+export function SettingsPanel() {
+  const { business } = useMyBusiness();
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+
+  async function toggle(field: "is_published" | "seo_indexable", value: boolean) {
+    if (!business) return;
+    setBusy(true);
+    const patch = field === "is_published" ? { is_published: value } : { seo_indexable: value };
+    const { error } = await supabase.from("businesses").update(patch).eq("id", business.id);
+    setBusy(false);
+    if (error) {
+      toast.error("Não foi possível guardar.");
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["my-business"] });
+    toast.success("Guardado.");
+  }
+
+  return (
+    <section className="surface divide-y divide-border">
+      <Row
+        title="Página publicada"
+        description="Desliga para deixar de aceitar marcações online."
+        checked={business?.is_published ?? false}
+        disabled={busy}
+        onChange={(v) => toggle("is_published", v)}
+      />
+      <Row
+        title="Aparecer no Google"
+        description="Permite que motores de busca indexem a tua página."
+        checked={business?.seo_indexable ?? false}
+        disabled={busy}
+        onChange={(v) => toggle("seo_indexable", v)}
+      />
+    </section>
+  );
+}
+
+function Row({
+  title,
+  description,
+  checked,
+  disabled,
+  onChange,
+}: {
+  title: string;
+  description: string;
+  checked: boolean;
+  disabled: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 p-5">
+      <div>
+        <p className="text-sm font-bold">{title}</p>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </div>
+      <Switch checked={checked} disabled={disabled} onCheckedChange={onChange} aria-label={title} />
+    </div>
+  );
+}

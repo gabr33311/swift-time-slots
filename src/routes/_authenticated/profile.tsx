@@ -8,6 +8,8 @@ import { ServicesPanel } from "@/components/panels/services-panel";
 import { TeamPanel } from "@/components/panels/team-panel";
 import { AvailabilityPanel } from "@/components/panels/availability-panel";
 import { AnalyticsPanel } from "@/components/panels/analytics-panel";
+import { SharePanel } from "@/components/panels/share-panel";
+import { SettingsPanel } from "@/components/panels/settings-panel";
 import {
   Building2,
   Scissors,
@@ -16,6 +18,8 @@ import {
   ChevronRight,
   ArrowLeft,
   BarChart3,
+  Share2,
+  Settings,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -53,15 +57,26 @@ const SECTIONS = [
     icon: Clock,
   },
   {
+    id: "booking",
+    label: "Página de marcações",
+    description: "Link público, partilha e código QR.",
+    icon: Share2,
+  },
+  {
     id: "analytics",
     label: "Estatísticas",
     description: "Receita, cancelamentos e serviços mais rentáveis.",
     icon: BarChart3,
   },
+  {
+    id: "settings",
+    label: "Definições",
+    description: "Publicação da página e visibilidade no Google.",
+    icon: Settings,
+  },
 ] as const;
 
 type SectionId = (typeof SECTIONS)[number]["id"];
-
 
 function ProfilePage() {
   const [section, setSection] = useState<SectionId | null>(null);
@@ -93,7 +108,7 @@ function ProfilePage() {
                 <s.icon className="size-5" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold">{s.label}</span>
+                <span className="block text-sm font-bold">{s.label}</span>
                 <span className="block text-sm text-muted-foreground">{s.description}</span>
               </span>
               <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
@@ -106,7 +121,9 @@ function ProfilePage() {
           {section === "services" && <ServicesPanel />}
           {section === "team" && <TeamPanel />}
           {section === "availability" && <AvailabilityPanel />}
+          {section === "booking" && <SharePanel />}
           {section === "analytics" && <AnalyticsPanel />}
+          {section === "settings" && <SettingsPanel />}
         </div>
       )}
     </AppShell>
