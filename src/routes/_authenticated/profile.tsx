@@ -106,6 +106,7 @@ function ProfilePage() {
           {section === "services" && <ServicesPanel />}
           {section === "team" && <TeamPanel />}
           {section === "availability" && <AvailabilityPanel />}
+          {section === "analytics" && <AnalyticsPanel />}
         </div>
       )}
     </AppShell>
