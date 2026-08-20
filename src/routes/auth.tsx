@@ -63,16 +63,20 @@ function AuthPage() {
   const [confirmSent, setConfirmSent] = useState<string | null>(null);
 
   useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) navigate({ to: "/dashboard" });
+    });
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/dashboard" });
     });
+    return () => sub.subscription.unsubscribe();
   }, [navigate]);
 
   async function signInWithGoogle() {
     setBusy(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: `${window.location.origin}/auth`,
       });
       if (result.error) {
         toast.error("Não foi possível entrar com o Google.");
