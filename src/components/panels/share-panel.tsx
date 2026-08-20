@@ -2,7 +2,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { QRCodeCanvas } from "qrcode.react";
-import { Copy, ExternalLink, Share2, Download } from "lucide-react";
+import { Copy, Share2, Download } from "lucide-react";
 
 /** Clean, shareable domain — preview/localhost hosts are never shown to clients. */
 const PUBLIC_ORIGIN = "https://swift-time-slots.lovable.app";
