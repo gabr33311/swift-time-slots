@@ -364,7 +364,9 @@ function Onboarding() {
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="slug">O teu link</Label>
+            <Label htmlFor="slug" className="font-semibold">
+              O teu link (nome de utilizador) <span className="text-destructive">*</span>
+            </Label>
             <div className="flex items-center gap-1 rounded-lg border border-input bg-muted/40 px-3">
               <span className="text-sm text-muted-foreground">/book/</span>
               <Input
