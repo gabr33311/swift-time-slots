@@ -62,11 +62,6 @@ function Landing() {
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-6">
         <span className="text-lg font-semibold tracking-tight">Marca</span>
-        <Link to="/auth" search={{ mode: undefined }}>
-          <Button variant="outline" size="sm">
-            Entrar
-          </Button>
-        </Link>
       </header>
 
       <main>
