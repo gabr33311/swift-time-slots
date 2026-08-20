@@ -481,7 +481,7 @@ function Onboarding() {
                 />
               </div>
               <div className="w-24 space-y-1.5">
-                <Label className="text-xs">Preço €</Label>
+                <Label className="text-xs font-semibold">Preço (€)</Label>
                 <Input
                   type="number"
                   min={0}
