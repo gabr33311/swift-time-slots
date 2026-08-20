@@ -8,7 +8,8 @@ import { PageHeader } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useMyBusiness } from "@/hooks/use-business";
-import { Copy, ExternalLink, MessageCircle } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
+import { Copy, ExternalLink, MessageCircle, QrCode, Download } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/booking-page")({
   head: () => ({
@@ -45,11 +46,20 @@ function BookingPageSettings() {
     qc.invalidateQueries({ queryKey: ["my-business"] });
   }
 
+  function downloadQr() {
+    const canvas = document.getElementById("booking-qr") as HTMLCanvasElement | null;
+    if (!canvas) return;
+    const link = document.createElement("a");
+    link.download = `${business?.slug ?? "schedivo"}-qr.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  }
+
   return (
     <AppShell>
       <PageHeader title="Página pública" subtitle="O link que dás aos teus clientes." />
 
-      <section className="surface p-5">
+      <section className="surface animate-enter p-5">
         <p className="text-sm text-muted-foreground">O teu link</p>
         <p className="mt-1 break-all text-base font-medium">{url}</p>
         <div className="mt-4 flex flex-wrap gap-2">
@@ -75,6 +85,26 @@ function BookingPageSettings() {
               <MessageCircle className="mr-2 size-4" /> Enviar por WhatsApp
             </Button>
           </a>
+        </div>
+      </section>
+
+      <section className="surface animate-enter mt-6 p-5">
+        <div className="flex items-center gap-2">
+          <QrCode className="size-4 text-primary" />
+          <h2 className="text-sm font-semibold">Código QR</h2>
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Imprime e coloca no balcão — os clientes marcam com a câmara do telemóvel.
+        </p>
+        <div className="mt-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+          <div className="rounded-2xl bg-card p-4 shadow-[var(--shadow-soft)] ring-1 ring-border">
+            {url && (
+              <QRCodeCanvas id="booking-qr" value={url} size={168} level="M" includeMargin />
+            )}
+          </div>
+          <Button variant="outline" onClick={downloadQr}>
+            <Download className="mr-2 size-4" /> Transferir PNG
+          </Button>
         </div>
       </section>
 
