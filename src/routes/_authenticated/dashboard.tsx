@@ -76,7 +76,7 @@ function Dashboard() {
   return (
     <AppShell>
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-2xl font-bold tracking-tight">
           {greetingPt()}
           {user?.user_metadata?.["full_name"] ? `, ${user.user_metadata["full_name"]}` : ""}
         </h1>
@@ -92,11 +92,17 @@ function Dashboard() {
         />
         <StatCard label="Cancelamentos" value={cancelled} to="/appointments" />
         <StatCard label="Clientes" value={<ClientCount businessId={business?.id} />} to="/customers" />
+        <StatCard
+          label="Lista de espera"
+          value={<WaitlistCount businessId={business?.id} />}
+          hint="clientes à espera"
+          to="/waitlist"
+        />
       </div>
 
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Próximas marcações</h2>
+          <h2 className="text-lg font-bold">Próximas marcações</h2>
           <Button size="sm" variant="outline" onClick={() => setNewOpen(true)}>
             Nova marcação
           </Button>
@@ -153,6 +159,22 @@ function Dashboard() {
       )}
     </AppShell>
   );
+}
+
+function WaitlistCount({ businessId }: { businessId: string | undefined }) {
+  const { data } = useQuery({
+    queryKey: ["waitlist-count", businessId],
+    enabled: !!businessId,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("waitlist_entries")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", businessId!)
+        .eq("status", "waiting");
+      return count ?? 0;
+    },
+  });
+  return <>{data ?? 0}</>;
 }
 
 function ClientCount({ businessId }: { businessId: string | undefined }) {

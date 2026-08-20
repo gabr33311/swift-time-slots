@@ -7,7 +7,16 @@ import { BusinessPanel } from "@/components/panels/business-panel";
 import { ServicesPanel } from "@/components/panels/services-panel";
 import { TeamPanel } from "@/components/panels/team-panel";
 import { AvailabilityPanel } from "@/components/panels/availability-panel";
-import { Building2, Scissors, UserRound, Clock, ChevronRight, ArrowLeft } from "lucide-react";
+import { AnalyticsPanel } from "@/components/panels/analytics-panel";
+import {
+  Building2,
+  Scissors,
+  UserRound,
+  Clock,
+  ChevronRight,
+  ArrowLeft,
+  BarChart3,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
@@ -15,7 +24,7 @@ export const Route = createFileRoute("/_authenticated/profile")({
       { title: "Perfil — Schedivo" },
       {
         name: "description",
-        content: "Negócio, serviços, equipa e horários num só lugar.",
+        content: "Negócio, serviços, equipa, horários e estatísticas num só lugar.",
       },
       { name: "robots", content: "noindex" },
     ],
@@ -43,9 +52,16 @@ const SECTIONS = [
     description: "Horário semanal, almoço e folgas.",
     icon: Clock,
   },
+  {
+    id: "analytics",
+    label: "Estatísticas",
+    description: "Receita, cancelamentos e serviços mais rentáveis.",
+    icon: BarChart3,
+  },
 ] as const;
 
 type SectionId = (typeof SECTIONS)[number]["id"];
+
 
 function ProfilePage() {
   const [section, setSection] = useState<SectionId | null>(null);
@@ -90,6 +106,7 @@ function ProfilePage() {
           {section === "services" && <ServicesPanel />}
           {section === "team" && <TeamPanel />}
           {section === "availability" && <AvailabilityPanel />}
+          {section === "analytics" && <AnalyticsPanel />}
         </div>
       )}
     </AppShell>

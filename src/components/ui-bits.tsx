@@ -16,7 +16,7 @@ export function PageHeader({
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
         {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
       </div>
       {action}
@@ -42,7 +42,7 @@ export function EmptyState({
           {icon}
         </div>
       )}
-      <p className="text-base font-medium">{title}</p>
+      <p className="text-base font-bold">{title}</p>
       {description && (
         <p className="mt-1 max-w-sm text-sm text-muted-foreground">{description}</p>
       )}
@@ -88,8 +88,8 @@ export function StatCard({
 }) {
   const inner = (
     <>
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-2 text-2xl font-semibold tabular-nums">{value}</p>
+      <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mt-2 text-2xl font-bold tabular-nums">{value}</p>
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
     </>
   );
@@ -120,7 +120,7 @@ export function LoadingRows({ rows = 3 }: { rows?: number }) {
 export function ErrorState({ message, onRetry }: { message?: string; onRetry?: () => void }) {
   return (
     <div className="surface p-6 text-center">
-      <p className="text-sm font-medium">Não foi possível carregar</p>
+      <p className="text-sm font-bold">Não foi possível carregar</p>
       <p className="mt-1 text-sm text-muted-foreground">
         {message ?? "Verifica a ligação e tenta novamente."}
       </p>

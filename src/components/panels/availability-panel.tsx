@@ -240,17 +240,17 @@ export function AvailabilityPanel() {
                   className="w-32"
                 />
               </div>
-              {d.enabled && (
-                <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-border pt-3">
-                  <Switch
-                    checked={d.lunch}
-                    disabled={locked}
-                    onCheckedChange={(v) =>
-                      setDays((prev) => prev.map((x, j) => (j === i ? { ...x, lunch: v } : x)))
-                    }
-                    aria-label={`Almoço ${WEEKDAYS_PT[i]}`}
-                  />
-                  <span className="w-24 text-sm font-semibold">Almoço</span>
+              <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-border pt-3">
+                <Switch
+                  checked={d.lunch}
+                  disabled={locked || !d.enabled}
+                  onCheckedChange={(v) =>
+                    setDays((prev) => prev.map((x, j) => (j === i ? { ...x, lunch: v } : x)))
+                  }
+                  aria-label={`Hora de almoço ${WEEKDAYS_PT[i]}`}
+                />
+                <span className="w-32 text-sm font-bold">Hora de almoço</span>
+
                   <Input
                     type="time"
                     value={d.lunchStart}
@@ -274,8 +274,7 @@ export function AvailabilityPanel() {
                     }
                     className="w-32"
                   />
-                </div>
-              )}
+              </div>
             </div>
           ))}
         </div>

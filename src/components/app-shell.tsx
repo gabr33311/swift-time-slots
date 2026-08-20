@@ -3,20 +3,17 @@ import {
   LayoutDashboard,
   CalendarDays,
   Users,
-  UserRound,
+  Store,
   Clock,
-  ListPlus,
   BarChart3,
   Share2,
-  Menu,
   Plus,
   LogOut,
   Clock3,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
 import { useMyBusiness } from "@/hooks/use-business";
@@ -28,20 +25,20 @@ const NAV = [
   { to: "/calendar", label: "Agenda", icon: CalendarDays },
   { to: "/appointments", label: "Marcações", icon: Clock },
   { to: "/customers", label: "Clientes", icon: Users },
-  { to: "/waitlist", label: "Lista de espera", icon: ListPlus },
   { to: "/analytics", label: "Estatísticas", icon: BarChart3 },
   { to: "/booking-page", label: "Partilhar", icon: Share2 },
-  { to: "/profile", label: "Perfil", icon: UserRound },
+  { to: "/profile", label: "Perfil", icon: Store },
 ] as const;
 
 const MOBILE_NAV = [
   { to: "/dashboard", label: "Hoje", icon: LayoutDashboard },
   { to: "/calendar", label: "Agenda", icon: CalendarDays },
+  { to: "/appointments", label: "Marcações", icon: Clock },
   { to: "/customers", label: "Clientes", icon: Users },
-  { to: "/profile", label: "Perfil", icon: UserRound },
+  { to: "/profile", label: "Perfil", icon: Store },
 ] as const;
 
-function NavList({ onNavigate }: { onNavigate?: () => void }) {
+function NavList() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="flex flex-col gap-0.5">
@@ -51,15 +48,18 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
           <Link
             key={item.to}
             to={item.to}
-            onClick={onNavigate}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all hover:translate-x-0.5",
+              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-bold transition-all hover:translate-x-0.5",
               active
                 ? "bg-accent text-accent-foreground"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            <item.icon className="size-4" strokeWidth={2.5} />
+            <item.icon
+              key={active ? `${item.to}-on` : `${item.to}-off`}
+              className={cn("size-4", active && "animate-icon-pop")}
+              strokeWidth={2.5}
+            />
             {item.label}
           </Link>
         );
@@ -68,10 +68,10 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { business } = useMyBusiness();
   const logoUrl = useLogoUrl(business?.logo_url);
-  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
@@ -130,28 +130,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <div className="lg:pl-64">
         <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur">
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Abrir menu">
-                <Menu className="size-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-72 p-4">
-              <SheetTitle className="sr-only">Navegação</SheetTitle>
-              <div className="pb-4">{brand}</div>
-              <NavList onNavigate={() => setOpen(false)} />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mt-4 w-full justify-start gap-3"
-                onClick={signOut}
-              >
-                <LogOut className="size-4" /> Terminar sessão
-              </Button>
-            </SheetContent>
-          </Sheet>
-
           <div className="lg:hidden">{brand}</div>
+
 
           <div className="ml-auto flex items-center gap-1">
             <Link to="/appointments" aria-label="Notificações">
@@ -170,9 +150,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main key={pathname} className="animate-enter mx-auto w-full max-w-6xl px-4 pb-28 pt-6 lg:pb-12">
-            {children}
-          </main>
+        <main className="animate-enter mx-auto w-full max-w-6xl px-4 pb-28 pt-6 lg:pb-12">
+          {children}
+        </main>
       </div>
 
       <Link
@@ -192,11 +172,15 @@ export function AppShell({ children }: { children: ReactNode }) {
               key={item.to}
               to={item.to}
               className={cn(
-                "flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium",
+                "flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-bold",
                 active ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <item.icon className="size-5" strokeWidth={2.5} />
+              <item.icon
+                key={active ? `${item.to}-on` : `${item.to}-off`}
+                className={cn("size-5", active && "animate-icon-pop")}
+                strokeWidth={2.5}
+              />
               {item.label}
             </Link>
           );
