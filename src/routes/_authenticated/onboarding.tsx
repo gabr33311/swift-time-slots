@@ -427,7 +427,9 @@ function Onboarding() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ig">Instagram</Label>
+              <Label htmlFor="ig" className="font-semibold">
+                Instagram <span className="font-normal text-muted-foreground">(opcional)</span>
+              </Label>
               <Input
                 id="ig"
                 value={instagram}
