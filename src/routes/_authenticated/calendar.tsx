@@ -67,7 +67,11 @@ function CalendarPage() {
       <PageHeader
         title="Agenda"
         subtitle="O dia da tua equipa."
-        action={<Button onClick={() => setNewOpen(true)}>Nova marcação</Button>}
+        action={
+          <Button className="hidden lg:inline-flex" onClick={() => setNewOpen(true)}>
+            Nova marcação
+          </Button>
+        }
       />
 
       <div className="mb-5 flex items-center gap-2">
