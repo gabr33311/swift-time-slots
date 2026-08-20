@@ -329,7 +329,9 @@ function Onboarding() {
             <p className="mt-1 text-sm text-muted-foreground">Só o essencial para começar.</p>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="bname">Nome do negócio</Label>
+            <Label htmlFor="bname" className="font-semibold">
+              Nome do negócio <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="bname"
               value={name}
