@@ -97,7 +97,7 @@ function CustomersPage() {
     <AppShell>
       <PageHeader title="Clientes" subtitle="Quem já passou pelo teu negócio." />
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div className="mb-4 flex items-center gap-2">
         {(
           [
             ["all", "Todos"],
@@ -110,6 +110,7 @@ function CustomersPage() {
             size="sm"
             variant={tab === value ? "default" : "outline"}
             onClick={() => setTab(value)}
+            className="shrink-0 px-2.5 text-xs sm:px-3 sm:text-sm"
           >
             {label}
           </Button>
@@ -117,11 +118,12 @@ function CustomersPage() {
         <Input
           value={term}
           onChange={(e) => setTerm(e.target.value)}
-          placeholder="Procurar cliente"
+          placeholder="Procurar"
           maxLength={60}
-          className="h-9 w-full max-w-56 sm:ml-auto"
+          className="h-9 min-w-0 flex-1"
         />
       </div>
+
 
       {isLoading ? (
         <LoadingRows />
