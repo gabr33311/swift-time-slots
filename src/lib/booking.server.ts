@@ -20,6 +20,8 @@ export type PublicBusiness = {
   cancellation_hours: number;
   slot_interval_minutes: number;
   seo_indexable: boolean;
+  show_team: boolean;
+  show_contacts: boolean;
 };
 
 export type PublicService = {
