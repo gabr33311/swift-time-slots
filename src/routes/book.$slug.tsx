@@ -42,7 +42,10 @@ export const Route = createFileRoute("/book/$slug")({
     };
   },
   errorComponent: () => (
-    <CenteredMessage title="Não foi possível abrir esta página" body="Tenta novamente daqui a pouco." />
+    <CenteredMessage
+      title="Não foi possível abrir esta página"
+      body="Tenta novamente daqui a pouco."
+    />
   ),
   notFoundComponent: () => (
     <CenteredMessage

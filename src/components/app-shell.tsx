@@ -80,7 +80,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <NavList />
         <div className="mt-auto px-1 pt-4">
-          <Button variant="ghost" size="sm" className="w-full justify-start gap-3" onClick={signOut}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start gap-3"
+            onClick={signOut}
+          >
             <LogOut className="size-4" /> Terminar sessão
           </Button>
         </div>

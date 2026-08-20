@@ -4,14 +4,12 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { QRCodeCanvas } from "qrcode.react";
 import { Copy, ExternalLink, Share2, QrCode, Download } from "lucide-react";
 
-export function bookingUrlFor(slug?: string) {
-  if (typeof window === "undefined" || !slug) return "";
-  return `${window.location.origin}/book/${slug}`;
-}
-
 export function SharePanel({ compact = false }: { compact?: boolean }) {
   const { business } = useMyBusiness();
-  const url = bookingUrlFor(business?.slug);
+  const url =
+    typeof window !== "undefined" && business
+      ? `${window.location.origin}/book/${business.slug}`
+      : "";
 
   async function share() {
     if (typeof navigator !== "undefined" && navigator.share) {

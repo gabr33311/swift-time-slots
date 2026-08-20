@@ -25,7 +25,10 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Painel — Schedivo" },
-      { name: "description", content: "O resumo do teu dia: marcações, receita prevista e clientes." },
+      {
+        name: "description",
+        content: "O resumo do teu dia: marcações, receita prevista e clientes.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),

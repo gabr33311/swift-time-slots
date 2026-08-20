@@ -105,7 +105,6 @@ function Landing() {
             <Button size="lg">Começar agora</Button>
           </Link>
         </section>
-
       </main>
 
       <footer className="border-t border-border px-5 py-8 text-center text-sm font-medium text-muted-foreground">

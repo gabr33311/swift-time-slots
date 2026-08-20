@@ -78,7 +78,6 @@ const SECTIONS = [
 
 type SectionId = (typeof SECTIONS)[number]["id"];
 
-
 function ProfilePage() {
   const [section, setSection] = useState<SectionId | null>(null);
   const active = SECTIONS.find((s) => s.id === section);
