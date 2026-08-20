@@ -266,3 +266,9 @@ export async function logSecurityEvent(
     business_id: businessId,
   });
 }
+
+export async function slugTaken(slug: string): Promise<boolean> {
+  const db = await admin();
+  const { data } = await db.from("businesses").select("id").eq("slug", slug).maybeSingle();
+  return !!data;
+}
