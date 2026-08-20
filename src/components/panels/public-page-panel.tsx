@@ -52,8 +52,14 @@ export function PublicPagePanel() {
 
   async function uploadCover(file: File) {
     if (!business) return;
-    if (!file.type.startsWith("image/")) return toast.error("Escolhe um ficheiro de imagem.");
-    if (file.size > 5 * 1024 * 1024) return toast.error("A imagem tem de ter menos de 5 MB.");
+    if (!file.type.startsWith("image/")) {
+      toast.error("Escolhe um ficheiro de imagem.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem tem de ter menos de 5 MB.");
+      return;
+    }
     setBusy(true);
     const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
     const path = `${business.id}/cover-${Date.now()}.${ext}`;
