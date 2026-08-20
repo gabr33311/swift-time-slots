@@ -27,16 +27,32 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
 
 type DraftService = { name: string; duration: number; price: number };
 type DraftStaff = { name: string; specialty: string };
-type DayHours = { open: boolean; start: string; end: string };
+type DayHours = {
+  open: boolean;
+  start: string;
+  end: string;
+  lunch: boolean;
+  lunchStart: string;
+  lunchEnd: string;
+};
+
+const day = (open: boolean, start: string, end: string, lunch = open): DayHours => ({
+  open,
+  start,
+  end,
+  lunch,
+  lunchStart: "13:00",
+  lunchEnd: "14:00",
+});
 
 const DEFAULT_HOURS: DayHours[] = [
-  { open: false, start: "09:00", end: "18:00" },
-  { open: true, start: "09:00", end: "18:00" },
-  { open: true, start: "09:00", end: "18:00" },
-  { open: true, start: "09:00", end: "18:00" },
-  { open: true, start: "09:00", end: "18:00" },
-  { open: true, start: "09:00", end: "18:00" },
-  { open: false, start: "09:00", end: "13:00" },
+  day(false, "09:00", "18:00", false),
+  day(true, "09:00", "18:00"),
+  day(true, "09:00", "18:00"),
+  day(true, "09:00", "18:00"),
+  day(true, "09:00", "18:00"),
+  day(true, "09:00", "18:00"),
+  day(false, "09:00", "13:00", false),
 ];
 
 function Onboarding() {
