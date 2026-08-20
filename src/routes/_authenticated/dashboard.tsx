@@ -84,10 +84,14 @@ function Dashboard() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="Hoje" value={active.length} hint="marcações" />
-        <StatCard label="Previsto" value={formatPrice(revenue, business?.currency ?? "EUR")} />
-        <StatCard label="Cancelamentos" value={cancelled} />
-        <StatCard label="Clientes" value={<ClientCount businessId={business?.id} />} />
+        <StatCard label="Hoje" value={active.length} hint="marcações" to="/appointments" />
+        <StatCard
+          label="Previsto"
+          value={formatPrice(revenue, business?.currency ?? "EUR")}
+          to="/analytics"
+        />
+        <StatCard label="Cancelamentos" value={cancelled} to="/appointments" />
+        <StatCard label="Clientes" value={<ClientCount businessId={business?.id} />} to="/customers" />
       </div>
 
       <section className="mt-8">
