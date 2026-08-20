@@ -416,7 +416,9 @@ function Onboarding() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="addr">Morada</Label>
+              <Label htmlFor="addr" className="font-semibold">
+                Morada <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="addr"
                 value={address}
