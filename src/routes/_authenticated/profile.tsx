@@ -34,7 +34,22 @@ export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
 });
 
-const GROUPS = [
+type SectionId =
+  | "business"
+  | "services"
+  | "team"
+  | "availability"
+  | "analytics"
+  | "settings";
+
+type SectionItem = {
+  id: SectionId;
+  label: string;
+  description: string;
+  icon: ComponentType<{ className?: string }>;
+};
+
+const GROUPS: { title: string; items: SectionItem[] }[] = [
   {
     title: "Negócio",
     items: [
