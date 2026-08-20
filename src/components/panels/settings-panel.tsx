@@ -40,6 +40,34 @@ export function SettingsPanel() {
         disabled={busy}
         onChange={(v) => toggle("seo_indexable", v)}
       />
+      <Row
+        title={t("prefs.theme")}
+        description={t("prefs.theme.desc")}
+        checked={theme === "dark"}
+        disabled={false}
+        onChange={(v) => setTheme(v ? "dark" : "light")}
+      />
+      <div className="flex items-center justify-between gap-4 p-5">
+        <div>
+          <p className="text-sm font-bold">{t("prefs.lang")}</p>
+          <p className="text-sm text-muted-foreground">{t("prefs.lang.desc")}</p>
+        </div>
+        <div className="flex gap-1 rounded-xl bg-muted p-1">
+          {(["pt", "en"] as const).map((l) => (
+            <button
+              key={l}
+              type="button"
+              onClick={() => setLang(l)}
+              className={
+                "rounded-lg px-3 py-1.5 text-xs font-bold uppercase transition-colors " +
+                (lang === l ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")
+              }
+            >
+              {l === "pt" ? "Português" : "English"}
+            </button>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
