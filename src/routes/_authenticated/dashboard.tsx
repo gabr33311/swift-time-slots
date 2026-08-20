@@ -107,7 +107,7 @@ function Dashboard() {
         />
         <StatCard
           label="Lista de espera"
-          value={<WaitlistCount businessId={business?.id} />}
+          value={waiting}
           hint="clientes à espera"
           to="/waitlist"
           dimmed={waiting === 0}
