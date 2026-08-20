@@ -144,7 +144,8 @@ function AuthPage() {
       } else if (message.includes("already registered") || message.includes("User already")) {
         toast.error("Já existe uma conta com este email. Entra em vez de criar conta.");
       } else if (message.includes("Email not confirmed")) {
-        toast.error("Esta conta ainda não foi confirmada. Cria uma nova ou confirma o email.");
+        setConfirmSent(email.trim());
+        toast.error("Ainda não confirmaste o email. Verifica a tua caixa de entrada.");
       } else if (message.toLowerCase().includes("weak password")) {
         toast.error("Palavra-passe demasiado fraca. Escolhe outra.");
       } else if (message.includes("rate limit") || message.includes("after")) {
