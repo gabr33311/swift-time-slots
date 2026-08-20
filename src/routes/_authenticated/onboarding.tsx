@@ -11,8 +11,19 @@ import { BUSINESS_TYPES, businessType } from "@/lib/business-types";
 import { slugify } from "@/lib/format";
 import { WEEKDAYS_PT } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { Check, Loader2, ArrowRight, ArrowLeft, Copy, ExternalLink, Trash2 } from "lucide-react";
+import {
+  Check,
+  Loader2,
+  ArrowRight,
+  ArrowLeft,
+  Copy,
+  ExternalLink,
+  Trash2,
+  CircleCheck,
+  CircleX,
+} from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { checkSlugAvailable } from "@/lib/booking.functions";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
@@ -373,7 +384,7 @@ function Onboarding() {
       </div>
 
       {step === 1 && (
-        <div className="surface space-y-5 p-6">
+        <div key={step} className="surface animate-slide-in space-y-5 p-6">
           <div>
             <h1 className="text-xl font-semibold">O teu negócio</h1>
             <p className="mt-1 text-sm text-muted-foreground">Só o essencial para começar.</p>
@@ -429,7 +440,25 @@ function Onboarding() {
                 className="border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
                 placeholder="barbearia-do-gabriel"
               />
+              {slugCheck.state === "checking" && (
+                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+              )}
+              {slugCheck.state === "free" && <CircleCheck className="size-4 text-success" />}
+              {(slugCheck.state === "taken" || slugCheck.state === "invalid") && (
+                <CircleX className="size-4 text-destructive" />
+              )}
             </div>
+            <p className="text-xs text-muted-foreground">
+              {slugCheck.state === "free" && (
+                <span className="text-success">Disponível — este link é teu.</span>
+              )}
+              {slugCheck.state === "taken" && (
+                <span className="text-destructive">Já está ocupado. Escolhe outro.</span>
+              )}
+              {slugCheck.state === "invalid" &&
+                "Usa 3 a 48 caracteres: letras minúsculas, números e hífens."}
+              {slugCheck.state === "checking" && "A verificar disponibilidade…"}
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="desc" className="font-semibold">
@@ -493,7 +522,7 @@ function Onboarding() {
       )}
 
       {step === 2 && (
-        <div className="surface space-y-4 p-6">
+        <div key={step} className="surface animate-slide-in space-y-4 p-6">
           <div>
             <h1 className="text-xl font-semibold">Os teus serviços</h1>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -564,7 +593,7 @@ function Onboarding() {
       )}
 
       {step === 3 && (
-        <div className="surface space-y-4 p-6">
+        <div key={step} className="surface animate-slide-in space-y-4 p-6">
           <div>
             <h1 className="text-xl font-semibold">Quem atende?</h1>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -621,7 +650,7 @@ function Onboarding() {
       )}
 
       {step === 4 && (
-        <div className="surface space-y-3 p-6">
+        <div key={step} className="surface animate-slide-in space-y-3 p-6">
           <div>
             <h1 className="text-xl font-semibold">Define quando estás disponível.</h1>
             <p className="mt-1 text-sm text-muted-foreground">Podes ajustar depois.</p>
@@ -727,7 +756,7 @@ function Onboarding() {
       )}
 
       {step === 5 && (
-        <div className="surface space-y-4 p-6">
+        <div key={step} className="surface animate-slide-in space-y-4 p-6">
           <h1 className="text-xl font-semibold">Confirma e cria a tua página</h1>
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between gap-4">
@@ -759,9 +788,12 @@ function Onboarding() {
           <ArrowLeft className="mr-2 size-4" /> Voltar
         </Button>
         {step < 5 ? (
-          <Button onClick={() => setStep((s) => s + 1)}>
-            Continuar <ArrowRight className="ml-2 size-4" />
-          </Button>
+          <div className="flex flex-col items-end gap-1.5">
+            <Button onClick={() => setStep((s) => s + 1)} disabled={!stepValid}>
+              Continuar <ArrowRight className="ml-2 size-4" />
+            </Button>
+            {!stepValid && <p className="text-xs text-muted-foreground">{stepHint}</p>}
+          </div>
         ) : (
           <Button onClick={finish} disabled={busy}>
             {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
