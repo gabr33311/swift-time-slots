@@ -1,6 +1,6 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { LayoutDashboard, CalendarDays, Users, Store, LogOut } from "lucide-react";
-import { type ReactNode } from "react";
+import { useState, type ComponentType, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,33 @@ const NAV = [
   { to: "/customers", label: "Clientes", icon: Users },
   { to: "/profile", label: "Perfil", icon: Store },
 ] as const;
+
+// Bottom bar order requested: Clientes, Agenda, Hoje, Perfil
+const MOBILE_NAV = [
+  NAV[2],
+  NAV[1],
+  NAV[0],
+  NAV[3],
+] as const;
+
+function PopIcon({
+  Icon,
+  className,
+}: {
+  Icon: ComponentType<{ className?: string; strokeWidth?: number }>;
+  className?: string;
+}) {
+  const [popping, setPopping] = useState(false);
+  return (
+    <span
+      onPointerDown={() => setPopping(true)}
+      onAnimationEnd={() => setPopping(false)}
+      className={cn("inline-flex", popping && "animate-icon-pop")}
+    >
+      <Icon className={className} strokeWidth={2.5} />
+    </span>
+  );
+}
 
 function NavList() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -32,11 +59,7 @@ function NavList() {
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            <item.icon
-              key={active ? `${item.to}-on` : `${item.to}-off`}
-              className={cn("size-4", active && "animate-icon-pop")}
-              strokeWidth={2.5}
-            />
+            <PopIcon Icon={item.icon} className="size-4" />
             {item.label}
           </Link>
         );
@@ -98,7 +121,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-background/95 backdrop-blur lg:hidden">
-        {NAV.map((item) => {
+        {MOBILE_NAV.map((item) => {
           const active = pathname.startsWith(item.to);
           return (
             <Link
@@ -109,11 +132,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 active ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <item.icon
-                key={active ? `${item.to}-on` : `${item.to}-off`}
-                className={cn("size-5", active && "animate-icon-pop")}
-                strokeWidth={2.5}
-              />
+              <PopIcon Icon={item.icon} className="size-5" />
               {item.label}
             </Link>
           );
