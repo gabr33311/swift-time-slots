@@ -191,17 +191,3 @@ function WaitlistCount({ businessId }: { businessId: string | undefined }) {
   return <>{data ?? 0}</>;
 }
 
-function ClientCount({ businessId }: { businessId: string | undefined }) {
-  const { data } = useQuery({
-    queryKey: ["customer-count", businessId],
-    enabled: !!businessId,
-    queryFn: async () => {
-      const { count } = await supabase
-        .from("customers")
-        .select("id", { count: "exact", head: true })
-        .eq("business_id", businessId!);
-      return count ?? 0;
-    },
-  });
-  return <>{data ?? 0}</>;
-}
