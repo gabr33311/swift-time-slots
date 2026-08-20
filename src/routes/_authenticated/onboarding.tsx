@@ -382,7 +382,9 @@ function Onboarding() {
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="desc">Descrição curta</Label>
+            <Label htmlFor="desc" className="font-semibold">
+              Descrição curta <span className="text-destructive">*</span>
+            </Label>
             <Textarea
               id="desc"
               value={description}
