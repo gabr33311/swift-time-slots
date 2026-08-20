@@ -274,8 +274,7 @@ export function AvailabilityPanel() {
                     }
                     className="w-32"
                   />
-                </div>
-              )}
+              </div>
             </div>
           ))}
         </div>
