@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useMyBusiness } from "@/hooks/use-business";
-import { useAuth } from "@/hooks/use-auth";
+
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
@@ -36,7 +36,7 @@ const schema = z.object({
 
 function SettingsPage() {
   const { business } = useMyBusiness();
-  const { signOut } = useAuth();
+
   const qc = useQueryClient();
   const [form, setForm] = useState({
     name: "",
@@ -155,7 +155,7 @@ function SettingsPage() {
           <p className="text-sm font-medium">Terminar sessão</p>
           <p className="text-sm text-muted-foreground">Sai da tua conta neste dispositivo.</p>
         </div>
-        <Button variant="outline" onClick={() => signOut()}>
+        <Button variant="outline" onClick={() => supabase.auth.signOut()}>
           Sair
         </Button>
       </section>

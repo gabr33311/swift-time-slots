@@ -34,10 +34,9 @@ function BookingPageSettings() {
   async function toggle(field: "is_published" | "seo_indexable", value: boolean) {
     if (!business) return;
     setBusy(true);
-    const { error } = await supabase
-      .from("businesses")
-      .update({ [field]: value })
-      .eq("id", business.id);
+    const patch =
+      field === "is_published" ? { is_published: value } : { seo_indexable: value };
+    const { error } = await supabase.from("businesses").update(patch).eq("id", business.id);
     setBusy(false);
     if (error) {
       toast.error("Não foi possível guardar.");
