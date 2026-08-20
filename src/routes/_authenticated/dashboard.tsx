@@ -168,10 +168,6 @@ function Dashboard() {
         )}
       </section>
 
-      <div className="mt-8">
-        <SharePanel compact />
-      </div>
-
       {business && (
         <NewAppointmentDialog business={business} open={newOpen} onOpenChange={setNewOpen} />
       )}
