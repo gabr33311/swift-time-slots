@@ -26,14 +26,16 @@ function PopIcon({
   Icon: ComponentType<{ className?: string | undefined; strokeWidth?: number | undefined }>;
   className?: string;
 }) {
-  const [popping, setPopping] = useState(false);
+  const [pop, setPop] = useState(0);
   return (
     <span
-      onPointerDown={() => setPopping(true)}
-      onAnimationEnd={() => setPopping(false)}
-      className={cn("inline-flex", popping && "animate-icon-pop")}
+      onPointerDown={() => setPop((n) => n + 1)}
+      onClick={() => setPop((n) => n + 1)}
+      className="inline-flex"
     >
-      <Icon className={className} strokeWidth={2.5} />
+      <span key={pop} className={cn("inline-flex", pop > 0 && "animate-icon-pop")}>
+        <Icon className={className} strokeWidth={2.5} />
+      </span>
     </span>
   );
 }
