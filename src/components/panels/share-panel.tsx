@@ -60,6 +60,7 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
         <div className="flex flex-wrap items-center gap-2">
           <Button
             size="sm"
+            variant="outline"
             onClick={() => {
               navigator.clipboard.writeText(url);
               toast.success("Link copiado.");
@@ -70,12 +71,16 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
           <Button size="sm" variant="outline" onClick={share}>
             <Share2 className="size-4" /> Partilhar
           </Button>
-          <button
-            onClick={downloadQr}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full px-2.5 text-[13px] font-bold text-muted-foreground transition-colors hover:text-foreground"
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => window.open(url, "_blank", "noopener")}
           >
+            <Eye className="size-4" /> Pré-visualizar
+          </Button>
+          <Button size="sm" variant="outline" onClick={downloadQr}>
             <Download className="size-4" /> PNG
-          </button>
+          </Button>
         </div>
       </div>
     </section>
