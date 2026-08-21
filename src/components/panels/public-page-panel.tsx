@@ -7,9 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useMyBusiness } from "@/hooks/use-business";
-import { useLogoUrl } from "@/hooks/use-logo";
-import { initials } from "@/lib/format";
-import { Pencil, Save, X, ExternalLink, ArrowUp, ArrowDown } from "lucide-react";
+import { Pencil, Save, X, ArrowUp, ArrowDown } from "lucide-react";
 
 export function PublicPagePanel() {
   const { business } = useMyBusiness();
@@ -19,7 +17,6 @@ export function PublicPagePanel() {
   const [description, setDescription] = useState("");
   const [showTeam, setShowTeam] = useState(true);
   const [showContacts, setShowContacts] = useState(true);
-  const logoUrl = useLogoUrl(business?.logo_url);
 
   function hydrate() {
     if (!business) return;
@@ -76,11 +73,6 @@ export function PublicPagePanel() {
     setEdit(false);
     qc.invalidateQueries({ queryKey: ["my-business"] });
   }
-
-  const publicUrl =
-    typeof window !== "undefined" && business
-      ? `${window.location.origin}/book/${business.slug}`
-      : "";
 
   return (
     <div className="space-y-4">
