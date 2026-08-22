@@ -164,13 +164,17 @@ function CalendarPage() {
         </div>
       )}
 
-      <button
-        onClick={() => setNewOpen(true)}
-        aria-label="Nova marcação"
-        className="fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 lg:hidden"
-      >
-        <Plus className="size-6" strokeWidth={2.6} />
-      </button>
+      {mounted &&
+        createPortal(
+          <button
+            onClick={() => setNewOpen(true)}
+            aria-label="Nova marcação"
+            className="fixed right-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-50 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lift transition-transform active:scale-95 lg:hidden"
+          >
+            <Plus className="size-6" strokeWidth={2.6} />
+          </button>,
+          document.body,
+        )}
 
       {business && (
         <NewAppointmentDialog
