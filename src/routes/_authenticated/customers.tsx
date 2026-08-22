@@ -9,7 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMyBusiness } from "@/hooks/use-business";
 import { initials } from "@/lib/format";
-import { Users, Ban, ShieldCheck, Search } from "lucide-react";
+import { Users, Ban, ShieldCheck, Search, Pencil } from "lucide-react";
+import {
+  EditCustomerDialog,
+  type EditableCustomer,
+} from "@/components/edit-customer-dialog";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -39,6 +43,7 @@ function CustomersPage() {
   const qc = useQueryClient();
   const [term, setTerm] = useState("");
   const [tab, setTab] = useState<"all" | "cancelled" | "blocked">("all");
+  const [editing, setEditing] = useState<EditableCustomer | null>(null);
 
   const { data: cancelledMap } = useQuery({
     queryKey: ["customers-cancelled", business?.id],
@@ -173,6 +178,15 @@ function CustomersPage() {
                   )}
                 </p>
               </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={`Editar ${c.name}`}
+                className="size-9 shrink-0 text-muted-foreground"
+                onClick={() => setEditing(c)}
+              >
+                <Pencil className="size-4" />
+              </Button>
               {c.is_blocked ? (
                 <Button
                   variant="ghost"
@@ -219,6 +233,12 @@ function CustomersPage() {
           </li>
         </ul>
       )}
+
+      <EditCustomerDialog
+        customer={editing}
+        open={!!editing}
+        onOpenChange={(v) => !v && setEditing(null)}
+      />
     </AppShell>
   );
 }
