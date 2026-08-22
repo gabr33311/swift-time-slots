@@ -161,6 +161,11 @@ function Dashboard() {
                   </span>
                   <StatusBadge status={a.status} />
                 </div>
+                <AppointmentActions
+                  id={a.id}
+                  status={a.status}
+                  customerName={displayCustomerName(a.customer_name, null, i + 1)}
+                />
               </li>
             ))}
           </ul>
