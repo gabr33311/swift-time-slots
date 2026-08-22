@@ -7,6 +7,7 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { formatPrice } from "@/lib/format";
 
 const PERIODS = [
+  { id: "today", label: "Hoje", days: 0 },
   { id: "7", label: "7 dias", days: 7 },
   { id: "30", label: "30 dias", days: 30 },
   { id: "all", label: "Total", days: null },
@@ -23,7 +24,12 @@ export function AnalyticsPanel() {
     queryKey: ["analytics", business?.id, period],
     enabled: !!business,
     queryFn: async () => {
-      const from = days ? new Date(Date.now() - days * 86400000).toISOString() : null;
+      const from =
+        days === 0
+          ? new Date(new Date().setHours(0, 0, 0, 0)).toISOString()
+          : days
+            ? new Date(Date.now() - days * 86400000).toISOString()
+            : null;
 
       let apptQuery = supabase
         .from("appointments")
