@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
 import { EmptyState, LoadingRows, PageHeader, StatusBadge } from "@/components/ui-bits";
@@ -11,6 +12,7 @@ import { addDays, todayIn, zonedToUtc } from "@/lib/time";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AppointmentActions } from "@/components/appointment-actions";
 
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
@@ -28,6 +30,8 @@ function CalendarPage() {
   const tz = business?.timezone ?? "Europe/Lisbon";
   const [date, setDate] = useState(todayIn(tz));
   const [newOpen, setNewOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const { data, isLoading } = useQuery({
     queryKey: ["calendar", business?.id, date],
@@ -149,6 +153,11 @@ function CalendarPage() {
                         </span>
                         <StatusBadge status={a.status} />
                       </div>
+                      <AppointmentActions
+                        id={a.id}
+                        status={a.status}
+                        customerName={displayCustomerName(a.customer_name, null, i + 1)}
+                      />
                     </li>
                   ))}
                 </ul>
@@ -158,13 +167,17 @@ function CalendarPage() {
         </div>
       )}
 
-      <button
-        onClick={() => setNewOpen(true)}
-        aria-label="Nova marcação"
-        className="fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 lg:hidden"
-      >
-        <Plus className="size-6" strokeWidth={2.6} />
-      </button>
+      {mounted &&
+        createPortal(
+          <button
+            onClick={() => setNewOpen(true)}
+            aria-label="Nova marcação"
+            className="fixed right-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-50 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lift transition-transform active:scale-95 lg:hidden"
+          >
+            <Plus className="size-6" strokeWidth={2.6} />
+          </button>,
+          document.body,
+        )}
 
       {business && (
         <NewAppointmentDialog

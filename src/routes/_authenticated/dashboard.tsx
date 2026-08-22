@@ -1,22 +1,17 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
-import { EmptyState, LoadingRows, StatCard, StatusBadge } from "@/components/ui-bits";
+import { EmptyState, LoadingRows, StatusBadge } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { useAuth } from "@/hooks/use-auth";
 import { displayCustomerName, formatPrice, formatTime, greetingPt } from "@/lib/format";
 import { zonedToUtc, todayIn } from "@/lib/time";
-import {
-  CalendarCheck,
-  CalendarDays,
-  CalendarX,
-  Hourglass,
-  BarChart3,
-
-} from "lucide-react";
+import { CalendarCheck, CalendarDays } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { AppointmentActions } from "@/components/appointment-actions";
 import { InstallPrompt } from "@/components/install-prompt";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 
@@ -75,9 +70,12 @@ function Dashboard() {
   const active = (dayData?.appts ?? []).filter(
     (a) => a.status === "confirmed" || a.status === "pending" || a.status === "completed",
   );
-  const revenue = active.reduce((sum, a) => sum + a.price_cents, 0);
   const cancelled = (dayData?.appts ?? []).filter((a) => a.status === "cancelled").length;
-  const waiting = useWaitlistCount(business?.id);
+  const counts = {
+    confirmed: active.filter((a) => a.status === "confirmed").length,
+    pending: active.filter((a) => a.status === "pending").length,
+    completed: active.filter((a) => a.status === "completed").length,
+  };
 
   return (
     <AppShell>
@@ -89,39 +87,31 @@ function Dashboard() {
         <p className="mt-1 text-sm font-normal text-muted-foreground">Aqui está o teu dia.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard
-          label="Hoje"
-          value={active.length}
-          hint="marcações"
-          to="/calendar"
-          icon={<CalendarDays className="size-4" />}
-        />
-        <StatCard
-          label="Cancelados"
-          value={cancelled}
-          hint="hoje"
-          to="/calendar"
-          dimmed={cancelled === 0}
-          icon={<CalendarX className="size-4" />}
-        />
-        <StatCard
-          label="Em espera"
-          value={waiting}
-          hint="clientes à espera"
-          to="/waitlist"
-          dimmed={waiting === 0}
-          icon={<Hourglass className="size-4" />}
-        />
-        <StatCard
-          label="Estatísticas"
-          value={formatPrice(revenue, business?.currency ?? "EUR")}
-          hint="receita do dia"
-          to="/analytics"
-          dimmed={revenue === 0}
-          icon={<BarChart3 className="size-4" />}
-        />
-      </div>
+      <Link to="/calendar" className="surface surface-hover block p-5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="font-display text-base font-bold">Marcações de hoje</p>
+          <span className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground">
+            <CalendarDays className="size-4" />
+            {(dayData?.appts.length ?? 0)}
+          </span>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            { label: "Confirmadas", value: counts.confirmed, dot: "bg-success" },
+            { label: "Pendentes", value: counts.pending, dot: "bg-warning" },
+            { label: "Canceladas", value: cancelled, dot: "bg-destructive" },
+            { label: "Concluídas", value: counts.completed, dot: "bg-muted-foreground" },
+          ].map((s) => (
+            <div key={s.label} className="rounded-2xl bg-muted/50 p-3">
+              <span className="flex items-center gap-1.5 text-[12px] font-bold text-muted-foreground">
+                <span className={cn("size-2 rounded-full", s.dot)} />
+                {s.label}
+              </span>
+              <p className="mt-1 text-2xl font-bold tabular-nums">{s.value}</p>
+            </div>
+          ))}
+        </div>
+      </Link>
 
 
       <InstallPrompt />
@@ -171,6 +161,11 @@ function Dashboard() {
                   </span>
                   <StatusBadge status={a.status} />
                 </div>
+                <AppointmentActions
+                  id={a.id}
+                  status={a.status}
+                  customerName={displayCustomerName(a.customer_name, null, i + 1)}
+                />
               </li>
             ))}
           </ul>
@@ -183,20 +178,3 @@ function Dashboard() {
     </AppShell>
   );
 }
-
-function useWaitlistCount(businessId: string | undefined) {
-  const { data } = useQuery({
-    queryKey: ["waitlist-count", businessId],
-    enabled: !!businessId,
-    queryFn: async () => {
-      const { count } = await supabase
-        .from("waitlist_entries")
-        .select("id", { count: "exact", head: true })
-        .eq("business_id", businessId!)
-        .eq("status", "waiting");
-      return count ?? 0;
-    },
-  });
-  return data ?? 0;
-}
-
