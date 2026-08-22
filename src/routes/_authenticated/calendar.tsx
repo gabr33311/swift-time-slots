@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
 import { EmptyState, LoadingRows, PageHeader, StatusBadge } from "@/components/ui-bits";
@@ -29,6 +30,8 @@ function CalendarPage() {
   const tz = business?.timezone ?? "Europe/Lisbon";
   const [date, setDate] = useState(todayIn(tz));
   const [newOpen, setNewOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const { data, isLoading } = useQuery({
     queryKey: ["calendar", business?.id, date],
