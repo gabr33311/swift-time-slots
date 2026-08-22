@@ -1,22 +1,17 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
-import { EmptyState, LoadingRows, StatCard, StatusBadge } from "@/components/ui-bits";
+import { EmptyState, LoadingRows, StatusBadge } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { useAuth } from "@/hooks/use-auth";
 import { displayCustomerName, formatPrice, formatTime, greetingPt } from "@/lib/format";
 import { zonedToUtc, todayIn } from "@/lib/time";
-import {
-  CalendarCheck,
-  CalendarDays,
-  CalendarX,
-  Hourglass,
-  BarChart3,
-
-} from "lucide-react";
+import { CalendarCheck, CalendarDays } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { AppointmentActions } from "@/components/appointment-actions";
 import { InstallPrompt } from "@/components/install-prompt";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 
@@ -75,9 +70,12 @@ function Dashboard() {
   const active = (dayData?.appts ?? []).filter(
     (a) => a.status === "confirmed" || a.status === "pending" || a.status === "completed",
   );
-  const revenue = active.reduce((sum, a) => sum + a.price_cents, 0);
   const cancelled = (dayData?.appts ?? []).filter((a) => a.status === "cancelled").length;
-  const waiting = useWaitlistCount(business?.id);
+  const counts = {
+    confirmed: active.filter((a) => a.status === "confirmed").length,
+    pending: active.filter((a) => a.status === "pending").length,
+    completed: active.filter((a) => a.status === "completed").length,
+  };
 
   return (
     <AppShell>
@@ -175,20 +173,3 @@ function Dashboard() {
     </AppShell>
   );
 }
-
-function useWaitlistCount(businessId: string | undefined) {
-  const { data } = useQuery({
-    queryKey: ["waitlist-count", businessId],
-    enabled: !!businessId,
-    queryFn: async () => {
-      const { count } = await supabase
-        .from("waitlist_entries")
-        .select("id", { count: "exact", head: true })
-        .eq("business_id", businessId!)
-        .eq("status", "waiting");
-      return count ?? 0;
-    },
-  });
-  return data ?? 0;
-}
-
