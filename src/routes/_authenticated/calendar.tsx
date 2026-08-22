@@ -11,6 +11,7 @@ import { addDays, todayIn, zonedToUtc } from "@/lib/time";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AppointmentActions } from "@/components/appointment-actions";
 
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
