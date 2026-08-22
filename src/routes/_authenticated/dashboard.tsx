@@ -89,39 +89,31 @@ function Dashboard() {
         <p className="mt-1 text-sm font-normal text-muted-foreground">Aqui está o teu dia.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard
-          label="Hoje"
-          value={active.length}
-          hint="marcações"
-          to="/calendar"
-          icon={<CalendarDays className="size-4" />}
-        />
-        <StatCard
-          label="Cancelados"
-          value={cancelled}
-          hint="hoje"
-          to="/calendar"
-          dimmed={cancelled === 0}
-          icon={<CalendarX className="size-4" />}
-        />
-        <StatCard
-          label="Em espera"
-          value={waiting}
-          hint="clientes à espera"
-          to="/waitlist"
-          dimmed={waiting === 0}
-          icon={<Hourglass className="size-4" />}
-        />
-        <StatCard
-          label="Estatísticas"
-          value={formatPrice(revenue, business?.currency ?? "EUR")}
-          hint="receita do dia"
-          to="/analytics"
-          dimmed={revenue === 0}
-          icon={<BarChart3 className="size-4" />}
-        />
-      </div>
+      <Link to="/calendar" className="surface surface-hover block p-5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="font-display text-base font-bold">Marcações de hoje</p>
+          <span className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground">
+            <CalendarDays className="size-4" />
+            {(dayData?.appts.length ?? 0)}
+          </span>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            { label: "Confirmadas", value: counts.confirmed, dot: "bg-success" },
+            { label: "Pendentes", value: counts.pending, dot: "bg-warning" },
+            { label: "Canceladas", value: cancelled, dot: "bg-destructive" },
+            { label: "Concluídas", value: counts.completed, dot: "bg-muted-foreground" },
+          ].map((s) => (
+            <div key={s.label} className="rounded-2xl bg-muted/50 p-3">
+              <span className="flex items-center gap-1.5 text-[12px] font-bold text-muted-foreground">
+                <span className={cn("size-2 rounded-full", s.dot)} />
+                {s.label}
+              </span>
+              <p className="mt-1 text-2xl font-bold tabular-nums">{s.value}</p>
+            </div>
+          ))}
+        </div>
+      </Link>
 
 
       <InstallPrompt />
