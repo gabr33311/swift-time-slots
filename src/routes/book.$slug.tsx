@@ -248,27 +248,30 @@ function BookPage() {
     return (
       <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-5 py-12">
         <div className="surface p-8 text-center">
-          <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-success/15 text-success">
+          <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-primary/12 text-primary">
             <Check className="size-7" />
           </div>
-          <h1 className="text-xl font-bold">
-            {done.status === "pending" ? "Pedido enviado" : "Marcação confirmada"}
-          </h1>
+          <h1 className="text-xl font-bold">Marcação confirmada</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {formatDateLong(`${date}T12:00:00Z`, business.timezone)} às {time} · {service?.name}
           </p>
           <p className="mt-4 text-sm text-muted-foreground">
-            {done.status === "pending"
-              ? "Vais receber a confirmação do negócio em breve."
-              : "Guarda o link abaixo para consultar, reagendar ou cancelar."}
+            Podes consultar e cancelar esta marcação na tua conta.
           </p>
+          <Link
+            to="/minhas-marcacoes"
+            className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground"
+          >
+            As minhas marcações
+          </Link>
           <Link
             to="/booking/$token"
             params={{ token: done.token }}
-            className="mt-6 inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground"
+            className="mt-2 inline-flex w-full items-center justify-center rounded-full border border-border px-4 py-2.5 text-sm font-bold"
           >
-            Ver a minha marcação
+            Ver detalhes da marcação
           </Link>
+
           {startsAt && endsAt && service && (
             <AddToCalendar
               event={{
