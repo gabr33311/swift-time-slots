@@ -137,7 +137,8 @@ export const createPublicBooking = createServerFn({ method: "POST" })
       customerId = created?.id ?? null;
     }
 
-    const status = service.requires_confirmation ? "pending" : "confirmed";
+    // Client bookings are always immediately confirmed — there is no pending state.
+    const status = "confirmed";
     const { data: appointment, error } = await supabaseAdmin
       .from("appointments")
       .insert({
@@ -145,8 +146,10 @@ export const createPublicBooking = createServerFn({ method: "POST" })
         service_id: service.id,
         staff_id: slot.staffId,
         customer_id: customerId,
+        user_id: userId,
         service_name: service.name,
         customer_name: data.name,
+
         customer_phone: data.phone,
         customer_email: data.email || null,
         starts_at: slot.startsAt,
