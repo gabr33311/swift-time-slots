@@ -11,10 +11,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { formatDuration, formatPrice, formatDateLong, initials } from "@/lib/format";
 import { addDays, todayIn, zonedToUtc, timeToMinutes } from "@/lib/time";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, CalendarDays, Check, Clock, Instagram, MapPin, Phone } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Instagram,
+  LogIn,
+  MapPin,
+  Phone,
+} from "lucide-react";
+
 
 export const Route = createFileRoute("/book/$slug")({
   loader: async ({ params }) => {
@@ -86,9 +100,13 @@ const formSchema = z.object({
 
 function BookPage() {
   const { business, services, staff } = Route.useLoaderData();
+  const { slug } = Route.useParams();
+  const { user, loading: authLoading } = useAuth();
   const [serviceId, setServiceId] = useState<string | null>(null);
   const [staffId, setStaffId] = useState<string | null>(null);
-  const [date, setDate] = useState(todayIn(business.timezone));
+  const today = todayIn(business.timezone);
+  const [date, setDate] = useState(today);
+  const [month, setMonth] = useState(() => today.slice(0, 7));
   const [time, setTime] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -103,10 +121,54 @@ function BookPage() {
     [staff, serviceId],
   );
 
-  const days = useMemo(
-    () => Array.from({ length: 14 }, (_, i) => addDays(todayIn(business.timezone), i)),
-    [business.timezone],
-  );
+  // Prefill from the signed-in client account (profile + auth email).
+  const { data: profile } = useQuery({
+    queryKey: ["client-profile", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, phone")
+        .eq("id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    if (!user) return;
+    setName((v) => v || profile?.full_name || (user.user_metadata?.["full_name"] as string) || "");
+    setPhone((v) => v || profile?.phone || "");
+    setEmail((v) => v || user.email || "");
+  }, [user, profile]);
+
+  const monthDays = useMemo(() => {
+    const [y, m] = month.split("-").map(Number);
+    const first = new Date(Date.UTC(y!, m! - 1, 1));
+    const daysInMonth = new Date(Date.UTC(y!, m!, 0)).getUTCDate();
+    const lead = (first.getUTCDay() + 6) % 7; // Monday-first grid
+    const cells: (string | null)[] = Array.from({ length: lead }, () => null);
+    for (let d = 1; d <= daysInMonth; d++) {
+      cells.push(`${month}-${String(d).padStart(2, "0")}`);
+    }
+    return cells;
+  }, [month]);
+
+  const monthLabel = useMemo(() => {
+    const [y, m] = month.split("-").map(Number);
+    const label = new Intl.DateTimeFormat("pt-PT", {
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    }).format(new Date(Date.UTC(y!, m! - 1, 1)));
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }, [month]);
+
+  function shiftMonth(delta: number) {
+    const [y, m] = month.split("-").map(Number);
+    const next = new Date(Date.UTC(y!, m! - 1 + delta, 1));
+    setMonth(`${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, "0")}`);
+  }
 
   const { data: slots, isFetching } = useQuery({
     queryKey: ["slots", business.id, serviceId, staffId, date],
@@ -116,6 +178,7 @@ function BookPage() {
         data: { businessId: business.id, serviceId: serviceId!, staffId, date },
       }),
   });
+
 
   // One view per browser session (refreshes don't count again).
   useEffect(() => {
@@ -131,6 +194,10 @@ function BookPage() {
   }, [business.id]);
 
   async function submit() {
+    if (!user) {
+      toast.error("Inicia sessão para confirmares a marcação.");
+      return;
+    }
     const parsed = formSchema.safeParse({ name, phone, email, notes });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Verifica os dados.");
@@ -138,6 +205,12 @@ function BookPage() {
     }
     if (!serviceId || !time) return;
     setBusy(true);
+    // Keep the client account profile up to date with the details used to book.
+    void supabase
+      .from("profiles")
+      .update({ full_name: parsed.data.name, phone: parsed.data.phone })
+      .eq("id", user.id);
+
     try {
       const res = await createPublicBooking({
         data: {
@@ -175,27 +248,30 @@ function BookPage() {
     return (
       <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-5 py-12">
         <div className="surface p-8 text-center">
-          <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-success/15 text-success">
+          <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-primary/12 text-primary">
             <Check className="size-7" />
           </div>
-          <h1 className="text-xl font-bold">
-            {done.status === "pending" ? "Pedido enviado" : "Marcação confirmada"}
-          </h1>
+          <h1 className="text-xl font-bold">Marcação confirmada</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {formatDateLong(`${date}T12:00:00Z`, business.timezone)} às {time} · {service?.name}
           </p>
           <p className="mt-4 text-sm text-muted-foreground">
-            {done.status === "pending"
-              ? "Vais receber a confirmação do negócio em breve."
-              : "Guarda o link abaixo para consultar, reagendar ou cancelar."}
+            Podes consultar e cancelar esta marcação na tua conta.
           </p>
+          <Link
+            to="/minhas-marcacoes"
+            className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground"
+          >
+            As minhas marcações
+          </Link>
           <Link
             to="/booking/$token"
             params={{ token: done.token }}
-            className="mt-6 inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground"
+            className="mt-2 inline-flex w-full items-center justify-center rounded-full border border-border px-4 py-2.5 text-sm font-bold"
           >
-            Ver a minha marcação
+            Ver detalhes da marcação
           </Link>
+
           {startsAt && endsAt && service && (
             <AddToCalendar
               event={{

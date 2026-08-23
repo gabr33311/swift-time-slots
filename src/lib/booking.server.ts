@@ -288,3 +288,13 @@ export async function slugTaken(slug: string): Promise<boolean> {
   const { data } = await db.from("businesses").select("id").eq("slug", slug).maybeSingle();
   return !!data;
 }
+
+/** Resolves the signed-in client from the request bearer token (null when guest). */
+export async function userIdFromAuthHeader(header?: string | null): Promise<string | null> {
+  const token = header?.startsWith("Bearer ") ? header.slice(7) : null;
+  if (!token) return null;
+  const db = await admin();
+  const { data } = await db.auth.getUser(token);
+  return data.user?.id ?? null;
+}
+
