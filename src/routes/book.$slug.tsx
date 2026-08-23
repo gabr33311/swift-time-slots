@@ -194,6 +194,10 @@ function BookPage() {
   }, [business.id]);
 
   async function submit() {
+    if (!user) {
+      toast.error("Inicia sessão para confirmares a marcação.");
+      return;
+    }
     const parsed = formSchema.safeParse({ name, phone, email, notes });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Verifica os dados.");
@@ -201,6 +205,12 @@ function BookPage() {
     }
     if (!serviceId || !time) return;
     setBusy(true);
+    // Keep the client account profile up to date with the details used to book.
+    void supabase
+      .from("profiles")
+      .update({ full_name: parsed.data.name, phone: parsed.data.phone })
+      .eq("id", user.id);
+
     try {
       const res = await createPublicBooking({
         data: {
