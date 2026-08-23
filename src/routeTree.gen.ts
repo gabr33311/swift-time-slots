@@ -18,6 +18,7 @@ import { Route as AuthenticatedBookingPageRouteImport } from './routes/_authenti
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedMinhasMarcacoesRouteImport } from './routes/_authenticated/minhas-marcacoes'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedShareRouteImport } from './routes/_authenticated/share'
@@ -71,6 +72,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMinhasMarcacoesRoute =
+  AuthenticatedMinhasMarcacoesRouteImport.update({
+    id: '/minhas-marcacoes',
+    path: '/minhas-marcacoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -111,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof AuthenticatedCalendarRoute
   '/customers': typeof AuthenticatedCustomersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/minhas-marcacoes': typeof AuthenticatedMinhasMarcacoesRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/share': typeof AuthenticatedShareRoute
@@ -127,6 +135,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof AuthenticatedCalendarRoute
   '/customers': typeof AuthenticatedCustomersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/minhas-marcacoes': typeof AuthenticatedMinhasMarcacoesRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/share': typeof AuthenticatedShareRoute
@@ -145,6 +154,7 @@ export interface FileRoutesById {
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/minhas-marcacoes': typeof AuthenticatedMinhasMarcacoesRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/share': typeof AuthenticatedShareRoute
@@ -163,6 +173,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/customers'
     | '/dashboard'
+    | '/minhas-marcacoes'
     | '/onboarding'
     | '/profile'
     | '/share'
@@ -179,6 +190,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/customers'
     | '/dashboard'
+    | '/minhas-marcacoes'
     | '/onboarding'
     | '/profile'
     | '/share'
@@ -196,6 +208,7 @@ export interface FileRouteTypes {
     | '/_authenticated/calendar'
     | '/_authenticated/customers'
     | '/_authenticated/dashboard'
+    | '/_authenticated/minhas-marcacoes'
     | '/_authenticated/onboarding'
     | '/_authenticated/profile'
     | '/_authenticated/share'
@@ -277,6 +290,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/minhas-marcacoes': {
+      id: '/_authenticated/minhas-marcacoes'
+      path: '/minhas-marcacoes'
+      fullPath: '/minhas-marcacoes'
+      preLoaderRoute: typeof AuthenticatedMinhasMarcacoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/onboarding': {
       id: '/_authenticated/onboarding'
       path: '/onboarding'
@@ -329,6 +349,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedMinhasMarcacoesRoute: typeof AuthenticatedMinhasMarcacoesRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedShareRoute: typeof AuthenticatedShareRoute
@@ -342,6 +363,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedCustomersRoute: AuthenticatedCustomersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedMinhasMarcacoesRoute: AuthenticatedMinhasMarcacoesRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedShareRoute: AuthenticatedShareRoute,
