@@ -65,11 +65,13 @@ export const getAvailableSlots = createServerFn({ method: "GET" })
 export const createPublicBooking = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => bookingSchema.parse(d))
   .handler(async ({ data }) => {
-    const { computeSlots, makeToken, hashIp, rateLimitExceeded, logSecurityEvent } =
+    const { computeSlots, makeToken, hashIp, rateLimitExceeded, logSecurityEvent, userIdFromAuthHeader } =
       await import("./booking.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    const userId = await userIdFromAuthHeader(getRequestHeader("authorization"));
     const ipHash = await hashIp(clientIp());
+
     if (await rateLimitExceeded(ipHash, data.phone)) {
       await logSecurityEvent("booking_rate_limited", ipHash, data.phone, data.businessId);
       return {
