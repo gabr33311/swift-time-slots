@@ -100,9 +100,13 @@ const formSchema = z.object({
 
 function BookPage() {
   const { business, services, staff } = Route.useLoaderData();
+  const { slug } = Route.useParams();
+  const { user, loading: authLoading } = useAuth();
   const [serviceId, setServiceId] = useState<string | null>(null);
   const [staffId, setStaffId] = useState<string | null>(null);
-  const [date, setDate] = useState(todayIn(business.timezone));
+  const today = todayIn(business.timezone);
+  const [date, setDate] = useState(today);
+  const [month, setMonth] = useState(() => today.slice(0, 7));
   const [time, setTime] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -117,10 +121,54 @@ function BookPage() {
     [staff, serviceId],
   );
 
-  const days = useMemo(
-    () => Array.from({ length: 14 }, (_, i) => addDays(todayIn(business.timezone), i)),
-    [business.timezone],
-  );
+  // Prefill from the signed-in client account (profile + auth email).
+  const { data: profile } = useQuery({
+    queryKey: ["client-profile", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, phone")
+        .eq("id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    if (!user) return;
+    setName((v) => v || profile?.full_name || (user.user_metadata?.["full_name"] as string) || "");
+    setPhone((v) => v || profile?.phone || "");
+    setEmail((v) => v || user.email || "");
+  }, [user, profile]);
+
+  const monthDays = useMemo(() => {
+    const [y, m] = month.split("-").map(Number);
+    const first = new Date(Date.UTC(y!, m! - 1, 1));
+    const daysInMonth = new Date(Date.UTC(y!, m!, 0)).getUTCDate();
+    const lead = (first.getUTCDay() + 6) % 7; // Monday-first grid
+    const cells: (string | null)[] = Array.from({ length: lead }, () => null);
+    for (let d = 1; d <= daysInMonth; d++) {
+      cells.push(`${month}-${String(d).padStart(2, "0")}`);
+    }
+    return cells;
+  }, [month]);
+
+  const monthLabel = useMemo(() => {
+    const [y, m] = month.split("-").map(Number);
+    const label = new Intl.DateTimeFormat("pt-PT", {
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    }).format(new Date(Date.UTC(y!, m! - 1, 1)));
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }, [month]);
+
+  function shiftMonth(delta: number) {
+    const [y, m] = month.split("-").map(Number);
+    const next = new Date(Date.UTC(y!, m! - 1 + delta, 1));
+    setMonth(`${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, "0")}`);
+  }
 
   const { data: slots, isFetching } = useQuery({
     queryKey: ["slots", business.id, serviceId, staffId, date],
@@ -130,6 +178,7 @@ function BookPage() {
         data: { businessId: business.id, serviceId: serviceId!, staffId, date },
       }),
   });
+
 
   // One view per browser session (refreshes don't count again).
   useEffect(() => {
