@@ -418,37 +418,61 @@ function BookPage() {
 
       {service && (
         <Section step={eligibleStaff.length > 1 ? 3 : 2} title="Escolhe o dia e a hora">
-          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2">
-            {days.map((d) => {
-              const dt = new Date(`${d}T12:00:00Z`);
-              return (
-                <button
-                  key={d}
-                  onClick={() => {
-                    setDate(d);
-                    setTime(null);
-                  }}
-                  className={cn(
-                    "flex w-16 shrink-0 flex-col items-center rounded-xl border border-border px-2 py-2.5 text-sm transition-colors",
-                    date === d && "border-primary bg-primary text-primary-foreground",
-                  )}
-                >
-                  <span className="text-xs uppercase">
-                    {new Intl.DateTimeFormat("pt-PT", {
-                      weekday: "short",
-                      timeZone: business.timezone,
-                    }).format(dt)}
-                  </span>
-                  <span className="text-base font-bold tabular-nums">
-                    {new Intl.DateTimeFormat("pt-PT", {
-                      day: "2-digit",
-                      timeZone: business.timezone,
-                    }).format(dt)}
-                  </span>
-                </button>
-              );
-            })}
+          <div className="rounded-2xl border border-border p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Mês anterior"
+                disabled={month <= today.slice(0, 7)}
+                onClick={() => shiftMonth(-1)}
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+              <span className="text-sm font-bold">{monthLabel}</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Mês seguinte"
+                onClick={() => shiftMonth(1)}
+              >
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
+            <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-muted-foreground">
+              {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map((d) => (
+                <span key={d}>{d}</span>
+              ))}
+            </div>
+            <div className="mt-1 grid grid-cols-7 gap-1">
+              {monthDays.map((d, i) => {
+                if (!d) return <span key={`e${i}`} />;
+                const past = d < today;
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    disabled={past}
+                    onClick={() => {
+                      setDate(d);
+                      setTime(null);
+                    }}
+                    className={cn(
+                      "flex h-10 items-center justify-center rounded-xl text-sm font-bold tabular-nums transition-colors",
+                      past && "text-muted-foreground/40",
+                      !past && date !== d && "hover:bg-accent",
+                      date === d && "bg-primary text-primary-foreground",
+                    )}
+                  >
+                    {Number(d.slice(-2))}
+                  </button>
+                );
+              })}
+            </div>
           </div>
+
 
           <div className="mt-4">
             {isFetching ? (
