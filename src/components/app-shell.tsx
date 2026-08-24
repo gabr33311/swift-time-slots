@@ -1,6 +1,6 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { LayoutDashboard, CalendarDays, Users, Store, LogOut, Share2 } from "lucide-react";
-import { useState, type ComponentType, type ReactNode } from "react";
+import { type ComponentType, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -26,19 +26,10 @@ function PopIcon({
   Icon: ComponentType<{ className?: string | undefined; strokeWidth?: number | undefined }>;
   className?: string;
 }) {
-  const [pop, setPop] = useState(0);
-  return (
-    <span
-      onPointerDown={() => setPop((n) => n + 1)}
-      onClick={() => setPop((n) => n + 1)}
-      className="inline-flex"
-    >
-      <span key={pop} className={cn("inline-flex", pop > 0 && "animate-icon-pop")}>
-        <Icon className={className} strokeWidth={2.5} />
-      </span>
-    </span>
-  );
+  // Icons stay static — only functional colour transitions remain.
+  return <Icon className={className} strokeWidth={2.5} />;
 }
+
 
 function NavList() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -74,7 +65,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   async function signOut() {
     await supabase.auth.signOut();
-    navigate({ to: "/auth", search: { mode: undefined } });
+    navigate({ to: "/auth", search: { mode: undefined, next: undefined } });
   }
 
   return (

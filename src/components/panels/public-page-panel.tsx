@@ -126,7 +126,7 @@ export function PublicPagePanel() {
           />
           <ToggleRow
             title="Mostrar contactos"
-            description="Morada, telemóvel e Instagram."
+            description="Morada, telemóvel e Instagram. Estes textos e informações podem ser personalizados na secção Negócio (Perfil → Negócio)."
             checked={showContacts}
             disabled={!edit}
             onChange={setShowContacts}

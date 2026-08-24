@@ -55,10 +55,10 @@ function Landing() {
             {t("home.subtitle")}
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link to="/auth" search={{ mode: "register" }}>
+            <Link to="/auth" search={{ mode: "register", next: undefined }}>
               <Button size="lg">{t("home.cta.create")}</Button>
             </Link>
-            <Link to="/auth" search={{ mode: undefined }}>
+            <Link to="/auth" search={{ mode: undefined, next: undefined }}>
               <Button size="lg" variant="outline">
                 {t("home.cta.have")}
               </Button>
@@ -81,7 +81,7 @@ function Landing() {
         </section>
 
         <section className="mx-auto max-w-3xl px-5 pb-24 text-center animate-enter">
-          <Link to="/auth" search={{ mode: "register" }} className="inline-block">
+          <Link to="/auth" search={{ mode: "register", next: undefined }} className="inline-block">
             <Button size="lg">{t("home.cta.start")}</Button>
           </Link>
         </section>
