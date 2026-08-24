@@ -74,7 +74,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   async function signOut() {
     await supabase.auth.signOut();
-    navigate({ to: "/auth", search: { mode: undefined } });
+    navigate({ to: "/auth", search: { mode: undefined, next: undefined } });
   }
 
   return (
