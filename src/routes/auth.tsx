@@ -13,7 +13,13 @@ import { CalendarCheck, Loader2, MailCheck, Check, X } from "lucide-react";
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>) => ({
     mode: search["mode"] === "register" ? ("register" as const) : undefined,
+    // Same-origin path to return to after signing in (e.g. a public booking page).
+    next:
+      typeof search["next"] === "string" && (search["next"] as string).startsWith("/")
+        ? (search["next"] as string)
+        : undefined,
   }),
+
   head: () => ({
     meta: [
       { title: "Entrar — Schedivo" },
