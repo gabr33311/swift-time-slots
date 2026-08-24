@@ -140,7 +140,7 @@ function AuthPage() {
           email: parsed.data.email,
           password: parsed.data.password,
           options: {
-            emailRedirectTo: `${window.location.origin}/onboarding`,
+            emailRedirectTo: `${window.location.origin}${next ?? "/onboarding"}`,
             data: { full_name: name.trim() },
           },
         });
@@ -151,14 +151,14 @@ function AuthPage() {
           return;
         }
         toast.success("Conta criada. Vamos configurar o teu negócio.");
-        navigate({ to: "/onboarding" });
+        goAfterAuth("/onboarding");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: parsed.data.email,
           password: parsed.data.password,
         });
         if (error) throw error;
-        navigate({ to: "/dashboard" });
+        goAfterAuth();
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
@@ -188,7 +188,7 @@ function AuthPage() {
       const { error } = await supabase.auth.resend({
         type: "signup",
         email: confirmSent,
-        options: { emailRedirectTo: `${window.location.origin}/onboarding` },
+        options: { emailRedirectTo: `${window.location.origin}${next ?? "/onboarding"}` },
       });
       if (error) throw error;
       toast.success("Email de confirmação reenviado.");
