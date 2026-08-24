@@ -60,7 +60,7 @@ const PASSWORD_RULES = [
 
 function AuthPage() {
   const navigate = useNavigate();
-  const { mode: initialMode } = Route.useSearch();
+  const { mode: initialMode, next } = Route.useSearch();
   const [mode, setMode] = useState<"login" | "register" | "forgot">(initialMode ?? "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -68,34 +68,46 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [confirmSent, setConfirmSent] = useState<string | null>(null);
 
+  // Returns the signed-in user to where they came from, or the pro dashboard.
+  function goAfterAuth(fallback: "/dashboard" | "/onboarding" = "/dashboard") {
+    if (next) {
+      navigate({ href: next });
+      return;
+    }
+    navigate({ to: fallback });
+  }
+
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) navigate({ to: "/dashboard" });
+      if (session) goAfterAuth();
     });
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard" });
+      if (data.session) goAfterAuth();
     });
     return () => sub.subscription.unsubscribe();
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate, next]);
 
   async function signInWithGoogle() {
     setBusy(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/auth`,
+        redirect_uri: `${window.location.origin}/auth${next ? `?next=${encodeURIComponent(next)}` : ""}`,
       });
       if (result.error) {
         toast.error("Não foi possível entrar com o Google.");
         return;
       }
       if (result.redirected) return;
-      navigate({ to: "/dashboard" });
+      goAfterAuth();
     } catch {
       toast.error("Não foi possível entrar com o Google.");
     } finally {
       setBusy(false);
     }
   }
+
+
 
 
   async function submit(e: React.FormEvent) {
