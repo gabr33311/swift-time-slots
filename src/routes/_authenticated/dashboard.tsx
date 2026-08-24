@@ -154,7 +154,11 @@ function Dashboard() {
                   <p className="truncate text-sm font-normal leading-snug text-muted-foreground">
                     {a.service_name}
                   </p>
+                  <p className="truncate text-xs font-bold leading-snug text-muted-foreground">
+                    {formatDateLong(a.starts_at, business!.timezone)}
+                  </p>
                 </div>
+
                 <div className="flex shrink-0 flex-col items-end gap-1.5">
                   <span className="text-sm font-bold tabular-nums">
                     {formatPrice(a.price_cents, business!.currency)}
