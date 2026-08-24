@@ -511,50 +511,75 @@ function BookPage() {
 
       {service && time && (
         <Section step={eligibleStaff.length > 1 ? 4 : 3} title="Os teus dados">
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="n">Nome</Label>
-              <Input id="n" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
+          {authLoading ? (
+            <Skeleton className="h-24 w-full rounded-2xl" />
+          ) : !user ? (
+            <div className="rounded-2xl border border-border p-5 text-center">
+              <div className="mx-auto mb-3 flex size-11 items-center justify-center rounded-full bg-primary/12 text-primary">
+                <LogIn className="size-5" />
+              </div>
+              <p className="text-[15px] font-bold">Inicia sessão para confirmar</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Com conta guardas os teus dados e podes consultar ou cancelar marcações.
+              </p>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
+                <Link
+                  to="/auth"
+                  search={{ mode: undefined, next: `/book/${slug}` }}
+                  className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground"
+                >
+                  Entrar
+                </Link>
+                <Link
+                  to="/auth"
+                  search={{ mode: "register", next: `/book/${slug}` }}
+                  className="inline-flex items-center justify-center rounded-full border border-border px-5 py-2.5 text-sm font-bold"
+                >
+                  Criar conta
+                </Link>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="p">Telemóvel</Label>
-              <Input
-                id="p"
-                inputMode="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                maxLength={24}
-                placeholder="912 345 678"
-              />
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="n">Nome</Label>
+                <Input
+                  id="n"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={80}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="p">Telemóvel</Label>
+                <Input
+                  id="p"
+                  inputMode="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  maxLength={24}
+                  placeholder="912 345 678"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="obs">Notas (opcional)</Label>
+                <Textarea
+                  id="obs"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  maxLength={500}
+                />
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="e">Email (opcional)</Label>
-              <Input
-                id="e"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                maxLength={160}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="obs">Notas (opcional)</Label>
-              <Textarea
-                id="obs"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                maxLength={500}
-              />
-            </div>
-          </div>
+          )}
         </Section>
       )}
 
-      {service && time && (
+      {service && time && user && (
         <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 px-5 py-3 backdrop-blur">
           <div className="mx-auto flex max-w-2xl items-center gap-4">
             <div className="min-w-0 flex-1 text-sm">
-              <p className="truncate font-medium">
+              <p className="truncate font-bold">
                 {service.name} · {time}
               </p>
               <p className="truncate text-muted-foreground">
@@ -567,6 +592,7 @@ function BookPage() {
           </div>
         </div>
       )}
+
 
       <p className="mt-10 text-center text-xs text-muted-foreground">
         Cancelamento gratuito até {business.cancellation_hours}h antes.
