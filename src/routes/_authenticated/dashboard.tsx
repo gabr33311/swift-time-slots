@@ -7,7 +7,7 @@ import { EmptyState, LoadingRows, StatusBadge } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { useAuth } from "@/hooks/use-auth";
-import { displayCustomerName, formatPrice, formatTime, greetingPt } from "@/lib/format";
+import { displayCustomerName, formatPrice, formatTime, formatDateLong, greetingPt } from "@/lib/format";
 import { zonedToUtc, todayIn } from "@/lib/time";
 import { CalendarCheck, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
