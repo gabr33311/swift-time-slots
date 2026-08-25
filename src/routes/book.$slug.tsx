@@ -370,9 +370,12 @@ function BookPage() {
                 setTime(null);
               }}
               className={cn(
-                "surface surface-hover flex items-center justify-between gap-4 p-4 text-left transition-all",
-                serviceId === s.id && "ring-2 ring-primary",
+                "surface surface-hover flex items-center justify-between gap-4 border-2 p-4 text-left transition-all",
+                serviceId === s.id
+                  ? "border-primary bg-primary/5 shadow-lift"
+                  : "border-transparent",
               )}
+
             >
               <span className="min-w-0">
                 <span className="block text-sm font-bold">{s.name}</span>
