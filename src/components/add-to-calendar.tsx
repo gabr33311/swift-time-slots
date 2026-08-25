@@ -1,36 +1,42 @@
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   downloadIcs,
   googleCalendarUrl,
   outlookCalendarUrl,
   type CalendarEvent,
 } from "@/lib/calendar-links";
-import { CalendarPlus, Download } from "lucide-react";
+import { CalendarPlus, ChevronDown } from "lucide-react";
 
+/** Single compact menu with every calendar export option. */
 export function AddToCalendar({ event }: { event: CalendarEvent }) {
   return (
-    <div className="mt-6 border-t border-border pt-5 text-left">
-      <p className="flex items-center gap-2 text-sm font-bold">
-        <CalendarPlus className="size-4 text-primary" /> Adicionar ao calendário
-      </p>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        <a href={googleCalendarUrl(event)} target="_blank" rel="noreferrer">
-          <Button variant="outline" className="w-full">
-            Google Calendar
-          </Button>
-        </a>
-        <a href={outlookCalendarUrl(event)} target="_blank" rel="noreferrer">
-          <Button variant="outline" className="w-full">
-            Outlook Calendar
-          </Button>
-        </a>
-        <Button variant="outline" onClick={() => downloadIcs(event)}>
-          Apple Calendar
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" className="mt-2 w-full">
+          <CalendarPlus className="mr-2 size-4" /> Adicionar ao calendário
+          <ChevronDown className="ml-2 size-4" />
         </Button>
-        <Button variant="outline" onClick={() => downloadIcs(event)}>
-          <Download className="mr-2 size-4" /> Ficheiro .ics
-        </Button>
-      </div>
-    </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="center" className="w-56">
+        <DropdownMenuItem
+          onClick={() => window.open(googleCalendarUrl(event), "_blank", "noopener")}
+        >
+          Google Calendar
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => downloadIcs(event)}>Apple Calendar</DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => window.open(outlookCalendarUrl(event), "_blank", "noopener")}
+        >
+          Outlook
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => downloadIcs(event)}>Ficheiro .ics</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
