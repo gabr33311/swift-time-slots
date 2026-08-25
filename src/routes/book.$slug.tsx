@@ -291,9 +291,9 @@ function BookPage() {
 
   return (
     <main className="animate-enter mx-auto max-w-2xl px-5 pb-24 pt-8">
-      <header className="mb-8">
-        <div className="flex items-center gap-4">
-          <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-lg font-bold text-primary-foreground">
+      <header className="surface mb-6 p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-base font-bold text-primary-foreground">
             {business.logo_url ? (
               <img
                 src={business.logo_url}
@@ -304,61 +304,60 @@ function BookPage() {
               initials(business.name)
             )}
           </div>
-          <div className="min-w-0">
-            <h1 className="truncate text-2xl font-bold tracking-tight">{business.name}</h1>
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-lg font-bold leading-tight tracking-tight">
+              {business.name}
+            </h1>
             {business.description && (
-              <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
+              <p className="mt-0.5 line-clamp-1 text-[13px] text-muted-foreground">
                 {business.description}
               </p>
             )}
+            {business.show_contacts && (
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] font-medium text-muted-foreground">
+                {business.address && (
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="size-3.5" /> {business.address}
+                    {business.city ? `, ${business.city}` : ""}
+                  </span>
+                )}
+                {business.phone && (
+                  <a href={`tel:${business.phone}`} className="inline-flex items-center gap-1">
+                    <Phone className="size-3.5" /> {business.phone}
+                  </a>
+                )}
+                {business.instagram && (
+                  <a
+                    href={`https://instagram.com/${business.instagram.replace("@", "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1"
+                  >
+                    <Instagram className="size-3.5" /> {business.instagram}
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         </div>
-        {business.show_contacts && (
-          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
-            {business.address && (
-              <span className="inline-flex items-center gap-1.5">
-                <MapPin className="size-4" /> {business.address}
-                {business.city ? `, ${business.city}` : ""}
-              </span>
-            )}
-            {business.phone && (
-              <a href={`tel:${business.phone}`} className="inline-flex items-center gap-1.5">
-                <Phone className="size-4" /> {business.phone}
-              </a>
-            )}
-            {business.instagram && (
-              <a
-                href={`https://instagram.com/${business.instagram.replace("@", "")}`}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5"
-              >
-                <Instagram className="size-4" /> {business.instagram}
-              </a>
-            )}
-          </div>
-        )}
 
         {business.show_team && staff.length > 0 && (
-          <div className="mt-5 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border pt-3">
             {staff.map((p) => (
               <span
                 key={p.id}
-                className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs font-bold"
+                className="inline-flex items-center gap-1.5 rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold text-accent-foreground"
               >
-                <span className="flex size-6 items-center justify-center rounded-full bg-accent text-[10px] text-accent-foreground">
-                  {initials(p.name)}
-                </span>
                 {p.name}
                 {p.specialty && (
-                  <span className="font-normal text-muted-foreground">· {p.specialty}</span>
+                  <span className="font-medium text-muted-foreground">· {p.specialty}</span>
                 )}
               </span>
             ))}
           </div>
         )}
-
       </header>
+
 
       <Section step={1} title="Escolhe o serviço">
         <div className="grid gap-2">
@@ -371,9 +370,12 @@ function BookPage() {
                 setTime(null);
               }}
               className={cn(
-                "surface surface-hover flex items-center justify-between gap-4 p-4 text-left transition-all",
-                serviceId === s.id && "ring-2 ring-primary",
+                "surface surface-hover flex items-center justify-between gap-4 border-2 p-4 text-left transition-all",
+                serviceId === s.id
+                  ? "border-primary bg-primary/5 shadow-lift"
+                  : "border-transparent",
               )}
+
             >
               <span className="min-w-0">
                 <span className="block text-sm font-bold">{s.name}</span>
@@ -460,11 +462,12 @@ function BookPage() {
                       setTime(null);
                     }}
                     className={cn(
-                      "flex h-10 items-center justify-center rounded-xl text-sm font-bold tabular-nums transition-colors",
+                      "mx-auto flex size-10 items-center justify-center rounded-full text-sm font-bold tabular-nums transition-colors",
                       past && "text-muted-foreground/40",
                       !past && date !== d && "hover:bg-accent",
-                      date === d && "bg-primary text-primary-foreground",
+                      date === d && "bg-primary text-white shadow-lift",
                     )}
+
                   >
                     {Number(d.slice(-2))}
                   </button>
