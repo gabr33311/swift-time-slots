@@ -462,11 +462,12 @@ function BookPage() {
                       setTime(null);
                     }}
                     className={cn(
-                      "flex h-10 items-center justify-center rounded-xl text-sm font-bold tabular-nums transition-colors",
+                      "mx-auto flex size-10 items-center justify-center rounded-full text-sm font-bold tabular-nums transition-colors",
                       past && "text-muted-foreground/40",
                       !past && date !== d && "hover:bg-accent",
-                      date === d && "bg-primary text-primary-foreground",
+                      date === d && "bg-primary text-white shadow-lift",
                     )}
+
                   >
                     {Number(d.slice(-2))}
                   </button>
