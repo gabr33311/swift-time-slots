@@ -156,39 +156,52 @@ function Dashboard() {
             }
           />
         ) : (
-          <ul className="space-y-2.5">
-            {dayData!.upcoming.map((a, i) => (
-              <li key={a.id} className="surface surface-hover flex items-center gap-3.5 p-4">
-                <span className="flex w-14 shrink-0 flex-col items-center rounded-xl bg-accent px-2 py-2 text-sm font-bold tabular-nums text-primary">
-                  {formatTime(a.starts_at, business!.timezone)}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] font-bold leading-snug">
-                    {displayCustomerName(a.customer_name, null, i + 1)}
-                  </p>
-                  <p className="truncate text-sm font-normal leading-snug text-muted-foreground">
-                    {a.service_name}
-                  </p>
-                  <p className="truncate text-xs font-bold leading-snug text-muted-foreground">
-                    {formatDateLong(a.starts_at, business!.timezone)}
-                  </p>
-                </div>
+          <div className="space-y-5">
+            {groupedUpcoming.map(([day, items], gi) => (
+              <DayGroup
+                key={day}
+                dayLabel={
+                  day === today
+                    ? "Hoje"
+                    : formatDateLong(`${day}T12:00:00Z`, business!.timezone)
+                }
+                count={items.length}
+                collapsibleDefaultOpen={gi === 0}
+              >
+                <ul className="space-y-2.5">
+                  {items.map((a, i) => (
+                    <li key={a.id} className="surface surface-hover flex items-center gap-3.5 p-4">
+                      <span className="flex w-14 shrink-0 flex-col items-center rounded-xl bg-accent px-2 py-2 text-sm font-bold tabular-nums text-primary">
+                        {formatTime(a.starts_at, business!.timezone)}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[15px] font-bold leading-snug">
+                          {displayCustomerName(a.customer_name, null, i + 1)}
+                        </p>
+                        <p className="truncate text-sm font-normal leading-snug text-muted-foreground">
+                          {a.service_name}
+                        </p>
+                      </div>
 
-                <div className="flex shrink-0 flex-col items-end gap-1.5">
-                  <span className="text-sm font-bold tabular-nums">
-                    {formatPrice(a.price_cents, business!.currency)}
-                  </span>
-                  <StatusBadge status={a.status} />
-                </div>
-                <AppointmentActions
-                  id={a.id}
-                  status={a.status}
-                  customerName={displayCustomerName(a.customer_name, null, i + 1)}
-                />
-              </li>
+                      <div className="flex shrink-0 flex-col items-end gap-1.5">
+                        <span className="text-sm font-bold tabular-nums">
+                          {formatPrice(a.price_cents, business!.currency)}
+                        </span>
+                        <StatusBadge status={a.status} />
+                      </div>
+                      <AppointmentActions
+                        id={a.id}
+                        status={a.status}
+                        customerName={displayCustomerName(a.customer_name, null, i + 1)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </DayGroup>
             ))}
-          </ul>
+          </div>
         )}
+
       </section>
 
       {business && (
