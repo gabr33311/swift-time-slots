@@ -9,7 +9,7 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { useAuth } from "@/hooks/use-auth";
 import { displayCustomerName, formatPrice, formatTime, formatDateLong, greetingPt } from "@/lib/format";
 import { zonedToUtc, todayIn } from "@/lib/time";
-import { CalendarCheck, CalendarDays } from "lucide-react";
+import { CalendarCheck, CalendarDays, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
 import { InstallPrompt } from "@/components/install-prompt";
@@ -77,6 +77,24 @@ function Dashboard() {
     pending: active.filter((a) => a.status === "pending").length,
     completed: active.filter((a) => a.status === "completed").length,
   };
+
+  const groupedUpcoming = (() => {
+    const fmt = (iso: string) =>
+      new Intl.DateTimeFormat("en-CA", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        timeZone: business?.timezone ?? "Europe/Lisbon",
+      }).format(new Date(iso));
+    const map = new Map<string, typeof dayData.upcoming>();
+    for (const a of dayData?.upcoming ?? []) {
+      const key = fmt(a.starts_at);
+      const list = map.get(key) ?? [];
+      list.push(a);
+      map.set(key, list);
+    }
+    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
+  })();
 
   return (
     <AppShell>
@@ -208,5 +226,38 @@ function Dashboard() {
         <NewAppointmentDialog business={business} open={newOpen} onOpenChange={setNewOpen} />
       )}
     </AppShell>
+  );
+}
+
+function DayGroup({
+  dayLabel,
+  count,
+  collapsibleDefaultOpen,
+  children,
+}: {
+  dayLabel: string;
+  count: number;
+  collapsibleDefaultOpen: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(collapsibleDefaultOpen);
+  return (
+    <section>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="mb-2.5 flex w-full items-center gap-2 px-1 text-left"
+      >
+        <span className="font-display text-sm font-bold uppercase capitalize tracking-[0.05em] text-muted-foreground">
+          {dayLabel}
+        </span>
+        <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold tabular-nums text-primary">
+          {count}
+        </span>
+        <ChevronDown
+          className={cn("ml-auto size-4 text-muted-foreground transition-transform", !open && "-rotate-90")}
+        />
+      </button>
+      {open && children}
+    </section>
   );
 }
