@@ -516,8 +516,7 @@ function BookPage() {
       )}
 
       {service && time && (
-        <Section step={eligibleStaff.length > 1 ? 4 : 3} title="Os teus dados">
-      {service && time && (
+
         <Section
           step={eligibleStaff.length > 1 ? 4 : 3}
           title={user ? "Os teus dados" : "A tua conta"}
