@@ -6,6 +6,9 @@ import { toast } from "sonner";
 import { getPublicBusiness, getAvailableSlots, createPublicBooking } from "@/lib/booking.functions";
 import { trackPageView } from "@/lib/analytics.functions";
 import { AddToCalendar } from "@/components/add-to-calendar";
+import { ClientAuthStep } from "@/components/client-auth-step";
+import { maskPhonePt } from "@/lib/phone";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +25,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Clock,
   Instagram,
   LogIn,
@@ -491,83 +495,83 @@ function BookPage() {
                 <p className="text-sm text-muted-foreground">Experimenta outro dia.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                {slots!.map((s) => (
-                  <button
-                    key={s.time}
-                    onClick={() => setTime(s.time)}
-                    className={cn(
-                      "rounded-lg border border-border py-2.5 text-sm font-bold tabular-nums transition-colors",
-                      time === s.time
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "hover:bg-accent",
-                    )}
-                  >
-                    {s.time}
-                  </button>
-                ))}
+              <div className="space-y-3">
+                {(
+                  [
+                    ["Manhã", slots!.filter((s) => Number(s.time.slice(0, 2)) < 13)],
+                    ["Tarde", slots!.filter((s) => Number(s.time.slice(0, 2)) >= 13)],
+                  ] as const
+                ).map(([label, group]) =>
+                  group.length === 0 ? null : (
+                    <SlotGroup
+                      key={label}
+                      label={label}
+                      times={group.map((s) => s.time)}
+                      selected={time}
+                      onSelect={setTime}
+                    />
+                  ),
+                )}
               </div>
             )}
+
           </div>
         </Section>
       )}
 
       {service && time && (
-        <Section step={eligibleStaff.length > 1 ? 4 : 3} title="Os teus dados">
+
+        <Section
+          step={eligibleStaff.length > 1 ? 4 : 3}
+          title={user ? "Os teus dados" : "A tua conta"}
+        >
           {authLoading ? (
             <Skeleton className="h-24 w-full rounded-2xl" />
           ) : !user ? (
-            <div className="rounded-2xl border border-border p-5 text-center">
-              <div className="mx-auto mb-3 flex size-11 items-center justify-center rounded-full bg-primary/12 text-primary">
-                <LogIn className="size-5" />
-              </div>
-              <p className="text-[15px] font-bold">Inicia sessão para confirmar</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Com conta guardas os teus dados e podes consultar ou cancelar marcações.
-              </p>
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
-                <Link
-                  to="/auth"
-                  search={{ mode: undefined, next: `/book/${slug}` }}
-                  className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground"
-                >
-                  Entrar
-                </Link>
-                <Link
-                  to="/auth"
-                  search={{ mode: "register", next: `/book/${slug}` }}
-                  className="inline-flex items-center justify-center rounded-full border border-border px-5 py-2.5 text-sm font-bold"
-                >
-                  Criar conta
-                </Link>
-              </div>
+            <div className="space-y-2">
+              <ClientAuthStep onDone={() => {}} />
+              <Link
+                to="/auth"
+                search={{ mode: undefined, next: `/book/${slug}` }}
+                className="flex items-center justify-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground"
+              >
+                <LogIn className="size-3.5" /> Entrar com palavra-passe ou Google
+              </Link>
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="n">Nome</Label>
+            <div className="space-y-2.5">
+              <div className="space-y-1">
+                <Label htmlFor="n" className="text-xs font-bold">
+                  Nome
+                </Label>
                 <Input
                   id="n"
+                  className="h-9"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   maxLength={80}
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="p">Telemóvel</Label>
+              <div className="space-y-1">
+                <Label htmlFor="p" className="text-xs font-bold">
+                  Telemóvel
+                </Label>
                 <Input
                   id="p"
+                  className="h-9"
                   inputMode="tel"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  maxLength={24}
+                  onChange={(e) => setPhone(maskPhonePt(e.target.value))}
                   placeholder="912 345 678"
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="obs">Notas (opcional)</Label>
+              <div className="space-y-1">
+                <Label htmlFor="obs" className="text-xs font-bold">
+                  Notas (opcional)
+                </Label>
                 <Textarea
                   id="obs"
+                  className="min-h-16"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   maxLength={500}
@@ -579,6 +583,7 @@ function BookPage() {
       )}
 
       {service && time && user && (
+
         <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 px-5 py-3 backdrop-blur">
           <div className="mx-auto flex max-w-2xl items-center gap-4">
             <div className="min-w-0 flex-1 text-sm">
@@ -651,5 +656,54 @@ function ChoiceChip({
     >
       {children}
     </button>
+  );
+}
+
+function SlotGroup({
+  label,
+  times,
+  selected,
+  onSelect,
+}: {
+  label: string;
+  times: string[];
+  selected: string | null;
+  onSelect: (t: string) => void;
+}) {
+  const [open, setOpen] = useState(true);
+  return (
+    <div className="rounded-2xl border border-border p-3">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between text-sm font-bold"
+      >
+        <span className="flex items-center gap-2">
+          {label}
+          <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold text-primary">
+            {times.length}
+          </span>
+        </span>
+        <ChevronDown className={cn("size-4 transition-transform", !open && "-rotate-90")} />
+      </button>
+      {open && (
+        <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
+          {times.map((t) => (
+            <button
+              key={t}
+              onClick={() => onSelect(t)}
+              className={cn(
+                "rounded-xl border py-2.5 text-sm font-bold tabular-nums transition-colors",
+                selected === t
+                  ? "border-primary bg-primary text-white"
+                  : "border-border hover:bg-accent",
+              )}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

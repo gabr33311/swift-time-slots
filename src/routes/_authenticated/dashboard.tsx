@@ -9,7 +9,7 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { useAuth } from "@/hooks/use-auth";
 import { displayCustomerName, formatPrice, formatTime, formatDateLong, greetingPt } from "@/lib/format";
 import { zonedToUtc, todayIn } from "@/lib/time";
-import { CalendarCheck, CalendarDays } from "lucide-react";
+import { CalendarCheck, CalendarDays, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
 import { InstallPrompt } from "@/components/install-prompt";
@@ -62,7 +62,8 @@ function Dashboard() {
         .gte("starts_at", new Date().toISOString())
         .in("status", ["pending", "confirmed"])
         .order("starts_at")
-        .limit(6);
+        .limit(60);
+
       return { appts: appts ?? [], upcoming: upcoming ?? [] };
     },
   });
@@ -77,6 +78,24 @@ function Dashboard() {
     completed: active.filter((a) => a.status === "completed").length,
   };
 
+  const groupedUpcoming = (() => {
+    const fmt = (iso: string) =>
+      new Intl.DateTimeFormat("en-CA", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        timeZone: business?.timezone ?? "Europe/Lisbon",
+      }).format(new Date(iso));
+    const map = new Map<string, NonNullable<typeof dayData>["upcoming"]>();
+    for (const a of dayData?.upcoming ?? []) {
+      const key = fmt(a.starts_at);
+      const list = map.get(key) ?? [];
+      list.push(a);
+      map.set(key, list);
+    }
+    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
+  })();
+
   return (
     <AppShell>
       <div className="mb-6">
@@ -87,31 +106,45 @@ function Dashboard() {
         <p className="mt-1 text-sm font-normal text-muted-foreground">Aqui está o teu dia.</p>
       </div>
 
-      <Link to="/calendar" className="surface surface-hover block p-5">
+      <div className="surface p-5">
         <div className="flex items-center justify-between gap-3">
-          <p className="font-display text-base font-bold">Marcações de hoje</p>
+          <Link to="/calendar" className="font-display text-base font-bold hover:text-primary">
+            Marcações de hoje
+          </Link>
           <span className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground">
             <CalendarDays className="size-4" />
-            {(dayData?.appts.length ?? 0)}
+            {dayData?.appts.length ?? 0}
           </span>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: "Confirmadas", value: counts.confirmed, dot: "bg-success" },
-            { label: "Pendentes", value: counts.pending, dot: "bg-warning" },
-            { label: "Canceladas", value: cancelled, dot: "bg-destructive" },
-            { label: "Concluídas", value: counts.completed, dot: "bg-muted-foreground" },
+            { label: "Confirmadas", value: counts.confirmed, dot: "bg-success", to: "/calendar" },
+            { label: "Pendentes", value: counts.pending, dot: "bg-warning", to: "/pendentes" },
+            { label: "Canceladas", value: cancelled, dot: "bg-destructive", to: "/pendentes" },
+            {
+              label: "Concluídas",
+              value: counts.completed,
+              dot: "bg-muted-foreground",
+              to: "/appointments",
+            },
           ].map((s) => (
-            <div key={s.label} className="rounded-2xl bg-muted/50 p-3">
-              <span className="flex items-center gap-1.5 text-[12px] font-bold text-muted-foreground">
-                <span className={cn("size-2 rounded-full", s.dot)} />
+            <Link
+              key={s.label}
+              to={s.to}
+              className="surface-hover flex flex-col rounded-2xl border border-border bg-muted/40 p-3"
+            >
+              <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.05em] text-foreground/70">
+                <span className={cn("size-2.5 rounded-full", s.dot)} />
                 {s.label}
               </span>
-              <p className="mt-1 text-2xl font-bold tabular-nums">{s.value}</p>
-            </div>
+              <p className="font-display mt-2 text-[28px] font-bold leading-none tabular-nums">
+                {s.value}
+              </p>
+            </Link>
           ))}
         </div>
-      </Link>
+      </div>
+
 
 
       <InstallPrompt />
@@ -141,44 +174,90 @@ function Dashboard() {
             }
           />
         ) : (
-          <ul className="space-y-2.5">
-            {dayData!.upcoming.map((a, i) => (
-              <li key={a.id} className="surface surface-hover flex items-center gap-3.5 p-4">
-                <span className="flex w-14 shrink-0 flex-col items-center rounded-xl bg-accent px-2 py-2 text-sm font-bold tabular-nums text-primary">
-                  {formatTime(a.starts_at, business!.timezone)}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] font-bold leading-snug">
-                    {displayCustomerName(a.customer_name, null, i + 1)}
-                  </p>
-                  <p className="truncate text-sm font-normal leading-snug text-muted-foreground">
-                    {a.service_name}
-                  </p>
-                  <p className="truncate text-xs font-bold leading-snug text-muted-foreground">
-                    {formatDateLong(a.starts_at, business!.timezone)}
-                  </p>
-                </div>
+          <div className="space-y-5">
+            {groupedUpcoming.map(([day, items], gi) => (
+              <DayGroup
+                key={day}
+                dayLabel={
+                  day === today
+                    ? "Hoje"
+                    : formatDateLong(`${day}T12:00:00Z`, business!.timezone)
+                }
+                count={items.length}
+                collapsibleDefaultOpen={gi === 0}
+              >
+                <ul className="space-y-2.5">
+                  {items.map((a, i) => (
+                    <li key={a.id} className="surface surface-hover flex items-center gap-3.5 p-4">
+                      <span className="flex w-14 shrink-0 flex-col items-center rounded-xl bg-accent px-2 py-2 text-sm font-bold tabular-nums text-primary">
+                        {formatTime(a.starts_at, business!.timezone)}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[15px] font-bold leading-snug">
+                          {displayCustomerName(a.customer_name, null, i + 1)}
+                        </p>
+                        <p className="truncate text-sm font-normal leading-snug text-muted-foreground">
+                          {a.service_name}
+                        </p>
+                      </div>
 
-                <div className="flex shrink-0 flex-col items-end gap-1.5">
-                  <span className="text-sm font-bold tabular-nums">
-                    {formatPrice(a.price_cents, business!.currency)}
-                  </span>
-                  <StatusBadge status={a.status} />
-                </div>
-                <AppointmentActions
-                  id={a.id}
-                  status={a.status}
-                  customerName={displayCustomerName(a.customer_name, null, i + 1)}
-                />
-              </li>
+                      <div className="flex shrink-0 flex-col items-end gap-1.5">
+                        <span className="text-sm font-bold tabular-nums">
+                          {formatPrice(a.price_cents, business!.currency)}
+                        </span>
+                        <StatusBadge status={a.status} />
+                      </div>
+                      <AppointmentActions
+                        id={a.id}
+                        status={a.status}
+                        customerName={displayCustomerName(a.customer_name, null, i + 1)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </DayGroup>
             ))}
-          </ul>
+          </div>
         )}
+
       </section>
 
       {business && (
         <NewAppointmentDialog business={business} open={newOpen} onOpenChange={setNewOpen} />
       )}
     </AppShell>
+  );
+}
+
+function DayGroup({
+  dayLabel,
+  count,
+  collapsibleDefaultOpen,
+  children,
+}: {
+  dayLabel: string;
+  count: number;
+  collapsibleDefaultOpen: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(collapsibleDefaultOpen);
+  return (
+    <section>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="mb-2.5 flex w-full items-center gap-2 px-1 text-left"
+      >
+        <span className="font-display text-sm font-bold uppercase capitalize tracking-[0.05em] text-muted-foreground">
+          {dayLabel}
+        </span>
+        <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold tabular-nums text-primary">
+          {count}
+        </span>
+        <ChevronDown
+          className={cn("ml-auto size-4 text-muted-foreground transition-transform", !open && "-rotate-90")}
+        />
+      </button>
+      {open && children}
+    </section>
   );
 }

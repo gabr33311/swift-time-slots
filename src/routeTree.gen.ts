@@ -20,6 +20,7 @@ import { Route as AuthenticatedCustomersRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedMinhasMarcacoesRouteImport } from './routes/_authenticated/minhas-marcacoes'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedPendentesRouteImport } from './routes/_authenticated/pendentes'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedShareRouteImport } from './routes/_authenticated/share'
 import { Route as AuthenticatedWaitlistRouteImport } from './routes/_authenticated/waitlist'
@@ -83,6 +84,11 @@ const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPendentesRoute = AuthenticatedPendentesRouteImport.update({
+  id: '/pendentes',
+  path: '/pendentes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/minhas-marcacoes': typeof AuthenticatedMinhasMarcacoesRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/pendentes': typeof AuthenticatedPendentesRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/share': typeof AuthenticatedShareRoute
   '/waitlist': typeof AuthenticatedWaitlistRoute
@@ -137,6 +144,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/minhas-marcacoes': typeof AuthenticatedMinhasMarcacoesRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/pendentes': typeof AuthenticatedPendentesRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/share': typeof AuthenticatedShareRoute
   '/waitlist': typeof AuthenticatedWaitlistRoute
@@ -156,6 +164,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/minhas-marcacoes': typeof AuthenticatedMinhasMarcacoesRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/pendentes': typeof AuthenticatedPendentesRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/share': typeof AuthenticatedShareRoute
   '/_authenticated/waitlist': typeof AuthenticatedWaitlistRoute
@@ -175,6 +184,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/minhas-marcacoes'
     | '/onboarding'
+    | '/pendentes'
     | '/profile'
     | '/share'
     | '/waitlist'
@@ -192,6 +202,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/minhas-marcacoes'
     | '/onboarding'
+    | '/pendentes'
     | '/profile'
     | '/share'
     | '/waitlist'
@@ -210,6 +221,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/minhas-marcacoes'
     | '/_authenticated/onboarding'
+    | '/_authenticated/pendentes'
     | '/_authenticated/profile'
     | '/_authenticated/share'
     | '/_authenticated/waitlist'
@@ -304,6 +316,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/pendentes': {
+      id: '/_authenticated/pendentes'
+      path: '/pendentes'
+      fullPath: '/pendentes'
+      preLoaderRoute: typeof AuthenticatedPendentesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/profile': {
       id: '/_authenticated/profile'
       path: '/profile'
@@ -351,6 +370,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedMinhasMarcacoesRoute: typeof AuthenticatedMinhasMarcacoesRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedPendentesRoute: typeof AuthenticatedPendentesRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedShareRoute: typeof AuthenticatedShareRoute
   AuthenticatedWaitlistRoute: typeof AuthenticatedWaitlistRoute
@@ -365,6 +385,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedMinhasMarcacoesRoute: AuthenticatedMinhasMarcacoesRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedPendentesRoute: AuthenticatedPendentesRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedShareRoute: AuthenticatedShareRoute,
   AuthenticatedWaitlistRoute: AuthenticatedWaitlistRoute,

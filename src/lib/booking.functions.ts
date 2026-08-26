@@ -137,8 +137,8 @@ export const createPublicBooking = createServerFn({ method: "POST" })
       customerId = created?.id ?? null;
     }
 
-    // Client bookings are always immediately confirmed — there is no pending state.
-    const status = "confirmed";
+    // Client bookings arrive as requests: the business accepts or refuses them.
+    const status = "pending" as const;
     const { data: appointment, error } = await supabaseAdmin
       .from("appointments")
       .insert({
@@ -179,8 +179,8 @@ export const createPublicBooking = createServerFn({ method: "POST" })
 
     await supabaseAdmin.from("notifications").insert({
       business_id: data.businessId,
-      type: "appointment_created",
-      title: "Nova marcação",
+      type: "appointment_requested",
+      title: "Novo pedido de marcação",
       body: `${data.name} — ${service.name}`,
       appointment_id: appointment.id,
     });
