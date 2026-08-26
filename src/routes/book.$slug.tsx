@@ -6,6 +6,9 @@ import { toast } from "sonner";
 import { getPublicBusiness, getAvailableSlots, createPublicBooking } from "@/lib/booking.functions";
 import { trackPageView } from "@/lib/analytics.functions";
 import { AddToCalendar } from "@/components/add-to-calendar";
+import { ClientAuthStep } from "@/components/client-auth-step";
+import { maskPhonePt } from "@/lib/phone";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
