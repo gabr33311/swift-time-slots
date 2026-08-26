@@ -895,6 +895,16 @@ export type Database = {
       can_manage_business: { Args: { _business_id: string }; Returns: boolean }
       is_business_member: { Args: { _business_id: string }; Returns: boolean }
       is_business_owner: { Args: { _business_id: string }; Returns: boolean }
+      log_audit_event: {
+        Args: {
+          _action: string
+          _business_id: string
+          _entity?: string
+          _entity_id?: string
+          _metadata?: Json
+        }
+        Returns: string
+      }
     }
     Enums: {
       appointment_status:
