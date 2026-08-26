@@ -62,7 +62,8 @@ function Dashboard() {
         .gte("starts_at", new Date().toISOString())
         .in("status", ["pending", "confirmed"])
         .order("starts_at")
-        .limit(6);
+        .limit(60);
+
       return { appts: appts ?? [], upcoming: upcoming ?? [] };
     },
   });
