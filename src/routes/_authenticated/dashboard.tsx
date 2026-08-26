@@ -86,7 +86,7 @@ function Dashboard() {
         day: "2-digit",
         timeZone: business?.timezone ?? "Europe/Lisbon",
       }).format(new Date(iso));
-    const map = new Map<string, typeof dayData.upcoming>();
+    const map = new Map<string, NonNullable<typeof dayData>["upcoming"]>();
     for (const a of dayData?.upcoming ?? []) {
       const key = fmt(a.starts_at);
       const list = map.get(key) ?? [];
