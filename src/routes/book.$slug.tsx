@@ -25,6 +25,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Clock,
   Instagram,
   LogIn,
@@ -655,5 +656,54 @@ function ChoiceChip({
     >
       {children}
     </button>
+  );
+}
+
+function SlotGroup({
+  label,
+  times,
+  selected,
+  onSelect,
+}: {
+  label: string;
+  times: string[];
+  selected: string | null;
+  onSelect: (t: string) => void;
+}) {
+  const [open, setOpen] = useState(true);
+  return (
+    <div className="rounded-2xl border border-border p-3">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between text-sm font-bold"
+      >
+        <span className="flex items-center gap-2">
+          {label}
+          <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold text-primary">
+            {times.length}
+          </span>
+        </span>
+        <ChevronDown className={cn("size-4 transition-transform", !open && "-rotate-90")} />
+      </button>
+      {open && (
+        <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
+          {times.map((t) => (
+            <button
+              key={t}
+              onClick={() => onSelect(t)}
+              className={cn(
+                "rounded-xl border py-2.5 text-sm font-bold tabular-nums transition-colors",
+                selected === t
+                  ? "border-primary bg-primary text-white"
+                  : "border-border hover:bg-accent",
+              )}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
