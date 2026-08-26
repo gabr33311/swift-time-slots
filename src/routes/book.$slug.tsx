@@ -517,60 +517,58 @@ function BookPage() {
 
       {service && time && (
         <Section step={eligibleStaff.length > 1 ? 4 : 3} title="Os teus dados">
+      {service && time && (
+        <Section
+          step={eligibleStaff.length > 1 ? 4 : 3}
+          title={user ? "Os teus dados" : "A tua conta"}
+        >
           {authLoading ? (
             <Skeleton className="h-24 w-full rounded-2xl" />
           ) : !user ? (
-            <div className="rounded-2xl border border-border p-5 text-center">
-              <div className="mx-auto mb-3 flex size-11 items-center justify-center rounded-full bg-primary/12 text-primary">
-                <LogIn className="size-5" />
-              </div>
-              <p className="text-[15px] font-bold">Inicia sessão para confirmar</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Com conta guardas os teus dados e podes consultar ou cancelar marcações.
-              </p>
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
-                <Link
-                  to="/auth"
-                  search={{ mode: undefined, next: `/book/${slug}` }}
-                  className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground"
-                >
-                  Entrar
-                </Link>
-                <Link
-                  to="/auth"
-                  search={{ mode: "register", next: `/book/${slug}` }}
-                  className="inline-flex items-center justify-center rounded-full border border-border px-5 py-2.5 text-sm font-bold"
-                >
-                  Criar conta
-                </Link>
-              </div>
+            <div className="space-y-2">
+              <ClientAuthStep onDone={() => {}} />
+              <Link
+                to="/auth"
+                search={{ mode: undefined, next: `/book/${slug}` }}
+                className="flex items-center justify-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground"
+              >
+                <LogIn className="size-3.5" /> Entrar com palavra-passe ou Google
+              </Link>
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="n">Nome</Label>
+            <div className="space-y-2.5">
+              <div className="space-y-1">
+                <Label htmlFor="n" className="text-xs font-bold">
+                  Nome
+                </Label>
                 <Input
                   id="n"
+                  className="h-9"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   maxLength={80}
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="p">Telemóvel</Label>
+              <div className="space-y-1">
+                <Label htmlFor="p" className="text-xs font-bold">
+                  Telemóvel
+                </Label>
                 <Input
                   id="p"
+                  className="h-9"
                   inputMode="tel"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  maxLength={24}
+                  onChange={(e) => setPhone(maskPhonePt(e.target.value))}
                   placeholder="912 345 678"
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="obs">Notas (opcional)</Label>
+              <div className="space-y-1">
+                <Label htmlFor="obs" className="text-xs font-bold">
+                  Notas (opcional)
+                </Label>
                 <Textarea
                   id="obs"
+                  className="min-h-16"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   maxLength={500}
@@ -582,6 +580,7 @@ function BookPage() {
       )}
 
       {service && time && user && (
+
         <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 px-5 py-3 backdrop-blur">
           <div className="mx-auto flex max-w-2xl items-center gap-4">
             <div className="min-w-0 flex-1 text-sm">
