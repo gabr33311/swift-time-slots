@@ -88,31 +88,45 @@ function Dashboard() {
         <p className="mt-1 text-sm font-normal text-muted-foreground">Aqui está o teu dia.</p>
       </div>
 
-      <Link to="/calendar" className="surface surface-hover block p-5">
+      <div className="surface p-5">
         <div className="flex items-center justify-between gap-3">
-          <p className="font-display text-base font-bold">Marcações de hoje</p>
+          <Link to="/calendar" className="font-display text-base font-bold hover:text-primary">
+            Marcações de hoje
+          </Link>
           <span className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground">
             <CalendarDays className="size-4" />
-            {(dayData?.appts.length ?? 0)}
+            {dayData?.appts.length ?? 0}
           </span>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: "Confirmadas", value: counts.confirmed, dot: "bg-success" },
-            { label: "Pendentes", value: counts.pending, dot: "bg-warning" },
-            { label: "Canceladas", value: cancelled, dot: "bg-destructive" },
-            { label: "Concluídas", value: counts.completed, dot: "bg-muted-foreground" },
+            { label: "Confirmadas", value: counts.confirmed, dot: "bg-success", to: "/calendar" },
+            { label: "Pendentes", value: counts.pending, dot: "bg-warning", to: "/pendentes" },
+            { label: "Canceladas", value: cancelled, dot: "bg-destructive", to: "/pendentes" },
+            {
+              label: "Concluídas",
+              value: counts.completed,
+              dot: "bg-muted-foreground",
+              to: "/appointments",
+            },
           ].map((s) => (
-            <div key={s.label} className="rounded-2xl bg-muted/50 p-3">
-              <span className="flex items-center gap-1.5 text-[12px] font-bold text-muted-foreground">
-                <span className={cn("size-2 rounded-full", s.dot)} />
+            <Link
+              key={s.label}
+              to={s.to}
+              className="surface-hover flex flex-col rounded-2xl border border-border bg-muted/40 p-3"
+            >
+              <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.05em] text-foreground/70">
+                <span className={cn("size-2.5 rounded-full", s.dot)} />
                 {s.label}
               </span>
-              <p className="mt-1 text-2xl font-bold tabular-nums">{s.value}</p>
-            </div>
+              <p className="font-display mt-2 text-[28px] font-bold leading-none tabular-nums">
+                {s.value}
+              </p>
+            </Link>
           ))}
         </div>
-      </Link>
+      </div>
+
 
 
       <InstallPrompt />
