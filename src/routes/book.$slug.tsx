@@ -491,23 +491,26 @@ function BookPage() {
                 <p className="text-sm text-muted-foreground">Experimenta outro dia.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                {slots!.map((s) => (
-                  <button
-                    key={s.time}
-                    onClick={() => setTime(s.time)}
-                    className={cn(
-                      "rounded-lg border border-border py-2.5 text-sm font-bold tabular-nums transition-colors",
-                      time === s.time
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "hover:bg-accent",
-                    )}
-                  >
-                    {s.time}
-                  </button>
-                ))}
+              <div className="space-y-3">
+                {(
+                  [
+                    ["Manhã", slots!.filter((s) => Number(s.time.slice(0, 2)) < 13)],
+                    ["Tarde", slots!.filter((s) => Number(s.time.slice(0, 2)) >= 13)],
+                  ] as const
+                ).map(([label, group]) =>
+                  group.length === 0 ? null : (
+                    <SlotGroup
+                      key={label}
+                      label={label}
+                      times={group.map((s) => s.time)}
+                      selected={time}
+                      onSelect={setTime}
+                    />
+                  ),
+                )}
               </div>
             )}
+
           </div>
         </Section>
       )}
