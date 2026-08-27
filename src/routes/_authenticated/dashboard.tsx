@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
@@ -9,11 +10,12 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { useAuth } from "@/hooks/use-auth";
 import { displayCustomerName, formatPrice, formatTime, formatDateLong, greetingPt } from "@/lib/format";
 import { zonedToUtc, todayIn } from "@/lib/time";
-import { CalendarCheck, CalendarDays, ChevronDown } from "lucide-react";
+import { Bell, CalendarCheck, CalendarDays, Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
 import { InstallPrompt } from "@/components/install-prompt";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
+import { markBusinessNotificationsRead } from "@/lib/appointment-management.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -31,9 +33,11 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const { user } = useAuth();
   const { business, isLoading, data } = useMyBusiness();
   const [newOpen, setNewOpen] = useState(false);
+  const markNotificationsRead = useServerFn(markBusinessNotificationsRead);
 
   useEffect(() => {
     if (!isLoading && data && data.count === 0) navigate({ to: "/onboarding" });
@@ -68,13 +72,37 @@ function Dashboard() {
     },
   });
 
+  const { data: requestData } = useQuery({
+    queryKey: ["dashboard-requests", business?.id],
+    enabled: !!business,
+    queryFn: async () => {
+      const [{ count: pending, error: pendingError }, { data: notifications, error: notificationsError }] =
+        await Promise.all([
+          supabase
+            .from("appointments")
+            .select("id", { count: "exact", head: true })
+            .eq("business_id", business!.id)
+            .eq("status", "pending"),
+          supabase
+            .from("notifications")
+            .select("id, title, body, created_at, appointment_id, read_at")
+            .eq("business_id", business!.id)
+            .order("created_at", { ascending: false })
+            .limit(5),
+        ]);
+      if (pendingError) throw pendingError;
+      if (notificationsError) throw notificationsError;
+      return { pending: pending ?? 0, notifications: notifications ?? [] };
+    },
+  });
+
   const active = (dayData?.appts ?? []).filter(
     (a) => a.status === "confirmed" || a.status === "pending" || a.status === "completed",
   );
   const cancelled = (dayData?.appts ?? []).filter((a) => a.status === "cancelled").length;
   const counts = {
     confirmed: active.filter((a) => a.status === "confirmed").length,
-    pending: active.filter((a) => a.status === "pending").length,
+    pending: requestData?.pending ?? 0,
     completed: active.filter((a) => a.status === "completed").length,
   };
 
@@ -105,6 +133,40 @@ function Dashboard() {
         </h1>
         <p className="mt-1 text-sm font-normal text-muted-foreground">Aqui está o teu dia.</p>
       </div>
+
+      {(requestData?.notifications.length ?? 0) > 0 && (
+        <section className="surface mt-5 p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-base font-bold">
+              <Bell className="size-4 text-primary" /> Notificações
+            </h2>
+            {requestData?.notifications.some((item) => !item.read_at) && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={async () => {
+                  if (!business) return;
+                  const result = await markNotificationsRead({ data: { businessId: business.id } });
+                  if (result.ok) qc.invalidateQueries({ queryKey: ["dashboard-requests"] });
+                }}
+              >
+                <Check className="size-4" /> Marcar lidas
+              </Button>
+            )}
+          </div>
+          <ul className="mt-3 divide-y divide-border">
+            {requestData?.notifications.map((item) => (
+              <li key={item.id} className="flex gap-3 py-3 first:pt-0 last:pb-0">
+                <span className={cn("mt-1 size-2 shrink-0 rounded-full", item.read_at ? "bg-muted" : "bg-primary")} />
+                <div className="min-w-0">
+                  <p className="text-sm font-bold">{item.title}</p>
+                  {item.body && <p className="truncate text-xs text-muted-foreground">{item.body}</p>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div className="surface p-5">
         <div className="flex items-center justify-between gap-3">

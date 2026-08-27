@@ -1,8 +1,9 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { useServerFn } from "@tanstack/react-start";
+import { updateBusinessAppointmentStatus } from "@/lib/appointment-management.functions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,19 +37,28 @@ export function AppointmentActions({
   const qc = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const updateStatus = useServerFn(updateBusinessAppointmentStatus);
 
   async function setStatus(next: Status) {
     setBusy(true);
-    const { error } = await supabase.from("appointments").update({ status: next }).eq("id", id);
+    const result = await updateStatus({
+      data: {
+        appointmentId: id,
+        status: next as "confirmed" | "completed" | "cancelled" | "no_show",
+        note: next === "cancelled" ? "Cancelada pelo negócio" : "Estado alterado pelo negócio",
+      },
+    });
     setBusy(false);
-    if (error) {
-      toast.error("Não foi possível actualizar a marcação.");
+    if (!result.ok) {
+      toast.error(result.message);
       return;
     }
     toast.success(next === "cancelled" ? "Marcação cancelada." : "Marcação actualizada.");
     qc.invalidateQueries({ queryKey: ["calendar"] });
     qc.invalidateQueries({ queryKey: ["dashboard-day"] });
     qc.invalidateQueries({ queryKey: ["appointments"] });
+    qc.invalidateQueries({ queryKey: ["requests"] });
+    qc.invalidateQueries({ queryKey: ["dashboard-requests"] });
   }
 
   const canCancel = status !== "cancelled" && status !== "completed";
