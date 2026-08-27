@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +11,7 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { formatPrice, formatTime, formatDateLong } from "@/lib/format";
 import { Check, Clock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { updateBusinessAppointmentStatus } from "@/lib/appointment-management.functions";
 
 type Tab = "pending" | "accepted" | "refused";
 
@@ -38,20 +40,21 @@ function PendingPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>("pending");
   const [busy, setBusy] = useState<string | null>(null);
+  const updateStatus = useServerFn(updateBusinessAppointmentStatus);
 
   const { data, isLoading } = useQuery({
     queryKey: ["requests", business?.id],
     enabled: !!business,
     queryFn: async () => {
-      const { data: rows } = await supabase
+      const { data: rows, error } = await supabase
         .from("appointments")
         .select(
           "id, starts_at, ends_at, customer_name, customer_phone, service_name, price_cents, status, notes, source",
         )
         .eq("business_id", business!.id)
-        .eq("source", "public")
         .order("starts_at", { ascending: false })
         .limit(200);
+      if (error) throw error;
       return rows ?? [];
     },
   });
@@ -66,17 +69,26 @@ function PendingPage() {
 
   async function decide(id: string, accept: boolean) {
     setBusy(id);
-    const { error } = await supabase
-      .from("appointments")
-      .update({ status: accept ? "confirmed" : "cancelled" })
-      .eq("id", id);
+    const result = await updateStatus({
+      data: {
+        appointmentId: id,
+        status: accept ? "confirmed" : "cancelled",
+        note: accept ? "Pedido aceite pelo negócio" : "Pedido recusado pelo negócio",
+      },
+    });
     setBusy(null);
-    if (error) {
-      toast.error("Não foi possível actualizar o pedido.");
+    if (!result.ok) {
+      toast.error(result.message);
       return;
     }
     toast.success(accept ? "Marcação aceite." : "Pedido recusado.");
-    qc.invalidateQueries();
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["requests"] }),
+      qc.invalidateQueries({ queryKey: ["dashboard-day"] }),
+      qc.invalidateQueries({ queryKey: ["dashboard-requests"] }),
+      qc.invalidateQueries({ queryKey: ["appointments"] }),
+      qc.invalidateQueries({ queryKey: ["calendar"] }),
+    ]);
   }
 
   return (
@@ -85,8 +97,10 @@ function PendingPage() {
 
       <div className="mb-5 flex gap-1 rounded-full bg-muted p-1">
         {TABS.map((t) => (
-          <button
+          <Button
             key={t.id}
+            type="button"
+            variant="ghost"
             onClick={() => setTab(t.id)}
             className={cn(
               "flex-1 rounded-full px-3 py-2 text-[13px] font-bold transition-colors",
@@ -96,7 +110,7 @@ function PendingPage() {
             )}
           >
             {t.label}
-          </button>
+          </Button>
         ))}
       </div>
 
