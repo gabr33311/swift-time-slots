@@ -55,6 +55,7 @@ function PendingPage() {
           "id, starts_at, ends_at, customer_name, customer_phone, service_name, price_cents, status, notes, source",
         )
         .eq("business_id", business!.id)
+        .eq("source", "public")
         .order("starts_at", { ascending: false })
         .limit(200);
       if (error) throw error;

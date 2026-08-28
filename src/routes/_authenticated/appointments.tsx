@@ -19,8 +19,10 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
+const filterSchema = z.enum(["upcoming", "today", "past", "cancelled"]);
+
 export const Route = createFileRoute("/_authenticated/appointments")({
-  validateSearch: z.object({ new: z.boolean().optional() }),
+  validateSearch: z.object({ new: z.boolean().optional(), filter: filterSchema.optional() }),
   head: () => ({
     meta: [
       { title: "Marcações — Schedivo" },
@@ -42,7 +44,9 @@ function AppointmentsPage() {
   const search = Route.useSearch();
   const { business } = useMyBusiness();
   const qc = useQueryClient();
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>("upcoming");
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>(
+    search.filter ?? "upcoming",
+  );
   const [newOpen, setNewOpen] = useState(Boolean(search.new));
 
   const { data, isLoading } = useQuery({
