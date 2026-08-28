@@ -192,8 +192,8 @@ function Dashboard() {
               label: "Canceladas",
               value: cancelled,
               dot: "bg-destructive",
-              to: "/pendentes",
-              search: { tab: "refused" as const },
+              to: "/appointments",
+              search: { filter: "cancelled" as const },
             },
             {
               label: "Concluídas",
