@@ -181,18 +181,32 @@ function Dashboard() {
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             { label: "Confirmadas", value: counts.confirmed, dot: "bg-success", to: "/calendar" },
-            { label: "Pendentes", value: counts.pending, dot: "bg-warning", to: "/pendentes" },
-            { label: "Canceladas", value: cancelled, dot: "bg-destructive", to: "/pendentes" },
+            {
+              label: "Pendentes",
+              value: counts.pending,
+              dot: "bg-warning",
+              to: "/pendentes",
+              search: { tab: "pending" as const },
+            },
+            {
+              label: "Canceladas",
+              value: cancelled,
+              dot: "bg-destructive",
+              to: "/pendentes",
+              search: { tab: "refused" as const },
+            },
             {
               label: "Concluídas",
               value: counts.completed,
               dot: "bg-muted-foreground",
               to: "/appointments",
+              search: undefined,
             },
           ].map((s) => (
             <Link
               key={s.label}
               to={s.to}
+              search={s.search ?? {}}
               className="surface-hover flex flex-col rounded-2xl border border-border bg-muted/40 p-3"
             >
               <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.05em] text-foreground/70">

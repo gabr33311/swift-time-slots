@@ -12,10 +12,12 @@ import { formatPrice, formatTime, formatDateLong } from "@/lib/format";
 import { Check, Clock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { updateBusinessAppointmentStatus } from "@/lib/appointment-management.functions";
+import { z } from "zod";
 
 type Tab = "pending" | "accepted" | "refused";
 
 export const Route = createFileRoute("/_authenticated/pendentes")({
+  validateSearch: z.object({ tab: z.enum(["pending", "accepted", "refused"]).optional() }),
   head: () => ({
     meta: [
       { title: "Pedidos de marcação — Schedivo" },
@@ -36,9 +38,10 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 function PendingPage() {
+  const search = Route.useSearch();
   const { business } = useMyBusiness();
   const qc = useQueryClient();
-  const [tab, setTab] = useState<Tab>("pending");
+  const [tab, setTab] = useState<Tab>(search.tab ?? "pending");
   const [busy, setBusy] = useState<string | null>(null);
   const updateStatus = useServerFn(updateBusinessAppointmentStatus);
 
