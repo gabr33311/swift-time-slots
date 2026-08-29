@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { useMyBusiness } from "@/hooks/use-business";
 import { formatDuration, formatPrice } from "@/lib/format";
-import { Scissors, Pencil, Trash2, Plus } from "lucide-react";
+import { Scissors, Pencil, Trash2, Plus, GripVertical } from "lucide-react";
 
 type ServiceRow = {
   id: string;
@@ -44,6 +44,7 @@ export function ServicesPanel() {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<ServiceRow | null>(null);
   const [open, setOpen] = useState(false);
+  const [dragId, setDragId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["services", business?.id],
@@ -62,6 +63,22 @@ export function ServicesPanel() {
 
   async function toggleActive(s: ServiceRow) {
     await supabase.from("services").update({ is_active: !s.is_active }).eq("id", s.id);
+    qc.invalidateQueries({ queryKey: ["services"] });
+  }
+
+  async function reorder(targetId: string) {
+    const list = data ?? [];
+    if (!dragId || dragId === targetId) return;
+    const from = list.findIndex((s) => s.id === dragId);
+    const to = list.findIndex((s) => s.id === targetId);
+    if (from < 0 || to < 0) return;
+    const next = [...list];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved!);
+    qc.setQueryData(["services", business?.id], next);
+    await Promise.all(
+      next.map((s, i) => supabase.from("services").update({ sort_order: i }).eq("id", s.id)),
+    );
     qc.invalidateQueries({ queryKey: ["services"] });
   }
 
@@ -99,7 +116,19 @@ export function ServicesPanel() {
       ) : (
         <ul className="space-y-2">
           {data!.map((s) => (
-            <li key={s.id} className="surface flex flex-wrap items-center gap-3 p-4">
+            <li
+              key={s.id}
+              draggable
+              onDragStart={() => setDragId(s.id)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => {
+                reorder(s.id);
+                setDragId(null);
+              }}
+              onDragEnd={() => setDragId(null)}
+              className="surface flex flex-wrap items-center gap-3 p-4"
+            >
+              <GripVertical className="size-4 shrink-0 cursor-grab text-muted-foreground" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{s.name}</p>
                 <p className="truncate text-sm text-muted-foreground">
