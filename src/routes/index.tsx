@@ -67,12 +67,12 @@ function Landing() {
         </section>
 
         <section className="mx-auto max-w-5xl px-5 pb-20">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mx-auto grid max-w-3xl grid-cols-2 gap-2.5">
             {FEATURES.map((f) => (
-              <article key={f.key} className="surface surface-hover animate-enter p-6">
-                <f.icon className="size-5 text-primary" />
-                <h2 className="mt-4 text-base font-bold">{t(`${f.key}.title`)}</h2>
-                <p className="mt-1.5 text-sm font-medium text-muted-foreground">
+              <article key={f.key} className="surface surface-hover animate-enter p-4">
+                <f.icon className="size-5 text-primary" strokeWidth={2.5} />
+                <h2 className="mt-3 text-[15px] font-bold leading-snug">{t(`${f.key}.title`)}</h2>
+                <p className="mt-1 text-[13px] font-medium leading-snug text-muted-foreground">
                   {t(`${f.key}.body`)}
                 </p>
               </article>
