@@ -34,7 +34,7 @@ export function EditCustomerDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
   /** When set and no customer is given, the dialog creates a new customer. */
-  businessId?: string;
+  businessId?: string | undefined;
 }) {
   const qc = useQueryClient();
   const [name, setName] = useState("");
