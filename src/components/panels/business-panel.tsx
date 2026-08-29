@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useMyBusiness } from "@/hooks/use-business";
 import { useLogoUrl } from "@/hooks/use-logo";
 import { initials } from "@/lib/format";
-import { Pencil, Save, X, ImagePlus } from "lucide-react";
+import { ImagePlus } from "lucide-react";
+import { SaveBar } from "@/components/save-bar";
 
 const schema = z.object({
   name: z.string().trim().min(2, "Indica o nome do negócio.").max(80),
