@@ -185,7 +185,7 @@ export function BusinessPanel() {
           <Label htmlFor="bn" className="font-semibold">
             Nome
           </Label>
-          <Input id="bn" value={form.name} onChange={set("name")} maxLength={80} disabled={!edit} />
+          <Input id="bn" value={form.name} onChange={set("name")} maxLength={80} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="bd" className="font-semibold">
@@ -203,7 +203,7 @@ export function BusinessPanel() {
             <Label htmlFor="bp" className="font-semibold">
               Telemóvel <span className="font-normal text-muted-foreground">(recomendado)</span>
             </Label>
-            <Input id="bp" value={form.phone} onChange={set("phone")} maxLength={24} disabled={!edit} />
+            <Input id="bp" value={form.phone} onChange={set("phone")} maxLength={24} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="bi" className="font-semibold">
@@ -223,7 +223,7 @@ export function BusinessPanel() {
             <Label htmlFor="bc" className="font-semibold">
               Cidade
             </Label>
-            <Input id="bc" value={form.city} onChange={set("city")} maxLength={80} disabled={!edit} />
+            <Input id="bc" value={form.city} onChange={set("city")} maxLength={80} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="ba" className="font-semibold">
