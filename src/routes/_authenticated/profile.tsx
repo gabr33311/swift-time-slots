@@ -107,8 +107,14 @@ function ProfilePage() {
         subtitle={active ? active.description : "Tudo sobre o teu negócio num só sítio."}
         action={
           active ? (
-            <Button variant="outline" size="sm" onClick={() => setSection(null)}>
-              <ArrowLeft className="mr-2 size-4" /> Voltar
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Voltar"
+              className="size-9 text-muted-foreground"
+              onClick={() => setSection(null)}
+            >
+              <ArrowLeft className="size-5" strokeWidth={2.5} />
             </Button>
           ) : undefined
         }

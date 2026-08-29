@@ -2,7 +2,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { QRCodeCanvas } from "qrcode.react";
-import { Copy, Share2, Download, Eye } from "lucide-react";
+import { Share2, Download, Eye } from "lucide-react";
 
 /** Clean, shareable domain — preview/localhost hosts are never shown to clients. */
 const PUBLIC_ORIGIN = "https://swift-time-slots.lovable.app";
@@ -58,16 +58,6 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              navigator.clipboard.writeText(url);
-              toast.success("Link copiado.");
-            }}
-          >
-            <Copy className="size-4" /> Copiar link
-          </Button>
           <Button size="sm" variant="outline" onClick={share}>
             <Share2 className="size-4" /> Partilhar
           </Button>

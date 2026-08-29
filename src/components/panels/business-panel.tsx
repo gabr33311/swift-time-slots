@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useMyBusiness } from "@/hooks/use-business";
 import { useLogoUrl } from "@/hooks/use-logo";
 import { initials } from "@/lib/format";
-import { Pencil, Save, X, ImagePlus } from "lucide-react";
+import { ImagePlus } from "lucide-react";
+import { SaveBar } from "@/components/save-bar";
 
 const schema = z.object({
   name: z.string().trim().min(2, "Indica o nome do negócio.").max(80),
@@ -34,27 +35,30 @@ const EMPTY = {
   slotInterval: "15",
 };
 
+function baseline(b: NonNullable<ReturnType<typeof useMyBusiness>["business"]>) {
+  return {
+    name: b.name,
+    description: b.description ?? "",
+    phone: b.phone ?? "",
+    instagram: b.instagram ?? "",
+    address: b.address ?? "",
+    city: b.city ?? "",
+    cancellationHours: String(b.cancellation_hours),
+    slotInterval: String(b.slot_interval_minutes),
+  };
+}
+
 export function BusinessPanel() {
   const { business } = useMyBusiness();
   const qc = useQueryClient();
   const [form, setForm] = useState(EMPTY);
-  const [edit, setEdit] = useState(false);
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const logoUrl = useLogoUrl(business?.logo_url);
 
   function hydrate() {
     if (!business) return;
-    setForm({
-      name: business.name,
-      description: business.description ?? "",
-      phone: business.phone ?? "",
-      instagram: business.instagram ?? "",
-      address: business.address ?? "",
-      city: business.city ?? "",
-      cancellationHours: String(business.cancellation_hours),
-      slotInterval: String(business.slot_interval_minutes),
-    });
+    setForm(baseline(business));
   }
 
   useEffect(hydrate, [business]);
@@ -124,12 +128,13 @@ export function BusinessPanel() {
       return;
     }
     toast.success("Definições guardadas.");
-    setEdit(false);
     qc.invalidateQueries({ queryKey: ["my-business"] });
   }
 
   const set = (k: keyof typeof form) => (e: { target: { value: string } }) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const dirty = !!business && JSON.stringify(form) !== JSON.stringify(baseline(business));
 
   return (
     <section className="surface space-y-5 p-5">
@@ -173,28 +178,6 @@ export function BusinessPanel() {
           </div>
         </div>
 
-        {edit ? (
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={busy}
-              onClick={() => {
-                hydrate();
-                setEdit(false);
-              }}
-            >
-              <X className="mr-2 size-4" /> Cancelar alterações
-            </Button>
-            <Button size="sm" onClick={save} disabled={busy}>
-              <Save className="mr-2 size-4" /> Guardar
-            </Button>
-          </div>
-        ) : (
-          <Button variant="outline" size="sm" onClick={() => setEdit(true)}>
-            <Pencil className="mr-2 size-4" /> Editar
-          </Button>
-        )}
       </div>
 
       <div className="space-y-4">
@@ -202,7 +185,7 @@ export function BusinessPanel() {
           <Label htmlFor="bn" className="font-semibold">
             Nome
           </Label>
-          <Input id="bn" value={form.name} onChange={set("name")} maxLength={80} disabled={!edit} />
+          <Input id="bn" value={form.name} onChange={set("name")} maxLength={80} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="bd" className="font-semibold">
@@ -213,7 +196,6 @@ export function BusinessPanel() {
             value={form.description}
             onChange={set("description")}
             maxLength={300}
-            disabled={!edit}
           />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -221,7 +203,7 @@ export function BusinessPanel() {
             <Label htmlFor="bp" className="font-semibold">
               Telemóvel <span className="font-normal text-muted-foreground">(recomendado)</span>
             </Label>
-            <Input id="bp" value={form.phone} onChange={set("phone")} maxLength={24} disabled={!edit} />
+            <Input id="bp" value={form.phone} onChange={set("phone")} maxLength={24} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="bi" className="font-semibold">
@@ -232,7 +214,6 @@ export function BusinessPanel() {
               value={form.instagram}
               onChange={set("instagram")}
               maxLength={60}
-              disabled={!edit}
               placeholder="@onome"
             />
           </div>
@@ -242,7 +223,7 @@ export function BusinessPanel() {
             <Label htmlFor="bc" className="font-semibold">
               Cidade
             </Label>
-            <Input id="bc" value={form.city} onChange={set("city")} maxLength={80} disabled={!edit} />
+            <Input id="bc" value={form.city} onChange={set("city")} maxLength={80} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="ba" className="font-semibold">
@@ -253,7 +234,6 @@ export function BusinessPanel() {
               value={form.address}
               onChange={set("address")}
               maxLength={160}
-              disabled={!edit}
             />
           </div>
         </div>
@@ -267,7 +247,6 @@ export function BusinessPanel() {
               inputMode="numeric"
               value={form.cancellationHours}
               onChange={set("cancellationHours")}
-              disabled={!edit}
             />
           </div>
           <div className="space-y-1.5">
@@ -279,11 +258,12 @@ export function BusinessPanel() {
               inputMode="numeric"
               value={form.slotInterval}
               onChange={set("slotInterval")}
-              disabled={!edit}
             />
           </div>
         </div>
       </div>
+
+      <SaveBar dirty={dirty} busy={busy} onSave={save} onCancel={hydrate} />
     </section>
   );
 }
