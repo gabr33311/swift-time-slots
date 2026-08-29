@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMyBusiness } from "@/hooks/use-business";
 import { initials } from "@/lib/format";
-import { Users, Ban, ShieldCheck, Search, Pencil } from "lucide-react";
+import { Users, Ban, ShieldCheck, Search, Pencil, Plus } from "lucide-react";
 import {
   EditCustomerDialog,
   type EditableCustomer,
@@ -44,6 +44,7 @@ function CustomersPage() {
   const [term, setTerm] = useState("");
   const [tab, setTab] = useState<"all" | "cancelled" | "blocked">("all");
   const [editing, setEditing] = useState<EditableCustomer | null>(null);
+  const [creating, setCreating] = useState(false);
 
   const { data: cancelledMap } = useQuery({
     queryKey: ["customers-cancelled", business?.id],
@@ -234,10 +235,26 @@ function CustomersPage() {
         </ul>
       )}
 
+      <Button
+        size="icon"
+        aria-label="Novo cliente"
+        onClick={() => setCreating(true)}
+        className="fixed bottom-24 right-5 z-40 size-14 rounded-full shadow-lift sm:bottom-8"
+      >
+        <Plus className="size-6" strokeWidth={2.5} />
+      </Button>
+
       <EditCustomerDialog
+        key={editing?.id ?? (creating ? "new" : "idle")}
         customer={editing}
-        open={!!editing}
-        onOpenChange={(v) => !v && setEditing(null)}
+        businessId={business?.id}
+        open={!!editing || creating}
+        onOpenChange={(v) => {
+          if (!v) {
+            setEditing(null);
+            setCreating(false);
+          }
+        }}
       />
     </AppShell>
   );

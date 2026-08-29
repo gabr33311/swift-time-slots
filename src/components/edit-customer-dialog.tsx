@@ -28,10 +28,13 @@ export function EditCustomerDialog({
   customer,
   open,
   onOpenChange,
+  businessId,
 }: {
   customer: EditableCustomer | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  /** When set and no customer is given, the dialog creates a new customer. */
+  businessId?: string;
 }) {
   const qc = useQueryClient();
   const [name, setName] = useState("");
@@ -48,27 +51,27 @@ export function EditCustomerDialog({
   }, [customer]);
 
   async function save() {
-    if (!customer) return;
+    if (!customer && !businessId) return;
     if (!name.trim()) {
       toast.error("O nome é obrigatório.");
       return;
     }
     setBusy(true);
-    const { error } = await supabase
-      .from("customers")
-      .update({
-        name: name.trim().slice(0, 80),
-        phone: phone.trim() ? phone.trim().slice(0, 30) : null,
-        email: email.trim() ? email.trim().slice(0, 120) : null,
-        notes: notes.trim() ? notes.trim().slice(0, 500) : null,
-      })
-      .eq("id", customer.id);
+    const payload = {
+      name: name.trim().slice(0, 80),
+      phone: phone.trim() ? phone.trim().slice(0, 30) : null,
+      email: email.trim() ? email.trim().slice(0, 120) : null,
+      notes: notes.trim() ? notes.trim().slice(0, 500) : null,
+    };
+    const { error } = customer
+      ? await supabase.from("customers").update(payload).eq("id", customer.id)
+      : await supabase.from("customers").insert({ ...payload, business_id: businessId! });
     setBusy(false);
     if (error) {
       toast.error("Não foi possível guardar o cliente.");
       return;
     }
-    toast.success("Cliente actualizado.");
+    toast.success(customer ? "Cliente actualizado." : "Cliente criado.");
     onOpenChange(false);
     qc.invalidateQueries({ queryKey: ["customers"] });
   }
@@ -77,8 +80,10 @@ export function EditCustomerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Editar cliente</DialogTitle>
-          <DialogDescription>Actualiza os dados e as notas deste cliente.</DialogDescription>
+          <DialogTitle>{customer ? "Editar cliente" : "Novo cliente"}</DialogTitle>
+          <DialogDescription>
+            Dados de contacto e ficha técnica (fórmula de tinta, alergias, preferências).
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -116,14 +121,14 @@ export function EditCustomerDialog({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="cnotes" className="font-bold">
-              Notas
+              Ficha técnica
             </Label>
             <Textarea
               id="cnotes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               maxLength={500}
-              placeholder="Preferências, alergias, histórico…"
+              placeholder="Fórmula de tinta, alergias, preferências…"
             />
           </div>
         </div>
