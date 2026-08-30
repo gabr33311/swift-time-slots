@@ -73,6 +73,22 @@ export function AppointmentActions({
 
   const canCancel = status !== "cancelled" && status !== "completed";
 
+  const tz = timezone ?? "Europe/Lisbon";
+  const phone = customerPhone ? normalizePhonePt(customerPhone) : null;
+  const canRemind = !!phone && !!startsAt && status !== "cancelled" && status !== "completed";
+
+  function remind() {
+    if (!phone || !startsAt) return;
+    const message = `Olá ${customerName}! Lembrete da tua marcação${
+      serviceName ? ` de ${serviceName}` : ""
+    } em ${formatDateLong(startsAt, tz)} às ${formatTime(startsAt, tz)}. Até já!`;
+    window.open(
+      `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`,
+      "_blank",
+      "noopener",
+    );
+  }
+
   return (
     <>
       <DropdownMenu>
