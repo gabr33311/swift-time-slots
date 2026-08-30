@@ -20,19 +20,29 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { MoreVertical, CheckCircle2, XCircle, CalendarCheck } from "lucide-react";
+import { MoreVertical, CheckCircle2, XCircle, CalendarCheck, BellRing } from "lucide-react";
+import { normalizePhonePt } from "@/lib/phone";
+import { formatDateLong, formatTime } from "@/lib/format";
 
 type Status = "pending" | "confirmed" | "completed" | "cancelled" | "no_show" | "expired";
 
-/** Quick status actions (confirm, complete, cancel) for one appointment. */
+/** Quick status actions (confirm, complete, cancel, remind) for one appointment. */
 export function AppointmentActions({
   id,
   status,
   customerName,
+  customerPhone,
+  startsAt,
+  serviceName,
+  timezone,
 }: {
   id: string;
   status: Status;
   customerName: string;
+  customerPhone?: string | null;
+  startsAt?: string;
+  serviceName?: string;
+  timezone?: string;
 }) {
   const qc = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
