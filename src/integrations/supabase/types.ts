@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointment_reminders: {
+        Row: {
+          appointment_id: string
+          business_id: string
+          created_at: string
+          id: string
+          kind: string
+        }
+        Insert: {
+          appointment_id: string
+          business_id: string
+          created_at?: string
+          id?: string
+          kind?: string
+        }
+        Update: {
+          appointment_id?: string
+          business_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_reminders_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_reminders_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_status_history: {
         Row: {
           appointment_id: string
@@ -893,6 +932,7 @@ export type Database = {
         Returns: Database["public"]["Enums"]["member_role"]
       }
       can_manage_business: { Args: { _business_id: string }; Returns: boolean }
+      generate_appointment_reminders: { Args: never; Returns: number }
       is_business_member: { Args: { _business_id: string }; Returns: boolean }
       is_business_owner: { Args: { _business_id: string }; Returns: boolean }
       log_audit_event: {

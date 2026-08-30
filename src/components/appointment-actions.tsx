@@ -20,19 +20,29 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { MoreVertical, CheckCircle2, XCircle, CalendarCheck } from "lucide-react";
+import { MoreVertical, CheckCircle2, XCircle, CalendarCheck, BellRing } from "lucide-react";
+import { normalizePhonePt } from "@/lib/phone";
+import { formatDateLong, formatTime } from "@/lib/format";
 
 type Status = "pending" | "confirmed" | "completed" | "cancelled" | "no_show" | "expired";
 
-/** Quick status actions (confirm, complete, cancel) for one appointment. */
+/** Quick status actions (confirm, complete, cancel, remind) for one appointment. */
 export function AppointmentActions({
   id,
   status,
   customerName,
+  customerPhone,
+  startsAt,
+  serviceName,
+  timezone,
 }: {
   id: string;
   status: Status;
   customerName: string;
+  customerPhone?: string | null;
+  startsAt?: string;
+  serviceName?: string;
+  timezone?: string;
 }) {
   const qc = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -63,6 +73,22 @@ export function AppointmentActions({
 
   const canCancel = status !== "cancelled" && status !== "completed";
 
+  const tz = timezone ?? "Europe/Lisbon";
+  const phone = customerPhone ? normalizePhonePt(customerPhone) : null;
+  const canRemind = !!phone && !!startsAt && status !== "cancelled" && status !== "completed";
+
+  function remind() {
+    if (!phone || !startsAt) return;
+    const message = `Olá ${customerName}! Lembrete da tua marcação${
+      serviceName ? ` de ${serviceName}` : ""
+    } em ${formatDateLong(startsAt, tz)} às ${formatTime(startsAt, tz)}. Até já!`;
+    window.open(
+      `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`,
+      "_blank",
+      "noopener",
+    );
+  }
+
   return (
     <>
       <DropdownMenu>
@@ -86,6 +112,11 @@ export function AppointmentActions({
           {status !== "completed" && status !== "cancelled" && (
             <DropdownMenuItem onClick={() => setStatus("completed")}>
               <CheckCircle2 className="mr-2 size-4" /> Marcar como concluída
+            </DropdownMenuItem>
+          )}
+          {canRemind && (
+            <DropdownMenuItem onClick={remind}>
+              <BellRing className="mr-2 size-4" /> Lembrar cliente (WhatsApp)
             </DropdownMenuItem>
           )}
           {canCancel && (
