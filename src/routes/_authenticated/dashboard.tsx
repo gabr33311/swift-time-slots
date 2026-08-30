@@ -54,14 +54,14 @@ function Dashboard() {
       const to = zonedToUtc(today!, 24 * 60, tz).toISOString();
       const { data: appts } = await supabase
         .from("appointments")
-        .select("id, starts_at, customer_name, service_name, price_cents, status")
+        .select("id, starts_at, customer_name, customer_phone, service_name, price_cents, status")
         .eq("business_id", business!.id)
         .gte("starts_at", from)
         .lt("starts_at", to)
         .order("starts_at");
       const { data: upcoming } = await supabase
         .from("appointments")
-        .select("id, starts_at, customer_name, service_name, price_cents, status")
+        .select("id, starts_at, customer_name, customer_phone, service_name, price_cents, status")
         .eq("business_id", business!.id)
         .gte("starts_at", new Date().toISOString())
         .in("status", ["pending", "confirmed"])
@@ -287,6 +287,10 @@ function Dashboard() {
                         id={a.id}
                         status={a.status}
                         customerName={displayCustomerName(a.customer_name, null, i + 1)}
+                        customerPhone={a.customer_phone}
+                        startsAt={a.starts_at}
+                        serviceName={a.service_name}
+                        timezone={tz}
                       />
                     </li>
                   ))}

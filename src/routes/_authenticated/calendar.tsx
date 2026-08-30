@@ -42,7 +42,7 @@ function CalendarPage() {
       const [{ data: appts }, { data: staff }] = await Promise.all([
         supabase
           .from("appointments")
-          .select("id, starts_at, ends_at, customer_name, service_name, price_cents, status, staff_id")
+          .select("id, starts_at, ends_at, customer_name, customer_phone, service_name, price_cents, status, staff_id")
           .eq("business_id", business!.id)
           .gte("starts_at", from)
           .lt("starts_at", to)
@@ -157,6 +157,10 @@ function CalendarPage() {
                         id={a.id}
                         status={a.status}
                         customerName={displayCustomerName(a.customer_name, null, i + 1)}
+                        customerPhone={a.customer_phone}
+                        startsAt={a.starts_at}
+                        serviceName={a.service_name}
+                        timezone={tz}
                       />
                     </li>
                   ))}
