@@ -114,6 +114,11 @@ export function AppointmentActions({
               <CheckCircle2 className="mr-2 size-4" /> Marcar como concluída
             </DropdownMenuItem>
           )}
+          {canRemind && (
+            <DropdownMenuItem onClick={remind}>
+              <BellRing className="mr-2 size-4" /> Lembrar cliente (WhatsApp)
+            </DropdownMenuItem>
+          )}
           {canCancel && (
             <DropdownMenuItem className="text-destructive" onClick={() => setConfirmOpen(true)}>
               <XCircle className="mr-2 size-4" /> Cancelar marcação
