@@ -31,6 +31,10 @@ const DICT: Record<Lang, Record<string, string>> = {
     "prefs.theme.desc": "Muda o aspecto da aplicação para tons escuros.",
     "prefs.lang": "Idioma",
     "prefs.lang.desc": "Escolhe a língua da aplicação.",
+    "showcase.title": "Assim é por dentro",
+    "showcase.body": "A tua agenda e a página que os clientes vêem — simples nos dois lados.",
+    "showcase.agenda": "Agenda do dia, sempre organizada",
+    "showcase.booking": "Página pública de marcações",
   },
   en: {
     "home.eyebrow": "For barbershops, salons, clinics and studios",
