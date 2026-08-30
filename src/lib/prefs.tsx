@@ -61,6 +61,10 @@ const DICT: Record<Lang, Record<string, string>> = {
     "prefs.theme.desc": "Switch the app to a darker look.",
     "prefs.lang": "Language",
     "prefs.lang.desc": "Choose the app language.",
+    "showcase.title": "A look inside",
+    "showcase.body": "Your agenda and the page clients see — simple on both sides.",
+    "showcase.agenda": "A tidy daily agenda",
+    "showcase.booking": "Public booking page",
   },
 };
 
