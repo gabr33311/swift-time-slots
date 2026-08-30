@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { CalendarCheck, Clock, Share2, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { PrefsToggles } from "@/components/prefs-toggles";
 import { usePrefs } from "@/lib/prefs";
+import agendaShot from "@/assets/app-agenda.jpg";
+import bookingShot from "@/assets/app-booking.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -77,6 +79,41 @@ function Landing() {
                 </p>
               </article>
             ))}
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-5xl px-5 pb-20">
+          <h2 className="text-center text-2xl font-bold tracking-tight">{t("showcase.title")}</h2>
+          <p className="mx-auto mt-2 max-w-xl text-center text-sm font-medium text-muted-foreground">
+            {t("showcase.body")}
+          </p>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <figure className="surface animate-enter overflow-hidden p-3">
+              <img
+                src={agendaShot}
+                alt={t("showcase.agenda")}
+                loading="lazy"
+                width={928}
+                height={720}
+                className="w-full rounded-2xl"
+              />
+              <figcaption className="px-1 pb-1 pt-3 text-sm font-bold">
+                {t("showcase.agenda")}
+              </figcaption>
+            </figure>
+            <figure className="surface animate-enter overflow-hidden p-3">
+              <img
+                src={bookingShot}
+                alt={t("showcase.booking")}
+                loading="lazy"
+                width={928}
+                height={720}
+                className="w-full rounded-2xl"
+              />
+              <figcaption className="px-1 pb-1 pt-3 text-sm font-bold">
+                {t("showcase.booking")}
+              </figcaption>
+            </figure>
           </div>
         </section>
 
