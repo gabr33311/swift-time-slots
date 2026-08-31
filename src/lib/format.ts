@@ -51,8 +51,13 @@ export function formatTime(iso: string, timeZone = "Europe/Lisbon"): string {
   }).format(new Date(iso));
 }
 
-export function greetingPt(date = new Date()): string {
+export function greetingPt(date = new Date(), lang: "pt" | "en" = "pt"): string {
   const h = date.getHours();
+  if (lang === "en") {
+    if (h < 12) return "Good morning";
+    if (h < 19) return "Good afternoon";
+    return "Good evening";
+  }
   if (h < 13) return "Bom dia";
   if (h < 20) return "Boa tarde";
   return "Boa noite";

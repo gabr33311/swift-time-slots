@@ -16,6 +16,7 @@ import { AppointmentActions } from "@/components/appointment-actions";
 import { InstallPrompt } from "@/components/install-prompt";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 import { markBusinessNotificationsRead } from "@/lib/appointment-management.functions";
+import { usePrefs } from "@/lib/prefs";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -38,6 +39,7 @@ function Dashboard() {
   const { business, isLoading, data } = useMyBusiness();
   const [newOpen, setNewOpen] = useState(false);
   const markNotificationsRead = useServerFn(markBusinessNotificationsRead);
+  const { t, lang } = usePrefs();
 
   useEffect(() => {
     if (!isLoading && data && data.count === 0) navigate({ to: "/onboarding" });
@@ -128,17 +130,17 @@ function Dashboard() {
     <AppShell>
       <div className="mb-6">
         <h1 className="font-display text-[28px] font-bold leading-tight tracking-tight">
-          {greetingPt()}
+          {greetingPt(new Date(), lang)}
           {user?.user_metadata?.["full_name"] ? `, ${user.user_metadata["full_name"]}` : ""}
         </h1>
-        <p className="mt-1 text-sm font-normal text-muted-foreground">Aqui está o teu dia.</p>
+        <p className="mt-1 text-sm font-normal text-muted-foreground">{t("dash.subtitle")}</p>
       </div>
 
       {(requestData?.notifications.length ?? 0) > 0 && (
         <section className="surface mt-5 p-5">
           <div className="flex items-center justify-between gap-3">
             <h2 className="flex items-center gap-2 text-base font-bold">
-              <Bell className="size-4 text-primary" /> Notificações
+              <Bell className="size-4 text-primary" /> {t("dash.notifications")}
             </h2>
             {requestData?.notifications.some((item) => !item.read_at) && (
               <Button
@@ -150,7 +152,7 @@ function Dashboard() {
                   if (result.ok) qc.invalidateQueries({ queryKey: ["dashboard-requests"] });
                 }}
               >
-                <Check className="size-4" /> Marcar lidas
+                <Check className="size-4" /> {t("dash.markRead")}
               </Button>
             )}
           </div>
@@ -171,7 +173,7 @@ function Dashboard() {
       <div className="surface p-5">
         <div className="flex items-center justify-between gap-3">
           <Link to="/calendar" className="font-display text-base font-bold hover:text-primary">
-            Marcações de hoje
+            {t("dash.today")}
           </Link>
           <span className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground">
             <CalendarDays className="size-4" />
@@ -180,23 +182,23 @@ function Dashboard() {
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: "Confirmadas", value: counts.confirmed, dot: "bg-success", to: "/calendar" },
+            { label: t("dash.confirmed"), value: counts.confirmed, dot: "bg-success", to: "/calendar" },
             {
-              label: "Pendentes",
+              label: t("dash.pending"),
               value: counts.pending,
               dot: "bg-warning",
               to: "/pendentes",
               search: { tab: "pending" as const },
             },
             {
-              label: "Canceladas",
+              label: t("dash.cancelled"),
               value: cancelled,
               dot: "bg-destructive",
               to: "/appointments",
               search: { filter: "cancelled" as const },
             },
             {
-              label: "Concluídas",
+              label: t("dash.completed"),
               value: counts.completed,
               dot: "bg-muted-foreground",
               to: "/appointments",
@@ -230,9 +232,9 @@ function Dashboard() {
 
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="font-display text-lg font-bold tracking-tight">Próximas marcações</h2>
+          <h2 className="font-display text-lg font-bold tracking-tight">{t("dash.upcoming")}</h2>
           <Button size="sm" onClick={() => setNewOpen(true)}>
-            <CalendarCheck className="size-4" /> Nova marcação
+            <CalendarCheck className="size-4" /> {t("dash.new")}
           </Button>
         </div>
 
@@ -241,11 +243,11 @@ function Dashboard() {
         ) : (dayData?.upcoming.length ?? 0) === 0 ? (
           <EmptyState
             icon={<CalendarCheck className="size-6" />}
-            title="Sem marcações para já."
-            description="Quando os teus clientes marcarem, vais vê-las aqui."
+            title={t("dash.empty.title")}
+            description={t("dash.empty.body")}
             action={
               <Button onClick={() => setNewOpen(true)}>
-                <CalendarCheck className="mr-2 size-4" /> Nova marcação
+                <CalendarCheck className="mr-2 size-4" /> {t("dash.new")}
               </Button>
             }
           />
@@ -256,7 +258,7 @@ function Dashboard() {
                 key={day}
                 dayLabel={
                   day === today
-                    ? "Hoje"
+                    ? t("dash.todayLabel")
                     : formatDateLong(`${day}T12:00:00Z`, business!.timezone)
                 }
                 count={items.length}
