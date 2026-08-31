@@ -59,7 +59,6 @@ const DICT: Record<Lang, Record<string, string>> = {
     "share.customize": "Personalizar página",
   },
   en: {
-  en: {
     "home.eyebrow": "For barbershops, salons, clinics and studios",
     "home.title": "Your bookings, without phone calls or confusion.",
     "home.subtitle":
