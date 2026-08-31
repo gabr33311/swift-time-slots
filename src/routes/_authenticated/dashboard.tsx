@@ -290,7 +290,7 @@ function Dashboard() {
                         customerPhone={a.customer_phone}
                         startsAt={a.starts_at}
                         serviceName={a.service_name}
-                        timezone={tz}
+                        timezone={business!.timezone}
                       />
                     </li>
                   ))}
