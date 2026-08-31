@@ -71,6 +71,12 @@ const DICT: Record<Lang, Record<string, string>> = {
     "showcase.body": "Your agenda and the page clients see — simple on both sides.",
     "showcase.agenda": "A tidy daily agenda",
     "showcase.booking": "Public booking page",
+    "nav.today": "Today",
+    "nav.calendar": "Calendar",
+    "nav.customers": "Clients",
+    "nav.share": "Share",
+    "nav.profile": "Profile",
+    "nav.logout": "Sign out",
   },
 };
 
