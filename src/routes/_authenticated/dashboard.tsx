@@ -16,6 +16,7 @@ import { AppointmentActions } from "@/components/appointment-actions";
 import { InstallPrompt } from "@/components/install-prompt";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 import { markBusinessNotificationsRead } from "@/lib/appointment-management.functions";
+import { usePrefs } from "@/lib/prefs";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -38,6 +39,7 @@ function Dashboard() {
   const { business, isLoading, data } = useMyBusiness();
   const [newOpen, setNewOpen] = useState(false);
   const markNotificationsRead = useServerFn(markBusinessNotificationsRead);
+  const { t, lang } = usePrefs();
 
   useEffect(() => {
     if (!isLoading && data && data.count === 0) navigate({ to: "/onboarding" });
