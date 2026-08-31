@@ -35,6 +35,12 @@ const DICT: Record<Lang, Record<string, string>> = {
     "showcase.body": "A tua agenda e a página que os clientes vêem — simples nos dois lados.",
     "showcase.agenda": "Agenda do dia, sempre organizada",
     "showcase.booking": "Página pública de marcações",
+    "nav.today": "Hoje",
+    "nav.calendar": "Agenda",
+    "nav.customers": "Clientes",
+    "nav.share": "Partilhar",
+    "nav.profile": "Perfil",
+    "nav.logout": "Terminar sessão",
   },
   en: {
     "home.eyebrow": "For barbershops, salons, clinics and studios",
