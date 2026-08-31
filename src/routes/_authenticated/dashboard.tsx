@@ -232,9 +232,9 @@ function Dashboard() {
 
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="font-display text-lg font-bold tracking-tight">Próximas marcações</h2>
+          <h2 className="font-display text-lg font-bold tracking-tight">{t("dash.upcoming")}</h2>
           <Button size="sm" onClick={() => setNewOpen(true)}>
-            <CalendarCheck className="size-4" /> Nova marcação
+            <CalendarCheck className="size-4" /> {t("dash.new")}
           </Button>
         </div>
 
@@ -243,11 +243,11 @@ function Dashboard() {
         ) : (dayData?.upcoming.length ?? 0) === 0 ? (
           <EmptyState
             icon={<CalendarCheck className="size-6" />}
-            title="Sem marcações para já."
-            description="Quando os teus clientes marcarem, vais vê-las aqui."
+            title={t("dash.empty.title")}
+            description={t("dash.empty.body")}
             action={
               <Button onClick={() => setNewOpen(true)}>
-                <CalendarCheck className="mr-2 size-4" /> Nova marcação
+                <CalendarCheck className="mr-2 size-4" /> {t("dash.new")}
               </Button>
             }
           />
@@ -258,7 +258,7 @@ function Dashboard() {
                 key={day}
                 dayLabel={
                   day === today
-                    ? "Hoje"
+                    ? t("dash.todayLabel")
                     : formatDateLong(`${day}T12:00:00Z`, business!.timezone)
                 }
                 count={items.length}
