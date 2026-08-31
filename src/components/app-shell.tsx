@@ -7,13 +7,14 @@ import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
 import { useMyBusiness } from "@/hooks/use-business";
 import { useLogoUrl } from "@/hooks/use-logo";
+import { usePrefs } from "@/lib/prefs";
 
 const NAV = [
-  { to: "/dashboard", label: "Hoje", icon: LayoutDashboard },
-  { to: "/calendar", label: "Agenda", icon: CalendarDays },
-  { to: "/customers", label: "Clientes", icon: Users },
-  { to: "/share", label: "Partilhar", icon: Share2 },
-  { to: "/profile", label: "Perfil", icon: Store },
+  { to: "/dashboard", label: "nav.today", icon: LayoutDashboard },
+  { to: "/calendar", label: "nav.calendar", icon: CalendarDays },
+  { to: "/customers", label: "nav.customers", icon: Users },
+  { to: "/share", label: "nav.share", icon: Share2 },
+  { to: "/profile", label: "nav.profile", icon: Store },
 ] as const;
 
 // Bottom bar: Hoje first, then Agenda, Clientes, Partilhar, Perfil
@@ -33,6 +34,7 @@ function PopIcon({
 
 function NavList() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { t } = usePrefs();
   return (
     <nav className="flex flex-col gap-0.5">
       {NAV.map((item) => {
@@ -49,7 +51,7 @@ function NavList() {
             )}
           >
             <PopIcon Icon={item.icon} className="size-[18px]" />
-            {item.label}
+            {t(item.label)}
           </Link>
         );
       })}
@@ -62,6 +64,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const logoUrl = useLogoUrl(business?.logo_url);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { t } = usePrefs();
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -98,7 +101,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             className="w-full justify-start gap-3"
             onClick={signOut}
           >
-            <LogOut className="size-4" /> Terminar sessão
+            <LogOut className="size-4" /> {t("nav.logout")}
           </Button>
         </div>
       </aside>
@@ -129,7 +132,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               >
                 <PopIcon Icon={item.icon} className="size-[19px]" />
               </span>
-              {item.label}
+              {t(item.label)}
             </Link>
           );
         })}
