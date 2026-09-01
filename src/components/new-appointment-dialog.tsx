@@ -17,15 +17,7 @@ import {
 import { Loader2 } from "lucide-react";
 import { zonedToUtc, todayIn } from "@/lib/time";
 import type { Business } from "@/hooks/use-business";
-
-const schema = z.object({
-  customerName: z.string().trim().min(2, "Indica o nome do cliente.").max(80),
-  phone: z.string().trim().max(24).optional(),
-  serviceId: z.string().uuid("Escolhe um serviço."),
-  staffId: z.string().uuid("Escolhe um profissional."),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Escolhe uma data."),
-  time: z.string().regex(/^\d{2}:\d{2}$/, "Escolhe uma hora."),
-});
+import { usePrefs } from "@/lib/prefs";
 
 export function NewAppointmentDialog({
   business,
@@ -38,6 +30,7 @@ export function NewAppointmentDialog({
   onOpenChange: (v: boolean) => void;
   defaultDate?: string;
 }) {
+  const { t } = usePrefs();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [customerName, setCustomerName] = useState("");
@@ -47,6 +40,15 @@ export function NewAppointmentDialog({
   const [date, setDate] = useState(defaultDate ?? todayIn(business.timezone));
   const [time, setTime] = useState("09:00");
   const [notes, setNotes] = useState("");
+
+  const schema = z.object({
+    customerName: z.string().trim().min(2, t("cal.err.name")).max(80),
+    phone: z.string().trim().max(24).optional(),
+    serviceId: z.string().uuid(t("cal.err.service")),
+    staffId: z.string().uuid(t("cal.err.staff")),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, t("cal.err.date")),
+    time: z.string().regex(/^\d{2}:\d{2}$/, t("cal.err.time")),
+  });
 
   const { data } = useQuery({
     queryKey: ["appointment-form-data", business.id],
@@ -72,7 +74,7 @@ export function NewAppointmentDialog({
   async function save() {
     const parsed = schema.safeParse({ customerName, phone, serviceId, staffId, date, time });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Verifica os dados.");
+      toast.error(parsed.error.issues[0]?.message ?? t("cal.err.generic"));
       return;
     }
     const service = data?.services.find((s) => s.id === serviceId);
@@ -125,20 +127,20 @@ export function NewAppointmentDialog({
 
       if (error) {
         if (error.code === "23P01") {
-          toast.error("Este horário já está ocupado para esse profissional.");
+          toast.error(t("cal.err.conflict"));
           return;
         }
         throw error;
       }
 
-      toast.success("Marcação criada.");
+      toast.success(t("cal.success.created"));
       qc.invalidateQueries();
       onOpenChange(false);
       setCustomerName("");
       setPhone("");
       setNotes("");
     } catch {
-      toast.error("Não foi possível criar a marcação.");
+      toast.error(t("cal.err.create"));
     } finally {
       setBusy(false);
     }
@@ -148,12 +150,12 @@ export function NewAppointmentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Nova marcação</DialogTitle>
-          <DialogDescription>Para clientes que ligaram ou apareceram na loja.</DialogDescription>
+          <DialogTitle>{t("cal.dialog.title")}</DialogTitle>
+          <DialogDescription>{t("cal.dialog.desc")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="cname">Cliente</Label>
+            <Label htmlFor="cname">{t("cal.field.client")}</Label>
             <Input
               id="cname"
               value={customerName}
@@ -162,7 +164,7 @@ export function NewAppointmentDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="cphone">Telemóvel</Label>
+            <Label htmlFor="cphone">{t("cal.field.phone")}</Label>
             <Input
               id="cphone"
               value={phone}
@@ -172,14 +174,14 @@ export function NewAppointmentDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="svc">Serviço</Label>
+            <Label htmlFor="svc">{t("cal.field.service")}</Label>
             <select
               id="svc"
               value={serviceId}
               onChange={(e) => setServiceId(e.target.value)}
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
             >
-              <option value="">Escolher…</option>
+              <option value="">{t("cal.choose")}</option>
               {data?.services.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
@@ -188,14 +190,14 @@ export function NewAppointmentDialog({
             </select>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="stf">Profissional</Label>
+            <Label htmlFor="stf">{t("cal.field.staff")}</Label>
             <select
               id="stf"
               value={staffId}
               onChange={(e) => setStaffId(e.target.value)}
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
             >
-              <option value="">Escolher…</option>
+              <option value="">{t("cal.choose")}</option>
               {data?.staff.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
@@ -205,16 +207,16 @@ export function NewAppointmentDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="adate">Data</Label>
+              <Label htmlFor="adate">{t("cal.field.date")}</Label>
               <Input id="adate" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="atime">Hora</Label>
+              <Label htmlFor="atime">{t("cal.field.time")}</Label>
               <Input id="atime" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="anotes">Notas</Label>
+            <Label htmlFor="anotes">{t("cal.field.notes")}</Label>
             <Textarea
               id="anotes"
               value={notes}
@@ -224,7 +226,7 @@ export function NewAppointmentDialog({
           </div>
           <Button className="w-full" onClick={save} disabled={busy}>
             {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
-            Guardar marcação
+            {t("cal.save")}
           </Button>
         </div>
       </DialogContent>

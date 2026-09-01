@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, X } from "lucide-react";
+import { usePrefs } from "@/lib/prefs";
 
 type InstallEvent = Event & {
   prompt: () => Promise<void>;
@@ -11,6 +12,7 @@ const DISMISS_KEY = "schedivo-install-dismissed";
 
 /** Discreet, optional "Add to home screen" card. Never blocks the UI. */
 export function InstallPrompt() {
+  const { t } = usePrefs();
   const [deferred, setDeferred] = useState<InstallEvent | null>(null);
   const [hidden, setHidden] = useState(true);
 
@@ -34,8 +36,8 @@ export function InstallPrompt() {
         <Download className="size-5" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold">Adicionar ao ecrã inicial</p>
-        <p className="text-sm text-muted-foreground">Abre o Schedivo como uma aplicação.</p>
+        <p className="text-sm font-bold">{t("ui.install.title")}</p>
+        <p className="text-sm text-muted-foreground">{t("ui.install.body")}</p>
       </div>
       <Button
         size="sm"
@@ -45,12 +47,12 @@ export function InstallPrompt() {
           setDeferred(null);
         }}
       >
-        Instalar
+        {t("ui.install.action")}
       </Button>
       <Button
         variant="ghost"
         size="icon"
-        aria-label="Dispensar"
+        aria-label={t("ui.install.dismiss")}
         onClick={() => {
           localStorage.setItem(DISMISS_KEY, "1");
           setHidden(true);

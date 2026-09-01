@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { usePrefs } from "@/lib/prefs";
 
 export type EditableCustomer = {
   id: string;
@@ -37,6 +38,7 @@ export function EditCustomerDialog({
   businessId?: string | undefined;
 }) {
   const qc = useQueryClient();
+  const { t } = usePrefs();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -53,7 +55,7 @@ export function EditCustomerDialog({
   async function save() {
     if (!customer && !businessId) return;
     if (!name.trim()) {
-      toast.error("O nome é obrigatório.");
+      toast.error(t("cust.toast.nameRequired"));
       return;
     }
     setBusy(true);
@@ -68,10 +70,10 @@ export function EditCustomerDialog({
       : await supabase.from("customers").insert({ ...payload, business_id: businessId! });
     setBusy(false);
     if (error) {
-      toast.error("Não foi possível guardar o cliente.");
+      toast.error(t("cust.toast.saveError"));
       return;
     }
-    toast.success(customer ? "Cliente actualizado." : "Cliente criado.");
+    toast.success(customer ? t("cust.toast.updated") : t("cust.toast.created"));
     onOpenChange(false);
     qc.invalidateQueries({ queryKey: ["customers"] });
   }
@@ -80,23 +82,23 @@ export function EditCustomerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{customer ? "Editar cliente" : "Novo cliente"}</DialogTitle>
+          <DialogTitle>{customer ? t("cust.dialog.editTitle") : t("cust.dialog.newTitle")}</DialogTitle>
           <DialogDescription>
-            Dados de contacto e ficha técnica (fórmula de tinta, alergias, preferências).
+            {t("cust.dialog.desc")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="cname" className="font-bold">
-              Nome *
+              {t("cust.field.name")}
             </Label>
             <Input id="cname" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="cphone" className="font-bold">
-                Telemóvel
+                {t("cust.field.phone")}
               </Label>
               <Input
                 id="cphone"
@@ -108,7 +110,7 @@ export function EditCustomerDialog({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="cemail" className="font-bold">
-                Email
+                {t("cust.field.email")}
               </Label>
               <Input
                 id="cemail"
@@ -121,24 +123,24 @@ export function EditCustomerDialog({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="cnotes" className="font-bold">
-              Ficha técnica
+              {t("cust.field.notes")}
             </Label>
             <Textarea
               id="cnotes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               maxLength={500}
-              placeholder="Fórmula de tinta, alergias, preferências…"
+              placeholder={t("cust.field.notes.placeholder")}
             />
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={busy}>
-            Cancelar
+            {t("cust.cancel")}
           </Button>
           <Button onClick={save} disabled={busy}>
-            Guardar
+            {t("cust.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

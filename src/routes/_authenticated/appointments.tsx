@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { usePrefs } from "@/lib/prefs";
 import { AppShell } from "@/components/app-shell";
 import { EmptyState, LoadingRows, PageHeader, StatusBadge } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
@@ -33,18 +34,14 @@ export const Route = createFileRoute("/_authenticated/appointments")({
   component: AppointmentsPage,
 });
 
-const FILTERS = [
-  { key: "upcoming", label: "Próximas" },
-  { key: "today", label: "Hoje" },
-  { key: "past", label: "Passadas" },
-  { key: "cancelled", label: "Canceladas" },
-] as const;
+const FILTERS = ["upcoming", "today", "past", "cancelled"] as const;
 
 function AppointmentsPage() {
+  const { t } = usePrefs();
   const search = Route.useSearch();
   const { business } = useMyBusiness();
   const qc = useQueryClient();
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>(
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]>(
     search.filter ?? "upcoming",
   );
   const [newOpen, setNewOpen] = useState(Boolean(search.new));
@@ -73,7 +70,7 @@ function AppointmentsPage() {
       .update({ status: status as never })
       .eq("id", id);
     if (error) {
-      toast.error("Não foi possível actualizar a marcação.");
+      toast.error(t("appt.toast.updateError"));
       return;
     }
     await supabase.from("appointment_status_history").insert({
@@ -81,31 +78,31 @@ function AppointmentsPage() {
       business_id: business!.id,
       status: status as never,
     });
-    toast.success("Marcação actualizada.");
+    toast.success(t("appt.toast.updated"));
     qc.invalidateQueries({ queryKey: ["appointments"] });
   }
 
   return (
     <AppShell>
       <PageHeader
-        title="Marcações"
-        subtitle="Gere tudo o que está agendado."
-        action={<Button onClick={() => setNewOpen(true)}>Nova marcação</Button>}
+        title={t("appt.page.title")}
+        subtitle={t("appt.page.subtitle")}
+        action={<Button onClick={() => setNewOpen(true)}>{t("appt.new")}</Button>}
       />
 
       <div className="mb-4 flex flex-wrap gap-2">
         {FILTERS.map((f) => (
           <button
-            key={f.key}
-            onClick={() => setFilter(f.key)}
+            key={f}
+            onClick={() => setFilter(f)}
             className={cn(
               "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
-              filter === f.key
+              filter === f
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground hover:text-foreground",
             )}
           >
-            {f.label}
+            {t(`appt.filter.${f}`)}
           </button>
         ))}
       </div>
@@ -115,8 +112,8 @@ function AppointmentsPage() {
       ) : (data?.length ?? 0) === 0 ? (
         <EmptyState
           icon={<CalendarX className="size-6" />}
-          title="Nada por aqui."
-          description="Assim que existirem marcações neste filtro, aparecem nesta lista."
+          title={t("appt.empty.title")}
+          description={t("appt.empty.desc")}
         />
       ) : (
         <ul className="space-y-2">
@@ -143,14 +140,14 @@ function AppointmentsPage() {
               <StatusBadge status={a.status} />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="Acções">
+                  <Button variant="ghost" size="icon" aria-label={t("appt.actions.label")}>
                     <MoreHorizontal className="size-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {["confirmed", "completed", "no_show", "cancelled"].map((s) => (
                     <DropdownMenuItem key={s} onClick={() => setStatus(a.id, s)}>
-                      Marcar como {STATUS_LABELS[s]?.toLowerCase()}
+                      {t("appt.markAs")}{STATUS_LABELS[s]?.toLowerCase()}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>

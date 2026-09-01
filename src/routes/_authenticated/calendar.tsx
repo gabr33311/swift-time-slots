@@ -13,12 +13,13 @@ import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
+import { usePrefs } from "@/lib/prefs";
 
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
     meta: [
-      { title: "Agenda — Schedivo" },
-      { name: "description", content: "A agenda diária da tua equipa, hora a hora." },
+      { title: "Calendar — Schedivo" },
+      { name: "description", content: "Your team's daily calendar, hour by hour." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/calendar")({
 });
 
 function CalendarPage() {
+  const { t } = usePrefs();
   const { business } = useMyBusiness();
   const tz = business?.timezone ?? "Europe/Lisbon";
   const [date, setDate] = useState(todayIn(tz));
@@ -69,11 +71,11 @@ function CalendarPage() {
   return (
     <AppShell>
       <PageHeader
-        title="Agenda"
-        subtitle="O dia da tua equipa."
+        title={t("cal.title")}
+        subtitle={t("cal.subtitle")}
         action={
           <Button className="hidden lg:inline-flex" onClick={() => setNewOpen(true)}>
-            Nova marcação
+            {t("cal.new")}
           </Button>
         }
       />
@@ -81,7 +83,7 @@ function CalendarPage() {
       <div className="surface mb-5 flex items-center gap-1 p-1.5">
         <button
           onClick={() => setDate(addDays(date, -1))}
-          aria-label="Dia anterior"
+          aria-label={t("cal.prevDay")}
           className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <ChevronLeft className="size-4" />
@@ -89,7 +91,7 @@ function CalendarPage() {
         <p className="min-w-0 flex-1 truncate text-center text-sm font-bold capitalize">{label}</p>
         <button
           onClick={() => setDate(addDays(date, 1))}
-          aria-label="Dia seguinte"
+          aria-label={t("cal.nextDay")}
           className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <ChevronRight className="size-4" />
@@ -103,7 +105,7 @@ function CalendarPage() {
               : "text-muted-foreground hover:bg-muted hover:text-foreground",
           )}
         >
-          Hoje
+          {t("cal.today")}
         </button>
       </div>
 
@@ -112,12 +114,12 @@ function CalendarPage() {
       ) : (data?.appts.length ?? 0) === 0 ? (
         <EmptyState
           icon={<CalendarDays className="size-6" />}
-          title="Dia livre."
-          description="Não há marcações para este dia."
+          title={t("cal.empty.title")}
+          description={t("cal.empty.desc")}
         />
       ) : (
         <div className="space-y-6">
-          {(data!.staff.length ? data!.staff : [{ id: "none", name: "Marcações" }]).map((member) => {
+          {(data!.staff.length ? data!.staff : [{ id: "none", name: t("cal.unassigned") }]).map((member) => {
             const items = data!.appts.filter((a) =>
               member.id === "none" ? true : a.staff_id === member.id,
             );
@@ -175,7 +177,7 @@ function CalendarPage() {
         createPortal(
           <button
             onClick={() => setNewOpen(true)}
-            aria-label="Nova marcação"
+            aria-label={t("cal.new")}
             className="fixed right-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-50 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lift transition-transform active:scale-95 lg:hidden"
           >
             <Plus className="size-6" strokeWidth={2.6} />

@@ -15,6 +15,7 @@ import {
   type EditableCustomer,
 } from "@/components/edit-customer-dialog";
 import { cn } from "@/lib/utils";
+import { usePrefs } from "@/lib/prefs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,6 +41,7 @@ export const Route = createFileRoute("/_authenticated/customers")({
 
 function CustomersPage() {
   const { business } = useMyBusiness();
+  const { t } = usePrefs();
   const qc = useQueryClient();
   const [term, setTerm] = useState("");
   const [tab, setTab] = useState<"all" | "cancelled" | "blocked">("all");
@@ -93,23 +95,23 @@ function CustomersPage() {
   async function toggleBlock(id: string, blocked: boolean) {
     const { error } = await supabase.from("customers").update({ is_blocked: !blocked }).eq("id", id);
     if (error) {
-      toast.error("Não foi possível actualizar o cliente.");
+      toast.error(t("cust.toast.updateError"));
       return;
     }
-    toast.success(blocked ? "Cliente desbloqueado." : "Cliente bloqueado.");
+    toast.success(blocked ? t("cust.toast.unblocked") : t("cust.toast.blocked"));
     qc.invalidateQueries({ queryKey: ["customers"] });
   }
 
   return (
     <AppShell>
-      <PageHeader title="Clientes" subtitle="Quem já passou pelo teu negócio." />
+      <PageHeader title={t("cust.title")} subtitle={t("cust.subtitle")} />
 
       <div className="relative mb-3">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={term}
           onChange={(e) => setTerm(e.target.value)}
-          placeholder="Procurar por nome ou telemóvel"
+          placeholder={t("cust.search.placeholder")}
           maxLength={60}
           className="pl-10"
         />
@@ -148,17 +150,17 @@ function CustomersPage() {
           icon={<Users className="size-6" />}
           title={
             tab === "cancelled"
-              ? "Ninguém cancelou por agora."
+              ? t("cust.empty.cancelled")
               : tab === "blocked"
-                ? "Sem clientes bloqueados."
+                ? t("cust.empty.blocked")
                 : term
-                  ? "Sem resultados."
-                  : "Ainda sem clientes."
+                  ? t("cust.empty.noResults")
+                  : t("cust.empty.none")
           }
           description={
             term
-              ? "Tenta outro nome ou número."
-              : "Cada marcação cria automaticamente a ficha do cliente."
+              ? t("cust.empty.desc.search")
+              : t("cust.empty.desc.default")
           }
         />
       ) : (
@@ -171,10 +173,10 @@ function CustomersPage() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[15px] font-bold leading-snug">{c.name}</p>
                 <p className="truncate text-sm font-normal leading-snug text-muted-foreground">
-                  {c.phone ?? c.email ?? "Sem contacto"}
+                  {c.phone ?? c.email ?? t("cust.noContact")}
                   {(cancelledMap?.[c.id] ?? 0) > 0 && (
                     <span className="ml-2 font-semibold text-destructive">
-                      {cancelledMap![c.id]} cancelamento{cancelledMap![c.id]! > 1 ? "s" : ""}
+                      {cancelledMap![c.id]} {cancelledMap![c.id]! > 1 ? t("cust.cancellations") : t("cust.cancellation")}
                     </span>
                   )}
                 </p>
@@ -182,7 +184,7 @@ function CustomersPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label={`Editar ${c.name}`}
+                aria-label={`${t("cust.edit")} ${c.name}`}
                 className="size-9 shrink-0 text-muted-foreground"
                 onClick={() => setEditing(c)}
               >
@@ -196,7 +198,7 @@ function CustomersPage() {
                   onClick={() => toggleBlock(c.id, true)}
                 >
                   <ShieldCheck className="size-4" />
-                  <span className="hidden sm:inline">Desbloquear</span>
+                  <span className="hidden sm:inline">{t("cust.unblock")}</span>
                 </Button>
               ) : (
                 <AlertDialog>
@@ -204,7 +206,7 @@ function CustomersPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      aria-label={`Bloquear ${c.name}`}
+                      aria-label={`${t("cust.block")} ${c.name}`}
                       className="size-9 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                     >
                       <Ban className="size-4" />
@@ -212,16 +214,15 @@ function CustomersPage() {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Bloquear {c.name}?</AlertDialogTitle>
+                      <AlertDialogTitle>{t("cust.blockTitle")} {c.name}{t("cust.blockConfirmSuffix")}</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Este cliente deixa de poder fazer marcações na tua página. Podes
-                        desbloquear a qualquer momento.
+                        {t("cust.blockDesc")}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogCancel>{t("cust.cancel")}</AlertDialogCancel>
                       <AlertDialogAction onClick={() => toggleBlock(c.id, false)}>
-                        Bloquear
+                        {t("cust.block")}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -230,14 +231,14 @@ function CustomersPage() {
             </li>
           ))}
           <li className="py-6 text-center text-sm font-medium text-muted-foreground">
-            Não há mais clientes a mostrar.
+            {t("cust.noMore")}
           </li>
         </ul>
       )}
 
       <Button
         size="icon"
-        aria-label="Novo cliente"
+        aria-label={t("cust.new")}
         onClick={() => setCreating(true)}
         className="fixed bottom-24 right-5 z-40 size-14 rounded-full shadow-lift sm:bottom-8"
       >
