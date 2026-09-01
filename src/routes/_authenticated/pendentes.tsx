@@ -13,6 +13,7 @@ import { Check, Clock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { updateBusinessAppointmentStatus } from "@/lib/appointment-management.functions";
 import { z } from "zod";
+import { usePrefs } from "@/lib/prefs";
 
 type Tab = "pending" | "accepted" | "refused";
 
@@ -31,13 +32,10 @@ export const Route = createFileRoute("/_authenticated/pendentes")({
   component: PendingPage,
 });
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: "pending", label: "Pendentes" },
-  { id: "accepted", label: "Aceites" },
-  { id: "refused", label: "Recusadas" },
-];
+const TABS: { id: Tab }[] = [{ id: "pending" }, { id: "accepted" }, { id: "refused" }];
 
 function PendingPage() {
+  const { t } = usePrefs();
   const search = Route.useSearch();
   const { business } = useMyBusiness();
   const qc = useQueryClient();
@@ -77,7 +75,7 @@ function PendingPage() {
       data: {
         appointmentId: id,
         status: accept ? "confirmed" : "cancelled",
-        note: accept ? "Pedido aceite pelo negócio" : "Pedido recusado pelo negócio",
+        note: accept ? t("pend.note.accepted") : t("pend.note.refused"),
       },
     });
     setBusy(null);
@@ -85,7 +83,7 @@ function PendingPage() {
       toast.error(result.message);
       return;
     }
-    toast.success(accept ? "Marcação aceite." : "Pedido recusado.");
+    toast.success(accept ? t("pend.toast.accepted") : t("pend.toast.refused"));
     await Promise.all([
       qc.invalidateQueries({ queryKey: ["requests"] }),
       qc.invalidateQueries({ queryKey: ["dashboard-day"] }),
@@ -97,23 +95,23 @@ function PendingPage() {
 
   return (
     <AppShell>
-      <PageHeader title="Pedidos" subtitle="Marcações pedidas pelos teus clientes." />
+      <PageHeader title={t("pend.page.title")} subtitle={t("pend.page.subtitle")} />
 
       <div className="mb-5 flex gap-1 rounded-full bg-muted p-1">
-        {TABS.map((t) => (
+        {TABS.map((tab_) => (
           <Button
-            key={t.id}
+            key={tab_.id}
             type="button"
             variant="ghost"
-            onClick={() => setTab(t.id)}
+            onClick={() => setTab(tab_.id)}
             className={cn(
               "flex-1 rounded-full px-3 py-2 text-[13px] font-bold transition-colors",
-              tab === t.id
+              tab === tab_.id
                 ? "bg-card text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
-            {t.label}
+            {t(`pend.tab.${tab_.id}`)}
           </Button>
         ))}
       </div>
@@ -123,8 +121,8 @@ function PendingPage() {
       ) : items.length === 0 ? (
         <EmptyState
           icon={<Clock className="size-6" />}
-          title="Nada por aqui."
-          description="Os pedidos dos clientes aparecem nesta lista."
+          title={t("pend.empty.title")}
+          description={t("pend.empty.desc")}
         />
       ) : (
         <ul className="space-y-2.5">
@@ -163,7 +161,7 @@ function PendingPage() {
                     disabled={busy === a.id}
                     onClick={() => decide(a.id, true)}
                   >
-                    <Check className="mr-1.5 size-4" /> Aceitar
+                    <Check className="mr-1.5 size-4" /> {t("pend.accept")}
                   </Button>
                   <Button
                     size="sm"
@@ -172,7 +170,7 @@ function PendingPage() {
                     disabled={busy === a.id}
                     onClick={() => decide(a.id, false)}
                   >
-                    <X className="mr-1.5 size-4" /> Recusar
+                    <X className="mr-1.5 size-4" /> {t("pend.refuse")}
                   </Button>
                 </div>
               )}
