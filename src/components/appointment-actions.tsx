@@ -23,6 +23,7 @@ import {
 import { MoreVertical, CheckCircle2, XCircle, CalendarCheck, BellRing } from "lucide-react";
 import { normalizePhonePt } from "@/lib/phone";
 import { formatDateLong, formatTime } from "@/lib/format";
+import { usePrefs } from "@/lib/prefs";
 
 type Status = "pending" | "confirmed" | "completed" | "cancelled" | "no_show" | "expired";
 
@@ -44,6 +45,7 @@ export function AppointmentActions({
   serviceName?: string;
   timezone?: string;
 }) {
+  const { t } = usePrefs();
   const qc = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -55,7 +57,7 @@ export function AppointmentActions({
       data: {
         appointmentId: id,
         status: next as "confirmed" | "completed" | "cancelled" | "no_show",
-        note: next === "cancelled" ? "Cancelada pelo negócio" : "Estado alterado pelo negócio",
+        note: next === "cancelled" ? t("acts.note.cancelled") : t("acts.note.changed"),
       },
     });
     setBusy(false);
@@ -63,7 +65,7 @@ export function AppointmentActions({
       toast.error(result.message);
       return;
     }
-    toast.success(next === "cancelled" ? "Marcação cancelada." : "Marcação actualizada.");
+    toast.success(next === "cancelled" ? t("acts.toast.cancelled") : t("acts.toast.updated"));
     qc.invalidateQueries({ queryKey: ["calendar"] });
     qc.invalidateQueries({ queryKey: ["dashboard-day"] });
     qc.invalidateQueries({ queryKey: ["appointments"] });
@@ -79,9 +81,9 @@ export function AppointmentActions({
 
   function remind() {
     if (!phone || !startsAt) return;
-    const message = `Olá ${customerName}! Lembrete da tua marcação${
-      serviceName ? ` de ${serviceName}` : ""
-    } em ${formatDateLong(startsAt, tz)} às ${formatTime(startsAt, tz)}. Até já!`;
+    const message = `${t("acts.remind.hello")}${customerName}${t("acts.remind.body1")}${
+      serviceName ? `${t("acts.remind.of")}${serviceName}` : ""
+    }${t("acts.remind.on")}${formatDateLong(startsAt, tz)}${t("acts.remind.at")}${formatTime(startsAt, tz)}${t("acts.remind.bye")}`;
     window.open(
       `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`,
       "_blank",
@@ -97,7 +99,7 @@ export function AppointmentActions({
             variant="ghost"
             size="icon"
             className="size-8 shrink-0 text-muted-foreground"
-            aria-label={`Opções da marcação de ${customerName}`}
+            aria-label={`${t("acts.opts.forLabel")}${customerName}`}
             disabled={busy}
           >
             <MoreVertical className="size-4" />
@@ -106,22 +108,22 @@ export function AppointmentActions({
         <DropdownMenuContent align="end">
           {status === "pending" && (
             <DropdownMenuItem onClick={() => setStatus("confirmed")}>
-              <CalendarCheck className="mr-2 size-4" /> Confirmar
+              <CalendarCheck className="mr-2 size-4" /> {t("acts.confirm")}
             </DropdownMenuItem>
           )}
           {status !== "completed" && status !== "cancelled" && (
             <DropdownMenuItem onClick={() => setStatus("completed")}>
-              <CheckCircle2 className="mr-2 size-4" /> Marcar como concluída
+              <CheckCircle2 className="mr-2 size-4" /> {t("acts.markCompleted")}
             </DropdownMenuItem>
           )}
           {canRemind && (
             <DropdownMenuItem onClick={remind}>
-              <BellRing className="mr-2 size-4" /> Lembrar cliente (WhatsApp)
+              <BellRing className="mr-2 size-4" /> {t("acts.remindWhatsapp")}
             </DropdownMenuItem>
           )}
           {canCancel && (
             <DropdownMenuItem className="text-destructive" onClick={() => setConfirmOpen(true)}>
-              <XCircle className="mr-2 size-4" /> Cancelar marcação
+              <XCircle className="mr-2 size-4" /> {t("acts.cancelAppt")}
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>
@@ -130,15 +132,13 @@ export function AppointmentActions({
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancelar a marcação de {customerName}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              O horário fica novamente livre para outros clientes.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t("acts.dialog.cancelTitle")}{customerName}?</AlertDialogTitle>
+            <AlertDialogDescription>{t("acts.dialog.cancelDesc")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Manter</AlertDialogCancel>
+            <AlertDialogCancel>{t("acts.dialog.keep")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => setStatus("cancelled")}>
-              Cancelar marcação
+              {t("acts.cancelAppt")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
