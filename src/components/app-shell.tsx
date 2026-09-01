@@ -78,7 +78,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {logoUrl ? (
             <img
               src={logoUrl}
-              alt={`Foto de ${business?.name ?? "perfil"}`}
+              alt={`${t("ui.photoOf")} ${business?.name ?? t("ui.photoOfProfile")}`}
               className="size-9 rounded-xl object-cover ring-1 ring-border"
             />
           ) : (
@@ -89,7 +89,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="min-w-0">
             <p className="truncate text-sm font-bold">{business?.name ?? "Schedivo"}</p>
             <p className="truncate text-xs text-muted-foreground">
-              {business ? `/${business.slug}` : "A carregar…"}
+              {business ? `/${business.slug}` : t("ui.loading")}
             </p>
           </div>
         </div>

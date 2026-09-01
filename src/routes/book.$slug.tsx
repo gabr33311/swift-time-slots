@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
+import { usePrefs } from "@/lib/prefs";
 import { getPublicBusiness, getAvailableSlots, createPublicBooking } from "@/lib/booking.functions";
 import { trackPageView } from "@/lib/analytics.functions";
 import { AddToCalendar } from "@/components/add-to-calendar";
@@ -61,48 +62,57 @@ export const Route = createFileRoute("/book/$slug")({
       ],
     };
   },
-  errorComponent: () => (
-    <CenteredMessage
-      title="Não foi possível abrir esta página"
-      body="Tenta novamente daqui a pouco."
-    />
-  ),
-  notFoundComponent: () => (
-    <CenteredMessage
-      title="Página não encontrada"
-      body="Este negócio não existe ou ainda não publicou a página de marcações."
-    />
-  ),
+  errorComponent: () => <ErrorMessage />,
+  notFoundComponent: () => <NotFoundMessage />,
   component: BookPage,
 });
 
 function CenteredMessage({ title, body }: { title: string; body: string }) {
+  const { t } = usePrefs();
   return (
     <main className="flex min-h-screen items-center justify-center px-6 text-center">
       <div>
         <h1 className="text-xl font-bold">{title}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{body}</p>
         <Link to="/" className="mt-6 inline-block text-sm font-medium text-primary underline">
-          Voltar ao início
+          {t("bk.backHome")}
         </Link>
       </div>
     </main>
   );
 }
 
+function ErrorMessage() {
+  const { t } = usePrefs();
+  return <CenteredMessage title={t("bk.error.title")} body={t("bk.error.body")} />;
+}
+
+function NotFoundMessage() {
+  const { t } = usePrefs();
+  return <CenteredMessage title={t("bk.notFound.title")} body={t("bk.notFound.body")} />;
+}
+
+let formNameError = "Indica o teu nome.";
+let formPhoneError = "Indica um telemóvel válido.";
+let formEmailError = "Email inválido.";
+
 const formSchema = z.object({
-  name: z.string().trim().min(2, "Indica o teu nome.").max(80),
+  name: z.string().trim().min(2, formNameError).max(80),
   phone: z
     .string()
     .trim()
-    .min(6, "Indica um telemóvel válido.")
+    .min(6, formPhoneError)
     .max(24)
-    .regex(/^[0-9+\s()-]+$/, "Indica um telemóvel válido."),
-  email: z.string().trim().email("Email inválido.").max(160).or(z.literal("")),
+    .regex(/^[0-9+\s()-]+$/, formPhoneError),
+  email: z.string().trim().email(formEmailError).max(160).or(z.literal("")),
   notes: z.string().trim().max(500),
 });
 
 function BookPage() {
+  const { t } = usePrefs();
+  formNameError = t("bk.validation.name");
+  formPhoneError = t("bk.validation.phone");
+  formEmailError = t("bk.validation.email");
   const { business, services, staff } = Route.useLoaderData();
   const { slug } = Route.useParams();
   const { user, loading: authLoading } = useAuth();
@@ -199,12 +209,12 @@ function BookPage() {
 
   async function submit() {
     if (!user) {
-      toast.error("Inicia sessão para confirmares a marcação.");
+      toast.error(t("bk.toast.loginRequired"));
       return;
     }
     const parsed = formSchema.safeParse({ name, phone, email, notes });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Verifica os dados.");
+      toast.error(parsed.error.issues[0]?.message ?? t("bk.toast.checkData"));
       return;
     }
     if (!serviceId || !time) return;
@@ -236,7 +246,7 @@ function BookPage() {
       }
       setDone({ token: res.token, status: res.status });
     } catch {
-      toast.error("Não foi possível concluir a marcação. Tenta novamente.");
+      toast.error(t("bk.toast.bookingFailed"));
     } finally {
       setBusy(false);
     }
@@ -255,32 +265,32 @@ function BookPage() {
           <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-primary/12 text-primary">
             <Check className="size-7" />
           </div>
-          <h1 className="text-xl font-bold">Marcação confirmada</h1>
+          <h1 className="text-xl font-bold">{t("bk.confirmed.title")}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {formatDateLong(`${date}T12:00:00Z`, business.timezone)} às {time} · {service?.name}
+            {formatDateLong(`${date}T12:00:00Z`, business.timezone)}{t("bk.confirmed.at")}{time} · {service?.name}
           </p>
           <p className="mt-4 text-sm text-muted-foreground">
-            Podes consultar e cancelar esta marcação na tua conta.
+            {t("bk.confirmed.manage")}
           </p>
           <Link
             to="/minhas-marcacoes"
             className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground"
           >
-            As minhas marcações
+            {t("bk.myBookings")}
           </Link>
           <Link
             to="/booking/$token"
             params={{ token: done.token }}
             className="mt-2 inline-flex w-full items-center justify-center rounded-full border border-border px-4 py-2.5 text-sm font-bold"
           >
-            Ver detalhes da marcação
+            {t("bk.viewDetails")}
           </Link>
 
           {startsAt && endsAt && service && (
             <AddToCalendar
               event={{
                 title: `${service.name} · ${business.name}`,
-                description: `Marcação em ${business.name}.`,
+                description: t("bk.calendar.title") + business.name + ".",
                 location: [business.address, business.city].filter(Boolean).join(", "),
                 startIso: startsAt.toISOString(),
                 endIso: endsAt.toISOString(),
@@ -301,7 +311,7 @@ function BookPage() {
             {business.logo_url ? (
               <img
                 src={business.logo_url}
-                alt={`Logótipo de ${business.name}`}
+                alt={t("bk.logoAlt") + business.name}
                 className="size-full rounded-2xl object-cover"
               />
             ) : (
@@ -363,7 +373,7 @@ function BookPage() {
       </header>
 
 
-      <Section step={1} title="Escolhe o serviço">
+      <Section step={1} title={t("bk.step.service")}>
         <div className="grid gap-2">
           {services.map((s) => (
             <button
@@ -401,10 +411,10 @@ function BookPage() {
       </Section>
 
       {service && eligibleStaff.length > 1 && (
-        <Section step={2} title="Com quem?">
+        <Section step={2} title={t("bk.step.staff")}>
           <div className="flex flex-wrap gap-2">
             <ChoiceChip active={staffId === null} onClick={() => setStaffId(null)}>
-              Qualquer profissional
+              {t("bk.step.anyStaff")}
             </ChoiceChip>
             {eligibleStaff.map((p) => (
               <ChoiceChip
@@ -423,14 +433,14 @@ function BookPage() {
       )}
 
       {service && (
-        <Section step={eligibleStaff.length > 1 ? 3 : 2} title="Escolhe o dia e a hora">
+        <Section step={eligibleStaff.length > 1 ? 3 : 2} title={t("bk.step.dateTime")}>
           <div className="rounded-2xl border border-border p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                aria-label="Mês anterior"
+                aria-label={t("bk.prevMonth")}
                 disabled={month <= today.slice(0, 7)}
                 onClick={() => shiftMonth(-1)}
               >
@@ -441,14 +451,22 @@ function BookPage() {
                 type="button"
                 variant="ghost"
                 size="icon"
-                aria-label="Mês seguinte"
+                aria-label={t("bk.nextMonth")}
                 onClick={() => shiftMonth(1)}
               >
                 <ChevronRight className="size-4" />
               </Button>
             </div>
             <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-muted-foreground">
-              {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map((d) => (
+              {[
+                t("bk.weekday.mon"),
+                t("bk.weekday.tue"),
+                t("bk.weekday.wed"),
+                t("bk.weekday.thu"),
+                t("bk.weekday.fri"),
+                t("bk.weekday.sat"),
+                t("bk.weekday.sun"),
+              ].map((d) => (
                 <span key={d}>{d}</span>
               ))}
             </div>
@@ -491,15 +509,15 @@ function BookPage() {
             ) : (slots?.length ?? 0) === 0 ? (
               <div className="surface flex flex-col items-center gap-2 p-8 text-center">
                 <CalendarDays className="size-5 text-muted-foreground" />
-                <p className="text-sm font-bold">Sem horários neste dia.</p>
-                <p className="text-sm text-muted-foreground">Experimenta outro dia.</p>
+                <p className="text-sm font-bold">{t("bk.noSlots.title")}</p>
+                <p className="text-sm text-muted-foreground">{t("bk.noSlots.body")}</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {(
                   [
-                    ["Manhã", slots!.filter((s) => Number(s.time.slice(0, 2)) < 13)],
-                    ["Tarde", slots!.filter((s) => Number(s.time.slice(0, 2)) >= 13)],
+                    [t("bk.period.morning"), slots!.filter((s) => Number(s.time.slice(0, 2)) < 13)],
+                    [t("bk.period.afternoon"), slots!.filter((s) => Number(s.time.slice(0, 2)) >= 13)],
                   ] as const
                 ).map(([label, group]) =>
                   group.length === 0 ? null : (
@@ -523,7 +541,7 @@ function BookPage() {
 
         <Section
           step={eligibleStaff.length > 1 ? 4 : 3}
-          title={user ? "Os teus dados" : "A tua conta"}
+          title={user ? t("bk.step.yourData") : t("bk.step.yourAccount")}
         >
           {authLoading ? (
             <Skeleton className="h-24 w-full rounded-2xl" />
@@ -535,14 +553,14 @@ function BookPage() {
                 search={{ mode: undefined, next: `/book/${slug}` }}
                 className="flex items-center justify-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground"
               >
-                <LogIn className="size-3.5" /> Entrar com palavra-passe ou Google
+                <LogIn className="size-3.5" /> {t("bk.loginWithPassword")}
               </Link>
             </div>
           ) : (
             <div className="space-y-2.5">
               <div className="space-y-1">
                 <Label htmlFor="n" className="text-xs font-bold">
-                  Nome
+                  {t("bk.field.name")}
                 </Label>
                 <Input
                   id="n"
@@ -554,7 +572,7 @@ function BookPage() {
               </div>
               <div className="space-y-1">
                 <Label htmlFor="p" className="text-xs font-bold">
-                  Telemóvel
+                  {t("bk.field.phone")}
                 </Label>
                 <Input
                   id="p"
@@ -567,7 +585,7 @@ function BookPage() {
               </div>
               <div className="space-y-1">
                 <Label htmlFor="obs" className="text-xs font-bold">
-                  Notas (opcional)
+                  {t("bk.field.notesOptional")}
                 </Label>
                 <Textarea
                   id="obs"
@@ -595,7 +613,7 @@ function BookPage() {
               </p>
             </div>
             <Button onClick={submit} disabled={busy} size="lg">
-              {busy ? "A marcar…" : "Confirmar marcação"}
+              {busy ? t("bk.booking") : t("bk.confirmBooking")}
             </Button>
           </div>
         </div>
@@ -603,13 +621,13 @@ function BookPage() {
 
 
       <p className="mt-10 text-center text-xs text-muted-foreground">
-        Cancelamento gratuito até {business.cancellation_hours}h antes.
+        {t("bk.freeCancellation")}{business.cancellation_hours}{t("bk.freeCancellationAfter")}
       </p>
       <Link
         to="/"
         className="mt-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="size-3.5" /> Criar a minha página de marcações
+        <ArrowLeft className="size-3.5" /> {t("bk.createMyPage")}
       </Link>
     </main>
   );

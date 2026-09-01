@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { ListChecks } from "lucide-react";
 import { toast } from "sonner";
+import { usePrefs } from "@/lib/prefs";
 
 export const Route = createFileRoute("/_authenticated/waitlist")({
   head: () => ({
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/_authenticated/waitlist")({
 
 function WaitlistPage() {
   const { business } = useMyBusiness();
+  const { t } = usePrefs();
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -40,7 +42,7 @@ function WaitlistPage() {
   async function setStatus(id: string, status: string) {
     const { error } = await supabase.from("waitlist_entries").update({ status }).eq("id", id);
     if (error) {
-      toast.error("Não foi possível actualizar.");
+      toast.error(t("cust.wait.toast.updateError"));
       return;
     }
     qc.invalidateQueries({ queryKey: ["waitlist"] });
@@ -48,15 +50,15 @@ function WaitlistPage() {
 
   return (
     <AppShell>
-      <PageHeader title="Lista de espera" subtitle="Preenche as vagas que ficam livres." />
+      <PageHeader title={t("cust.wait.title")} subtitle={t("cust.wait.subtitle")} />
 
       {isLoading ? (
         <LoadingRows />
       ) : (data?.length ?? 0) === 0 ? (
         <EmptyState
           icon={<ListChecks className="size-6" />}
-          title="Sem pedidos em espera."
-          description="Quando um cliente pedir para ser avisado de uma vaga, aparece aqui."
+          title={t("cust.wait.empty.title")}
+          description={t("cust.wait.empty.desc")}
         />
       ) : (
         <ul className="space-y-2">
@@ -65,16 +67,16 @@ function WaitlistPage() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{w.customer_name}</p>
                 <p className="truncate text-sm text-muted-foreground">
-                  {w.customer_phone ?? "Sem contacto"}
+                  {w.customer_phone ?? t("cust.wait.noContact")}
                   {w.preference ? ` · ${w.preference}` : ""}
                 </p>
               </div>
               <span className="text-xs text-muted-foreground">{w.status}</span>
               <Button variant="outline" size="sm" onClick={() => setStatus(w.id, "contacted")}>
-                Contactado
+                {t("cust.wait.contacted")}
               </Button>
               <Button variant="ghost" size="sm" onClick={() => setStatus(w.id, "closed")}>
-                Fechar
+                {t("cust.wait.close")}
               </Button>
             </li>
           ))}
