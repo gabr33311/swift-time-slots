@@ -119,6 +119,21 @@ const BASE: Record<Lang, Record<string, string>> = {
   },
 };
 
+const MODULES = [
+  commonDict,
+  customersDict,
+  calendarDict,
+  profileDict,
+  appointmentsDict,
+  bookingDict,
+  onboardingDict,
+];
+
+const DICT: Record<Lang, Record<string, string>> = {
+  pt: Object.assign({}, BASE.pt, ...MODULES.map((m) => m.pt)),
+  en: Object.assign({}, BASE.en, ...MODULES.map((m) => m.en)),
+};
+
 type PrefsValue = {
   theme: Theme;
   setTheme: (t: Theme) => void;
