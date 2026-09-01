@@ -1,9 +1,16 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import type { Lang, Theme } from "./prefs-types";
+import { customersDict } from "./i18n/customers";
+import { calendarDict } from "./i18n/calendar";
+import { profileDict } from "./i18n/profile";
+import { appointmentsDict } from "./i18n/appointments";
+import { bookingDict } from "./i18n/booking";
+import { onboardingDict } from "./i18n/onboarding";
+import { commonDict } from "./i18n/common";
 
-export type Theme = "light" | "dark";
-export type Lang = "pt" | "en";
+export type { Lang, Theme };
 
-const DICT: Record<Lang, Record<string, string>> = {
+const BASE: Record<Lang, Record<string, string>> = {
   pt: {
     "home.eyebrow": "Para barbearias, salões, clínicas e estúdios",
     "home.title": "As tuas marcações, sem telefonemas nem confusão.",
