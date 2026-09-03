@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_authenticated/appointments")({
 const FILTERS = ["upcoming", "today", "past", "cancelled"] as const;
 
 function AppointmentsPage() {
-  const { t } = usePrefs();
+  const { t, lang } = usePrefs();
   const search = Route.useSearch();
   const { business } = useMyBusiness();
   const qc = useQueryClient();
