@@ -8,7 +8,7 @@ import { AppShell } from "@/components/app-shell";
 import { EmptyState, LoadingRows, PageHeader, StatusBadge } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
-import { formatDateShort, formatPrice, formatTime, STATUS_LABELS } from "@/lib/format";
+import { formatDateShort, formatPrice, formatTime, statusLabel } from "@/lib/format";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 import { CalendarX, MoreHorizontal } from "lucide-react";
 import {
@@ -147,7 +147,7 @@ function AppointmentsPage() {
                 <DropdownMenuContent align="end">
                   {["confirmed", "completed", "no_show", "cancelled"].map((s) => (
                     <DropdownMenuItem key={s} onClick={() => setStatus(a.id, s)}>
-                      {t("appt.markAs")}{STATUS_LABELS[s]?.toLowerCase()}
+                      {t("appt.markAs")}{statusLabel(s, lang).toLowerCase()}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>

@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { STATUS_LABELS } from "@/lib/format";
+import { statusLabel } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePrefs } from "@/lib/prefs";
 
@@ -66,6 +66,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export function StatusBadge({ status }: { status: string }) {
+  const { lang } = usePrefs();
   return (
     <span
       className={cn(
@@ -73,7 +74,7 @@ export function StatusBadge({ status }: { status: string }) {
         STATUS_STYLES[status] ?? "bg-muted text-muted-foreground ring-border",
       )}
     >
-      {STATUS_LABELS[status] ?? status}
+      {statusLabel(status, lang)}
     </span>
   );
 }

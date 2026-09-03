@@ -7,6 +7,7 @@ import { appointmentsDict } from "./i18n/appointments";
 import { bookingDict } from "./i18n/booking";
 import { onboardingDict } from "./i18n/onboarding";
 import { commonDict } from "./i18n/common";
+import { setFormatLang } from "./format";
 
 export type { Lang, Theme };
 
@@ -160,6 +161,10 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
+
+  useEffect(() => {
+    setFormatLang(lang);
+  }, [lang]);
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);
