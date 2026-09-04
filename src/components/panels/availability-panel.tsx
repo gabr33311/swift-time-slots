@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useMyBusiness } from "@/hooks/use-business";
-import { WEEKDAYS_PT, formatDateShort } from "@/lib/format";
+import { weekdays, formatDateShort } from "@/lib/format";
+import { usePrefs } from "@/lib/prefs";
 import { Trash2, Pencil, Save, X } from "lucide-react";
 
 type DayState = {
@@ -140,11 +141,11 @@ export function AvailabilityPanel() {
           ];
         });
       if (rows.length) await supabase.from("working_hours").insert(rows);
-      toast.success("Horários guardados.");
+      toast.success(t("pf.av.saved"));
       setEditMode(false);
       qc.invalidateQueries({ queryKey: ["availability"] });
     } catch {
-      toast.error("Não foi possível guardar os horários.");
+      toast.error(t("pf.av.err.save"));
     } finally {
       setBusy(false);
     }
@@ -153,7 +154,7 @@ export function AvailabilityPanel() {
   async function addBlock() {
     if (!business) return;
     if (!blockFrom || !blockTo || new Date(blockFrom) >= new Date(blockTo)) {
-      toast.error("Escolhe um intervalo válido.");
+      toast.error(t("pf.av.err.range"));
       return;
     }
     const { error } = await supabase.from("blocked_times").insert({
@@ -163,13 +164,13 @@ export function AvailabilityPanel() {
       reason: reason.trim().slice(0, 120) || null,
     });
     if (error) {
-      toast.error("Não foi possível criar a folga.");
+      toast.error(t("pf.av.err.block"));
       return;
     }
     setBlockFrom("");
     setBlockTo("");
     setReason("");
-    toast.success("Folga adicionada.");
+    toast.success(t("pf.av.blockAdded"));
     qc.invalidateQueries({ queryKey: ["availability"] });
   }
 
@@ -186,18 +187,18 @@ export function AvailabilityPanel() {
     <div className="space-y-6">
       <section className="surface p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-base font-semibold">Horário semanal</h2>
+          <h2 className="text-base font-semibold">{t("pf.av.weekly")}</h2>
           {locked ? (
             <Button variant="outline" size="sm" onClick={() => setEditMode(true)}>
-              <Pencil className="mr-2 size-4" /> Editar
+              <Pencil className="mr-2 size-4" /> {t("pf.common.edit")}
             </Button>
           ) : (
             <div className="flex gap-2">
               <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={busy}>
-                <X className="mr-2 size-4" /> Cancelar alterações
+                <X className="mr-2 size-4" /> {t("pf.av.cancelChanges")}
               </Button>
               <Button size="sm" onClick={saveHours} disabled={busy}>
-                <Save className="mr-2 size-4" /> Guardar
+                <Save className="mr-2 size-4" /> {t("pf.common.save")}
               </Button>
             </div>
           )}
@@ -213,9 +214,9 @@ export function AvailabilityPanel() {
                   onCheckedChange={(v) =>
                     setDays((prev) => prev.map((x, j) => (j === i ? { ...x, enabled: v } : x)))
                   }
-                  aria-label={WEEKDAYS_PT[i]}
+                  aria-label={days[i]}
                 />
-                <span className="w-24 text-sm font-semibold">{WEEKDAYS_PT[i]}</span>
+                <span className="w-24 text-sm font-semibold">{days[i]}</span>
                 <Input
                   type="time"
                   value={d.start}
@@ -227,7 +228,7 @@ export function AvailabilityPanel() {
                   }
                   className="w-32"
                 />
-                <span className="text-sm text-muted-foreground">até</span>
+                <span className="text-sm text-muted-foreground">{t("pf.av.to")}</span>
                 <Input
                   type="time"
                   value={d.end}
@@ -247,9 +248,9 @@ export function AvailabilityPanel() {
                   onCheckedChange={(v) =>
                     setDays((prev) => prev.map((x, j) => (j === i ? { ...x, lunch: v } : x)))
                   }
-                  aria-label={`Hora de almoço ${WEEKDAYS_PT[i]}`}
+                  aria-label={`${t("pf.av.lunch")} ${days[i]}`}
                 />
-                <span className="w-32 text-sm font-bold">Hora de almoço</span>
+                <span className="w-32 text-sm font-bold">{t("pf.av.lunch")}</span>
 
                   <Input
                     type="time"
@@ -262,7 +263,7 @@ export function AvailabilityPanel() {
                     }
                     className="w-32"
                   />
-                  <span className="text-sm text-muted-foreground">até</span>
+                  <span className="text-sm text-muted-foreground">{t("pf.av.to")}</span>
                   <Input
                     type="time"
                     value={d.lunchEnd}
@@ -281,14 +282,14 @@ export function AvailabilityPanel() {
       </section>
 
       <section className="surface p-5">
-        <h2 className="text-base font-semibold">Folgas e ausências</h2>
+        <h2 className="text-base font-semibold">{t("pf.av.blocks")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Bloqueia períodos em que não recebes marcações.
+          {t("pf.av.blocks.desc")}
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <div className="space-y-1.5">
             <Label htmlFor="bf" className="font-semibold">
-              Início
+              {t("pf.av.start")}
             </Label>
             <Input
               id="bf"
@@ -299,7 +300,7 @@ export function AvailabilityPanel() {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="bt" className="font-semibold">
-              Fim
+              {t("pf.av.end")}
             </Label>
             <Input
               id="bt"
@@ -310,19 +311,19 @@ export function AvailabilityPanel() {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="br" className="font-semibold">
-              Motivo
+              {t("pf.av.reason")}
             </Label>
             <Input
               id="br"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               maxLength={120}
-              placeholder="Férias"
+              placeholder={t("pf.av.reason.placeholder")}
             />
           </div>
         </div>
         <Button variant="outline" className="mt-4" onClick={addBlock}>
-          Adicionar folga
+          {t("pf.av.addBlock")}
         </Button>
 
         {(data?.blocks.length ?? 0) > 0 && (
@@ -340,7 +341,7 @@ export function AvailabilityPanel() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label="Remover folga"
+                  aria-label={t("pf.av.removeBlock")}
                   onClick={() => removeBlock(b.id)}
                 >
                   <Trash2 className="size-4" />
