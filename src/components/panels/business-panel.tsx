@@ -8,13 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useMyBusiness } from "@/hooks/use-business";
+import { usePrefs } from "@/lib/prefs";
 import { useLogoUrl } from "@/hooks/use-logo";
 import { initials } from "@/lib/format";
 import { ImagePlus } from "lucide-react";
 import { SaveBar } from "@/components/save-bar";
 
 const schema = z.object({
-  name: z.string().trim().min(2, "Indica o nome do negócio.").max(80),
+  name: z.string().trim().min(2, "pf.biz.err.name").max(80),
   description: z.string().trim().max(300),
   phone: z.string().trim().max(24),
   instagram: z.string().trim().max(60),
@@ -50,6 +51,7 @@ function baseline(b: NonNullable<ReturnType<typeof useMyBusiness>["business"]>) 
 
 export function BusinessPanel() {
   const { business } = useMyBusiness();
+  const { t } = usePrefs();
   const qc = useQueryClient();
   const [form, setForm] = useState(EMPTY);
   const [busy, setBusy] = useState(false);
@@ -66,11 +68,11 @@ export function BusinessPanel() {
   async function uploadLogo(file: File) {
     if (!business) return;
     if (!file.type.startsWith("image/")) {
-      toast.error("Escolhe um ficheiro de imagem.");
+      toast.error(t("pf.biz.err.imageType"));
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("A imagem tem de ter menos de 5 MB.");
+      toast.error(t("pf.biz.err.imageSize"));
       return;
     }
     setBusy(true);
@@ -81,7 +83,7 @@ export function BusinessPanel() {
       .upload(path, file, { upsert: true });
     if (upErr) {
       setBusy(false);
-      toast.error("Não foi possível enviar a foto.");
+      toast.error(t("pf.biz.err.upload"));
       return;
     }
     const { error } = await supabase
@@ -90,10 +92,10 @@ export function BusinessPanel() {
       .eq("id", business.id);
     setBusy(false);
     if (error) {
-      toast.error("Não foi possível guardar a foto.");
+      toast.error(t("pf.biz.err.savePhoto"));
       return;
     }
-    toast.success("Foto actualizada.");
+    toast.success(t("pf.biz.photoUpdated"));
     qc.invalidateQueries({ queryKey: ["my-business"] });
   }
 
@@ -104,7 +106,7 @@ export function BusinessPanel() {
       slotInterval: Number(form.slotInterval),
     });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Verifica os dados.");
+      toast.error(t(parsed.error.issues[0]?.message ?? "pf.common.checkData"));
       return;
     }
     if (!business) return;
@@ -124,10 +126,10 @@ export function BusinessPanel() {
       .eq("id", business.id);
     setBusy(false);
     if (error) {
-      toast.error("Não foi possível guardar.");
+      toast.error(t("pf.common.saveError"));
       return;
     }
-    toast.success("Definições guardadas.");
+    toast.success(t("pf.biz.saved"));
     qc.invalidateQueries({ queryKey: ["my-business"] });
   }
 
@@ -154,7 +156,7 @@ export function BusinessPanel() {
             )}
           </div>
           <div>
-            <p className="text-sm font-semibold">Foto de perfil</p>
+            <p className="text-sm font-semibold">{t("pf.biz.photo")}</p>
             <Button
               variant="outline"
               size="sm"
@@ -162,7 +164,7 @@ export function BusinessPanel() {
               disabled={busy}
               onClick={() => fileRef.current?.click()}
             >
-              <ImagePlus className="mr-2 size-4" /> Carregar foto
+              <ImagePlus className="mr-2 size-4" /> {t("pf.biz.uploadPhoto")}
             </Button>
             <input
               ref={fileRef}
@@ -183,13 +185,13 @@ export function BusinessPanel() {
       <div className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="bn" className="font-semibold">
-            Nome
+            {t("pf.biz.name")}
           </Label>
           <Input id="bn" value={form.name} onChange={set("name")} maxLength={80} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="bd" className="font-semibold">
-            Descrição
+            {t("pf.biz.description")}
           </Label>
           <Textarea
             id="bd"
@@ -201,13 +203,15 @@ export function BusinessPanel() {
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="bp" className="font-semibold">
-              Telemóvel <span className="font-normal text-muted-foreground">(recomendado)</span>
+              {t("pf.biz.phone")}{" "}
+              <span className="font-normal text-muted-foreground">{t("pf.biz.recommended")}</span>
             </Label>
             <Input id="bp" value={form.phone} onChange={set("phone")} maxLength={24} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="bi" className="font-semibold">
-              Instagram <span className="font-normal text-muted-foreground">(opcional)</span>
+              Instagram{" "}
+              <span className="font-normal text-muted-foreground">{t("pf.biz.optional")}</span>
             </Label>
             <Input
               id="bi"
@@ -221,13 +225,13 @@ export function BusinessPanel() {
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="bc" className="font-semibold">
-              Cidade
+              {t("pf.biz.city")}
             </Label>
             <Input id="bc" value={form.city} onChange={set("city")} maxLength={80} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="ba" className="font-semibold">
-              Morada
+              {t("pf.biz.address")}
             </Label>
             <Input
               id="ba"
@@ -240,7 +244,7 @@ export function BusinessPanel() {
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="bch" className="font-semibold">
-              Cancelamento até (horas antes)
+              {t("pf.biz.cancellation")}
             </Label>
             <Input
               id="bch"
@@ -251,7 +255,7 @@ export function BusinessPanel() {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="bsi" className="font-semibold">
-              Intervalo entre horários (min)
+              {t("pf.biz.slotInterval")}
             </Label>
             <Input
               id="bsi"
