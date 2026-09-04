@@ -7,10 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useMyBusiness } from "@/hooks/use-business";
+import { usePrefs } from "@/lib/prefs";
 import { Pencil, Save, X, ArrowUp, ArrowDown } from "lucide-react";
 
 export function PublicPagePanel() {
   const { business } = useMyBusiness();
+  const { t } = usePrefs();
   const qc = useQueryClient();
   const [edit, setEdit] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -66,10 +68,10 @@ export function PublicPagePanel() {
       .eq("id", business.id);
     setBusy(false);
     if (error) {
-      toast.error("Não foi possível guardar.");
+      toast.error(t("pf.common.saveError"));
       return;
     }
-    toast.success("Página actualizada.");
+    toast.success(t("pf.pub.saved"));
     setEdit(false);
     qc.invalidateQueries({ queryKey: ["my-business"] });
   }
@@ -78,7 +80,7 @@ export function PublicPagePanel() {
     <div className="space-y-4">
       <section className="surface space-y-5 p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-bold">Personalizar página pública</h2>
+          <h2 className="text-sm font-bold">{t("pf.pub.title")}</h2>
           {edit ? (
             <div className="flex gap-2">
               <Button
@@ -90,22 +92,22 @@ export function PublicPagePanel() {
                   setEdit(false);
                 }}
               >
-                <X className="mr-2 size-4" /> Cancelar
+                <X className="mr-2 size-4" /> {t("pf.common.cancel")}
               </Button>
               <Button size="sm" onClick={save} disabled={busy}>
-                <Save className="mr-2 size-4" /> Guardar
+                <Save className="mr-2 size-4" /> {t("pf.common.save")}
               </Button>
             </div>
           ) : (
             <Button variant="outline" size="sm" onClick={() => setEdit(true)}>
-              <Pencil className="mr-2 size-4" /> Editar
+              <Pencil className="mr-2 size-4" /> {t("pf.common.edit")}
             </Button>
           )}
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="ppd" className="font-bold">
-            Descrição
+            {t("pf.pub.description")}
           </Label>
           <Textarea
             id="ppd"
@@ -118,15 +120,15 @@ export function PublicPagePanel() {
 
         <div className="divide-y divide-border rounded-xl border border-border">
           <ToggleRow
-            title="Mostrar equipa"
-            description="Apresenta os profissionais na página."
+            title={t("pf.pub.showTeam")}
+            description={t("pf.pub.showTeam.desc")}
             checked={showTeam}
             disabled={!edit}
             onChange={setShowTeam}
           />
           <ToggleRow
-            title="Mostrar contactos"
-            description="Morada, telemóvel e Instagram. Estes textos e informações podem ser personalizados na secção Negócio (Perfil → Negócio)."
+            title={t("pf.pub.showContacts")}
+            description={t("pf.pub.contacts.desc")}
             checked={showContacts}
             disabled={!edit}
             onChange={setShowContacts}
@@ -134,7 +136,7 @@ export function PublicPagePanel() {
         </div>
 
         <div className="space-y-2">
-          <Label className="font-bold">Ordem dos serviços</Label>
+          <Label className="font-bold">{t("pf.pub.serviceOrder")}</Label>
           <ul className="space-y-2">
             {(services ?? []).map((s, i) => (
               <li
@@ -145,7 +147,7 @@ export function PublicPagePanel() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label="Subir"
+                  aria-label={t("pf.common.up")}
                   disabled={i === 0}
                   onClick={() => move(i, -1)}
                 >
@@ -154,7 +156,7 @@ export function PublicPagePanel() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label="Descer"
+                  aria-label={t("pf.common.down")}
                   disabled={i === (services?.length ?? 0) - 1}
                   onClick={() => move(i, 1)}
                 >

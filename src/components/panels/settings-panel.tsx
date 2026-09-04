@@ -19,25 +19,25 @@ export function SettingsPanel() {
     const { error } = await supabase.from("businesses").update(patch).eq("id", business.id);
     setBusy(false);
     if (error) {
-      toast.error("Não foi possível guardar.");
+      toast.error(t("pf.common.saveError"));
       return;
     }
     qc.invalidateQueries({ queryKey: ["my-business"] });
-    toast.success("Guardado.");
+    toast.success(t("pf.common.saved"));
   }
 
   return (
     <section className="surface divide-y divide-border">
       <Row
-        title="Página publicada"
-        description="Desliga para deixar de aceitar marcações online."
+        title={t("pf.set.published")}
+        description={t("pf.set.published.desc")}
         checked={business?.is_published ?? false}
         disabled={busy}
         onChange={(v) => toggle("is_published", v)}
       />
       <Row
-        title="Aparecer no Google"
-        description="Permite que motores de busca indexem a tua página."
+        title={t("pf.set.google")}
+        description={t("pf.set.google.desc")}
         checked={business?.seo_indexable ?? false}
         disabled={busy}
         onChange={(v) => toggle("seo_indexable", v)}

@@ -28,6 +28,9 @@ export const profileDict: Record<Lang, Record<string, string>> = {
     "pf.common.remove": "Remover",
     "pf.common.active": "Activo",
     "pf.common.checkData": "Verifica os dados.",
+    "pf.common.cancel": "Cancelar",
+    "pf.common.up": "Subir",
+    "pf.common.down": "Descer",
     "pf.common.saveError": "Não foi possível guardar.",
 
     "pf.biz.err.name": "Indica o nome do negócio.",
@@ -135,7 +138,9 @@ export const profileDict: Record<Lang, Record<string, string>> = {
     "pf.pub.saved": "Página actualizada.",
     "pf.pub.title": "Personalizar página pública",
     "pf.pub.description": "Descrição",
+    "pf.pub.showTeam": "Mostrar equipa",
     "pf.pub.showTeam.desc": "Apresenta os profissionais na página.",
+    "pf.pub.showContacts": "Mostrar contactos",
     "pf.pub.contacts.desc":
       "Morada, telemóvel e Instagram. Estes textos e informações podem ser personalizados na secção Negócio (Perfil → Negócio).",
     "pf.pub.serviceOrder": "Ordem dos serviços",
@@ -167,6 +172,9 @@ export const profileDict: Record<Lang, Record<string, string>> = {
     "pf.common.remove": "Remove",
     "pf.common.active": "Active",
     "pf.common.checkData": "Check the details.",
+    "pf.common.cancel": "Cancel",
+    "pf.common.up": "Move up",
+    "pf.common.down": "Move down",
     "pf.common.saveError": "Could not save.",
 
     "pf.biz.err.name": "Enter your business name.",
@@ -275,7 +283,9 @@ export const profileDict: Record<Lang, Record<string, string>> = {
     "pf.pub.saved": "Page updated.",
     "pf.pub.title": "Customise public page",
     "pf.pub.description": "Description",
+    "pf.pub.showTeam": "Show team",
     "pf.pub.showTeam.desc": "Show your staff on the page.",
+    "pf.pub.showContacts": "Show contacts",
     "pf.pub.contacts.desc":
       "Address, phone and Instagram. These texts can be customised in the Business section (Profile → Business).",
     "pf.pub.serviceOrder": "Service order",

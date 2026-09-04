@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { usePrefs } from "@/lib/prefs";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { QRCodeCanvas } from "qrcode.react";
@@ -16,19 +17,20 @@ function publicOrigin(): string {
 
 export function SharePanel({ compact = false }: { compact?: boolean }) {
   const { business } = useMyBusiness();
+  const { t } = usePrefs();
   const url = business ? `${publicOrigin()}/book/${business.slug}` : "";
 
   async function share() {
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
-        await navigator.share({ title: business?.name ?? "Marcações", url });
+        await navigator.share({ title: business?.name ?? t("pf.share.defaultTitle"), url });
       } catch {
         /* cancelled */
       }
       return;
     }
     await navigator.clipboard.writeText(url);
-    toast.success("Link copiado.");
+    toast.success(t("pf.share.linkCopied"));
   }
 
   function downloadQr() {
@@ -51,7 +53,7 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-            O teu link
+            {t("pf.share.yourLink")}
           </p>
           <p className="mt-1 break-all text-[13px] font-bold leading-snug sm:text-sm">
             {url.replace(/^https?:\/\//, "")}
@@ -59,14 +61,14 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" variant="outline" onClick={share}>
-            <Share2 className="size-4" /> Partilhar
+            <Share2 className="size-4" /> {t("pf.share.share")}
           </Button>
           <Button
             size="sm"
             variant="outline"
             onClick={() => window.open(url, "_blank", "noopener")}
           >
-            <Eye className="size-4" /> Pré-visualizar
+            <Eye className="size-4" /> {t("pf.share.preview")}
           </Button>
           <Button size="sm" variant="outline" onClick={downloadQr}>
             <Download className="size-4" /> PNG
