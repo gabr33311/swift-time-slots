@@ -58,6 +58,8 @@ function fromRows(hours: { weekday: number; start_time: string; end_time: string
 
 export function AvailabilityPanel() {
   const { business } = useMyBusiness();
+  const { t, lang } = usePrefs();
+  const days = weekdays(lang);
   const qc = useQueryClient();
   const [days, setDays] = useState<DayState[]>(
     Array.from({ length: 7 }, () => ({ ...DEFAULT_DAY })),
