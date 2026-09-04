@@ -59,7 +59,7 @@ function fromRows(hours: { weekday: number; start_time: string; end_time: string
 export function AvailabilityPanel() {
   const { business } = useMyBusiness();
   const { t, lang } = usePrefs();
-  const days = weekdays(lang);
+  const dayNames = weekdays(lang);
   const qc = useQueryClient();
   const [days, setDays] = useState<DayState[]>(
     Array.from({ length: 7 }, () => ({ ...DEFAULT_DAY })),
@@ -216,9 +216,9 @@ export function AvailabilityPanel() {
                   onCheckedChange={(v) =>
                     setDays((prev) => prev.map((x, j) => (j === i ? { ...x, enabled: v } : x)))
                   }
-                  aria-label={days[i]}
+                  aria-label={dayNames[i]}
                 />
-                <span className="w-24 text-sm font-semibold">{days[i]}</span>
+                <span className="w-24 text-sm font-semibold">{dayNames[i]}</span>
                 <Input
                   type="time"
                   value={d.start}
@@ -250,7 +250,7 @@ export function AvailabilityPanel() {
                   onCheckedChange={(v) =>
                     setDays((prev) => prev.map((x, j) => (j === i ? { ...x, lunch: v } : x)))
                   }
-                  aria-label={`${t("pf.av.lunch")} ${days[i]}`}
+                  aria-label={`${t("pf.av.lunch")} ${dayNames[i]}`}
                 />
                 <span className="w-32 text-sm font-bold">{t("pf.av.lunch")}</span>
 
