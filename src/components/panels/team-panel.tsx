@@ -17,6 +17,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useMyBusiness } from "@/hooks/use-business";
+import { usePrefs } from "@/lib/prefs";
 import { initials } from "@/lib/format";
 import { UserRound, Pencil, Trash2, Plus } from "lucide-react";
 
@@ -30,6 +31,7 @@ type StaffRow = {
 
 export function TeamPanel() {
   const { business } = useMyBusiness();
+  const { t } = usePrefs();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<StaffRow | null>(null);
@@ -63,10 +65,10 @@ export function TeamPanel() {
   async function remove(id: string) {
     const { error } = await supabase.from("staff").delete().eq("id", id);
     if (error) {
-      toast.error("Este profissional tem marcações. Desactiva-o em vez de o apagar.");
+      toast.error(t("pf.team.err.hasAppointments"));
       return;
     }
-    toast.success("Profissional removido.");
+    toast.success(t("pf.team.removed"));
     qc.invalidateQueries({ queryKey: ["team"] });
   }
 
@@ -84,7 +86,7 @@ export function TeamPanel() {
             setOpen(true);
           }}
         >
-          <Plus className="mr-2 size-4" /> Adicionar profissional
+          <Plus className="mr-2 size-4" /> {t("pf.team.add")}
         </Button>
       </div>
 
@@ -93,8 +95,8 @@ export function TeamPanel() {
       ) : (data?.rows.length ?? 0) === 0 ? (
         <EmptyState
           icon={<UserRound className="size-6" />}
-          title="Ainda sem equipa."
-          description="Adiciona-te a ti ou aos teus colegas para começar."
+          title={t("pf.team.empty.title")}
+          description={t("pf.team.empty.desc")}
         />
       ) : (
         <ul className="space-y-2">
@@ -106,18 +108,18 @@ export function TeamPanel() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{s.name}</p>
                 <p className="truncate text-sm text-muted-foreground">
-                  {s.specialty ?? `${s.service_ids.length} serviços`}
+                  {s.specialty ?? `${s.service_ids.length}${t("pf.team.servicesCount")}`}
                 </p>
               </div>
               <Switch
                 checked={s.is_active}
                 onCheckedChange={() => toggleActive(s)}
-                aria-label="Activo"
+                aria-label={t("pf.common.active")}
               />
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Editar"
+                aria-label={t("pf.common.edit")}
                 onClick={() => {
                   setEditing(s);
                   setOpen(true);
@@ -125,7 +127,7 @@ export function TeamPanel() {
               >
                 <Pencil className="size-4" />
               </Button>
-              <Button variant="ghost" size="icon" aria-label="Remover" onClick={() => remove(s.id)}>
+              <Button variant="ghost" size="icon" aria-label={t("pf.common.remove")} onClick={() => remove(s.id)}>
                 <Trash2 className="size-4" />
               </Button>
             </li>
@@ -146,7 +148,7 @@ export function TeamPanel() {
 }
 
 const schema = z.object({
-  name: z.string().trim().min(2, "Indica o nome.").max(80),
+  name: z.string().trim().min(2, "pf.team.err.name").max(80),
   specialty: z.string().trim().max(80),
 });
 
@@ -164,6 +166,7 @@ function StaffDialog({
   onOpenChange: (v: boolean) => void;
 }) {
   const qc = useQueryClient();
+  const { t } = usePrefs();
   const [name, setName] = useState(staff?.name ?? "");
   const [specialty, setSpecialty] = useState(staff?.specialty ?? "");
   const [selected, setSelected] = useState<string[]>(
@@ -174,7 +177,7 @@ function StaffDialog({
   async function save() {
     const parsed = schema.safeParse({ name, specialty });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Verifica os dados.");
+      toast.error(t(parsed.error.issues[0]?.message ?? "pf.common.checkData"));
       return;
     }
     if (!businessId) return;
@@ -207,11 +210,11 @@ function StaffDialog({
           })),
         );
       }
-      toast.success("Profissional guardado.");
+      toast.success(t("pf.team.saved"));
       qc.invalidateQueries({ queryKey: ["team"] });
       onOpenChange(false);
     } catch {
-      toast.error("Não foi possível guardar.");
+      toast.error(t("pf.common.saveError"));
     } finally {
       setBusy(false);
     }
@@ -221,30 +224,30 @@ function StaffDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{staff ? "Editar profissional" : "Novo profissional"}</DialogTitle>
-          <DialogDescription>Escolhe que serviços esta pessoa faz.</DialogDescription>
+          <DialogTitle>{staff ? t("pf.team.editTitle") : t("pf.team.newTitle")}</DialogTitle>
+          <DialogDescription>{t("pf.team.dialogDesc")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="pname" className="font-semibold">
-              Nome
+              {t("pf.team.name")}
             </Label>
             <Input id="pname" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="pspec" className="font-semibold">
-              Especialidade
+              {t("pf.team.specialty")}
             </Label>
             <Input
               id="pspec"
               value={specialty}
               onChange={(e) => setSpecialty(e.target.value)}
               maxLength={80}
-              placeholder="Ex.: Cortes e barba"
+              placeholder={t("pf.team.specialty.placeholder")}
             />
           </div>
           <div className="space-y-2">
-            <Label className="font-semibold">Serviços</Label>
+            <Label className="font-semibold">{t("pf.team.services")}</Label>
             {services.map((s) => (
               <label key={s.id} className="flex items-center gap-2.5 text-sm">
                 <Checkbox
@@ -258,7 +261,7 @@ function StaffDialog({
             ))}
           </div>
           <Button className="w-full" onClick={save} disabled={busy}>
-            Guardar
+            {t("pf.common.save")}
           </Button>
         </div>
       </DialogContent>
