@@ -51,6 +51,7 @@ function baseline(b: NonNullable<ReturnType<typeof useMyBusiness>["business"]>) 
 
 export function BusinessPanel() {
   const { business } = useMyBusiness();
+  const { t } = usePrefs();
   const qc = useQueryClient();
   const [form, setForm] = useState(EMPTY);
   const [busy, setBusy] = useState(false);
