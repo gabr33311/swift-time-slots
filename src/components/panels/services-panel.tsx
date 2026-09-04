@@ -42,6 +42,7 @@ const schema = z.object({
 
 export function ServicesPanel() {
   const { business } = useMyBusiness();
+  const { t } = usePrefs();
   const qc = useQueryClient();
   const [editing, setEditing] = useState<ServiceRow | null>(null);
   const [open, setOpen] = useState(false);
