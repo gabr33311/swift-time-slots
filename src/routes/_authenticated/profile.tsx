@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { usePrefs } from "@/lib/prefs";
 import { useState, type ComponentType } from "react";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/ui-bits";
@@ -23,10 +24,10 @@ import {
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [
-      { title: "Perfil — Schedivo" },
+      { title: "Profile — Schedivo" },
       {
         name: "description",
-        content: "Negócio, serviços, equipa, horários e estatísticas num só lugar.",
+        content: "Business, services, team, hours and stats in one place.",
       },
       { name: "robots", content: "noindex" },
     ],
@@ -44,51 +45,24 @@ type SectionId =
 
 type SectionItem = {
   id: SectionId;
-  label: string;
-  description: string;
   icon: ComponentType<{ className?: string }>;
 };
 
-const GROUPS: { title: string; items: SectionItem[] }[] = [
+const GROUPS: { titleKey: string; items: SectionItem[] }[] = [
   {
-    title: "Negócio",
+    titleKey: "pf.group.business",
     items: [
-      {
-        id: "business",
-        label: "Negócio",
-        description: "Nome, foto, contactos e regras de cancelamento.",
-        icon: Building2,
-      },
-      {
-        id: "services",
-        label: "Serviços",
-        description: "O que os clientes podem marcar.",
-        icon: Scissors,
-      },
-      { id: "team", label: "Equipa", description: "Quem atende os clientes.", icon: UserRound },
-      {
-        id: "availability",
-        label: "Disponibilidade",
-        description: "Horário semanal, almoço e folgas.",
-        icon: Clock,
-      },
+      { id: "business", icon: Building2 },
+      { id: "services", icon: Scissors },
+      { id: "team", icon: UserRound },
+      { id: "availability", icon: Clock },
     ],
   },
   {
-    title: "Gestão",
+    titleKey: "pf.group.management",
     items: [
-      {
-        id: "analytics",
-        label: "Estatísticas",
-        description: "Receita, cancelamentos e serviços mais rentáveis.",
-        icon: BarChart3,
-      },
-      {
-        id: "settings",
-        label: "Definições",
-        description: "Publicação da página, tema e idioma.",
-        icon: Settings,
-      },
+      { id: "analytics", icon: BarChart3 },
+      { id: "settings", icon: Settings },
     ],
   },
 ];
@@ -97,20 +71,23 @@ const SECTIONS = GROUPS.flatMap((g) => g.items);
 
 
 function ProfilePage() {
+  const { t } = usePrefs();
   const [section, setSection] = useState<SectionId | null>(null);
   const active = SECTIONS.find((s) => s.id === section);
+  const label = (id: SectionId) => t(`pf.section.${id}`);
+  const desc = (id: SectionId) => t(`pf.section.${id}.desc`);
 
   return (
     <AppShell>
       <PageHeader
-        title={active ? active.label : "Perfil"}
-        subtitle={active ? active.description : "Tudo sobre o teu negócio num só sítio."}
+        title={active ? label(active.id) : t("pf.title")}
+        subtitle={active ? desc(active.id) : t("pf.subtitle")}
         action={
           active ? (
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Voltar"
+              aria-label={t("pf.back")}
               className="size-9 text-muted-foreground"
               onClick={() => setSection(null)}
             >
@@ -123,9 +100,9 @@ function ProfilePage() {
       {!active ? (
         <div className="space-y-7">
           {GROUPS.map((group) => (
-            <section key={group.title}>
+            <section key={group.titleKey}>
               <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                {group.title}
+                {t(group.titleKey)}
               </h2>
               <div className="grid gap-3 sm:grid-cols-2">
                 {group.items.map((s) => (
@@ -138,8 +115,8 @@ function ProfilePage() {
                       <s.icon className="size-5" />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-bold">{s.label}</span>
-                      <span className="block text-sm text-muted-foreground">{s.description}</span>
+                      <span className="block text-sm font-bold">{label(s.id)}</span>
+                      <span className="block text-sm text-muted-foreground">{desc(s.id)}</span>
                     </span>
                     <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
                   </button>
