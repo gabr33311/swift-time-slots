@@ -67,6 +67,7 @@ const DEFAULT_HOURS: DayHours[] = [
 ];
 
 function Onboarding() {
+  const { t } = usePrefs();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [step, setStep] = useState(1);
@@ -406,7 +407,7 @@ function Onboarding() {
               {t("onb.s1.type")} <span className="text-destructive">*</span>
             </Label>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {BUSINESS_TYPES.map((t) => (
+              {BUSINESS_TYPES.map((bt) => (
                 <button
                   key={t.value}
                   type="button"
