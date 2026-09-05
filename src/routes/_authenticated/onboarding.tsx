@@ -155,12 +155,12 @@ function Onboarding() {
     );
   const stepValid = [step1Valid, step2Valid, step3Valid, step4Valid, true][step - 1] ?? true;
   const stepHint = !step1Valid
-    ? "Preenche todos os campos obrigatórios e escolhe um link disponível."
+    ? t("onb.hint.step1")
     : !step2Valid
-      ? "Adiciona pelo menos um serviço com nome e duração."
+      ? t("onb.hint.step2")
       : !step3Valid
-        ? "Adiciona pelo menos um profissional."
-        : "Confirma os horários (e o almoço dentro do horário de trabalho).";
+        ? t("onb.hint.step3")
+        : t("onb.hint.step4");
 
   const bookingUrl =
     typeof window !== "undefined" && createdSlug
@@ -170,38 +170,38 @@ function Onboarding() {
   async function finish() {
     const parsed = z
       .object({
-        name: z.string().trim().min(2, "Indica o nome do negócio.").max(80),
+        name: z.string().trim().min(2, "onb.err.name").max(80),
         slug: z
           .string()
           .trim()
-          .min(3, "O link precisa de pelo menos 3 caracteres.")
+          .min(3, "onb.err.slugMin")
           .max(48)
-          .regex(/^[a-z0-9-]+$/, "O link só pode ter letras minúsculas, números e hífens."),
-        description: z.string().trim().min(10, "Escreve uma descrição curta do negócio.").max(280),
-        city: z.string().trim().min(2, "Indica a cidade.").max(60),
-        address: z.string().trim().min(4, "Indica a morada.").max(140),
+          .regex(/^[a-z0-9-]+$/, "onb.err.slugFormat"),
+        description: z.string().trim().min(10, "onb.err.description").max(280),
+        city: z.string().trim().min(2, "onb.err.city").max(60),
+        address: z.string().trim().min(4, "onb.err.address").max(140),
         phone: z.string().trim().max(24).optional(),
       })
       .safeParse({ name, slug, description, city, address, phone });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Verifica os dados.");
+      toast.error(t(parsed.error.issues[0]?.message ?? "onb.err.checkData"));
       setStep(1);
       return;
     }
     const validServices = services.filter((s) => s.name.trim().length > 0);
     if (validServices.length === 0) {
-      toast.error("Adiciona pelo menos um serviço.");
+      toast.error(t("onb.err.addService"));
       setStep(2);
       return;
     }
     const validStaff = staff.filter((s) => s.name.trim().length > 0);
     if (validStaff.length === 0) {
-      toast.error("Adiciona pelo menos um profissional.");
+      toast.error(t("onb.err.addStaff"));
       setStep(3);
       return;
     }
     if (!hours.some((h) => h.open)) {
-      toast.error("Escolhe pelo menos um dia de trabalho.");
+      toast.error(t("onb.err.chooseDay"));
       setStep(4);
       return;
     }
@@ -212,7 +212,7 @@ function Onboarding() {
         !(h.start < h.lunchStart && h.lunchStart < h.lunchEnd && h.lunchEnd < h.end),
     );
     if (badLunch) {
-      toast.error("O horário de almoço tem de estar dentro do horário de trabalho.");
+      toast.error(t("onb.err.lunchRange"));
       setStep(4);
       return;
     }
@@ -238,7 +238,7 @@ function Onboarding() {
 
       if (error) {
         if (error.code === "23505") {
-          toast.error("Esse link já está a ser usado. Escolhe outro.");
+          toast.error(t("onb.err.slugTaken"));
           setStep(1);
           return;
         }
@@ -315,7 +315,7 @@ function Onboarding() {
       setCreatedSlug(business.slug);
       setStep(6);
     } catch {
-      toast.error("Não foi possível criar o negócio. Tenta novamente.");
+      toast.error(t("onb.err.createFailed"));
     } finally {
       setBusy(false);
     }
@@ -328,9 +328,9 @@ function Onboarding() {
           <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-2xl bg-success/15 text-success">
             <Check className="size-7" />
           </div>
-          <h1 className="text-2xl font-semibold">Está tudo pronto.</h1>
+          <h1 className="text-2xl font-semibold">{t("onb.success.title")}</h1>
           <ul className="mx-auto mt-5 max-w-xs space-y-2 text-left text-sm text-muted-foreground">
-            {["Negócio criado", "Serviços adicionados", "Horário configurado", "Página criada"].map(
+            {[t("onb.success.item1"), t("onb.success.item2"), t("onb.success.item3"), t("onb.success.item4")].map(
               (item) => (
                 <li key={item} className="flex items-center gap-2">
                   <Check className="size-4 text-success" /> {item}
@@ -338,7 +338,7 @@ function Onboarding() {
               ),
             )}
           </ul>
-          <p className="mt-6 text-sm">Partilha o teu link para começar a receber marcações.</p>
+          <p className="mt-6 text-sm">{t("onb.success.share")}</p>
           <p className="mt-2 break-all rounded-lg bg-muted px-3 py-2 text-sm font-medium">
             {bookingUrl}
           </p>
@@ -347,7 +347,7 @@ function Onboarding() {
               size="lg"
               onClick={() => {
                 navigator.clipboard.writeText(bookingUrl);
-                toast.success("Link copiado.");
+                toast.success(t("onb.success.linkCopied"));
               }}
             >
               <Copy className="mr-2 size-4" /> Copiar link
@@ -358,7 +358,7 @@ function Onboarding() {
               </a>
             </Button>
             <Button variant="outline" onClick={() => navigate({ to: "/dashboard" })}>
-              Ir para o painel
+              {t("onb.success.goDashboard")}
             </Button>
           </div>
         </div>
@@ -386,24 +386,24 @@ function Onboarding() {
       {step === 1 && (
         <div key={step} className="surface animate-slide-in space-y-5 p-6">
           <div>
-            <h1 className="text-xl font-semibold">O teu negócio</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Só o essencial para começar.</p>
+            <h1 className="text-xl font-semibold">{t("onb.s1.title")}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t("onb.s1.subtitle")}</p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="bname" className="font-semibold">
-              Nome do negócio <span className="text-destructive">*</span>
+              {t("onb.s1.name")} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="bname"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Barbearia do Gabriel"
+              placeholder={t("onb.s1.name.placeholder")}
               maxLength={80}
             />
           </div>
           <div className="space-y-2">
             <Label className="font-semibold">
-              Tipo de negócio <span className="text-destructive">*</span>
+              {t("onb.s1.type")} <span className="text-destructive">*</span>
             </Label>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {BUSINESS_TYPES.map((t) => (
@@ -426,7 +426,7 @@ function Onboarding() {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="slug" className="font-semibold">
-              O teu link (nome de utilizador) <span className="text-destructive">*</span>
+              {t("onb.s1.slug")} <span className="text-destructive">*</span>
             </Label>
             <div className="flex items-center gap-1 rounded-lg border border-input bg-muted/40 px-3">
               <span className="text-sm text-muted-foreground">/book/</span>
@@ -438,7 +438,7 @@ function Onboarding() {
                   setSlug(slugify(e.target.value));
                 }}
                 className="border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
-                placeholder="barbearia-do-gabriel"
+                placeholder={t("onb.s1.slug.placeholder")}
               />
               {slugCheck.state === "checking" && (
                 <Loader2 className="size-4 animate-spin text-muted-foreground" />
@@ -450,32 +450,32 @@ function Onboarding() {
             </div>
             <p className="text-xs text-muted-foreground">
               {slugCheck.state === "free" && (
-                <span className="text-success">Disponível — este link é teu.</span>
+                <span className="text-success">{t("onb.s1.slug.free")}</span>
               )}
               {slugCheck.state === "taken" && (
-                <span className="text-destructive">Já está ocupado. Escolhe outro.</span>
+                <span className="text-destructive">{t("onb.s1.slug.taken")}</span>
               )}
               {slugCheck.state === "invalid" &&
-                "Usa 3 a 48 caracteres: letras minúsculas, números e hífens."}
-              {slugCheck.state === "checking" && "A verificar disponibilidade…"}
+                t("onb.s1.slug.invalid")}
+              {slugCheck.state === "checking" && t("onb.s1.slug.checking")}
             </p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="desc" className="font-semibold">
-              Descrição curta <span className="text-destructive">*</span>
+              {t("onb.s1.desc")} <span className="text-destructive">*</span>
             </Label>
             <Textarea
               id="desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Cortes clássicos e modernos no centro do Porto."
+              placeholder={t("onb.s1.desc.placeholder")}
               maxLength={280}
             />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="city" className="font-semibold">
-                Cidade <span className="text-destructive">*</span>
+                {t("onb.s1.city")} <span className="text-destructive">*</span>
               </Label>
               <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} maxLength={60} />
             </div>
@@ -488,7 +488,7 @@ function Onboarding() {
                 id="phone"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="912 345 678"
+                placeholder={t("onb.s1.phone.placeholder")}
                 maxLength={24}
               />
             </div>
@@ -513,7 +513,7 @@ function Onboarding() {
                 id="ig"
                 value={instagram}
                 onChange={(e) => setInstagram(e.target.value)}
-                placeholder="@onegocio"
+                placeholder={t("onb.s1.instagram.placeholder")}
                 maxLength={60}
               />
             </div>
@@ -524,15 +524,15 @@ function Onboarding() {
       {step === 2 && (
         <div key={step} className="surface animate-slide-in space-y-4 p-6">
           <div>
-            <h1 className="text-xl font-semibold">Os teus serviços</h1>
+            <h1 className="text-xl font-semibold">{t("onb.s2.title")}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Já sugerimos alguns. Ajusta preços e durações.
+              {t("onb.s2.subtitle")}
             </p>
           </div>
           {services.map((s, i) => (
             <div key={i} className="grid grid-cols-[1fr_auto_auto_auto] items-end gap-2">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Nome do serviço</Label>
+                <Label className="text-xs font-semibold">{t("onb.s2.serviceName")}</Label>
                 <Input
                   value={s.name}
                   onChange={(e) =>
@@ -544,7 +544,7 @@ function Onboarding() {
                 />
               </div>
               <div className="w-32 space-y-1.5">
-                <Label className="text-xs font-semibold">Tempo (minutos)</Label>
+                <Label className="text-xs font-semibold">{t("onb.s2.duration")}</Label>
                 <Input
                   type="number"
                   min={5}
@@ -560,7 +560,7 @@ function Onboarding() {
                 />
               </div>
               <div className="w-24 space-y-1.5">
-                <Label className="text-xs font-semibold">Preço (€)</Label>
+                <Label className="text-xs font-semibold">{t("onb.s2.price")}</Label>
                 <Input
                   type="number"
                   min={0}
@@ -576,7 +576,7 @@ function Onboarding() {
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Remover serviço"
+                aria-label={t("onb.s2.remove")}
                 onClick={() => setServices((prev) => prev.filter((_, j) => j !== i))}
               >
                 <Trash2 className="size-4" />
@@ -587,7 +587,7 @@ function Onboarding() {
             variant="outline"
             onClick={() => setServices((p) => [...p, { name: "", duration: 30, price: 20 }])}
           >
-            Adicionar serviço
+            {t("onb.s2.add")}
           </Button>
         </div>
       )}
@@ -595,9 +595,9 @@ function Onboarding() {
       {step === 3 && (
         <div key={step} className="surface animate-slide-in space-y-4 p-6">
           <div>
-            <h1 className="text-xl font-semibold">Quem atende?</h1>
+            <h1 className="text-xl font-semibold">{t("onb.s3.title")}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Se trabalhas sozinho, adiciona só o teu nome.
+              {t("onb.s3.subtitle")}
             </p>
           </div>
           {staff.map((s, i) => (
@@ -633,7 +633,7 @@ function Onboarding() {
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Remover profissional"
+                aria-label={t("onb.s3.remove")}
                 onClick={() => setStaff((prev) => prev.filter((_, j) => j !== i))}
               >
                 <Trash2 className="size-4" />
@@ -644,7 +644,7 @@ function Onboarding() {
             variant="outline"
             onClick={() => setStaff((p) => [...p, { name: "", specialty: "" }])}
           >
-            Adicionar profissional
+            {t("onb.s3.add")}
           </Button>
         </div>
       )}
@@ -652,8 +652,8 @@ function Onboarding() {
       {step === 4 && (
         <div key={step} className="surface animate-slide-in space-y-3 p-6">
           <div>
-            <h1 className="text-xl font-semibold">Define quando estás disponível.</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Podes ajustar depois.</p>
+            <h1 className="text-xl font-semibold">{t("onb.s4.title")}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t("onb.s4.subtitle")}</p>
           </div>
           {hours.map((h, i) => (
             <div key={i} className="rounded-xl border border-border p-3">
@@ -697,7 +697,7 @@ function Onboarding() {
                     />
                   </div>
                 ) : (
-                  <span className="text-sm text-muted-foreground">Fechado</span>
+                  <span className="text-sm text-muted-foreground">{t("onb.s4.closed")}</span>
                 )}
               </div>
 
@@ -717,7 +717,7 @@ function Onboarding() {
                         : "border-border text-muted-foreground",
                     )}
                   >
-                    Almoço
+                    {t("onb.s4.lunch")}
                   </button>
                   {h.lunch ? (
                     <div className="flex items-center gap-2">
@@ -746,7 +746,7 @@ function Onboarding() {
                       />
                     </div>
                   ) : (
-                    <span className="text-sm text-muted-foreground">Sem pausa de almoço</span>
+                    <span className="text-sm text-muted-foreground">{t("onb.s4.noLunch")}</span>
                   )}
                 </div>
               )}
@@ -757,26 +757,26 @@ function Onboarding() {
 
       {step === 5 && (
         <div key={step} className="surface animate-slide-in space-y-4 p-6">
-          <h1 className="text-xl font-semibold">Confirma e cria a tua página</h1>
+          <h1 className="text-xl font-semibold">{t("onb.s5.title")}</h1>
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Negócio</dt>
+              <dt className="text-muted-foreground">{t("onb.s5.business")}</dt>
               <dd className="font-medium">{name || "—"}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Link</dt>
+              <dt className="text-muted-foreground">{t("onb.s5.link")}</dt>
               <dd className="font-medium">/book/{slug || "—"}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Serviços</dt>
+              <dt className="text-muted-foreground">{t("onb.s5.services")}</dt>
               <dd className="font-medium">{services.filter((s) => s.name).length}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Profissionais</dt>
+              <dt className="text-muted-foreground">{t("onb.s5.staff")}</dt>
               <dd className="font-medium">{staff.filter((s) => s.name).length}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Dias abertos</dt>
+              <dt className="text-muted-foreground">{t("onb.s5.openDays")}</dt>
               <dd className="font-medium">{hours.filter((h) => h.open).length}</dd>
             </div>
           </dl>
@@ -797,7 +797,7 @@ function Onboarding() {
         ) : (
           <Button onClick={finish} disabled={busy}>
             {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
-            Criar a minha página
+            {t("onb.create")}
           </Button>
         )}
       </div>
