@@ -50,6 +50,7 @@ function MyBookings() {
   const cancelMine = useServerFn(cancelMyClientAppointment);
   const [pendingCancel, setPendingCancel] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const { t } = usePrefs();
   const [tab, setTab] = useState<Tab>("upcoming");
 
   const { data, isLoading } = useQuery({
