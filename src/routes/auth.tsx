@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { CalendarCheck, Loader2, MailCheck, Check, X } from "lucide-react";
+import { usePrefs } from "@/lib/prefs";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -37,28 +38,29 @@ export const Route = createFileRoute("/auth")({
 
 const passwordSchema = z
   .string()
-  .min(8, { message: "A palavra-passe precisa de pelo menos 8 caracteres." })
+  .min(8, { message: "onb.auth.err.password.min" })
   .max(72)
-  .regex(/[A-Z]/, { message: "A palavra-passe precisa de uma letra maiúscula." })
-  .regex(/[a-z]/, { message: "A palavra-passe precisa de uma letra minúscula." })
-  .regex(/[0-9]/, { message: "A palavra-passe precisa de um número." })
-  .regex(/[^A-Za-z0-9]/, { message: "A palavra-passe precisa de um símbolo (ex.: !?@#)." });
+  .regex(/[A-Z]/, { message: "onb.auth.err.password.upper" })
+  .regex(/[a-z]/, { message: "onb.auth.err.password.lower" })
+  .regex(/[0-9]/, { message: "onb.auth.err.password.number" })
+  .regex(/[^A-Za-z0-9]/, { message: "onb.auth.err.password.symbol" });
 
 const schema = z.object({
-  email: z.string().trim().email({ message: "Introduz um email válido." }).max(255),
+  email: z.string().trim().email({ message: "onb.auth.err.email" }).max(255),
   password: passwordSchema,
   name: z.string().trim().max(80).optional(),
 });
 
 const PASSWORD_RULES = [
-  { label: "Pelo menos 8 caracteres", test: (v: string) => v.length >= 8 },
-  { label: "Uma letra maiúscula", test: (v: string) => /[A-Z]/.test(v) },
-  { label: "Uma letra minúscula", test: (v: string) => /[a-z]/.test(v) },
-  { label: "Um número", test: (v: string) => /[0-9]/.test(v) },
-  { label: "Um símbolo", test: (v: string) => /[^A-Za-z0-9]/.test(v) },
+  { label: "onb.auth.rule.min", test: (v: string) => v.length >= 8 },
+  { label: "onb.auth.rule.upper", test: (v: string) => /[A-Z]/.test(v) },
+  { label: "onb.auth.rule.lower", test: (v: string) => /[a-z]/.test(v) },
+  { label: "onb.auth.rule.number", test: (v: string) => /[0-9]/.test(v) },
+  { label: "onb.auth.rule.symbol", test: (v: string) => /[^A-Za-z0-9]/.test(v) },
 ];
 
 function AuthPage() {
+  const { t } = usePrefs();
   const navigate = useNavigate();
   const { mode: initialMode, next } = Route.useSearch();
   const [mode, setMode] = useState<"login" | "register" | "forgot">(initialMode ?? "login");
@@ -95,13 +97,13 @@ function AuthPage() {
         redirect_uri: `${window.location.origin}/auth${next ? `?next=${encodeURIComponent(next)}` : ""}`,
       });
       if (result.error) {
-        toast.error("Não foi possível entrar com o Google.");
+        toast.error(t("onb.auth.err.google"));
         return;
       }
       if (result.redirected) return;
       goAfterAuth();
     } catch {
-      toast.error("Não foi possível entrar com o Google.");
+      toast.error(t("onb.auth.err.google"));
     } finally {
       setBusy(false);
     }
@@ -117,21 +119,21 @@ function AuthPage() {
       if (mode === "forgot") {
         const parsed = z.string().email().safeParse(email.trim());
         if (!parsed.success) {
-          toast.error("Introduz um email válido.");
+          toast.error(t("onb.auth.err.email"));
           return;
         }
         const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
           redirectTo: `${window.location.origin}/auth`,
         });
         if (error) throw error;
-        toast.success("Enviámos-te um email para recuperar a palavra-passe.");
+        toast.success(t("onb.auth.success.resetEmail"));
         setMode("login");
         return;
       }
 
       const parsed = schema.safeParse({ email, password, name });
       if (!parsed.success) {
-        toast.error(parsed.error.issues[0]?.message ?? "Verifica os dados.");
+        toast.error(t(parsed.error.issues[0]?.message ?? "onb.auth.err.checkData"));
         return;
       }
 
@@ -147,10 +149,10 @@ function AuthPage() {
         if (error) throw error;
         if (!data.session) {
           setConfirmSent(parsed.data.email);
-          toast.success("Conta criada. Confirma o email para continuar.");
+          toast.success(t("onb.auth.success.accountCreated"));
           return;
         }
-        toast.success("Conta criada. Vamos configurar o teu negócio.");
+        toast.success(t("onb.auth.success.accountCreatedGo"));
         goAfterAuth("/onboarding");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -163,18 +165,18 @@ function AuthPage() {
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
       if (message.includes("Invalid login credentials")) {
-        toast.error("Email ou palavra-passe incorrectos.");
+        toast.error(t("onb.auth.err.invalidLogin"));
       } else if (message.includes("already registered") || message.includes("User already")) {
-        toast.error("Já existe uma conta com este email. Entra em vez de criar conta.");
+        toast.error(t("onb.auth.err.alreadyRegistered"));
       } else if (message.includes("Email not confirmed")) {
         setConfirmSent(email.trim());
-        toast.error("Ainda não confirmaste o email. Verifica a tua caixa de entrada.");
+        toast.error(t("onb.auth.err.emailNotConfirmed"));
       } else if (message.toLowerCase().includes("weak password")) {
-        toast.error("Palavra-passe demasiado fraca. Escolhe outra.");
+        toast.error(t("onb.auth.err.weakPassword"));
       } else if (message.includes("rate limit") || message.includes("after")) {
-        toast.error("Demasiadas tentativas. Espera alguns segundos.");
+        toast.error(t("onb.auth.err.rateLimit"));
       } else {
-        toast.error(message || "Não foi possível concluir. Tenta novamente.");
+        toast.error(message || t("onb.auth.err.generic"));
       }
     } finally {
       setBusy(false);
@@ -191,9 +193,9 @@ function AuthPage() {
         options: { emailRedirectTo: `${window.location.origin}${next ?? "/onboarding"}` },
       });
       if (error) throw error;
-      toast.success("Email de confirmação reenviado.");
+      toast.success(t("onb.auth.success.resent"));
     } catch {
-      toast.error("Não foi possível reenviar agora. Tenta daqui a pouco.");
+      toast.error(t("onb.auth.err.resend"));
     } finally {
       setBusy(false);
     }
@@ -206,15 +208,15 @@ function AuthPage() {
           <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
             <MailCheck className="size-7" strokeWidth={2.5} />
           </div>
-          <h1 className="text-xl font-semibold">Confirma o teu email</h1>
+          <h1 className="text-xl font-semibold">{t("onb.auth.confirmTitle")}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Enviámos um link de confirmação para <span className="font-medium">{confirmSent}</span>.
-            Abre o email e clica no link — depois disso segues logo para a criação do teu negócio.
+            {t("onb.auth.confirmBody1")} <span className="font-medium">{confirmSent}</span>.{" "}
+            {t("onb.auth.confirmBody2")}
           </p>
           <div className="mt-6 flex flex-col gap-2">
             <Button onClick={resendConfirmation} disabled={busy} variant="outline">
               {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Reenviar email
+              {t("onb.auth.resend")}
             </Button>
             <Button
               variant="ghost"
@@ -223,7 +225,7 @@ function AuthPage() {
                 setMode("login");
               }}
             >
-              Voltar a entrar
+              {t("onb.auth.backToLogin")}
             </Button>
           </div>
         </div>
@@ -242,51 +244,51 @@ function AuthPage() {
 
       <div className="surface animate-enter w-full max-w-sm p-6">
         <h1 className="text-xl font-semibold">
-          {mode === "login" && "Entrar"}
-          {mode === "register" && "Criar conta"}
-          {mode === "forgot" && "Recuperar palavra-passe"}
+          {mode === "login" && t("onb.auth.title.login")}
+          {mode === "register" && t("onb.auth.title.register")}
+          {mode === "forgot" && t("onb.auth.title.forgot")}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {mode === "register"
-            ? "Cria a tua página de marcações em poucos minutos."
-            : "Acede ao painel do teu negócio."}
+            ? t("onb.auth.subtitle.register")
+            : t("onb.auth.subtitle.other")}
         </p>
 
         <form onSubmit={submit} className="mt-6 space-y-4">
           {mode === "register" && (
             <div className="space-y-1.5">
-              <Label htmlFor="name">Nome</Label>
+              <Label htmlFor="name">{t("onb.auth.name")}</Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="O teu nome"
+                placeholder={t("onb.auth.name.placeholder")}
                 maxLength={80}
                 autoComplete="name"
               />
             </div>
           )}
           <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("onb.auth.email")}</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="nome@exemplo.pt"
+              placeholder={t("onb.auth.email.placeholder")}
               autoComplete="email"
               required
             />
           </div>
           {mode !== "forgot" && (
             <div className="space-y-1.5">
-              <Label htmlFor="password">Palavra-passe</Label>
+              <Label htmlFor="password">{t("onb.auth.password")}</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Mínimo 8 caracteres"
+                placeholder={t("onb.auth.password.placeholder")}
                 autoComplete={mode === "login" ? "current-password" : "new-password"}
                 required
               />
@@ -307,7 +309,7 @@ function AuthPage() {
                         ) : (
                           <X className="size-3.5" strokeWidth={3} />
                         )}
-                        {r.label}
+                        {t(r.label)}
                       </li>
                     );
                   })}
@@ -317,9 +319,9 @@ function AuthPage() {
           )}
           <Button type="submit" className="w-full" disabled={busy}>
             {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
-            {mode === "login" && "Entrar"}
-            {mode === "register" && "Criar conta"}
-            {mode === "forgot" && "Enviar email"}
+            {mode === "login" && t("onb.auth.submit.login")}
+            {mode === "register" && t("onb.auth.submit.register")}
+            {mode === "forgot" && t("onb.auth.submit.forgot")}
           </Button>
         </form>
 
@@ -327,7 +329,7 @@ function AuthPage() {
           <>
             <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
               <span className="h-px flex-1 bg-border" />
-              ou
+              {t("onb.auth.or")}
               <span className="h-px flex-1 bg-border" />
             </div>
             <Button
@@ -352,7 +354,7 @@ function AuthPage() {
                   d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4C17.9 1.2 15.2 0 12 0A12 12 0 0 0 1.4 6.7l4 3.1C6.3 6.9 8.9 4.8 12 4.8z"
                 />
               </svg>
-              Continuar com Google
+              {t("onb.auth.google")}
             </Button>
           </>
         )}
@@ -366,19 +368,19 @@ function AuthPage() {
                 className="text-muted-foreground underline-offset-4 hover:underline"
                 onClick={() => setMode("forgot")}
               >
-                Esqueci-me da palavra-passe
+                {t("onb.auth.forgotPassword")}
               </button>
               <p className="text-muted-foreground">
-                Ainda não tens conta?{" "}
+                {t("onb.auth.noAccount")}{" "}
                 <button className="font-medium text-primary" onClick={() => setMode("register")}>
-                  Criar conta
+                  {t("onb.auth.createAccount")}
                 </button>
               </p>
             </>
           )}
           {mode !== "login" && (
             <button className="font-medium text-primary" onClick={() => setMode("login")}>
-              Voltar a entrar
+              {t("onb.auth.backToLogin2")}
             </button>
           )}
         </div>
