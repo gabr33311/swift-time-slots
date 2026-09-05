@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SaveBar } from "@/components/save-bar";
+import { usePrefs } from "@/lib/prefs";
 import { PrefsToggles } from "@/components/prefs-toggles";
 import { EmptyState, LoadingRows, StatusBadge } from "@/components/ui-bits";
 import { maskPhonePt, normalizePhonePt } from "@/lib/phone";
@@ -65,7 +66,7 @@ function MyBookings() {
       toast.error(res.message);
       return;
     }
-    toast.success("Marcação cancelada.");
+    toast.success(t("mine.toast.cancelled"));
     qc.invalidateQueries({ queryKey: ["my-client-appointments"] });
   }
 
@@ -87,13 +88,13 @@ function MyBookings() {
         to="/"
         className="mb-6 inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="size-3.5" /> Início
+        <ArrowLeft className="size-3.5" /> {t("mine.back")}
       </Link>
       <h1 className="font-display text-[28px] font-bold leading-tight tracking-tight">
-        A minha conta
+        {t("mine.title")}
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Dados de perfil, preferências e as tuas marcações.
+        {t("mine.subtitle")}
       </p>
 
       <ClientProfileCard />
@@ -101,8 +102,8 @@ function MyBookings() {
       <div className="mt-8 flex items-center gap-1 rounded-2xl border border-border bg-muted/40 p-1">
         {(
           [
-            ["upcoming", "Próximas"],
-            ["past", "Anteriores"],
+            ["upcoming", t("mine.tab.upcoming")],
+            ["past", t("mine.tab.past")],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -124,8 +125,8 @@ function MyBookings() {
         ) : list.length === 0 ? (
           <EmptyState
             icon={<CalendarDays className="size-6" />}
-            title={tab === "upcoming" ? "Sem marcações futuras." : "Ainda não tens histórico."}
-            description="Quando marcares num negócio, aparecem aqui."
+            title={tab === "upcoming" ? t("mine.empty.upcoming") : t("mine.empty.past")}
+            description={t("mine.empty.desc")}
           />
         ) : (
           <ul className="space-y-2.5">
@@ -158,7 +159,7 @@ function MyBookings() {
                         onClick={() => setPendingCancel(a.id)}
                         disabled={busy}
                       >
-                        Cancelar marcação
+                        {t("mine.cancel")}
                       </Button>
                     </div>
                   )}
@@ -172,15 +173,15 @@ function MyBookings() {
       <AlertDialog open={!!pendingCancel} onOpenChange={(o) => !o && setPendingCancel(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancelar esta marcação?</AlertDialogTitle>
+            <AlertDialogTitle>{t("mine.dialog.cancelTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              O horário fica novamente disponível para outros clientes.
+              {t("mine.dialog.cancelDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Manter</AlertDialogCancel>
+            <AlertDialogCancel>{t("mine.dialog.keep")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => pendingCancel && cancel(pendingCancel)}>
-              Cancelar marcação
+              {t("mine.cancel")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -190,6 +191,7 @@ function MyBookings() {
 }
 
 function ClientProfileCard() {
+  const { t } = usePrefs();
   const { user } = useAuth();
   const [form, setForm] = useState({ full_name: "", phone: "" });
   const [saved, setSaved] = useState({ full_name: "", phone: "" });
@@ -227,11 +229,11 @@ function ClientProfileCard() {
     });
     setBusy(false);
     if (error) {
-      toast.error("Não foi possível guardar o perfil.");
+      toast.error(t("mine.toast.saveError"));
       return;
     }
     setSaved(form);
-    toast.success("Perfil actualizado.");
+    toast.success(t("mine.toast.saved"));
   }
 
   const dirty = JSON.stringify(form) !== JSON.stringify(saved);
@@ -244,7 +246,7 @@ function ClientProfileCard() {
             {initials(form.full_name || user?.email || "C")}
           </span>
           <div className="min-w-0">
-            <p className="truncate text-sm font-bold">{form.full_name || "Cliente"}</p>
+            <p className="truncate text-sm font-bold">{form.full_name || t("mine.profile.clientFallback")}</p>
             <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
           </div>
         </div>
@@ -254,7 +256,7 @@ function ClientProfileCard() {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="cn" className="font-semibold">
-            Nome
+            {t("mine.profile.name")}
           </Label>
           <Input
             id="cn"
@@ -265,7 +267,7 @@ function ClientProfileCard() {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="cp" className="font-semibold">
-            Telemóvel
+            {t("mine.profile.phone")}
           </Label>
           <Input
             id="cp"
