@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, MailCheck, ShieldCheck } from "lucide-react";
 import { maskPhonePt, isValidPhonePt } from "@/lib/phone";
+import { usePrefs } from "@/lib/prefs";
 
 const detailsSchema = z.object({
-  name: z.string().trim().min(2, "Indica o teu nome próprio.").max(80),
+  name: z.string().trim().min(2, "bk.auth.err.name").max(80),
   phone: z.string().trim(),
-  email: z.string().trim().email("Email inválido.").max(160),
+  email: z.string().trim().email("bk.auth.err.email").max(160),
 });
 
 /**
@@ -19,6 +20,7 @@ const detailsSchema = z.object({
  * sent by email. Creates the account when it does not exist yet.
  */
 export function ClientAuthStep({ onDone }: { onDone: () => void }) {
+  const { t } = usePrefs();
   const [stage, setStage] = useState<"details" | "code">("details");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -29,11 +31,11 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
   async function sendCode() {
     const parsed = detailsSchema.safeParse({ name, phone, email });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Verifica os dados.");
+      toast.error(t(parsed.error.issues[0]?.message ?? "bk.auth.err.check"));
       return;
     }
     if (!isValidPhonePt(phone)) {
-      toast.error("Indica um telemóvel com 9 dígitos.");
+      toast.error(t("bk.auth.err.phone"));
       return;
     }
     setBusy(true);
@@ -43,16 +45,16 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
     });
     setBusy(false);
     if (error) {
-      toast.error("Não foi possível enviar o código. Verifica o email.");
+      toast.error(t("bk.auth.err.send"));
       return;
     }
-    toast.success("Enviámos um código de 6 dígitos para o teu email.");
+    toast.success(t("bk.auth.codeSent"));
     setStage("code");
   }
 
   async function verify() {
     if (code.replace(/\D/g, "").length !== 6) {
-      toast.error("Introduz o código de 6 dígitos.");
+      toast.error(t("bk.auth.err.code6"));
       return;
     }
     setBusy(true);
@@ -63,7 +65,7 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
     });
     if (error || !data.user) {
       setBusy(false);
-      toast.error("Código inválido ou expirado.");
+      toast.error(t("bk.auth.err.codeInvalid"));
       return;
     }
     await supabase
@@ -71,7 +73,7 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
       .update({ full_name: name.trim(), phone: phone.trim() })
       .eq("id", data.user.id);
     setBusy(false);
-    toast.success("Email confirmado. Bem-vindo!");
+    toast.success(t("bk.auth.confirmed"));
     onDone();
   }
 
@@ -79,10 +81,10 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
     return (
       <div className="rounded-2xl border border-border bg-card p-5">
         <div className="mb-3 flex items-center gap-2 text-sm font-bold">
-          <MailCheck className="size-4 text-primary" /> Confirma o teu email
+          <MailCheck className="size-4 text-primary" /> {t("bk.auth.confirmTitle")}
         </div>
         <p className="text-sm text-muted-foreground">
-          Enviámos um código para <span className="font-bold text-foreground">{email}</span>.
+          {t("bk.auth.sentTo")}<span className="font-bold text-foreground">{email}</span>.
         </p>
         <Input
           className="mt-3 h-10 text-center text-lg font-bold tracking-[0.4em]"
@@ -91,16 +93,16 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
           value={code}
           onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
           placeholder="000000"
-          aria-label="Código de confirmação"
+          aria-label={t("bk.auth.codeLabel")}
         />
         <Button className="mt-3 w-full" onClick={verify} disabled={busy}>
-          {busy && <Loader2 className="mr-2 size-4 animate-spin" />} Confirmar email
+          {busy && <Loader2 className="mr-2 size-4 animate-spin" />} {t("bk.auth.confirmEmail")}
         </Button>
         <button
           onClick={() => setStage("details")}
           className="mt-2 w-full text-xs font-bold text-muted-foreground hover:text-foreground"
         >
-          Alterar dados
+          {t("bk.auth.changeDetails")}
         </button>
       </div>
     );
@@ -109,12 +111,12 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-5">
       <div className="mb-3 flex items-center gap-2 text-sm font-bold">
-        <ShieldCheck className="size-4 text-primary" /> Criar conta / entrar
+        <ShieldCheck className="size-4 text-primary" /> {t("bk.auth.title")}
       </div>
       <div className="space-y-2.5">
         <div className="space-y-1">
           <Label htmlFor="cname" className="text-xs font-bold">
-            Nome próprio
+            {t("bk.auth.firstName")}
           </Label>
           <Input
             id="cname"
@@ -126,7 +128,7 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
         </div>
         <div className="space-y-1">
           <Label htmlFor="cphone" className="text-xs font-bold">
-            Telemóvel
+            {t("bk.auth.phone")}
           </Label>
           <Input
             id="cphone"
@@ -152,7 +154,7 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
         </div>
       </div>
       <Button className="mt-3 w-full" onClick={sendCode} disabled={busy}>
-        {busy && <Loader2 className="mr-2 size-4 animate-spin" />} Enviar código por email
+        {busy && <Loader2 className="mr-2 size-4 animate-spin" />} {t("bk.auth.sendCode")}
       </Button>
     </div>
   );
