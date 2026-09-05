@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { usePrefs } from "@/lib/prefs";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -409,18 +410,18 @@ function Onboarding() {
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {BUSINESS_TYPES.map((bt) => (
                 <button
-                  key={t.value}
+                  key={bt.value}
                   type="button"
-                  onClick={() => setType(t.value)}
+                  onClick={() => setType(bt.value)}
                   className={cn(
                     "rounded-xl border px-3 py-2.5 text-left text-sm transition-colors",
-                    type === t.value
+                    type === bt.value
                       ? "border-primary bg-accent text-accent-foreground"
                       : "border-border hover:bg-muted",
                   )}
                 >
-                  <t.icon className="mr-1.5 inline size-4 align-[-3px]" strokeWidth={2.5} />
-                  {t.label}
+                  <bt.icon className="mr-1.5 inline size-4 align-[-3px]" strokeWidth={2.5} />
+                  {bt.label}
                 </button>
               ))}
             </div>
