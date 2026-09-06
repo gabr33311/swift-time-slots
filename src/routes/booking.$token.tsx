@@ -30,10 +30,10 @@ export const Route = createFileRoute("/booking/$token")({
     ],
   }),
   errorComponent: () => (
-    <Message title="Não foi possível abrir a marcação" body="Tenta novamente daqui a pouco." />
+    <MessageT titleKey="bk.tk.errorTitle" bodyKey="bk.tk.errorBody" />
   ),
   notFoundComponent: () => (
-    <Message title="Link inválido" body="Esta marcação já não existe ou o link expirou." />
+    <MessageT titleKey="bk.tk.invalidTitle" bodyKey="bk.tk.invalidBody" />
   ),
   component: BookingPage,
 });
@@ -49,7 +49,13 @@ function Message({ title, body }: { title: string; body: string }) {
   );
 }
 
+function MessageT({ titleKey, bodyKey }: { titleKey: string; bodyKey: string }) {
+  const { t } = usePrefs();
+  return <Message title={t(titleKey)} body={t(bodyKey)} />;
+}
+
 function BookingPage() {
+  const { t, lang } = usePrefs();
   const { token } = Route.useParams();
   const initial = Route.useLoaderData();
   const [data, setData] = useState(initial);
@@ -83,7 +89,7 @@ function BookingPage() {
         return;
       }
       setData({ ...data, appointment: { ...appt, status: "cancelled" } });
-      toast.success("Marcação cancelada.");
+      toast.success(t("bk.tk.cancelled"));
     } finally {
       setBusy(false);
     }
@@ -100,7 +106,7 @@ function BookingPage() {
       const fresh = await getBookingByToken({ data: { token } });
       if (fresh) setData(fresh);
       setRescheduling(false);
-      toast.success("Marcação reagendada.");
+      toast.success(t("bk.tk.rescheduled"));
     } finally {
       setBusy(false);
     }
@@ -112,17 +118,17 @@ function BookingPage() {
   return (
     <main className="mx-auto max-w-lg px-5 py-10">
       <p className="text-sm text-muted-foreground">{data.business?.name}</p>
-      <h1 className="mt-1 text-2xl font-semibold tracking-tight">A tua marcação</h1>
+      <h1 className="mt-1 text-2xl font-semibold tracking-tight">{t("bk.tk.title")}</h1>
 
       <div className="surface mt-6 p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-base font-medium">{appt.service_name}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              {formatDateLong(appt.starts_at, tz)} às {formatTime(appt.starts_at, tz)}
+              {formatDateLong(appt.starts_at, tz)}{t("bk.tk.at")}{formatTime(appt.starts_at, tz)}
             </p>
             {data.staffName && (
-              <p className="mt-0.5 text-sm text-muted-foreground">com {data.staffName}</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">{t("bk.tk.with")}{data.staffName}</p>
             )}
           </div>
           <StatusBadge status={appt.status} />
@@ -152,10 +158,10 @@ function BookingPage() {
         <div className="mt-8 flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => setRescheduling((v) => !v)}>
             <CalendarClock className="mr-2 size-4" />
-            {rescheduling ? "Fechar" : "Reagendar"}
+            {rescheduling ? t("bk.tk.close") : t("bk.tk.reschedule")}
           </Button>
           <Button variant="ghost" onClick={cancel} disabled={busy}>
-            Cancelar marcação
+            {t("bk.tk.cancel")}
           </Button>
         </div>
       )}
@@ -173,12 +179,12 @@ function BookingPage() {
                 )}
               >
                 <span className="text-xs uppercase">
-                  {new Intl.DateTimeFormat("pt-PT", { weekday: "short", timeZone: tz }).format(
+                  {new Intl.DateTimeFormat(lang === "en" ? "en-GB" : "pt-PT", { weekday: "short", timeZone: tz }).format(
                     new Date(`${d}T12:00:00Z`),
                   )}
                 </span>
                 <span className="text-base font-semibold tabular-nums">
-                  {new Intl.DateTimeFormat("pt-PT", { day: "2-digit", timeZone: tz }).format(
+                  {new Intl.DateTimeFormat(lang === "en" ? "en-GB" : "pt-PT", { day: "2-digit", timeZone: tz }).format(
                     new Date(`${d}T12:00:00Z`),
                   )}
                 </span>
@@ -200,13 +206,13 @@ function BookingPage() {
                 ))}
           </div>
           {!isFetching && (slots?.length ?? 0) === 0 && (
-            <p className="mt-4 text-sm text-muted-foreground">Sem horários neste dia.</p>
+            <p className="mt-4 text-sm text-muted-foreground">{t("bk.tk.noSlots")}</p>
           )}
         </section>
       )}
 
       <p className="mt-10 text-xs text-muted-foreground">
-        Cancelamento online até {data.business?.cancellation_hours ?? 24}h antes do horário.
+        {t("bk.tk.policy1")}{data.business?.cancellation_hours ?? 24}{t("bk.tk.policy2")}
       </p>
     </main>
   );
