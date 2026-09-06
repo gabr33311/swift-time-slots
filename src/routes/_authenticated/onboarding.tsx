@@ -96,12 +96,12 @@ function Onboarding() {
   useEffect(() => {
     setServices(
       businessType(type).sampleServices.map((s) => ({
-        name: s.name,
+        name: t(s.name),
         duration: s.duration,
         price: s.price / 100,
       })),
     );
-  }, [type]);
+  }, [type, t]);
 
   useEffect(() => {
     // Send users who already have a business straight to the dashboard.
@@ -421,7 +421,7 @@ function Onboarding() {
                   )}
                 >
                   <bt.icon className="mr-1.5 inline size-4 align-[-3px]" strokeWidth={2.5} />
-                  {bt.label}
+                  {t(bt.label)}
                 </button>
               ))}
             </div>
