@@ -18,133 +18,133 @@ import {
 
 export type BusinessTypeDef = {
   value: string;
+  /** i18n key — render with t() */
   label: string;
   icon: LucideIcon;
+  /** sample service `name` is an i18n key — render with t() */
   sampleServices: { name: string; duration: number; price: number }[];
 };
 
 export const BUSINESS_TYPES: BusinessTypeDef[] = [
   {
     value: "barbershop",
-    label: "Barbearia",
+    label: "biz.type.barbershop",
     icon: Scissors,
     sampleServices: [
-      { name: "Corte", duration: 30, price: 1500 },
-      { name: "Corte + Barba", duration: 45, price: 2000 },
-      { name: "Barba", duration: 20, price: 1000 },
+      { name: "biz.svc.cut", duration: 30, price: 1500 },
+      { name: "biz.svc.cutBeard", duration: 45, price: 2000 },
+      { name: "biz.svc.beard", duration: 20, price: 1000 },
     ],
   },
   {
     value: "hair",
-    label: "Cabeleireiro",
+    label: "biz.type.hair",
     icon: Sparkle,
     sampleServices: [
-      { name: "Corte", duration: 45, price: 2000 },
-      { name: "Coloração", duration: 90, price: 4500 },
-      { name: "Brushing", duration: 40, price: 1800 },
+      { name: "biz.svc.cut", duration: 45, price: 2000 },
+      { name: "biz.svc.color", duration: 90, price: 4500 },
+      { name: "biz.svc.blowdry", duration: 40, price: 1800 },
     ],
   },
   {
     value: "nails",
-    label: "Manicure / Nail art",
+    label: "biz.type.nails",
     icon: Hand,
     sampleServices: [
-      { name: "Manicure", duration: 45, price: 1800 },
-      { name: "Pedicure", duration: 60, price: 2200 },
-      { name: "Gelinho", duration: 75, price: 2800 },
+      { name: "biz.svc.manicure", duration: 45, price: 1800 },
+      { name: "biz.svc.pedicure", duration: 60, price: 2200 },
+      { name: "biz.svc.gel", duration: 75, price: 2800 },
     ],
   },
   {
     value: "lashes",
-    label: "Pestanas & Sobrancelhas",
+    label: "biz.type.lashes",
     icon: Eye,
     sampleServices: [
-      { name: "Extensões de pestanas", duration: 90, price: 4000 },
-      { name: "Design de sobrancelhas", duration: 30, price: 1200 },
+      { name: "biz.svc.lashExt", duration: 90, price: 4000 },
+      { name: "biz.svc.browDesign", duration: 30, price: 1200 },
     ],
   },
   {
     value: "beauty",
-    label: "Estética",
+    label: "biz.type.beauty",
     icon: Sparkles,
     sampleServices: [
-      { name: "Limpeza de pele", duration: 60, price: 3500 },
-      { name: "Depilação perna inteira", duration: 45, price: 2500 },
+      { name: "biz.svc.facial", duration: 60, price: 3500 },
+      { name: "biz.svc.waxLegs", duration: 45, price: 2500 },
     ],
   },
   {
     value: "massage",
-    label: "Massagens",
+    label: "biz.type.massage",
     icon: Leaf,
     sampleServices: [
-      { name: "Massagem relaxante", duration: 60, price: 4000 },
-      { name: "Massagem desportiva", duration: 45, price: 3500 },
+      { name: "biz.svc.relaxMassage", duration: 60, price: 4000 },
+      { name: "biz.svc.sportsMassage", duration: 45, price: 3500 },
     ],
   },
   {
     value: "tattoo",
-    label: "Tatuagens & Piercings",
+    label: "biz.type.tattoo",
     icon: PenTool,
     sampleServices: [
-      { name: "Sessão de tatuagem", duration: 120, price: 12000 },
-      { name: "Piercing", duration: 30, price: 3000 },
+      { name: "biz.svc.tattooSession", duration: 120, price: 12000 },
+      { name: "biz.svc.piercing", duration: 30, price: 3000 },
     ],
   },
   {
     value: "fitness",
-    label: "Personal trainer",
+    label: "biz.type.fitness",
     icon: Dumbbell,
     sampleServices: [
-      { name: "Treino individual", duration: 60, price: 3000 },
-      { name: "Avaliação física", duration: 45, price: 2500 },
+      { name: "biz.svc.pt", duration: 60, price: 3000 },
+      { name: "biz.svc.assessment", duration: 45, price: 2500 },
     ],
   },
   {
     value: "photo",
-    label: "Fotografia",
+    label: "biz.type.photo",
     icon: Camera,
     sampleServices: [
-      { name: "Sessão retrato", duration: 90, price: 12000 },
-      { name: "Sessão família", duration: 120, price: 18000 },
+      { name: "biz.svc.portrait", duration: 90, price: 12000 },
+      { name: "biz.svc.family", duration: 120, price: 18000 },
     ],
   },
   {
     value: "pets",
-    label: "Pet grooming",
+    label: "biz.type.pets",
     icon: PawPrint,
     sampleServices: [
-      { name: "Banho e tosquia", duration: 90, price: 3000 },
-      { name: "Banho", duration: 45, price: 1800 },
+      { name: "biz.svc.bathGroom", duration: 90, price: 3000 },
+      { name: "biz.svc.bath", duration: 45, price: 1800 },
     ],
   },
   {
     value: "tutoring",
-    label: "Explicações",
+    label: "biz.type.tutoring",
     icon: BookOpen,
-    sampleServices: [
-      { name: "Explicação individual", duration: 60, price: 1500 },
-    ],
+    sampleServices: [{ name: "biz.svc.lesson", duration: 60, price: 1500 }],
   },
   {
     value: "consulting",
-    label: "Consultoria",
+    label: "biz.type.consulting",
     icon: Briefcase,
-    sampleServices: [{ name: "Sessão de consultoria", duration: 60, price: 7500 }],
+    sampleServices: [{ name: "biz.svc.consultation", duration: 60, price: 7500 }],
   },
   {
     value: "auto",
-    label: "Oficina / Detailing",
+    label: "biz.type.auto",
     icon: Car,
     sampleServices: [
-      { name: "Lavagem completa", duration: 90, price: 4500 },
-      { name: "Polimento", duration: 180, price: 15000 },
+      { name: "biz.svc.fullWash", duration: 90, price: 4500 },
+      { name: "biz.svc.polish", duration: 180, price: 15000 },
     ],
   },
   {
     value: "other",
-    label: "Outro",
+    label: "biz.type.other",
     icon: CalendarDays,
-    sampleServices: [{ name: "Serviço", duration: 60, price: 3000 }],
+    sampleServices: [{ name: "biz.svc.generic", duration: 60, price: 3000 }],
   },
 ];
 
