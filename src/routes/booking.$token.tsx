@@ -1,3 +1,4 @@
+import { usePrefs } from "@/lib/prefs";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
