@@ -24,6 +24,9 @@ export const commonDict: Record<Lang, Record<string, string>> = {
     "ui.error.page.body": "Algo correu mal do nosso lado. Podes tentar atualizar ou voltar ao início.",
     "ui.error.page.tryAgain": "Tentar novamente",
     "ui.error.page.goHome": "Voltar ao início",
+    "ui.save.unsaved": "Tens alterações não guardadas.",
+    "ui.save.cancel": "Cancelar",
+    "ui.save.save": "Guardar",
   },
   en: {
     "ui.loading": "Loading…",
@@ -48,5 +51,8 @@ export const commonDict: Record<Lang, Record<string, string>> = {
     "ui.error.page.body": "Something went wrong on our end. You can try refreshing or head back home.",
     "ui.error.page.tryAgain": "Try again",
     "ui.error.page.goHome": "Go home",
+    "ui.save.unsaved": "You have unsaved changes.",
+    "ui.save.cancel": "Cancel",
+    "ui.save.save": "Save",
   },
 };
