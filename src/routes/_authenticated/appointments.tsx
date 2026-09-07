@@ -110,6 +110,17 @@ function AppointmentsPage() {
         action={<Button onClick={() => setNewOpen(true)}>{t("appt.new")}</Button>}
       />
 
+      {(overdue?.length ?? 0) > 0 && (
+        <OverdueReview
+          items={overdue!}
+          idx={Math.min(overdueIdx, overdue!.length - 1)}
+          setIdx={setOverdueIdx}
+          timezone={business!.timezone}
+          currency={business!.currency}
+          onSetStatus={setStatus}
+        />
+      )}
+
       <div className="mb-4 flex flex-wrap gap-2">
         {FILTERS.map((f) => (
           <button
