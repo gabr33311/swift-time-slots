@@ -234,6 +234,29 @@
   }
 }
 
+@keyframes bell-ring {
+  0%,
+  55%,
+  100% {
+    transform: rotate(0deg);
+  }
+  5% {
+    transform: rotate(14deg);
+  }
+  15% {
+    transform: rotate(-12deg);
+  }
+  25% {
+    transform: rotate(8deg);
+  }
+  35% {
+    transform: rotate(-6deg);
+  }
+  45% {
+    transform: rotate(3deg);
+  }
+}
+
 @keyframes app-fade-up {
   from {
     opacity: 0;
