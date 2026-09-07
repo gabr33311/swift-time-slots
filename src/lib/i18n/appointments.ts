@@ -103,6 +103,13 @@ export const appointmentsDict: Record<Lang, Record<string, string>> = {
     "appt.toast.updated": "Appointment updated.",
     "appt.head.title": "Appointments — Schedivo",
     "appt.head.desc": "All of your business appointments in one place.",
+    "appt.overdue.title": "To review",
+    "appt.overdue.desc": "These appointments have already passed. Say how each one went.",
+    "appt.overdue.done": "Completed",
+    "appt.overdue.noShow": "No-show",
+    "appt.overdue.prev": "Previous",
+    "appt.overdue.next": "Next",
+    "appt.overdue.counter": "{current} of {total}",
 
     "pend.head.title": "Booking requests — Schedivo",
     "pend.head.desc": "Accept or decline the booking requests made by your customers.",
