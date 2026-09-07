@@ -128,47 +128,23 @@ function Dashboard() {
 
   return (
     <AppShell>
-      <div className="mb-6">
-        <h1 className="font-display text-[28px] font-bold leading-tight tracking-tight">
-          {greetingPt(new Date(), lang)}
-          {user?.user_metadata?.["full_name"] ? `, ${user.user_metadata["full_name"]}` : ""}
-        </h1>
-        <p className="mt-1 text-sm font-normal text-muted-foreground">{t("dash.subtitle")}</p>
+      <div className="mb-6 flex items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-[28px] font-bold leading-tight tracking-tight">
+            {greetingPt(new Date(), lang)}
+            {user?.user_metadata?.["full_name"] ? `, ${user.user_metadata["full_name"]}` : ""}
+          </h1>
+          <p className="mt-1 text-sm font-normal text-muted-foreground">{t("dash.subtitle")}</p>
+        </div>
+        <NotificationBell
+          notifications={requestData?.notifications ?? []}
+          onMarkRead={async () => {
+            if (!business) return;
+            const result = await markNotificationsRead({ data: { businessId: business.id } });
+            if (result.ok) qc.invalidateQueries({ queryKey: ["dashboard-requests"] });
+          }}
+        />
       </div>
-
-      {(requestData?.notifications.length ?? 0) > 0 && (
-        <section className="surface mt-5 p-5">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="flex items-center gap-2 text-base font-bold">
-              <Bell className="size-4 text-primary" /> {t("dash.notifications")}
-            </h2>
-            {requestData?.notifications.some((item) => !item.read_at) && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={async () => {
-                  if (!business) return;
-                  const result = await markNotificationsRead({ data: { businessId: business.id } });
-                  if (result.ok) qc.invalidateQueries({ queryKey: ["dashboard-requests"] });
-                }}
-              >
-                <Check className="size-4" /> {t("dash.markRead")}
-              </Button>
-            )}
-          </div>
-          <ul className="mt-3 divide-y divide-border">
-            {requestData?.notifications.map((item) => (
-              <li key={item.id} className="flex gap-3 py-3 first:pt-0 last:pb-0">
-                <span className={cn("mt-1 size-2 shrink-0 rounded-full", item.read_at ? "bg-muted" : "bg-primary")} />
-                <div className="min-w-0">
-                  <p className="text-sm font-bold">{item.title}</p>
-                  {item.body && <p className="truncate text-xs text-muted-foreground">{item.body}</p>}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
 
       <div className="surface p-5">
         <div className="flex items-center justify-between gap-3">
