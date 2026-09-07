@@ -185,8 +185,8 @@ function Dashboard() {
           ].map((s) => (
             <Link
               key={s.label}
-              to={s.to}
-              search={s.search ?? {}}
+              to="/appointments"
+              search={s.search}
               className="surface-hover flex flex-col rounded-2xl border border-border bg-muted/40 p-3"
             >
               <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.05em] text-foreground/70">
