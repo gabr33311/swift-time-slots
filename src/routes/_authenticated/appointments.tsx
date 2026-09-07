@@ -194,3 +194,87 @@ function AppointmentsPage() {
     </AppShell>
   );
 }
+
+type OverdueItem = {
+  id: string;
+  starts_at: string;
+  customer_name: string;
+  customer_phone: string | null;
+  service_name: string;
+  price_cents: number;
+  status: string;
+  notes: string | null;
+};
+
+function OverdueReview({
+  items,
+  idx,
+  setIdx,
+  timezone,
+  currency,
+  onSetStatus,
+}: {
+  items: OverdueItem[];
+  idx: number;
+  setIdx: (i: number) => void;
+  timezone: string;
+  currency: string;
+  onSetStatus: (id: string, status: string) => void;
+}) {
+  const { t } = usePrefs();
+  const a = items[idx];
+  if (!a) return null;
+  return (
+    <section className="surface mb-5 p-5">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="font-display text-base font-bold">{t("appt.overdue.title")}</h2>
+          <p className="text-xs font-normal text-muted-foreground">{t("appt.overdue.desc")}</p>
+        </div>
+        <span className="text-xs font-bold tabular-nums text-muted-foreground">
+          {t("appt.overdue.counter")
+            .replace("{current}", String(idx + 1))
+            .replace("{total}", String(items.length))}
+        </span>
+      </div>
+      <div className="mt-4 flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={t("appt.overdue.prev")}
+          disabled={idx === 0}
+          onClick={() => setIdx(idx - 1)}
+        >
+          <ChevronLeft className="size-5" />
+        </Button>
+        <div className="min-w-0 flex-1 rounded-2xl border border-border bg-muted/40 p-4 text-center">
+          <p className="truncate text-sm font-bold">{a.customer_name}</p>
+          <p className="truncate text-sm text-muted-foreground">{a.service_name}</p>
+          <p className="mt-1 text-xs font-semibold tabular-nums text-muted-foreground">
+            {formatDateShort(a.starts_at, timezone)} · {formatTime(a.starts_at, timezone)} ·{" "}
+            {formatPrice(a.price_cents, currency)}
+          </p>
+          <div className="mt-3 flex justify-center gap-2">
+            <Button size="sm" onClick={() => onSetStatus(a.id, "completed")}>
+              <Check className="size-4" />
+              {t("appt.overdue.done")}
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => onSetStatus(a.id, "no_show")}>
+              <UserX className="size-4" />
+              {t("appt.overdue.noShow")}
+            </Button>
+          </div>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={t("appt.overdue.next")}
+          disabled={idx >= items.length - 1}
+          onClick={() => setIdx(idx + 1)}
+        >
+          <ChevronRight className="size-5" />
+        </Button>
+      </div>
+    </section>
+  );
+}
