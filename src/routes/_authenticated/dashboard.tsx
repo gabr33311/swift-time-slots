@@ -128,47 +128,23 @@ function Dashboard() {
 
   return (
     <AppShell>
-      <div className="mb-6">
-        <h1 className="font-display text-[28px] font-bold leading-tight tracking-tight">
-          {greetingPt(new Date(), lang)}
-          {user?.user_metadata?.["full_name"] ? `, ${user.user_metadata["full_name"]}` : ""}
-        </h1>
-        <p className="mt-1 text-sm font-normal text-muted-foreground">{t("dash.subtitle")}</p>
+      <div className="mb-6 flex items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-[28px] font-bold leading-tight tracking-tight">
+            {greetingPt(new Date(), lang)}
+            {user?.user_metadata?.["full_name"] ? `, ${user.user_metadata["full_name"]}` : ""}
+          </h1>
+          <p className="mt-1 text-sm font-normal text-muted-foreground">{t("dash.subtitle")}</p>
+        </div>
+        <NotificationBell
+          notifications={requestData?.notifications ?? []}
+          onMarkRead={async () => {
+            if (!business) return;
+            const result = await markNotificationsRead({ data: { businessId: business.id } });
+            if (result.ok) qc.invalidateQueries({ queryKey: ["dashboard-requests"] });
+          }}
+        />
       </div>
-
-      {(requestData?.notifications.length ?? 0) > 0 && (
-        <section className="surface mt-5 p-5">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="flex items-center gap-2 text-base font-bold">
-              <Bell className="size-4 text-primary" /> {t("dash.notifications")}
-            </h2>
-            {requestData?.notifications.some((item) => !item.read_at) && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={async () => {
-                  if (!business) return;
-                  const result = await markNotificationsRead({ data: { businessId: business.id } });
-                  if (result.ok) qc.invalidateQueries({ queryKey: ["dashboard-requests"] });
-                }}
-              >
-                <Check className="size-4" /> {t("dash.markRead")}
-              </Button>
-            )}
-          </div>
-          <ul className="mt-3 divide-y divide-border">
-            {requestData?.notifications.map((item) => (
-              <li key={item.id} className="flex gap-3 py-3 first:pt-0 last:pb-0">
-                <span className={cn("mt-1 size-2 shrink-0 rounded-full", item.read_at ? "bg-muted" : "bg-primary")} />
-                <div className="min-w-0">
-                  <p className="text-sm font-bold">{item.title}</p>
-                  {item.body && <p className="truncate text-xs text-muted-foreground">{item.body}</p>}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
 
       <div className="surface p-5">
         <div className="flex items-center justify-between gap-3">
@@ -308,6 +284,88 @@ function Dashboard() {
         <NewAppointmentDialog business={business} open={newOpen} onOpenChange={setNewOpen} />
       )}
     </AppShell>
+  );
+}
+
+function NotificationBell({
+  notifications,
+  onMarkRead,
+}: {
+  notifications: { id: string; title: string; body: string | null; read_at: string | null }[];
+  onMarkRead: () => Promise<void>;
+}) {
+  const { t } = usePrefs();
+  const [open, setOpen] = useState(false);
+  const unread = notifications.filter((n) => !n.read_at).length;
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label={t("dash.notifications")}
+        className="relative flex size-10 items-center justify-center rounded-2xl border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <Bell
+          className={cn("size-5", unread > 0 && "animate-[bell-ring_1.2s_ease-in-out_infinite] text-primary")}
+          strokeWidth={2.5}
+        />
+        {unread > 0 && (
+          <span className="absolute -right-1 -top-1 flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-primary-foreground">
+            {unread}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <>
+          <button
+            type="button"
+            aria-hidden
+            className="fixed inset-0 z-40 cursor-default"
+            onClick={() => setOpen(false)}
+          />
+          <div className="animate-enter absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-card p-4 shadow-lift">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-sm font-bold">{t("dash.notifications")}</h2>
+              {unread > 0 && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={async () => {
+                    await onMarkRead();
+                  }}
+                >
+                  <Check className="size-4" /> {t("dash.markRead")}
+                </Button>
+              )}
+            </div>
+            {notifications.length === 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground">{t("dash.notifications.empty")}</p>
+            ) : (
+              <ul className="mt-2 divide-y divide-border">
+                {notifications.map((item) => (
+                  <li key={item.id} className="flex gap-3 py-3 first:pt-2 last:pb-0">
+                    <span
+                      className={cn(
+                        "mt-1.5 size-2 shrink-0 rounded-full",
+                        item.read_at ? "bg-muted" : "bg-primary",
+                      )}
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold">{item.title}</p>
+                      {item.body && (
+                        <p className="truncate text-xs text-muted-foreground">{item.body}</p>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
