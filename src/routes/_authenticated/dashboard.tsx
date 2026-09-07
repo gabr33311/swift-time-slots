@@ -158,33 +158,35 @@ function Dashboard() {
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: t("dash.confirmed"), value: counts.confirmed, dot: "bg-success", to: "/calendar" },
+            {
+              label: t("dash.confirmed"),
+              value: counts.confirmed,
+              dot: "bg-success",
+              search: { filter: "confirmed" as const },
+            },
             {
               label: t("dash.pending"),
               value: counts.pending,
               dot: "bg-warning",
-              to: "/pendentes",
-              search: { tab: "pending" as const },
+              search: { filter: "pending" as const },
             },
             {
               label: t("dash.cancelled"),
               value: cancelled,
               dot: "bg-destructive",
-              to: "/appointments",
               search: { filter: "cancelled" as const },
             },
             {
               label: t("dash.completed"),
               value: counts.completed,
               dot: "bg-muted-foreground",
-              to: "/appointments",
-              search: undefined,
+              search: { filter: "completed" as const },
             },
           ].map((s) => (
             <Link
               key={s.label}
-              to={s.to}
-              search={s.search ?? {}}
+              to="/appointments"
+              search={s.search}
               className="surface-hover flex flex-col rounded-2xl border border-border bg-muted/40 p-3"
             >
               <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.05em] text-foreground/70">

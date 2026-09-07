@@ -20,7 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const filterSchema = z.enum(["upcoming", "today", "past", "cancelled"]);
+const filterSchema = z.enum(["upcoming", "today", "past", "cancelled", "confirmed", "pending", "completed"]);
 
 export const Route = createFileRoute("/_authenticated/appointments")({
   validateSearch: z.object({ new: z.boolean().optional(), filter: filterSchema.optional() }),
@@ -34,7 +34,7 @@ export const Route = createFileRoute("/_authenticated/appointments")({
   component: AppointmentsPage,
 });
 
-const FILTERS = ["upcoming", "today", "past", "cancelled"] as const;
+const FILTERS = ["upcoming", "today", "confirmed", "pending", "completed", "past", "cancelled"] as const;
 
 function AppointmentsPage() {
   const { t, lang } = usePrefs();
@@ -59,6 +59,9 @@ function AppointmentsPage() {
       if (filter === "today") q = q.gte("starts_at", new Date(Date.now() - 12 * 3600000).toISOString()).order("starts_at");
       if (filter === "past") q = q.lt("starts_at", now).order("starts_at", { ascending: false });
       if (filter === "cancelled") q = q.eq("status", "cancelled").order("starts_at", { ascending: false });
+      if (filter === "confirmed") q = q.eq("status", "confirmed").order("starts_at");
+      if (filter === "pending") q = q.eq("status", "pending").order("starts_at");
+      if (filter === "completed") q = q.eq("status", "completed").order("starts_at", { ascending: false });
       const { data } = await q.limit(100);
       return data ?? [];
     },
