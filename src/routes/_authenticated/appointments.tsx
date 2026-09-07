@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { formatDateShort, formatPrice, formatTime, statusLabel } from "@/lib/format";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
-import { CalendarX, MoreHorizontal } from "lucide-react";
+import { CalendarX, Check, ChevronLeft, ChevronRight, MoreHorizontal, UserX } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +45,23 @@ function AppointmentsPage() {
     search.filter ?? "upcoming",
   );
   const [newOpen, setNewOpen] = useState(Boolean(search.new));
+  const [overdueIdx, setOverdueIdx] = useState(0);
+
+  const { data: overdue } = useQuery({
+    queryKey: ["appointments", business?.id, "overdue"],
+    enabled: !!business,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("appointments")
+        .select("id, starts_at, customer_name, customer_phone, service_name, price_cents, status, notes")
+        .eq("business_id", business!.id)
+        .in("status", ["confirmed", "pending"])
+        .lt("starts_at", new Date().toISOString())
+        .order("starts_at")
+        .limit(100);
+      return data ?? [];
+    },
+  });
 
   const { data, isLoading } = useQuery({
     queryKey: ["appointments", business?.id, filter],
