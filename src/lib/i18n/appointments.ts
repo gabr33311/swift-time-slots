@@ -20,6 +20,13 @@ export const appointmentsDict: Record<Lang, Record<string, string>> = {
     "appt.toast.updated": "Marcação actualizada.",
     "appt.head.title": "Marcações — Schedivo",
     "appt.head.desc": "Todas as marcações do teu negócio num só lugar.",
+    "appt.overdue.title": "Por rever",
+    "appt.overdue.desc": "Estas marcações já passaram da hora. Diz como correu cada uma.",
+    "appt.overdue.done": "Concluído",
+    "appt.overdue.noShow": "Não apareceu",
+    "appt.overdue.prev": "Anterior",
+    "appt.overdue.next": "Seguinte",
+    "appt.overdue.counter": "{current} de {total}",
 
     "pend.head.title": "Pedidos de marcação — Schedivo",
     "pend.head.desc": "Aceita ou recusa os pedidos de marcação feitos pelos teus clientes.",
