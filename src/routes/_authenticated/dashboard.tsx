@@ -158,27 +158,29 @@ function Dashboard() {
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: t("dash.confirmed"), value: counts.confirmed, dot: "bg-success", to: "/calendar" },
+            {
+              label: t("dash.confirmed"),
+              value: counts.confirmed,
+              dot: "bg-success",
+              search: { filter: "confirmed" as const },
+            },
             {
               label: t("dash.pending"),
               value: counts.pending,
               dot: "bg-warning",
-              to: "/pendentes",
-              search: { tab: "pending" as const },
+              search: { filter: "pending" as const },
             },
             {
               label: t("dash.cancelled"),
               value: cancelled,
               dot: "bg-destructive",
-              to: "/appointments",
               search: { filter: "cancelled" as const },
             },
             {
               label: t("dash.completed"),
               value: counts.completed,
               dot: "bg-muted-foreground",
-              to: "/appointments",
-              search: undefined,
+              search: { filter: "completed" as const },
             },
           ].map((s) => (
             <Link
