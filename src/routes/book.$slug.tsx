@@ -684,25 +684,37 @@ function BookPage() {
 
 function Section({
   step,
+  total,
   title,
+  subtitle,
   children,
 }: {
   step: number;
+  total?: number;
   title: string;
+  subtitle?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="animate-enter mb-8">
-      <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">
+    <section key={step} className="animate-enter mb-8">
+      <h2 className="mb-1 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">
         <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
           {step}
         </span>
         {title}
+        {total ? (
+          <span className="ml-auto text-[11px] font-bold tabular-nums">
+            {step}/{total}
+          </span>
+        ) : null}
       </h2>
+      {subtitle && <p className="mb-3 text-xs font-medium text-muted-foreground">{subtitle}</p>}
+      {!subtitle && <div className="mb-3" />}
       {children}
     </section>
   );
 }
+
 
 function ChoiceChip({
   active,
