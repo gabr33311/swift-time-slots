@@ -117,7 +117,9 @@ function BookPage() {
   const { slug } = Route.useParams();
   const { user, loading: authLoading } = useAuth();
   const [serviceId, setServiceId] = useState<string | null>(null);
-  const [staffId, setStaffId] = useState<string | null>(null);
+  const [staffId, setStaffId] = useState<string | null>(
+    staff.length === 1 ? staff[0]!.id : null,
+  );
   const today = todayIn(business.timezone);
   const [date, setDate] = useState(today);
   const [month, setMonth] = useState(() => today.slice(0, 7));
@@ -128,12 +130,27 @@ function BookPage() {
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ token: string; status: string } | null>(null);
+  const [stepIdx, setStepIdx] = useState(0);
+
+  const stepKeys = useMemo<readonly string[]>(
+    () =>
+      staff.length > 1
+        ? ["staff", "service", "day", "time", "account"]
+        : ["service", "day", "time", "account"],
+    [staff.length],
+  );
+  const safeIdx = Math.min(stepIdx, stepKeys.length - 1);
+  const currentStep = stepKeys[safeIdx]!;
+  const stepNumber = safeIdx + 1;
+  const goNext = () => setStepIdx((i) => Math.min(i + 1, stepKeys.length - 1));
+  const goBack = () => setStepIdx((i) => Math.max(i - 1, 0));
 
   const service = services.find((s) => s.id === serviceId) ?? null;
-  const eligibleStaff = useMemo(
-    () => (serviceId ? staff.filter((s) => s.service_ids.includes(serviceId)) : staff),
-    [staff, serviceId],
-  );
+  const visibleServices = useMemo(() => {
+    const person = staffId ? staff.find((p) => p.id === staffId) : null;
+    return person ? services.filter((s) => person.service_ids.includes(s.id)) : services;
+  }, [services, staff, staffId]);
+
 
   // Prefill from the signed-in client account (profile + auth email).
   const { data: profile } = useQuery({
@@ -372,68 +389,127 @@ function BookPage() {
         )}
       </header>
 
+      <div className="mb-5 flex items-center justify-between gap-3">
+        {safeIdx > 0 ? (
+          <button
+            type="button"
+            onClick={goBack}
+            className="inline-flex items-center gap-1.5 text-sm font-bold text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" /> {t("bk.back")}
+          </button>
+        ) : (
+          <span />
+        )}
+        {user ? (
+          <Link
+            to="/minhas-marcacoes"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-bold hover:bg-accent"
+          >
+            <LogIn className="size-3.5" />
+            {t("bk.myBookings")}
+          </Link>
+        ) : (
+          <Link
+            to="/auth"
+            search={{ mode: undefined, next: "/minhas-marcacoes" }}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-bold hover:bg-accent"
+          >
+            <LogIn className="size-3.5" />
+            {t("bk.account.cta")}
+          </Link>
+        )}
 
-      <Section step={1} title={t("bk.step.service")}>
-        <div className="grid gap-2">
-          {services.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => {
-                setServiceId(s.id);
-                setStaffId(null);
-                setTime(null);
-              }}
-              className={cn(
-                "surface surface-hover flex items-center justify-between gap-4 border-2 p-4 text-left transition-all",
-                serviceId === s.id
-                  ? "border-primary bg-primary/5 shadow-lift"
-                  : "border-transparent",
-              )}
+      </div>
 
-            >
-              <span className="min-w-0">
-                <span className="block text-sm font-bold">{s.name}</span>
-                {s.description && (
-                  <span className="mt-0.5 block truncate text-sm text-muted-foreground">
-                    {s.description}
-                  </span>
-                )}
-                <span className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Clock className="size-3.5" /> {formatDuration(s.duration_minutes)}
-                </span>
-              </span>
-              <span className="shrink-0 text-sm font-bold tabular-nums">
-                {formatPrice(s.price_cents, business.currency)}
-              </span>
-            </button>
-          ))}
-        </div>
-      </Section>
 
-      {service && eligibleStaff.length > 1 && (
-        <Section step={2} title={t("bk.step.staff")}>
-          <div className="flex flex-wrap gap-2">
-            <ChoiceChip active={staffId === null} onClick={() => setStaffId(null)}>
-              {t("bk.step.anyStaff")}
-            </ChoiceChip>
-            {eligibleStaff.map((p) => (
-              <ChoiceChip
+
+
+      {currentStep === "staff" && (
+        <Section step={stepNumber} total={stepKeys.length} title={t("bk.step.staff")}>
+          <div className="grid gap-2">
+            {staff.map((p) => (
+              <button
                 key={p.id}
-                active={staffId === p.id}
                 onClick={() => {
                   setStaffId(p.id);
+                  setServiceId(null);
                   setTime(null);
+                  goNext();
                 }}
+                className={cn(
+                  "surface surface-hover flex items-center gap-3 border-2 p-4 text-left transition-all",
+                  staffId === p.id ? "border-primary bg-primary/5 shadow-lift" : "border-transparent",
+                )}
               >
-                {p.name}
-              </ChoiceChip>
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
+                  {initials(p.name)}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold">{p.name}</span>
+                  {p.specialty && (
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {p.specialty}
+                    </span>
+                  )}
+                </span>
+              </button>
+            ))}
+            <button
+              onClick={() => {
+                setStaffId(null);
+                setServiceId(null);
+                setTime(null);
+                goNext();
+              }}
+              className="surface surface-hover border-2 border-transparent p-4 text-left text-sm font-bold"
+            >
+              {t("bk.step.anyStaff")}
+            </button>
+          </div>
+        </Section>
+      )}
+
+      {currentStep === "service" && (
+        <Section step={stepNumber} total={stepKeys.length} title={t("bk.step.service")}>
+          <div className="grid gap-2">
+            {visibleServices.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => {
+                  setServiceId(s.id);
+                  setTime(null);
+                  goNext();
+                }}
+                className={cn(
+                  "surface surface-hover flex items-center justify-between gap-4 border-2 p-4 text-left transition-all",
+                  serviceId === s.id
+                    ? "border-primary bg-primary/5 shadow-lift"
+                    : "border-transparent",
+                )}
+              >
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold">{s.name}</span>
+                  {s.description && (
+                    <span className="mt-0.5 block truncate text-sm text-muted-foreground">
+                      {s.description}
+                    </span>
+                  )}
+                  <span className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Clock className="size-3.5" /> {formatDuration(s.duration_minutes)}
+                  </span>
+                </span>
+                <span className="shrink-0 text-sm font-bold tabular-nums">
+                  {formatPrice(s.price_cents, business.currency)}
+                </span>
+              </button>
             ))}
           </div>
         </Section>
       )}
 
-      {service && (
-        <Section step={eligibleStaff.length > 1 ? 3 : 2} title={t("bk.step.dateTime")}>
+      {currentStep === "day" && (
+        <Section step={stepNumber} total={stepKeys.length} title={t("bk.step.day")}>
           <div className="rounded-2xl border border-border p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
               <Button
@@ -482,6 +558,7 @@ function BookPage() {
                     onClick={() => {
                       setDate(d);
                       setTime(null);
+                      goNext();
                     }}
                     className={cn(
                       "mx-auto flex size-10 items-center justify-center rounded-full text-sm font-bold tabular-nums transition-colors",
@@ -489,7 +566,6 @@ function BookPage() {
                       !past && date !== d && "hover:bg-accent",
                       date === d && "bg-primary text-white shadow-lift",
                     )}
-
                   >
                     {Number(d.slice(-2))}
                   </button>
@@ -497,50 +573,58 @@ function BookPage() {
               })}
             </div>
           </div>
-
-
-          <div className="mt-4">
-            {isFetching ? (
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <Skeleton key={i} className="h-10 rounded-lg" />
-                ))}
-              </div>
-            ) : (slots?.length ?? 0) === 0 ? (
-              <div className="surface flex flex-col items-center gap-2 p-8 text-center">
-                <CalendarDays className="size-5 text-muted-foreground" />
-                <p className="text-sm font-bold">{t("bk.noSlots.title")}</p>
-                <p className="text-sm text-muted-foreground">{t("bk.noSlots.body")}</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {(
-                  [
-                    [t("bk.period.morning"), slots!.filter((s) => Number(s.time.slice(0, 2)) < 13)],
-                    [t("bk.period.afternoon"), slots!.filter((s) => Number(s.time.slice(0, 2)) >= 13)],
-                  ] as const
-                ).map(([label, group]) =>
-                  group.length === 0 ? null : (
-                    <SlotGroup
-                      key={label}
-                      label={label}
-                      times={group.map((s) => s.time)}
-                      selected={time}
-                      onSelect={setTime}
-                    />
-                  ),
-                )}
-              </div>
-            )}
-
-          </div>
         </Section>
       )}
 
-      {service && time && (
-
+      {currentStep === "time" && (
         <Section
-          step={eligibleStaff.length > 1 ? 4 : 3}
+          step={stepNumber}
+          total={stepKeys.length}
+          title={t("bk.step.time")}
+          subtitle={formatDateLong(`${date}T12:00:00Z`, business.timezone)}
+        >
+          {isFetching ? (
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 rounded-lg" />
+              ))}
+            </div>
+          ) : (slots?.length ?? 0) === 0 ? (
+            <div className="surface flex flex-col items-center gap-2 p-8 text-center">
+              <CalendarDays className="size-5 text-muted-foreground" />
+              <p className="text-sm font-bold">{t("bk.noSlots.title")}</p>
+              <p className="text-sm text-muted-foreground">{t("bk.noSlots.body")}</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {(
+                [
+                  [t("bk.period.morning"), slots!.filter((s) => Number(s.time.slice(0, 2)) < 13)],
+                  [t("bk.period.afternoon"), slots!.filter((s) => Number(s.time.slice(0, 2)) >= 13)],
+                ] as const
+              ).map(([label, group]) =>
+                group.length === 0 ? null : (
+                  <SlotGroup
+                    key={label}
+                    label={label}
+                    times={group.map((s) => s.time)}
+                    selected={time}
+                    onSelect={(v) => {
+                      setTime(v);
+                      goNext();
+                    }}
+                  />
+                ),
+              )}
+            </div>
+          )}
+        </Section>
+      )}
+
+      {currentStep === "account" && (
+        <Section
+          step={stepNumber}
+          total={stepKeys.length}
           title={user ? t("bk.step.yourData") : t("bk.step.yourAccount")}
         >
           {authLoading ? (
@@ -600,8 +684,7 @@ function BookPage() {
         </Section>
       )}
 
-      {service && time && user && (
-
+      {currentStep === "account" && service && time && user && (
         <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 px-5 py-3 backdrop-blur">
           <div className="mx-auto flex max-w-2xl items-center gap-4">
             <div className="min-w-0 flex-1 text-sm">
@@ -620,6 +703,7 @@ function BookPage() {
       )}
 
 
+
       <p className="mt-10 text-center text-xs text-muted-foreground">
         {t("bk.freeCancellation")}{business.cancellation_hours}{t("bk.freeCancellationAfter")}
       </p>
@@ -635,25 +719,37 @@ function BookPage() {
 
 function Section({
   step,
+  total,
   title,
+  subtitle,
   children,
 }: {
   step: number;
+  total?: number;
   title: string;
+  subtitle?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="animate-enter mb-8">
-      <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">
+    <section key={step} className="animate-enter mb-8">
+      <h2 className="mb-1 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">
         <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
           {step}
         </span>
         {title}
+        {total ? (
+          <span className="ml-auto text-[11px] font-bold tabular-nums">
+            {step}/{total}
+          </span>
+        ) : null}
       </h2>
+      {subtitle && <p className="mb-3 text-xs font-medium text-muted-foreground">{subtitle}</p>}
+      {!subtitle && <div className="mb-3" />}
       {children}
     </section>
   );
 }
+
 
 function ChoiceChip({
   active,
