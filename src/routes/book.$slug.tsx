@@ -389,6 +389,30 @@ function BookPage() {
         )}
       </header>
 
+      <div className="mb-5 flex items-center justify-between gap-3">
+        {safeIdx > 0 ? (
+          <button
+            type="button"
+            onClick={goBack}
+            className="inline-flex items-center gap-1.5 text-sm font-bold text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" /> {t("bk.back")}
+          </button>
+        ) : (
+          <span />
+        )}
+        <Link
+          to={user ? "/minhas-marcacoes" : "/auth"}
+          {...(user ? {} : { search: { mode: undefined, next: "/minhas-marcacoes" } })}
+          className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-bold hover:bg-accent"
+        >
+          <LogIn className="size-3.5" />
+          {user ? t("bk.myBookings") : t("bk.account.cta")}
+        </Link>
+      </div>
+
+
+
 
       {currentStep === "staff" && (
         <Section step={stepNumber} total={stepKeys.length} title={t("bk.step.staff")}>
