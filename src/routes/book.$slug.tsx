@@ -117,7 +117,9 @@ function BookPage() {
   const { slug } = Route.useParams();
   const { user, loading: authLoading } = useAuth();
   const [serviceId, setServiceId] = useState<string | null>(null);
-  const [staffId, setStaffId] = useState<string | null>(null);
+  const [staffId, setStaffId] = useState<string | null>(
+    staff.length === 1 ? staff[0]!.id : null,
+  );
   const today = todayIn(business.timezone);
   const [date, setDate] = useState(today);
   const [month, setMonth] = useState(() => today.slice(0, 7));
@@ -128,12 +130,27 @@ function BookPage() {
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ token: string; status: string } | null>(null);
+  const [stepIdx, setStepIdx] = useState(0);
+
+  const stepKeys = useMemo<readonly string[]>(
+    () =>
+      staff.length > 1
+        ? ["staff", "service", "day", "time", "account"]
+        : ["service", "day", "time", "account"],
+    [staff.length],
+  );
+  const safeIdx = Math.min(stepIdx, stepKeys.length - 1);
+  const currentStep = stepKeys[safeIdx]!;
+  const stepNumber = safeIdx + 1;
+  const goNext = () => setStepIdx((i) => Math.min(i + 1, stepKeys.length - 1));
+  const goBack = () => setStepIdx((i) => Math.max(i - 1, 0));
 
   const service = services.find((s) => s.id === serviceId) ?? null;
-  const eligibleStaff = useMemo(
-    () => (serviceId ? staff.filter((s) => s.service_ids.includes(serviceId)) : staff),
-    [staff, serviceId],
-  );
+  const visibleServices = useMemo(() => {
+    const person = staffId ? staff.find((p) => p.id === staffId) : null;
+    return person ? services.filter((s) => person.service_ids.includes(s.id)) : services;
+  }, [services, staff, staffId]);
+
 
   // Prefill from the signed-in client account (profile + auth email).
   const { data: profile } = useQuery({
