@@ -321,71 +321,30 @@ function BookPage() {
 
 
   return (
-    <main className="animate-enter mx-auto max-w-2xl px-5 pb-24 pt-8">
-      <header className="surface mb-6 p-4">
-        <div className="flex items-start gap-3">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-base font-bold text-primary-foreground">
-            {business.logo_url ? (
-              <img
-                src={business.logo_url}
-                alt={t("bk.logoAlt") + business.name}
-                className="size-full rounded-2xl object-cover"
-              />
-            ) : (
-              initials(business.name)
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-lg font-bold leading-tight tracking-tight">
-              {business.name}
-            </h1>
-            {business.description && (
-              <p className="mt-0.5 line-clamp-1 text-[13px] text-muted-foreground">
-                {business.description}
-              </p>
-            )}
-            {business.show_contacts && (
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] font-medium text-muted-foreground">
-                {business.address && (
-                  <span className="inline-flex items-center gap-1">
-                    <MapPin className="size-3.5" /> {business.address}
-                    {business.city ? `, ${business.city}` : ""}
-                  </span>
-                )}
-                {business.phone && (
-                  <a href={`tel:${business.phone}`} className="inline-flex items-center gap-1">
-                    <Phone className="size-3.5" /> {business.phone}
-                  </a>
-                )}
-                {business.instagram && (
-                  <a
-                    href={`https://instagram.com/${business.instagram.replace("@", "")}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1"
-                  >
-                    <Instagram className="size-3.5" /> {business.instagram}
-                  </a>
-                )}
-              </div>
-            )}
-          </div>
+    <main className="mx-auto flex min-h-dvh max-w-2xl flex-col px-5 pb-6 pt-6">
+      <header className="flex items-center gap-3">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
+          {business.logo_url ? (
+            <img
+              src={business.logo_url}
+              alt={t("bk.logoAlt") + business.name}
+              className="size-full rounded-xl object-cover"
+            />
+          ) : (
+            initials(business.name)
+          )}
         </div>
-
-        {business.show_team && staff.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border pt-3">
-            {staff.map((p) => (
-              <span
-                key={p.id}
-                className="inline-flex items-center gap-1.5 rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold text-accent-foreground"
-              >
-                {p.name}
-                {p.specialty && (
-                  <span className="font-medium text-muted-foreground">· {p.specialty}</span>
-                )}
-              </span>
-            ))}
-          </div>
+        <h1 className="min-w-0 flex-1 truncate text-base font-bold leading-tight tracking-tight">
+          {business.name}
+        </h1>
+        {business.show_contacts && business.phone && (
+          <a
+            href={`tel:${business.phone}`}
+            aria-label={business.phone}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Phone className="size-4" />
+          </a>
         )}
       </header>
 
