@@ -383,7 +383,7 @@ function BookPage() {
 
 
 
-
+      <div key={currentStep} className="animate-enter flex flex-1 flex-col justify-center py-6">
       {currentStep === "staff" && (
         <Section step={stepNumber} total={stepKeys.length} title={t("bk.step.staff")}>
           <div className="grid gap-2">
@@ -642,6 +642,7 @@ function BookPage() {
           )}
         </Section>
       )}
+      </div>
 
       {currentStep === "account" && service && time && user && (
         <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 px-5 py-3 backdrop-blur">
@@ -663,15 +664,17 @@ function BookPage() {
 
 
 
-      <p className="mt-10 text-center text-xs text-muted-foreground">
+      <p className="mt-4 text-center text-xs text-muted-foreground">
         {t("bk.freeCancellation")}{business.cancellation_hours}{t("bk.freeCancellationAfter")}
       </p>
-      <Link
-        to="/"
-        className="mt-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-3.5" /> {t("bk.createMyPage")}
-      </Link>
+      <div className="mt-2 text-center">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="size-3.5" /> {t("bk.createMyPage")}
+        </Link>
+      </div>
     </main>
   );
 }
