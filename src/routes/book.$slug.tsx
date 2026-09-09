@@ -383,7 +383,7 @@ function BookPage() {
 
 
 
-
+      <div key={currentStep} className="animate-enter flex flex-1 flex-col justify-center py-6">
       {currentStep === "staff" && (
         <Section step={stepNumber} total={stepKeys.length} title={t("bk.step.staff")}>
           <div className="grid gap-2">
