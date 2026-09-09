@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useMyBusiness } from "@/hooks/use-business";
+import { PublicPagePanel } from "@/components/panels/public-page-panel";
 import { weekdays, formatDateShort } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
 import { Trash2, Pencil, Save, X } from "lucide-react";
@@ -353,6 +354,80 @@ export function AvailabilityPanel() {
           </ul>
         )}
       </section>
+
+      <BookingRules />
+
+      <PublicPagePanel />
     </div>
+  );
+}
+
+function BookingRules() {
+  const { business } = useMyBusiness();
+  const { t } = usePrefs();
+  const qc = useQueryClient();
+  const [cancellation, setCancellation] = useState("24");
+  const [interval, setIntervalMin] = useState("15");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!business) return;
+    setCancellation(String(business.cancellation_hours));
+    setIntervalMin(String(business.slot_interval_minutes));
+  }, [business]);
+
+  async function save() {
+    if (!business) return;
+    const ch = Number(cancellation);
+    const si = Number(interval);
+    if (!Number.isFinite(ch) || ch < 0 || ch > 168 || !Number.isFinite(si) || si < 5 || si > 120) {
+      toast.error(t("pf.common.checkData"));
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase
+      .from("businesses")
+      .update({ cancellation_hours: ch, slot_interval_minutes: si })
+      .eq("id", business.id);
+    setBusy(false);
+    if (error) {
+      toast.error(t("pf.common.saveError"));
+      return;
+    }
+    toast.success(t("pf.common.saved"));
+    qc.invalidateQueries({ queryKey: ["my-business"] });
+  }
+
+  return (
+    <section className="surface space-y-4 p-5">
+      <h2 className="text-base font-semibold">{t("pf.av.rules")}</h2>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label htmlFor="avch" className="font-semibold">
+            {t("pf.biz.cancellation")}
+          </Label>
+          <Input
+            id="avch"
+            inputMode="numeric"
+            value={cancellation}
+            onChange={(e) => setCancellation(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="avsi" className="font-semibold">
+            {t("pf.biz.slotInterval")}
+          </Label>
+          <Input
+            id="avsi"
+            inputMode="numeric"
+            value={interval}
+            onChange={(e) => setIntervalMin(e.target.value)}
+          />
+        </div>
+      </div>
+      <Button size="sm" onClick={save} disabled={busy}>
+        <Save className="mr-2 size-4" /> {t("pf.common.save")}
+      </Button>
+    </section>
   );
 }

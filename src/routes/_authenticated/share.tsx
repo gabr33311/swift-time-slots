@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/ui-bits";
 import { SharePanel } from "@/components/panels/share-panel";
-import { PublicPagePanel } from "@/components/panels/public-page-panel";
 import { usePrefs } from "@/lib/prefs";
 
 export const Route = createFileRoute("/_authenticated/share")({
@@ -32,11 +31,9 @@ function SharePage() {
         title={t("share.title")}
         subtitle={t("share.subtitle")}
       />
-      <SharePanel />
-      <section className="mt-8">
-        <h2 className="mb-3 text-lg font-bold">{t("share.customize")}</h2>
-        <PublicPagePanel />
-      </section>
+      <div className="mx-auto max-w-xl py-6">
+        <SharePanel />
+      </div>
     </AppShell>
   );
 }
