@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+
 import { Switch } from "@/components/ui/switch";
 import { useMyBusiness } from "@/hooks/use-business";
 import { usePrefs } from "@/lib/prefs";
@@ -103,19 +103,6 @@ export function PublicPagePanel() {
               <Pencil className="mr-2 size-4" /> {t("pf.common.edit")}
             </Button>
           )}
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="ppd" className="font-bold">
-            {t("pf.pub.description")}
-          </Label>
-          <Textarea
-            id="ppd"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            maxLength={300}
-            disabled={!edit}
-          />
         </div>
 
         <div className="divide-y divide-border rounded-xl border border-border">
