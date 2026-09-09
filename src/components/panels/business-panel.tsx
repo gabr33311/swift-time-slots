@@ -241,30 +241,6 @@ export function BusinessPanel() {
             />
           </div>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="bch" className="font-semibold">
-              {t("pf.biz.cancellation")}
-            </Label>
-            <Input
-              id="bch"
-              inputMode="numeric"
-              value={form.cancellationHours}
-              onChange={set("cancellationHours")}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="bsi" className="font-semibold">
-              {t("pf.biz.slotInterval")}
-            </Label>
-            <Input
-              id="bsi"
-              inputMode="numeric"
-              value={form.slotInterval}
-              onChange={set("slotInterval")}
-            />
-          </div>
-        </div>
       </div>
 
       <SaveBar dirty={dirty} busy={busy} onSave={save} onCancel={hydrate} />
