@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/ui-bits";
 import { SharePanel } from "@/components/panels/share-panel";
-import { PublicPagePanel } from "@/components/panels/public-page-panel";
 import { usePrefs } from "@/lib/prefs";
 
 export const Route = createFileRoute("/_authenticated/share")({
