@@ -664,15 +664,17 @@ function BookPage() {
 
 
 
-      <p className="mt-10 text-center text-xs text-muted-foreground">
+      <p className="mt-4 text-center text-xs text-muted-foreground">
         {t("bk.freeCancellation")}{business.cancellation_hours}{t("bk.freeCancellationAfter")}
       </p>
-      <Link
-        to="/"
-        className="mt-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-3.5" /> {t("bk.createMyPage")}
-      </Link>
+      <div className="mt-2 text-center">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="size-3.5" /> {t("bk.createMyPage")}
+        </Link>
+      </div>
     </main>
   );
 }
