@@ -31,11 +31,9 @@ function SharePage() {
         title={t("share.title")}
         subtitle={t("share.subtitle")}
       />
-      <SharePanel />
-      <section className="mt-8">
-        <h2 className="mb-3 text-lg font-bold">{t("share.customize")}</h2>
-        <PublicPagePanel />
-      </section>
+      <div className="mx-auto max-w-xl py-6">
+        <SharePanel />
+      </div>
     </AppShell>
   );
 }
