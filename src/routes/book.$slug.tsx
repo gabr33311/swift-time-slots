@@ -642,6 +642,7 @@ function BookPage() {
           )}
         </Section>
       )}
+      </div>
 
       {currentStep === "account" && service && time && user && (
         <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 px-5 py-3 backdrop-blur">
