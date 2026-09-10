@@ -1,6 +1,5 @@
 import { toast } from "sonner";
 import { usePrefs } from "@/lib/prefs";
-import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { QRCodeCanvas } from "qrcode.react";
 import { Share2, Download, Eye } from "lucide-react";
@@ -43,39 +42,56 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <section className="surface flex flex-row items-center gap-4 p-5">
-      <div className="shrink-0 rounded-2xl bg-card p-2.5 ring-1 ring-border">
+    <section className="surface animate-enter flex flex-col items-center gap-6 p-8 text-center">
+      {/* Link above */}
+      <div className="w-full min-w-0">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          {t("pf.share.yourLink")}
+        </p>
+        <p className="mt-1.5 break-all text-sm font-bold leading-snug sm:text-base">
+          {url.replace(/^https?:\/\//, "")}
+        </p>
+      </div>
+
+      {/* Giant QR centered */}
+      <div className="rounded-3xl bg-white p-4 ring-1 ring-border shadow-soft">
         {url && (
-          <QRCodeCanvas id="booking-qr" value={url} size={compact ? 88 : 104} level="M" />
+          <QRCodeCanvas
+            id="booking-qr"
+            value={url}
+            size={compact ? 180 : 232}
+            level="M"
+          />
         )}
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col justify-center gap-3">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-            {t("pf.share.yourLink")}
-          </p>
-          <p className="mt-1 break-all text-[13px] font-bold leading-snug sm:text-sm">
-            {url.replace(/^https?:\/\//, "")}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" variant="outline" onClick={share}>
-            <Share2 className="size-4" /> {t("pf.share.share")}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => window.open(url, "_blank", "noopener")}
-          >
-            <Eye className="size-4" /> {t("pf.share.preview")}
-          </Button>
-          <Button size="sm" variant="outline" onClick={downloadQr}>
-            <Download className="size-4" /> PNG
-          </Button>
-        </div>
+      {/* 3 buttons below, centered */}
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        <button
+          type="button"
+          onClick={share}
+          className="flex size-12 flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <Share2 className="size-5" strokeWidth={2.5} />
+          <span className="text-[10px] font-bold">{t("pf.share.share")}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => window.open(url, "_blank", "noopener")}
+          className="flex size-12 flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <Eye className="size-5" strokeWidth={2.5} />
+          <span className="text-[10px] font-bold">{t("pf.share.preview")}</span>
+        </button>
+        <button
+          type="button"
+          onClick={downloadQr}
+          className="flex size-12 flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <Download className="size-5" strokeWidth={2.5} />
+          <span className="text-[10px] font-bold">PNG</span>
+        </button>
       </div>
     </section>
   );
 }
-
