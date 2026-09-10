@@ -104,7 +104,7 @@ function ProfilePage() {
               className="surface surface-hover flex items-center gap-4 p-5 text-left"
             >
               <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
-                <s.icon className="size-5" strokeWidth={2.5} />
+                <s.icon className="size-5" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-bold">
