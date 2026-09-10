@@ -63,7 +63,28 @@ function ProfilePage() {
             >
               <ArrowLeft className="size-5" strokeWidth={2.5} />
             </Button>
-          ) : undefined
+          ) : (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t("pf.section.settings")}
+                className="size-9 text-muted-foreground"
+                onClick={() => setSection("settings")}
+              >
+                <Settings className="size-[18px] strokeWidth={2.5}" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t("pf.section.analytics")}
+                className="size-9 text-muted-foreground"
+                onClick={() => setSection("analytics")}
+              >
+                <BarChart3 className="size-[18px] strokeWidth={2.5}" />
+              </Button>
+            </div>
+          )
         }
       />
 
