@@ -42,7 +42,7 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <section className="surface animate-enter flex flex-col items-center gap-6 p-8 text-center">
+    <section className="animate-enter flex flex-col items-center gap-8 text-center">
       {/* Link above */}
       <div className="w-full min-w-0">
         <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
@@ -53,43 +53,41 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
         </p>
       </div>
 
-      {/* Giant QR centered */}
-      <div className="rounded-3xl bg-white p-4 ring-1 ring-border shadow-soft">
-        {url && (
-          <QRCodeCanvas
-            id="booking-qr"
-            value={url}
-            size={compact ? 180 : 232}
-            level="M"
-          />
-        )}
-      </div>
+      {/* Giant QR centered, no border/frame */}
+      {url && (
+        <QRCodeCanvas
+          id="booking-qr"
+          value={url}
+          size={compact ? 180 : 256}
+          level="M"
+        />
+      )}
 
-      {/* 3 buttons below, centered */}
-      <div className="flex flex-wrap items-center justify-center gap-3">
+      {/* 3 buttons below, larger */}
+      <div className="flex flex-wrap items-center justify-center gap-4">
         <button
           type="button"
           onClick={share}
-          className="flex size-12 flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
+          className="flex w-24 flex-col items-center justify-center gap-1.5 rounded-2xl border border-border bg-card px-3 py-3.5 text-muted-foreground transition-colors hover:text-foreground"
         >
-          <Share2 className="size-5" strokeWidth={2.5} />
-          <span className="text-[10px] font-bold">{t("pf.share.share")}</span>
+          <Share2 className="size-6" strokeWidth={2.5} />
+          <span className="text-xs font-bold">{t("pf.share.share")}</span>
         </button>
         <button
           type="button"
           onClick={() => window.open(url, "_blank", "noopener")}
-          className="flex size-12 flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
+          className="flex w-24 flex-col items-center justify-center gap-1.5 rounded-2xl border border-border bg-card px-3 py-3.5 text-muted-foreground transition-colors hover:text-foreground"
         >
-          <Eye className="size-5" strokeWidth={2.5} />
-          <span className="text-[10px] font-bold">{t("pf.share.preview")}</span>
+          <Eye className="size-6" strokeWidth={2.5} />
+          <span className="text-xs font-bold">{t("pf.share.preview")}</span>
         </button>
         <button
           type="button"
           onClick={downloadQr}
-          className="flex size-12 flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
+          className="flex w-24 flex-col items-center justify-center gap-1.5 rounded-2xl border border-border bg-card px-3 py-3.5 text-muted-foreground transition-colors hover:text-foreground"
         >
-          <Download className="size-5" strokeWidth={2.5} />
-          <span className="text-[10px] font-bold">PNG</span>
+          <Download className="size-6" strokeWidth={2.5} />
+          <span className="text-xs font-bold">PNG</span>
         </button>
       </div>
     </section>
