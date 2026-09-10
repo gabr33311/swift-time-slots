@@ -35,9 +35,18 @@ export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
 });
 
-type SectionId = "availability" | "analytics" | "settings";
+type SectionId =
+  | "info"
+  | "services"
+  | "team"
+  | "availability"
+  | "analytics"
+  | "settings";
 
 const LINKS: { id: SectionId; icon: ComponentType<{ className?: string }> }[] = [
+  { id: "info", icon: Building2 },
+  { id: "services", icon: Scissors },
+  { id: "team", icon: UserRound },
   { id: "availability", icon: Clock },
 ];
 
