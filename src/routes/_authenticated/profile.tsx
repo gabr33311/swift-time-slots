@@ -39,8 +39,6 @@ type SectionId = "availability" | "analytics" | "settings";
 
 const LINKS: { id: SectionId; icon: ComponentType<{ className?: string }> }[] = [
   { id: "availability", icon: Clock },
-  { id: "analytics", icon: BarChart3 },
-  { id: "settings", icon: Settings },
 ];
 
 function ProfilePage() {
