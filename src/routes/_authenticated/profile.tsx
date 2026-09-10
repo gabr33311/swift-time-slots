@@ -64,25 +64,23 @@ function ProfilePage() {
               <ArrowLeft className="size-5" strokeWidth={2.5} />
             </Button>
           ) : (
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
                 aria-label={t("pf.section.settings")}
-                className="size-9 text-muted-foreground"
                 onClick={() => setSection("settings")}
+                className="flex size-10 items-center justify-center rounded-2xl border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
               >
-                <Settings className="size-[18px] strokeWidth={2.5}" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
+                <Settings className="size-5" strokeWidth={2.5} />
+              </button>
+              <button
+                type="button"
                 aria-label={t("pf.section.analytics")}
-                className="size-9 text-muted-foreground"
                 onClick={() => setSection("analytics")}
+                className="flex size-10 items-center justify-center rounded-2xl border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
               >
-                <BarChart3 className="size-[18px] strokeWidth={2.5}" />
-              </Button>
+                <BarChart3 className="size-5" strokeWidth={2.5} />
+              </button>
             </div>
           )
         }
