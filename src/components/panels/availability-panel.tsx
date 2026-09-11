@@ -151,6 +151,8 @@ export function AvailabilityPanel() {
     }
   }
 
+  useAutoSaveOnExit(dirty, saveHours);
+
   async function addBlock() {
     if (!business) return;
     if (!blockFrom || !blockTo || new Date(blockFrom) >= new Date(blockTo)) {
