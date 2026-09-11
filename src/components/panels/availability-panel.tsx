@@ -142,7 +142,6 @@ export function AvailabilityPanel() {
         });
       if (rows.length) await supabase.from("working_hours").insert(rows);
       toast.success(t("pf.av.saved"));
-      setEditMode(false);
       qc.invalidateQueries({ queryKey: ["availability"] });
     } catch {
       toast.error(t("pf.av.err.save"));
