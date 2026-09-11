@@ -180,27 +180,13 @@ export function AvailabilityPanel() {
 
   if (isLoading) return <LoadingRows rows={4} />;
 
-  const locked = !editMode;
+  const locked = false;
 
   return (
     <div className="space-y-6">
       <section className="surface p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-base font-semibold">{t("pf.av.weekly")}</h2>
-          {locked ? (
-            <Button variant="outline" size="sm" onClick={() => setEditMode(true)}>
-              <Pencil className="mr-2 size-4" /> {t("pf.common.edit")}
-            </Button>
-          ) : (
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={busy}>
-                <X className="mr-2 size-4" /> {t("pf.av.cancelChanges")}
-              </Button>
-              <Button size="sm" onClick={saveHours} disabled={busy}>
-                <Save className="mr-2 size-4" /> {t("pf.common.save")}
-              </Button>
-            </div>
-          )}
         </div>
 
         <div className="mt-4 space-y-3">
