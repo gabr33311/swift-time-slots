@@ -107,9 +107,7 @@ function ProfilePage() {
                 <s.icon className="size-5" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-bold">
-                  {s.id === "availability" ? t("pf.editAvailability") : label(s.id)}
-                </span>
+                <span className="block text-sm font-bold">{label(s.id)}</span>
                 <span className="block text-sm text-muted-foreground">{desc(s.id)}</span>
               </span>
               <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
