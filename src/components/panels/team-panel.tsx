@@ -210,7 +210,7 @@ function StaffDialog({
           })),
         );
       }
-      toast.success(t("pf.team.saved"));
+      toast.success(t("ui.save.auto"));
       qc.invalidateQueries({ queryKey: ["team"] });
       onOpenChange(false);
     } catch {

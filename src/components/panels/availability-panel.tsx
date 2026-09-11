@@ -12,7 +12,7 @@ import { PublicPagePanel } from "@/components/panels/public-page-panel";
 import { weekdays, formatDateShort } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
 import { Trash2 } from "lucide-react";
-import { useAutoSaveOnExit, AutoSaveNote } from "@/hooks/use-autosave";
+import { useAutoSaveOnExit } from "@/hooks/use-autosave";
 
 type DayState = {
   enabled: boolean;
@@ -344,7 +344,6 @@ export function AvailabilityPanel() {
 
       <PublicPagePanel />
 
-      <AutoSaveNote />
     </div>
   );
 }

@@ -23,7 +23,7 @@ export function SettingsPanel() {
       return;
     }
     qc.invalidateQueries({ queryKey: ["my-business"] });
-    toast.success(t("pf.common.saved"));
+    toast.success(t("ui.save.auto"));
   }
 
   return (

@@ -1,20 +1,27 @@
 import { useEffect, useRef } from "react";
-import { Check } from "lucide-react";
+import { toast } from "sonner";
 import { usePrefs } from "@/lib/prefs";
 
 /**
  * Saves pending changes automatically when the panel unmounts (user leaves the
- * section) or when the tab/page is hidden.
+ * section) or when the tab/page is hidden, then confirms with a top toast.
  */
 export function useAutoSaveOnExit(dirty: boolean, save: () => void | Promise<void>) {
+  const { t } = usePrefs();
   const dirtyRef = useRef(dirty);
   const saveRef = useRef(save);
+  const tRef = useRef(t);
   dirtyRef.current = dirty;
   saveRef.current = save;
+  tRef.current = t;
 
   useEffect(() => {
     const flush = () => {
-      if (dirtyRef.current) void saveRef.current();
+      if (!dirtyRef.current) return;
+      dirtyRef.current = false;
+      void Promise.resolve(saveRef.current()).then(() => {
+        toast.success(tRef.current("ui.save.auto"));
+      });
     };
     const onHide = () => {
       if (document.visibilityState === "hidden") flush();
@@ -25,17 +32,4 @@ export function useAutoSaveOnExit(dirty: boolean, save: () => void | Promise<voi
       flush();
     };
   }, []);
-}
-
-/** Small island telling the user everything is saved automatically. */
-export function AutoSaveNote({ className = "" }: { className?: string }) {
-  const { t } = usePrefs();
-  return (
-    <div
-      className={`flex items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-2.5 text-[13px] font-bold text-muted-foreground ${className}`}
-    >
-      <Check className="size-4" strokeWidth={3} />
-      {t("ui.save.auto")}
-    </div>
-  );
 }

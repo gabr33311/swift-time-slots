@@ -228,7 +228,7 @@ function ServiceDialog({
       toast.error(t("pf.svc.err.save"));
       return;
     }
-    toast.success(t("pf.svc.saved"));
+    toast.success(t("ui.save.auto"));
     qc.invalidateQueries({ queryKey: ["services"] });
     onOpenChange(false);
   }
