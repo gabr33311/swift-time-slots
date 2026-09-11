@@ -243,7 +243,7 @@ export function BusinessPanel() {
         </div>
       </div>
 
-      <SaveBar dirty={dirty} busy={busy} onSave={save} onCancel={hydrate} />
+      <AutoSaveNote />
     </section>
   );
 }
