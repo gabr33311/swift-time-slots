@@ -73,37 +73,22 @@ export function PublicPagePanel() {
       return;
     }
     toast.success(t("pf.pub.saved"));
-    setEdit(false);
     qc.invalidateQueries({ queryKey: ["my-business"] });
   }
+
+  const dirty =
+    !!business &&
+    (description !== (business.description ?? "") ||
+      showTeam !== business.show_team ||
+      showContacts !== business.show_contacts);
+
+  useAutoSaveOnExit(dirty, save);
 
   return (
     <div className="space-y-4">
       <section className="surface space-y-5 p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-bold">{t("pf.pub.title")}</h2>
-          {edit ? (
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={busy}
-                onClick={() => {
-                  hydrate();
-                  setEdit(false);
-                }}
-              >
-                <X className="mr-2 size-4" /> {t("pf.common.cancel")}
-              </Button>
-              <Button size="sm" onClick={save} disabled={busy}>
-                <Save className="mr-2 size-4" /> {t("pf.common.save")}
-              </Button>
-            </div>
-          ) : (
-            <Button variant="outline" size="sm" onClick={() => setEdit(true)}>
-              <Pencil className="mr-2 size-4" /> {t("pf.common.edit")}
-            </Button>
-          )}
         </div>
 
         <div className="divide-y divide-border rounded-xl border border-border">
