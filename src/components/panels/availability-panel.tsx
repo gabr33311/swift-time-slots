@@ -408,9 +408,6 @@ function BookingRules() {
           />
         </div>
       </div>
-      <Button size="sm" onClick={save} disabled={busy}>
-        <Save className="mr-2 size-4" /> {t("pf.common.save")}
-      </Button>
     </section>
   );
 }
