@@ -11,7 +11,8 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { PublicPagePanel } from "@/components/panels/public-page-panel";
 import { weekdays, formatDateShort } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
-import { Trash2, Pencil, Save, X } from "lucide-react";
+import { Trash2 } from "lucide-react";
+import { useAutoSaveOnExit, AutoSaveNote } from "@/hooks/use-autosave";
 
 type DayState = {
   enabled: boolean;
