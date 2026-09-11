@@ -138,6 +138,8 @@ export function BusinessPanel() {
 
   const dirty = !!business && JSON.stringify(form) !== JSON.stringify(baseline(business));
 
+  useAutoSaveOnExit(dirty, save);
+
   return (
     <section className="surface space-y-5 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
