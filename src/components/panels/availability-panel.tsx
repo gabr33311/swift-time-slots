@@ -386,6 +386,8 @@ function BookingRules() {
     qc.invalidateQueries({ queryKey: ["my-business"] });
   }
 
+  useAutoSaveOnExit(rulesDirty, save);
+
   return (
     <section className="surface space-y-4 p-5">
       <h2 className="text-base font-semibold">{t("pf.av.rules")}</h2>
