@@ -98,10 +98,7 @@ export function AvailabilityPanel() {
     setDays(fromRows(data.hours));
   }, [data]);
 
-  function cancelEdit() {
-    if (data) setDays(fromRows(data.hours));
-    setEditMode(false);
-  }
+  const dirty = !!data && JSON.stringify(days) !== JSON.stringify(fromRows(data.hours));
 
   async function saveHours() {
     if (!business) return;
