@@ -27,6 +27,7 @@ export const commonDict: Record<Lang, Record<string, string>> = {
     "ui.save.unsaved": "Tens alterações não guardadas.",
     "ui.save.cancel": "Cancelar",
     "ui.save.save": "Guardar",
+    "ui.save.auto": "Guardado automaticamente",
   },
   en: {
     "ui.loading": "Loading…",
@@ -54,5 +55,6 @@ export const commonDict: Record<Lang, Record<string, string>> = {
     "ui.save.unsaved": "You have unsaved changes.",
     "ui.save.cancel": "Cancel",
     "ui.save.save": "Save",
+    "ui.save.auto": "Saved automatically",
   },
 };

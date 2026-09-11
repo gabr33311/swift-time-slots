@@ -11,7 +11,8 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { PublicPagePanel } from "@/components/panels/public-page-panel";
 import { weekdays, formatDateShort } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
-import { Trash2, Pencil, Save, X } from "lucide-react";
+import { Trash2 } from "lucide-react";
+import { useAutoSaveOnExit, AutoSaveNote } from "@/hooks/use-autosave";
 
 type DayState = {
   enabled: boolean;
@@ -65,7 +66,7 @@ export function AvailabilityPanel() {
   const [days, setDays] = useState<DayState[]>(
     Array.from({ length: 7 }, () => ({ ...DEFAULT_DAY })),
   );
-  const [editMode, setEditMode] = useState(false);
+  
   const [busy, setBusy] = useState(false);
   const [blockFrom, setBlockFrom] = useState("");
   const [blockTo, setBlockTo] = useState("");
@@ -98,10 +99,7 @@ export function AvailabilityPanel() {
     setDays(fromRows(data.hours));
   }, [data]);
 
-  function cancelEdit() {
-    if (data) setDays(fromRows(data.hours));
-    setEditMode(false);
-  }
+  const dirty = !!data && JSON.stringify(days) !== JSON.stringify(fromRows(data.hours));
 
   async function saveHours() {
     if (!business) return;
@@ -145,7 +143,6 @@ export function AvailabilityPanel() {
         });
       if (rows.length) await supabase.from("working_hours").insert(rows);
       toast.success(t("pf.av.saved"));
-      setEditMode(false);
       qc.invalidateQueries({ queryKey: ["availability"] });
     } catch {
       toast.error(t("pf.av.err.save"));
@@ -153,6 +150,8 @@ export function AvailabilityPanel() {
       setBusy(false);
     }
   }
+
+  useAutoSaveOnExit(dirty, saveHours);
 
   async function addBlock() {
     if (!business) return;
@@ -184,27 +183,13 @@ export function AvailabilityPanel() {
 
   if (isLoading) return <LoadingRows rows={4} />;
 
-  const locked = !editMode;
+  const locked = false;
 
   return (
     <div className="space-y-6">
       <section className="surface p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-base font-semibold">{t("pf.av.weekly")}</h2>
-          {locked ? (
-            <Button variant="outline" size="sm" onClick={() => setEditMode(true)}>
-              <Pencil className="mr-2 size-4" /> {t("pf.common.edit")}
-            </Button>
-          ) : (
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={busy}>
-                <X className="mr-2 size-4" /> {t("pf.av.cancelChanges")}
-              </Button>
-              <Button size="sm" onClick={saveHours} disabled={busy}>
-                <Save className="mr-2 size-4" /> {t("pf.common.save")}
-              </Button>
-            </div>
-          )}
         </div>
 
         <div className="mt-4 space-y-3">
@@ -358,6 +343,8 @@ export function AvailabilityPanel() {
       <BookingRules />
 
       <PublicPagePanel />
+
+      <AutoSaveNote />
     </div>
   );
 }
@@ -368,13 +355,18 @@ function BookingRules() {
   const qc = useQueryClient();
   const [cancellation, setCancellation] = useState("24");
   const [interval, setIntervalMin] = useState("15");
-  const [busy, setBusy] = useState(false);
+  const [, setBusy] = useState(false);
 
   useEffect(() => {
     if (!business) return;
     setCancellation(String(business.cancellation_hours));
     setIntervalMin(String(business.slot_interval_minutes));
   }, [business]);
+
+  const rulesDirty =
+    !!business &&
+    (cancellation !== String(business.cancellation_hours) ||
+      interval !== String(business.slot_interval_minutes));
 
   async function save() {
     if (!business) return;
@@ -397,6 +389,8 @@ function BookingRules() {
     toast.success(t("pf.common.saved"));
     qc.invalidateQueries({ queryKey: ["my-business"] });
   }
+
+  useAutoSaveOnExit(rulesDirty, save);
 
   return (
     <section className="surface space-y-4 p-5">
@@ -425,9 +419,6 @@ function BookingRules() {
           />
         </div>
       </div>
-      <Button size="sm" onClick={save} disabled={busy}>
-        <Save className="mr-2 size-4" /> {t("pf.common.save")}
-      </Button>
     </section>
   );
 }
