@@ -341,6 +341,8 @@ export function AvailabilityPanel() {
       <BookingRules />
 
       <PublicPagePanel />
+
+      <AutoSaveNote />
     </div>
   );
 }
