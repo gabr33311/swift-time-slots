@@ -12,7 +12,7 @@ import { usePrefs } from "@/lib/prefs";
 import { useLogoUrl } from "@/hooks/use-logo";
 import { initials } from "@/lib/format";
 import { ImagePlus } from "lucide-react";
-import { useAutoSaveOnExit, AutoSaveNote } from "@/hooks/use-autosave";
+import { useAutoSaveOnExit } from "@/hooks/use-autosave";
 
 const schema = z.object({
   name: z.string().trim().min(2, "pf.biz.err.name").max(80),
@@ -245,7 +245,6 @@ export function BusinessPanel() {
         </div>
       </div>
 
-      <AutoSaveNote />
     </section>
   );
 }
