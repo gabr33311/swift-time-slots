@@ -351,13 +351,18 @@ function BookingRules() {
   const qc = useQueryClient();
   const [cancellation, setCancellation] = useState("24");
   const [interval, setIntervalMin] = useState("15");
-  const [busy, setBusy] = useState(false);
+  const [, setBusy] = useState(false);
 
   useEffect(() => {
     if (!business) return;
     setCancellation(String(business.cancellation_hours));
     setIntervalMin(String(business.slot_interval_minutes));
   }, [business]);
+
+  const rulesDirty =
+    !!business &&
+    (cancellation !== String(business.cancellation_hours) ||
+      interval !== String(business.slot_interval_minutes));
 
   async function save() {
     if (!business) return;
