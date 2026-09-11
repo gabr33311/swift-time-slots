@@ -8,14 +8,15 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useMyBusiness } from "@/hooks/use-business";
 import { usePrefs } from "@/lib/prefs";
-import { Pencil, Save, X, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUp, ArrowDown } from "lucide-react";
+import { useAutoSaveOnExit } from "@/hooks/use-autosave";
 
 export function PublicPagePanel() {
   const { business } = useMyBusiness();
   const { t } = usePrefs();
   const qc = useQueryClient();
-  const [edit, setEdit] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const edit = true;
+  const [, setBusy] = useState(false);
   const [description, setDescription] = useState("");
   const [showTeam, setShowTeam] = useState(true);
   const [showContacts, setShowContacts] = useState(true);
