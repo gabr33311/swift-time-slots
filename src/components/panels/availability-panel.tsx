@@ -65,7 +65,7 @@ export function AvailabilityPanel() {
   const [days, setDays] = useState<DayState[]>(
     Array.from({ length: 7 }, () => ({ ...DEFAULT_DAY })),
   );
-  const [editMode, setEditMode] = useState(false);
+  
   const [busy, setBusy] = useState(false);
   const [blockFrom, setBlockFrom] = useState("");
   const [blockTo, setBlockTo] = useState("");
