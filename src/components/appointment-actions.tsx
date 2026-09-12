@@ -2,8 +2,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { useServerFn } from "@tanstack/react-start";
-import { updateBusinessAppointmentStatus } from "@/lib/appointment-management.functions";
+import { setAppointmentStatus } from "@/lib/appointment-status";
+import { useMyBusiness } from "@/hooks/use-business";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,16 +49,16 @@ export function AppointmentActions({
   const qc = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const updateStatus = useServerFn(updateBusinessAppointmentStatus);
+  const { business } = useMyBusiness();
 
   async function setStatus(next: Status) {
+    if (!business) return;
     setBusy(true);
-    const result = await updateStatus({
-      data: {
-        appointmentId: id,
-        status: next as "confirmed" | "completed" | "cancelled" | "no_show",
-        note: next === "cancelled" ? t("acts.note.cancelled") : t("acts.note.changed"),
-      },
+    const result = await setAppointmentStatus({
+      id,
+      businessId: business.id,
+      status: next,
+      note: next === "cancelled" ? t("acts.note.cancelled") : t("acts.note.changed"),
     });
     setBusy(false);
     if (!result.ok) {

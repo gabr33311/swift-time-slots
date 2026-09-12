@@ -34,15 +34,28 @@ export const Route = createFileRoute("/_authenticated/appointments")({
   component: AppointmentsPage,
 });
 
-const FILTERS = ["upcoming", "today", "confirmed", "pending", "completed", "past", "cancelled"] as const;
+const STATUS_FILTERS = ["all", "confirmed", "pending", "cancelled", "completed"] as const;
+const TIME_FILTERS = ["all", "upcoming", "today", "past"] as const;
+type StatusFilter = (typeof STATUS_FILTERS)[number];
+type TimeFilter = (typeof TIME_FILTERS)[number];
 
 function AppointmentsPage() {
   const { t, lang } = usePrefs();
   const search = Route.useSearch();
   const { business } = useMyBusiness();
   const qc = useQueryClient();
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]>(
-    search.filter ?? "upcoming",
+  const initial = search.filter;
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(
+    initial && (STATUS_FILTERS as readonly string[]).includes(initial)
+      ? (initial as StatusFilter)
+      : "all",
+  );
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>(
+    initial && (TIME_FILTERS as readonly string[]).includes(initial)
+      ? (initial as TimeFilter)
+      : initial
+        ? "all"
+        : "upcoming",
   );
   const [newOpen, setNewOpen] = useState(Boolean(search.new));
   const [overdueIdx, setOverdueIdx] = useState(0);
@@ -64,7 +77,7 @@ function AppointmentsPage() {
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ["appointments", business?.id, filter],
+    queryKey: ["appointments", business?.id, statusFilter, timeFilter],
     enabled: !!business,
     queryFn: async () => {
       let q = supabase
@@ -72,13 +85,17 @@ function AppointmentsPage() {
         .select("id, starts_at, customer_name, customer_phone, service_name, price_cents, status, notes")
         .eq("business_id", business!.id);
       const now = new Date().toISOString();
-      if (filter === "upcoming") q = q.gte("starts_at", now).neq("status", "cancelled").order("starts_at");
-      if (filter === "today") q = q.gte("starts_at", new Date(Date.now() - 12 * 3600000).toISOString()).order("starts_at");
-      if (filter === "past") q = q.lt("starts_at", now).order("starts_at", { ascending: false });
-      if (filter === "cancelled") q = q.eq("status", "cancelled").order("starts_at", { ascending: false });
-      if (filter === "confirmed") q = q.eq("status", "confirmed").order("starts_at");
-      if (filter === "pending") q = q.eq("status", "pending").order("starts_at");
-      if (filter === "completed") q = q.eq("status", "completed").order("starts_at", { ascending: false });
+      if (statusFilter !== "all") q = q.eq("status", statusFilter);
+      if (timeFilter === "upcoming") q = q.gte("starts_at", now);
+      if (timeFilter === "today")
+        q = q
+          .gte("starts_at", new Date(Date.now() - 12 * 3600000).toISOString())
+          .lte("starts_at", new Date(Date.now() + 12 * 3600000).toISOString());
+      if (timeFilter === "past") q = q.lt("starts_at", now);
+      if (statusFilter === "all" && timeFilter === "upcoming") q = q.neq("status", "cancelled");
+      const descending =
+        timeFilter === "past" || statusFilter === "cancelled" || statusFilter === "completed";
+      q = q.order("starts_at", { ascending: !descending });
       const { data } = await q.limit(100);
       return data ?? [];
     },
@@ -121,21 +138,49 @@ function AppointmentsPage() {
         />
       )}
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        {FILTERS.map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={cn(
-              "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
-              filter === f
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {t(`appt.filter.${f}`)}
-          </button>
-        ))}
+      <div className="mb-4 space-y-2.5">
+        <div>
+          <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+            {t("appt.group.status")}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {STATUS_FILTERS.map((f) => (
+              <button
+                key={f}
+                onClick={() => setStatusFilter(f)}
+                className={cn(
+                  "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+                  statusFilter === f
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {t(`appt.filter.${f}`)}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+            {t("appt.group.time")}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {TIME_FILTERS.map((f) => (
+              <button
+                key={f}
+                onClick={() => setTimeFilter(f)}
+                className={cn(
+                  "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+                  timeFilter === f
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {t(`appt.filter.${f}`)}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {isLoading ? (
