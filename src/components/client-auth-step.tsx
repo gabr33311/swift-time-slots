@@ -21,6 +21,7 @@ const detailsSchema = z.object({
  */
 export function ClientAuthStep({ onDone }: { onDone: () => void }) {
   const { t } = usePrefs();
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [stage, setStage] = useState<"details" | "code">("details");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -29,23 +30,31 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
   const [busy, setBusy] = useState(false);
 
   async function sendCode() {
-    const parsed = detailsSchema.safeParse({ name, phone, email });
-    if (!parsed.success) {
-      toast.error(t(parsed.error.issues[0]?.message ?? "bk.auth.err.check"));
-      return;
-    }
-    if (!isValidPhonePt(phone)) {
-      toast.error(t("bk.auth.err.phone"));
+    if (mode === "signup") {
+      const parsed = detailsSchema.safeParse({ name, phone, email });
+      if (!parsed.success) {
+        toast.error(t(parsed.error.issues[0]?.message ?? "bk.auth.err.check"));
+        return;
+      }
+      if (!isValidPhonePt(phone)) {
+        toast.error(t("bk.auth.err.phone"));
+        return;
+      }
+    } else if (!z.string().email().safeParse(email.trim()).success) {
+      toast.error(t("bk.auth.err.email"));
       return;
     }
     setBusy(true);
     const { error } = await supabase.auth.signInWithOtp({
-      email: parsed.data.email,
-      options: { shouldCreateUser: true, data: { full_name: parsed.data.name } },
+      email: email.trim(),
+      options:
+        mode === "signup"
+          ? { shouldCreateUser: true, data: { full_name: name.trim() } }
+          : { shouldCreateUser: false },
     });
     setBusy(false);
     if (error) {
-      toast.error(t("bk.auth.err.send"));
+      toast.error(mode === "signin" ? t("bk.auth.err.noAccount") : t("bk.auth.err.send"));
       return;
     }
     toast.success(t("bk.auth.codeSent"));
