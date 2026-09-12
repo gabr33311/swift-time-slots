@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +11,7 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { formatPrice, formatTime, formatDateLong } from "@/lib/format";
 import { Check, Clock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { updateBusinessAppointmentStatus } from "@/lib/appointment-management.functions";
+import { setAppointmentStatus } from "@/lib/appointment-status";
 import { z } from "zod";
 import { usePrefs } from "@/lib/prefs";
 
@@ -41,7 +41,7 @@ function PendingPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>(search.tab ?? "pending");
   const [busy, setBusy] = useState<string | null>(null);
-  const updateStatus = useServerFn(updateBusinessAppointmentStatus);
+  
 
   const { data, isLoading } = useQuery({
     queryKey: ["requests", business?.id],
@@ -71,12 +71,11 @@ function PendingPage() {
 
   async function decide(id: string, accept: boolean) {
     setBusy(id);
-    const result = await updateStatus({
-      data: {
-        appointmentId: id,
-        status: accept ? "confirmed" : "cancelled",
-        note: accept ? t("pend.note.accepted") : t("pend.note.refused"),
-      },
+    const result = await setAppointmentStatus({
+      id,
+      businessId: business!.id,
+      status: accept ? "confirmed" : "cancelled",
+      note: accept ? t("pend.note.accepted") : t("pend.note.refused"),
     });
     setBusy(null);
     if (!result.ok) {
