@@ -44,8 +44,18 @@ function AppointmentsPage() {
   const search = Route.useSearch();
   const { business } = useMyBusiness();
   const qc = useQueryClient();
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]>(
-    search.filter ?? "upcoming",
+  const initial = search.filter;
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(
+    initial && (STATUS_FILTERS as readonly string[]).includes(initial)
+      ? (initial as StatusFilter)
+      : "all",
+  );
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>(
+    initial && (TIME_FILTERS as readonly string[]).includes(initial)
+      ? (initial as TimeFilter)
+      : initial
+        ? "all"
+        : "upcoming",
   );
   const [newOpen, setNewOpen] = useState(Boolean(search.new));
   const [overdueIdx, setOverdueIdx] = useState(0);
