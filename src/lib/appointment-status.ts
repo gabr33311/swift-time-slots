@@ -1,6 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type ApptStatus = "confirmed" | "completed" | "cancelled" | "no_show" | "pending";
+export type ApptStatus =
+  | "confirmed"
+  | "completed"
+  | "cancelled"
+  | "no_show"
+  | "pending"
+  | "expired";
 
 /**
  * Updates an appointment status directly through the Data API (RLS restricts
