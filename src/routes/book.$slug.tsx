@@ -346,6 +346,24 @@ function BookPage() {
             <Phone className="size-4" />
           </a>
         )}
+        {user ? (
+          <Link
+            to="/minhas-marcacoes"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-bold hover:bg-accent"
+          >
+            <LogIn className="size-3.5" />
+            {t("bk.myBookings")}
+          </Link>
+        ) : (
+          <Link
+            to="/auth"
+            search={{ mode: undefined, next: "/minhas-marcacoes" }}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-bold hover:bg-accent"
+          >
+            <LogIn className="size-3.5" />
+            {t("bk.myBookings")}
+          </Link>
+        )}
       </header>
 
       <div className="mb-5 flex items-center justify-between gap-3">
