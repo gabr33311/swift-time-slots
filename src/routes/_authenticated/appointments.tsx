@@ -138,21 +138,49 @@ function AppointmentsPage() {
         />
       )}
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        {FILTERS.map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={cn(
-              "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
-              filter === f
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {t(`appt.filter.${f}`)}
-          </button>
-        ))}
+      <div className="mb-4 space-y-2.5">
+        <div>
+          <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+            {t("appt.group.status")}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {STATUS_FILTERS.map((f) => (
+              <button
+                key={f}
+                onClick={() => setStatusFilter(f)}
+                className={cn(
+                  "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+                  statusFilter === f
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {t(`appt.filter.${f}`)}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+            {t("appt.group.time")}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {TIME_FILTERS.map((f) => (
+              <button
+                key={f}
+                onClick={() => setTimeFilter(f)}
+                className={cn(
+                  "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+                  timeFilter === f
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {t(`appt.filter.${f}`)}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {isLoading ? (
