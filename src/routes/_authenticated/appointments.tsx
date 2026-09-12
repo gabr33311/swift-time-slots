@@ -34,7 +34,10 @@ export const Route = createFileRoute("/_authenticated/appointments")({
   component: AppointmentsPage,
 });
 
-const FILTERS = ["upcoming", "today", "confirmed", "pending", "completed", "past", "cancelled"] as const;
+const STATUS_FILTERS = ["all", "confirmed", "pending", "cancelled", "completed"] as const;
+const TIME_FILTERS = ["all", "upcoming", "today", "past"] as const;
+type StatusFilter = (typeof STATUS_FILTERS)[number];
+type TimeFilter = (typeof TIME_FILTERS)[number];
 
 function AppointmentsPage() {
   const { t, lang } = usePrefs();
