@@ -77,7 +77,7 @@ function AppointmentsPage() {
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ["appointments", business?.id, filter],
+    queryKey: ["appointments", business?.id, statusFilter, timeFilter],
     enabled: !!business,
     queryFn: async () => {
       let q = supabase
@@ -85,13 +85,17 @@ function AppointmentsPage() {
         .select("id, starts_at, customer_name, customer_phone, service_name, price_cents, status, notes")
         .eq("business_id", business!.id);
       const now = new Date().toISOString();
-      if (filter === "upcoming") q = q.gte("starts_at", now).neq("status", "cancelled").order("starts_at");
-      if (filter === "today") q = q.gte("starts_at", new Date(Date.now() - 12 * 3600000).toISOString()).order("starts_at");
-      if (filter === "past") q = q.lt("starts_at", now).order("starts_at", { ascending: false });
-      if (filter === "cancelled") q = q.eq("status", "cancelled").order("starts_at", { ascending: false });
-      if (filter === "confirmed") q = q.eq("status", "confirmed").order("starts_at");
-      if (filter === "pending") q = q.eq("status", "pending").order("starts_at");
-      if (filter === "completed") q = q.eq("status", "completed").order("starts_at", { ascending: false });
+      if (statusFilter !== "all") q = q.eq("status", statusFilter);
+      if (timeFilter === "upcoming") q = q.gte("starts_at", now);
+      if (timeFilter === "today")
+        q = q
+          .gte("starts_at", new Date(Date.now() - 12 * 3600000).toISOString())
+          .lte("starts_at", new Date(Date.now() + 12 * 3600000).toISOString());
+      if (timeFilter === "past") q = q.lt("starts_at", now);
+      if (statusFilter === "all" && timeFilter === "upcoming") q = q.neq("status", "cancelled");
+      const descending =
+        timeFilter === "past" || statusFilter === "cancelled" || statusFilter === "completed";
+      q = q.order("starts_at", { ascending: !descending });
       const { data } = await q.limit(100);
       return data ?? [];
     },
