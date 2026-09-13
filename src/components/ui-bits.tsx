@@ -15,14 +15,14 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-      <div>
+    <div className="mb-6 flex items-start justify-between gap-3">
+      <div className="min-w-0 flex-1">
         <h1 className="font-display text-[28px] font-bold leading-tight tracking-tight">{title}</h1>
         {subtitle && (
           <p className="mt-1 text-sm font-normal text-muted-foreground">{subtitle}</p>
         )}
       </div>
-      {action}
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }

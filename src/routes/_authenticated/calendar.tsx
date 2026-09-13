@@ -96,16 +96,16 @@ function CalendarPage() {
         >
           <ChevronRight className="size-4" />
         </button>
-        {date === todayIn(tz) && (
-          <span
-            className={cn(
-              "ml-0.5 h-9 shrink-0 rounded-full px-3.5 text-[13px] font-bold transition-colors",
-              "text-muted-foreground hover:bg-muted hover:text-foreground",
-            )}
-          >
-            {t("cal.today")}
-          </span>
-        )}
+        <span
+          className={cn(
+            "ml-0.5 flex h-9 shrink-0 items-center rounded-full px-3.5 text-[13px] font-bold transition-opacity",
+            date === todayIn(tz)
+              ? "opacity-100 text-muted-foreground"
+              : "pointer-events-none opacity-0",
+          )}
+        >
+          {t("cal.today")}
+        </span>
       </div>
 
       {isLoading ? (
