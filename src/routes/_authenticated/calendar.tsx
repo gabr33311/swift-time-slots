@@ -96,16 +96,15 @@ function CalendarPage() {
         >
           <ChevronRight className="size-4" />
         </button>
-        {date !== todayIn(tz) && (
-          <button
-            onClick={() => setDate(todayIn(tz))}
+        {date === todayIn(tz) && (
+          <span
             className={cn(
               "ml-0.5 h-9 shrink-0 rounded-full px-3.5 text-[13px] font-bold transition-colors",
               "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
             {t("cal.today")}
-          </button>
+          </span>
         )}
       </div>
 
