@@ -104,7 +104,7 @@ function CalendarPage() {
             )}
           >
             {t("cal.today")}
-          </button>
+          </span>
         )}
       </div>
 
