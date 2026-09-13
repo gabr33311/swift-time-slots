@@ -84,6 +84,10 @@ export const bookingDict: Record<Lang, Record<string, string>> = {
     "bk.auth.title": "Criar conta / entrar",
     "bk.auth.firstName": "Nome próprio",
     "bk.auth.phone": "Telemóvel",
+    "bk.auth.tab.signin": "Entrar",
+    "bk.auth.tab.signup": "Criar conta",
+    "bk.auth.err.email": "Introduz um email válido.",
+    "bk.auth.err.noAccount": "Não existe conta com esse email. Cria uma conta.",
     "bk.auth.sendCode": "Enviar código por email",
   },
   en: {
@@ -169,6 +173,10 @@ export const bookingDict: Record<Lang, Record<string, string>> = {
     "bk.auth.title": "Create account / sign in",
     "bk.auth.firstName": "First name",
     "bk.auth.phone": "Phone",
+    "bk.auth.tab.signin": "Sign in",
+    "bk.auth.tab.signup": "Create account",
+    "bk.auth.err.email": "Enter a valid email.",
+    "bk.auth.err.noAccount": "No account with that email. Create one instead.",
     "bk.auth.sendCode": "Send code by email",
   },
 };
