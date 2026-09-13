@@ -77,10 +77,12 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
       toast.error(t("bk.auth.err.codeInvalid"));
       return;
     }
-    await supabase
-      .from("profiles")
-      .update({ full_name: name.trim(), phone: phone.trim() })
-      .eq("id", data.user.id);
+    if (mode === "signup") {
+      await supabase
+        .from("profiles")
+        .update({ full_name: name.trim(), phone: phone.trim() })
+        .eq("id", data.user.id);
+    }
     setBusy(false);
     toast.success(t("bk.auth.confirmed"));
     onDone();
