@@ -124,32 +124,52 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
       <div className="mb-3 flex items-center gap-2 text-sm font-bold">
         <ShieldCheck className="size-4 text-primary" /> {t("bk.auth.title")}
       </div>
+      <div className="mb-3 flex gap-1 rounded-full bg-muted p-1">
+        {(["signin", "signup"] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMode(m)}
+            className={`flex-1 rounded-full px-3 py-1.5 text-[13px] font-bold transition-colors ${
+              mode === m
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t(m === "signin" ? "bk.auth.tab.signin" : "bk.auth.tab.signup")}
+          </button>
+        ))}
+      </div>
       <div className="space-y-2.5">
-        <div className="space-y-1">
-          <Label htmlFor="cname" className="text-xs font-bold">
-            {t("bk.auth.firstName")}
-          </Label>
-          <Input
-            id="cname"
-            className="h-9"
-            value={name}
-            maxLength={80}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="cphone" className="text-xs font-bold">
-            {t("bk.auth.phone")}
-          </Label>
-          <Input
-            id="cphone"
-            className="h-9"
-            inputMode="tel"
-            value={phone}
-            placeholder="912 345 678"
-            onChange={(e) => setPhone(maskPhonePt(e.target.value))}
-          />
-        </div>
+        {mode === "signup" && (
+          <>
+            <div className="space-y-1">
+              <Label htmlFor="cname" className="text-xs font-bold">
+                {t("bk.auth.firstName")}
+              </Label>
+              <Input
+                id="cname"
+                className="h-9"
+                value={name}
+                maxLength={80}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="cphone" className="text-xs font-bold">
+                {t("bk.auth.phone")}
+              </Label>
+              <Input
+                id="cphone"
+                className="h-9"
+                inputMode="tel"
+                value={phone}
+                placeholder="912 345 678"
+                onChange={(e) => setPhone(maskPhonePt(e.target.value))}
+              />
+            </div>
+          </>
+        )}
         <div className="space-y-1">
           <Label htmlFor="cemail" className="text-xs font-bold">
             Email
