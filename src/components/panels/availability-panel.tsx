@@ -469,31 +469,49 @@ function BookingRules() {
   const qc = useQueryClient();
   const [cancellation, setCancellation] = useState("24");
   const [interval, setIntervalMin] = useState("15");
+  const [horizon, setHorizon] = useState("2");
   const [, setBusy] = useState(false);
 
   useEffect(() => {
     if (!business) return;
     setCancellation(String(business.cancellation_hours));
     setIntervalMin(String(business.slot_interval_minutes));
+    setHorizon(String(business.booking_horizon_months ?? 2));
   }, [business]);
 
   const rulesDirty =
     !!business &&
     (cancellation !== String(business.cancellation_hours) ||
-      interval !== String(business.slot_interval_minutes));
+      interval !== String(business.slot_interval_minutes) ||
+      horizon !== String(business.booking_horizon_months ?? 2));
 
   async function save() {
     if (!business) return;
     const ch = Number(cancellation);
     const si = Number(interval);
-    if (!Number.isFinite(ch) || ch < 0 || ch > 168 || !Number.isFinite(si) || si < 5 || si > 120) {
+    const hz = Number(horizon);
+    if (
+      !Number.isFinite(ch) ||
+      ch < 0 ||
+      ch > 168 ||
+      !Number.isFinite(si) ||
+      si < 5 ||
+      si > 120 ||
+      !Number.isFinite(hz) ||
+      hz < 1 ||
+      hz > 24
+    ) {
       toast.error(t("pf.common.checkData"));
       return;
     }
     setBusy(true);
     const { error } = await supabase
       .from("businesses")
-      .update({ cancellation_hours: ch, slot_interval_minutes: si })
+      .update({
+        cancellation_hours: ch,
+        slot_interval_minutes: si,
+        booking_horizon_months: Math.round(hz),
+      })
       .eq("id", business.id);
     setBusy(false);
     if (error) {
@@ -531,6 +549,18 @@ function BookingRules() {
             value={interval}
             onChange={(e) => setIntervalMin(e.target.value)}
           />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="avhz" className="font-semibold">
+            {t("pf.av.horizon")}
+          </Label>
+          <Input
+            id="avhz"
+            inputMode="numeric"
+            value={horizon}
+            onChange={(e) => setHorizon(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">{t("pf.av.horizon.hint")}</p>
         </div>
       </div>
     </section>
