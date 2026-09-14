@@ -493,6 +493,7 @@ function BookPage() {
                 variant="ghost"
                 size="icon"
                 aria-label={t("bk.nextMonth")}
+                disabled={month >= maxDate.slice(0, 7)}
                 onClick={() => shiftMonth(1)}
               >
                 <ChevronRight className="size-4" />
@@ -514,7 +515,7 @@ function BookPage() {
             <div className="mt-1 grid grid-cols-7 gap-1">
               {monthDays.map((d, i) => {
                 if (!d) return <span key={`e${i}`} />;
-                const past = d < today;
+                const past = d < today || d > maxDate;
                 return (
                   <button
                     key={d}
