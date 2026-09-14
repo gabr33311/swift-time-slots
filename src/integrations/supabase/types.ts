@@ -343,6 +343,7 @@ export type Database = {
       businesses: {
         Row: {
           address: string | null
+          booking_horizon_months: number
           brand_color: string
           business_type: string
           cancellation_hours: number
@@ -373,6 +374,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          booking_horizon_months?: number
           brand_color?: string
           business_type?: string
           cancellation_hours?: number
@@ -403,6 +405,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          booking_horizon_months?: number
           brand_color?: string
           business_type?: string
           cancellation_hours?: number
