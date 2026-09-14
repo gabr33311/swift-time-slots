@@ -22,6 +22,7 @@ export type PublicBusiness = {
   seo_indexable: boolean;
   show_team: boolean;
   show_contacts: boolean;
+  booking_horizon_months: number;
 };
 
 export type PublicService = {
@@ -45,7 +46,7 @@ export type PublicStaff = {
 };
 
 const BUSINESS_FIELDS =
-  "id, slug, name, description, business_type, address, city, phone, email, website, instagram, logo_url, cover_url, brand_color, timezone, currency, cancellation_hours, slot_interval_minutes, seo_indexable, show_team, show_contacts";
+  "id, slug, name, description, business_type, address, city, phone, email, website, instagram, logo_url, cover_url, brand_color, timezone, currency, cancellation_hours, slot_interval_minutes, seo_indexable, show_team, show_contacts, booking_horizon_months";
 
 async function admin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -125,7 +126,9 @@ export async function computeSlots(params: {
   const db = await admin();
   const { data: business } = await db
     .from("businesses")
-    .select("id, timezone, slot_interval_minutes, is_published, deleted_at")
+    .select(
+      "id, timezone, slot_interval_minutes, is_published, deleted_at, booking_horizon_months",
+    )
     .eq("id", params.businessId)
     .maybeSingle();
   if (!business || !business.is_published || business.deleted_at) return [];
@@ -141,6 +144,11 @@ export async function computeSlots(params: {
   const tz = business.timezone;
   const today = todayIn(tz);
   if (params.date < today) return [];
+  {
+    const [y, m, d] = today.split("-").map(Number);
+    const limit = new Date(Date.UTC(y!, m! - 1 + (business.booking_horizon_months ?? 2), d!));
+    if (params.date > limit.toISOString().slice(0, 10)) return [];
+  }
 
   const { data: allStaff } = await db
     .from("staff")

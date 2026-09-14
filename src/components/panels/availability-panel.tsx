@@ -11,8 +11,10 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { PublicPagePanel } from "@/components/panels/public-page-panel";
 import { weekdays, formatDateShort } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
-import { Trash2 } from "lucide-react";
+import { Trash2, MessageCircle, Mail } from "lucide-react";
 import { useAutoSaveOnExit } from "@/hooks/use-autosave";
+import { setAppointmentStatus } from "@/lib/appointment-status";
+import { normalizePhonePt } from "@/lib/phone";
 
 type DayState = {
   enabled: boolean;
@@ -340,11 +342,124 @@ export function AvailabilityPanel() {
         )}
       </section>
 
+      <VacationConflicts blocks={data?.blocks ?? []} />
+
       <BookingRules />
 
       <PublicPagePanel />
 
     </div>
+  );
+}
+
+type Block = { id: string; starts_at: string; ends_at: string; reason: string | null };
+
+/** Appointments that fall inside a time-off period, with WhatsApp/email notice. */
+function VacationConflicts({ blocks }: { blocks: Block[] }) {
+  const { business } = useMyBusiness();
+  const { t } = usePrefs();
+  const qc = useQueryClient();
+
+  const from = blocks.length
+    ? blocks.map((b) => b.starts_at).sort()[0]!
+    : null;
+  const to = blocks.length ? blocks.map((b) => b.ends_at).sort().slice(-1)[0]! : null;
+
+  const { data: conflicts = [] } = useQuery({
+    queryKey: ["vacation-conflicts", business?.id, from, to],
+    enabled: !!business && !!from && !!to,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("appointments")
+        .select("id, starts_at, ends_at, customer_name, customer_phone, customer_email, service_name")
+        .eq("business_id", business!.id)
+        .in("status", ["pending", "confirmed"])
+        .gte("starts_at", from!)
+        .lt("starts_at", to!)
+        .order("starts_at");
+      return (data ?? []).filter((a) =>
+        blocks.some((b) => a.starts_at < b.ends_at && a.ends_at > b.starts_at),
+      );
+    },
+  });
+
+  if (!business || conflicts.length === 0) return null;
+
+  const message = (a: (typeof conflicts)[number]) =>
+    t("pf.av.conflict.message")
+      .replace("{name}", a.customer_name)
+      .replace("{date}", formatDateShort(a.starts_at, business.timezone))
+      .replace("{business}", business.name);
+
+  async function cancel(id: string) {
+    const res = await setAppointmentStatus({
+      id,
+      businessId: business!.id,
+      status: "cancelled",
+      note: "vacation",
+    });
+    if (!res.ok) {
+      toast.error(t("pf.common.saveError"));
+      return;
+    }
+    toast.success(t("pf.av.conflict.cancelled"));
+    qc.invalidateQueries({ queryKey: ["vacation-conflicts"] });
+  }
+
+  return (
+    <section className="surface p-5">
+      <h2 className="text-base font-semibold">{t("pf.av.conflict.title")}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{t("pf.av.conflict.desc")}</p>
+      <ul className="mt-4 space-y-3">
+        {conflicts.map((a) => {
+          const phone = normalizePhonePt(a.customer_phone ?? "");
+          return (
+            <li key={a.id} className="rounded-xl border border-border p-3">
+              <p className="text-sm font-bold">{a.customer_name}</p>
+              <p className="text-sm text-muted-foreground">
+                {formatDateShort(a.starts_at, business.timezone)} · {a.service_name}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!phone}
+                  onClick={() =>
+                    window.open(
+                      `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(message(a))}`,
+                      "_blank",
+                      "noopener",
+                    )
+                  }
+                >
+                  <MessageCircle className="mr-1 size-4" />
+                  WhatsApp
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!a.customer_email}
+                  onClick={() =>
+                    window.open(
+                      `mailto:${a.customer_email}?subject=${encodeURIComponent(
+                        t("pf.av.conflict.subject"),
+                      )}&body=${encodeURIComponent(message(a))}`,
+                      "_self",
+                    )
+                  }
+                >
+                  <Mail className="mr-1 size-4" />
+                  Email
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => cancel(a.id)}>
+                  {t("pf.av.conflict.cancel")}
+                </Button>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 
@@ -354,31 +469,49 @@ function BookingRules() {
   const qc = useQueryClient();
   const [cancellation, setCancellation] = useState("24");
   const [interval, setIntervalMin] = useState("15");
+  const [horizon, setHorizon] = useState("2");
   const [, setBusy] = useState(false);
 
   useEffect(() => {
     if (!business) return;
     setCancellation(String(business.cancellation_hours));
     setIntervalMin(String(business.slot_interval_minutes));
+    setHorizon(String(business.booking_horizon_months ?? 2));
   }, [business]);
 
   const rulesDirty =
     !!business &&
     (cancellation !== String(business.cancellation_hours) ||
-      interval !== String(business.slot_interval_minutes));
+      interval !== String(business.slot_interval_minutes) ||
+      horizon !== String(business.booking_horizon_months ?? 2));
 
   async function save() {
     if (!business) return;
     const ch = Number(cancellation);
     const si = Number(interval);
-    if (!Number.isFinite(ch) || ch < 0 || ch > 168 || !Number.isFinite(si) || si < 5 || si > 120) {
+    const hz = Number(horizon);
+    if (
+      !Number.isFinite(ch) ||
+      ch < 0 ||
+      ch > 168 ||
+      !Number.isFinite(si) ||
+      si < 5 ||
+      si > 120 ||
+      !Number.isFinite(hz) ||
+      hz < 1 ||
+      hz > 24
+    ) {
       toast.error(t("pf.common.checkData"));
       return;
     }
     setBusy(true);
     const { error } = await supabase
       .from("businesses")
-      .update({ cancellation_hours: ch, slot_interval_minutes: si })
+      .update({
+        cancellation_hours: ch,
+        slot_interval_minutes: si,
+        booking_horizon_months: Math.round(hz),
+      })
       .eq("id", business.id);
     setBusy(false);
     if (error) {
@@ -416,6 +549,18 @@ function BookingRules() {
             value={interval}
             onChange={(e) => setIntervalMin(e.target.value)}
           />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="avhz" className="font-semibold">
+            {t("pf.av.horizon")}
+          </Label>
+          <Input
+            id="avhz"
+            inputMode="numeric"
+            value={horizon}
+            onChange={(e) => setHorizon(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">{t("pf.av.horizon.hint")}</p>
         </div>
       </div>
     </section>
