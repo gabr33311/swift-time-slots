@@ -126,7 +126,9 @@ export async function computeSlots(params: {
   const db = await admin();
   const { data: business } = await db
     .from("businesses")
-    .select("id, timezone, slot_interval_minutes, is_published, deleted_at")
+    .select(
+      "id, timezone, slot_interval_minutes, is_published, deleted_at, booking_horizon_months",
+    )
     .eq("id", params.businessId)
     .maybeSingle();
   if (!business || !business.is_published || business.deleted_at) return [];
@@ -142,6 +144,11 @@ export async function computeSlots(params: {
   const tz = business.timezone;
   const today = todayIn(tz);
   if (params.date < today) return [];
+  {
+    const [y, m, d] = today.split("-").map(Number);
+    const limit = new Date(Date.UTC(y!, m! - 1 + (business.booking_horizon_months ?? 2), d!));
+    if (params.date > limit.toISOString().slice(0, 10)) return [];
+  }
 
   const { data: allStaff } = await db
     .from("staff")
