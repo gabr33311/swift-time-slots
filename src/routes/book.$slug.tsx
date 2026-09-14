@@ -195,6 +195,13 @@ function BookPage() {
     return label.charAt(0).toUpperCase() + label.slice(1);
   }, [month]);
 
+  // Farthest date a client may book (admin-configurable, in months).
+  const maxDate = useMemo(() => {
+    const [y, m, d] = today.split("-").map(Number);
+    const months = business.booking_horizon_months ?? 2;
+    return new Date(Date.UTC(y!, m! - 1 + months, d!)).toISOString().slice(0, 10);
+  }, [today, business.booking_horizon_months]);
+
   function shiftMonth(delta: number) {
     const [y, m] = month.split("-").map(Number);
     const next = new Date(Date.UTC(y!, m! - 1 + delta, 1));
