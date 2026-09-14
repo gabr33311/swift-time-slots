@@ -22,6 +22,7 @@ export type PublicBusiness = {
   seo_indexable: boolean;
   show_team: boolean;
   show_contacts: boolean;
+  booking_horizon_months: number;
 };
 
 export type PublicService = {
@@ -45,7 +46,7 @@ export type PublicStaff = {
 };
 
 const BUSINESS_FIELDS =
-  "id, slug, name, description, business_type, address, city, phone, email, website, instagram, logo_url, cover_url, brand_color, timezone, currency, cancellation_hours, slot_interval_minutes, seo_indexable, show_team, show_contacts";
+  "id, slug, name, description, business_type, address, city, phone, email, website, instagram, logo_url, cover_url, brand_color, timezone, currency, cancellation_hours, slot_interval_minutes, seo_indexable, show_team, show_contacts, booking_horizon_months";
 
 async function admin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
