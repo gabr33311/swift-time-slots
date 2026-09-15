@@ -38,6 +38,7 @@ function Dashboard() {
   const { user } = useAuth();
   const { business, isLoading, data } = useMyBusiness();
   const [newOpen, setNewOpen] = useState(false);
+  const [focusId, setFocusId] = useState<string | null>(null);
   const markNotificationsRead = useServerFn(markBusinessNotificationsRead);
   const { t, lang } = usePrefs();
 
