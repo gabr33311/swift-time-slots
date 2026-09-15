@@ -111,6 +111,16 @@ export const profileDict: Record<Lang, Record<string, string>> = {
     "pf.av.addBlock": "Adicionar folga",
     "pf.av.blockAdded": "Folga adicionada.",
     "pf.av.removeBlock": "Remover folga",
+    "pf.av.horizon": "Marcações até (meses)",
+    "pf.av.horizon.hint": "Meses de antecedência que os clientes podem marcar.",
+    "pf.av.conflict.title": "Marcações em dias de folga",
+    "pf.av.conflict.desc":
+      "Estas marcações caem dentro de uma folga. Avisa o cliente e cancela.",
+    "pf.av.conflict.cancel": "Cancelar marcação",
+    "pf.av.conflict.cancelled": "Marcação cancelada.",
+    "pf.av.conflict.subject": "Marcação cancelada",
+    "pf.av.conflict.message":
+      "Olá {name}, a tua marcação de {date} foi cancelada porque vamos estar de férias. Pedimos desculpa e podes remarcar quando quiseres. — {business}",
 
     "pf.set.published": "Página publicada",
     "pf.set.published.desc": "Desliga para deixar de aceitar marcações online.",
