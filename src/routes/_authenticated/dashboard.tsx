@@ -377,19 +377,30 @@ function NotificationBell({
             ) : (
               <ul className="mt-2 divide-y divide-border">
                 {notifications.map((item) => (
-                  <li key={item.id} className="flex gap-3 py-3 first:pt-2 last:pb-0">
-                    <span
-                      className={cn(
-                        "mt-1.5 size-2 shrink-0 rounded-full",
-                        item.read_at ? "bg-muted" : "bg-primary",
-                      )}
-                    />
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold">{item.title}</p>
-                      {item.body && (
-                        <p className="truncate text-xs text-muted-foreground">{item.body}</p>
-                      )}
-                    </div>
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      disabled={!item.appointment_id}
+                      onClick={() => {
+                        if (!item.appointment_id) return;
+                        setOpen(false);
+                        onSelectAppointment(item.appointment_id);
+                      }}
+                      className="flex w-full gap-3 rounded-xl py-3 text-left first:pt-2 last:pb-0 enabled:hover:bg-muted/60"
+                    >
+                      <span
+                        className={cn(
+                          "mt-1.5 size-2 shrink-0 rounded-full",
+                          item.read_at ? "bg-muted" : "bg-primary",
+                        )}
+                      />
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold">{item.title}</p>
+                        {item.body && (
+                          <p className="truncate text-xs text-muted-foreground">{item.body}</p>
+                        )}
+                      </div>
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -405,14 +416,19 @@ function DayGroup({
   dayLabel,
   count,
   collapsibleDefaultOpen,
+  forceOpen,
   children,
 }: {
   dayLabel: string;
   count: number;
   collapsibleDefaultOpen: boolean;
+  forceOpen?: boolean;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(collapsibleDefaultOpen);
+  useEffect(() => {
+    if (forceOpen) setOpen(true);
+  }, [forceOpen]);
   return (
     <section>
       <button
