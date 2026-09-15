@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { MoreVertical, CheckCircle2, XCircle, CalendarCheck, BellRing } from "lucide-react";
+import { Bell, CheckCircle2, XCircle, CalendarCheck, BellRing } from "lucide-react";
 import { normalizePhonePt } from "@/lib/phone";
 import { formatDateLong, formatTime } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
@@ -98,32 +98,48 @@ export function AppointmentActions({
           <Button
             variant="ghost"
             size="icon"
-            className="size-8 shrink-0 text-muted-foreground"
+            className={cn(
+              "size-9 shrink-0 rounded-full border border-border bg-card text-muted-foreground",
+              status === "pending" &&
+                "animate-pending-bell border-warning/50 bg-warning/15 text-warning hover:bg-warning/25 hover:text-warning",
+            )}
             aria-label={`${t("acts.opts.forLabel")}${customerName}`}
             disabled={busy}
           >
-            <MoreVertical className="size-4" />
+            <Bell className="size-[18px]" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="min-w-64 space-y-1 p-1.5">
           {status === "pending" && (
-            <DropdownMenuItem onClick={() => setStatus("confirmed")}>
-              <CalendarCheck className="mr-2 size-4" /> {t("acts.confirm")}
+            <DropdownMenuItem
+              className="animate-confirm-pulse bg-success/12 py-2.5 font-bold text-success focus:bg-success/20 focus:text-success"
+              onClick={() => setStatus("confirmed")}
+            >
+              <CalendarCheck className="mr-1 size-4" /> {t("acts.confirm")}
             </DropdownMenuItem>
           )}
           {status !== "completed" && status !== "cancelled" && (
-            <DropdownMenuItem onClick={() => setStatus("completed")}>
-              <CheckCircle2 className="mr-2 size-4" /> {t("acts.markCompleted")}
+            <DropdownMenuItem
+              className="bg-info/12 py-2.5 font-bold text-info focus:bg-info/20 focus:text-info"
+              onClick={() => setStatus("completed")}
+            >
+              <CheckCircle2 className="mr-1 size-4" /> {t("acts.markCompleted")}
             </DropdownMenuItem>
           )}
           {canRemind && (
-            <DropdownMenuItem onClick={remind}>
-              <BellRing className="mr-2 size-4" /> {t("acts.remindWhatsapp")}
+            <DropdownMenuItem
+              className="bg-warning/12 py-2.5 font-bold text-warning-foreground focus:bg-warning/20 focus:text-warning-foreground"
+              onClick={remind}
+            >
+              <BellRing className="mr-1 size-4 text-warning" /> {t("acts.remindWhatsapp")}
             </DropdownMenuItem>
           )}
           {canCancel && (
-            <DropdownMenuItem className="text-destructive" onClick={() => setConfirmOpen(true)}>
-              <XCircle className="mr-2 size-4" /> {t("acts.cancelAppt")}
+            <DropdownMenuItem
+              className="bg-destructive/10 py-2.5 font-bold text-destructive focus:bg-destructive/20 focus:text-destructive"
+              onClick={() => setConfirmOpen(true)}
+            >
+              <XCircle className="mr-1 size-4" /> {t("acts.cancelAppt")}
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>
