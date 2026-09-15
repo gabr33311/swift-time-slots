@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { setAppointmentStatus } from "@/lib/appointment-status";
@@ -37,6 +37,8 @@ export function AppointmentActions({
   startsAt,
   serviceName,
   timezone,
+  autoOpen,
+  onAutoOpenDone,
 }: {
   id: string;
   status: Status;
@@ -45,12 +47,24 @@ export function AppointmentActions({
   startsAt?: string;
   serviceName?: string;
   timezone?: string;
+  autoOpen?: boolean;
+  onAutoOpenDone?: () => void;
 }) {
   const { t } = usePrefs();
   const qc = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const { business } = useMyBusiness();
+
+  useEffect(() => {
+    if (!autoOpen) return;
+    const timer = window.setTimeout(() => {
+      setMenuOpen(true);
+      onAutoOpenDone?.();
+    }, 420);
+    return () => window.clearTimeout(timer);
+  }, [autoOpen, onAutoOpenDone]);
 
   async function setStatus(next: Status) {
     if (!business) return;
