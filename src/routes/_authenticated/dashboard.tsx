@@ -38,6 +38,7 @@ function Dashboard() {
   const { user } = useAuth();
   const { business, isLoading, data } = useMyBusiness();
   const [newOpen, setNewOpen] = useState(false);
+  const [focusId, setFocusId] = useState<string | null>(null);
   const markNotificationsRead = useServerFn(markBusinessNotificationsRead);
   const { t, lang } = usePrefs();
 
@@ -138,6 +139,15 @@ function Dashboard() {
         </div>
         <NotificationBell
           notifications={requestData?.notifications ?? []}
+          pending={requestData?.pending ?? 0}
+          onSelectAppointment={(apptId) => {
+            setFocusId(apptId);
+            window.setTimeout(() => {
+              document
+                .getElementById(`appt-${apptId}`)
+                ?.scrollIntoView({ behavior: "smooth", block: "center" });
+            }, 120);
+          }}
           onMarkRead={async () => {
             if (!business) return;
             const result = await markNotificationsRead({ data: { businessId: business.id } });
@@ -241,10 +251,18 @@ function Dashboard() {
                 }
                 count={items.length}
                 collapsibleDefaultOpen={gi === 0}
+                forceOpen={items.some((a) => a.id === focusId)}
               >
                 <ul className="space-y-2.5">
                   {items.map((a, i) => (
-                    <li key={a.id} className="surface surface-hover flex items-center gap-3.5 p-4">
+                    <li
+                      key={a.id}
+                      id={`appt-${a.id}`}
+                      className={cn(
+                        "surface surface-hover flex items-center gap-3.5 p-4 transition-shadow",
+                        focusId === a.id && "ring-2 ring-primary",
+                      )}
+                    >
                       <span className="flex w-14 shrink-0 flex-col items-center rounded-xl bg-accent px-2 py-2 text-sm font-bold tabular-nums text-primary">
                         {formatTime(a.starts_at, business!.timezone)}
                       </span>
@@ -271,6 +289,8 @@ function Dashboard() {
                         startsAt={a.starts_at}
                         serviceName={a.service_name}
                         timezone={business!.timezone}
+                        autoOpen={focusId === a.id}
+                        onAutoOpenDone={() => setFocusId(null)}
                       />
                     </li>
                   ))}
@@ -291,14 +311,24 @@ function Dashboard() {
 
 function NotificationBell({
   notifications,
+  pending,
   onMarkRead,
+  onSelectAppointment,
 }: {
-  notifications: { id: string; title: string; body: string | null; read_at: string | null }[];
+  notifications: {
+    id: string;
+    title: string;
+    body: string | null;
+    read_at: string | null;
+    appointment_id?: string | null;
+  }[];
+  pending: number;
   onMarkRead: () => Promise<void>;
+  onSelectAppointment: (appointmentId: string) => void;
 }) {
   const { t } = usePrefs();
   const [open, setOpen] = useState(false);
-  const unread = notifications.filter((n) => !n.read_at).length;
+  const unread = pending > 0 ? notifications.filter((n) => !n.read_at).length : 0;
 
   return (
     <div className="relative">
@@ -347,19 +377,30 @@ function NotificationBell({
             ) : (
               <ul className="mt-2 divide-y divide-border">
                 {notifications.map((item) => (
-                  <li key={item.id} className="flex gap-3 py-3 first:pt-2 last:pb-0">
-                    <span
-                      className={cn(
-                        "mt-1.5 size-2 shrink-0 rounded-full",
-                        item.read_at ? "bg-muted" : "bg-primary",
-                      )}
-                    />
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold">{item.title}</p>
-                      {item.body && (
-                        <p className="truncate text-xs text-muted-foreground">{item.body}</p>
-                      )}
-                    </div>
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      disabled={!item.appointment_id}
+                      onClick={() => {
+                        if (!item.appointment_id) return;
+                        setOpen(false);
+                        onSelectAppointment(item.appointment_id);
+                      }}
+                      className="flex w-full gap-3 rounded-xl py-3 text-left first:pt-2 last:pb-0 enabled:hover:bg-muted/60"
+                    >
+                      <span
+                        className={cn(
+                          "mt-1.5 size-2 shrink-0 rounded-full",
+                          item.read_at ? "bg-muted" : "bg-primary",
+                        )}
+                      />
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold">{item.title}</p>
+                        {item.body && (
+                          <p className="truncate text-xs text-muted-foreground">{item.body}</p>
+                        )}
+                      </div>
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -375,14 +416,19 @@ function DayGroup({
   dayLabel,
   count,
   collapsibleDefaultOpen,
+  forceOpen,
   children,
 }: {
   dayLabel: string;
   count: number;
   collapsibleDefaultOpen: boolean;
+  forceOpen?: boolean;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(collapsibleDefaultOpen);
+  useEffect(() => {
+    if (forceOpen) setOpen(true);
+  }, [forceOpen]);
   return (
     <section>
       <button
