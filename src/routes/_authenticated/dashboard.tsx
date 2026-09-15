@@ -311,14 +311,24 @@ function Dashboard() {
 
 function NotificationBell({
   notifications,
+  pending,
   onMarkRead,
+  onSelectAppointment,
 }: {
-  notifications: { id: string; title: string; body: string | null; read_at: string | null }[];
+  notifications: {
+    id: string;
+    title: string;
+    body: string | null;
+    read_at: string | null;
+    appointment_id?: string | null;
+  }[];
+  pending: number;
   onMarkRead: () => Promise<void>;
+  onSelectAppointment: (appointmentId: string) => void;
 }) {
   const { t } = usePrefs();
   const [open, setOpen] = useState(false);
-  const unread = notifications.filter((n) => !n.read_at).length;
+  const unread = pending > 0 ? notifications.filter((n) => !n.read_at).length : 0;
 
   return (
     <div className="relative">
