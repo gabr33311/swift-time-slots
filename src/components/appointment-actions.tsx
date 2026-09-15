@@ -108,7 +108,7 @@ export function AppointmentActions({
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
@@ -116,12 +116,17 @@ export function AppointmentActions({
             className={cn(
               "size-9 shrink-0 rounded-full border border-border bg-card text-muted-foreground",
               status === "pending" &&
-                "animate-pending-bell border-warning/50 bg-warning/15 text-warning hover:bg-warning/25 hover:text-warning",
+                "border-warning/50 bg-warning/15 text-warning hover:bg-warning/25 hover:text-warning",
             )}
             aria-label={`${t("acts.opts.forLabel")}${customerName}`}
             disabled={busy}
           >
-            <Bell className="size-[18px]" />
+            <Bell
+              className={cn(
+                "size-[18px]",
+                status === "pending" && !menuOpen && "animate-pending-bell",
+              )}
+            />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-64 space-y-1 p-1.5">
