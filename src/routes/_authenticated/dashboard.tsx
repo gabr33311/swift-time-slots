@@ -255,7 +255,14 @@ function Dashboard() {
               >
                 <ul className="space-y-2.5">
                   {items.map((a, i) => (
-                    <li key={a.id} className="surface surface-hover flex items-center gap-3.5 p-4">
+                    <li
+                      key={a.id}
+                      id={`appt-${a.id}`}
+                      className={cn(
+                        "surface surface-hover flex items-center gap-3.5 p-4 transition-shadow",
+                        focusId === a.id && "ring-2 ring-primary",
+                      )}
+                    >
                       <span className="flex w-14 shrink-0 flex-col items-center rounded-xl bg-accent px-2 py-2 text-sm font-bold tabular-nums text-primary">
                         {formatTime(a.starts_at, business!.timezone)}
                       </span>
@@ -282,6 +289,8 @@ function Dashboard() {
                         startsAt={a.starts_at}
                         serviceName={a.service_name}
                         timezone={business!.timezone}
+                        autoOpen={focusId === a.id}
+                        onAutoOpenDone={() => setFocusId(null)}
                       />
                     </li>
                   ))}
