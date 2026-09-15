@@ -139,6 +139,15 @@ function Dashboard() {
         </div>
         <NotificationBell
           notifications={requestData?.notifications ?? []}
+          pending={requestData?.pending ?? 0}
+          onSelectAppointment={(apptId) => {
+            setFocusId(apptId);
+            window.setTimeout(() => {
+              document
+                .getElementById(`appt-${apptId}`)
+                ?.scrollIntoView({ behavior: "smooth", block: "center" });
+            }, 120);
+          }}
           onMarkRead={async () => {
             if (!business) return;
             const result = await markNotificationsRead({ data: { businessId: business.id } });
@@ -242,6 +251,7 @@ function Dashboard() {
                 }
                 count={items.length}
                 collapsibleDefaultOpen={gi === 0}
+                forceOpen={items.some((a) => a.id === focusId)}
               >
                 <ul className="space-y-2.5">
                   {items.map((a, i) => (
