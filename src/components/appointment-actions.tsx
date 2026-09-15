@@ -24,6 +24,7 @@ import { Bell, CheckCircle2, XCircle, CalendarCheck, BellRing } from "lucide-rea
 import { normalizePhonePt } from "@/lib/phone";
 import { formatDateLong, formatTime } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
+import { cn } from "@/lib/utils";
 
 type Status = "pending" | "confirmed" | "completed" | "cancelled" | "no_show" | "expired";
 
