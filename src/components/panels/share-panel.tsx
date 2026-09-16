@@ -41,6 +41,11 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
     toast.success(t("pf.share.linkCopied"));
   }
 
+  async function copyLink() {
+    await navigator.clipboard.writeText(url);
+    toast.success(t("pf.share.linkCopied"));
+  }
+
   function downloadQr() {
     const canvas = document.getElementById("booking-qr") as HTMLCanvasElement | null;
     if (!canvas) return;
