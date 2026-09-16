@@ -24,11 +24,13 @@ export function NewAppointmentDialog({
   open,
   onOpenChange,
   defaultDate,
+  defaultTime,
 }: {
   business: Business;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   defaultDate?: string;
+  defaultTime?: string;
 }) {
   const { t } = usePrefs();
   const qc = useQueryClient();
