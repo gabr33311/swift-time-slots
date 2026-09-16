@@ -106,11 +106,34 @@ function CalendarPage() {
       {isLoading ? (
         <LoadingRows rows={5} />
       ) : (data?.appts.length ?? 0) === 0 ? (
-        <EmptyState
-          icon={<CalendarDays className="size-6" />}
-          title={t("cal.empty.title")}
-          description={t("cal.empty.desc")}
-        />
+        <div className="space-y-4">
+          <EmptyState
+            icon={<CalendarDays className="size-6" />}
+            title={t("cal.empty.title")}
+            description={t("cal.empty.hint")}
+          />
+          <ul className="space-y-2">
+            {HOURS.map((h) => (
+              <li key={h}>
+                <button
+                  onClick={() => {
+                    setNewTime(h);
+                    setNewOpen(true);
+                  }}
+                  className="surface surface-hover flex w-full items-center gap-3.5 px-4 py-3 text-left"
+                >
+                  <span className="w-14 shrink-0 text-sm font-bold tabular-nums text-muted-foreground">
+                    {h}
+                  </span>
+                  <span className="flex-1 text-sm font-semibold text-muted-foreground/70">
+                    {t("cal.slot.free")}
+                  </span>
+                  <Plus className="size-4 shrink-0 text-primary" strokeWidth={2.6} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : (
         <div className="space-y-6">
           {(data!.staff.length ? data!.staff : [{ id: "none", name: t("cal.unassigned") }]).map((member) => {
