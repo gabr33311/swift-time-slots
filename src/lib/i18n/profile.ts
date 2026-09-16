@@ -130,6 +130,7 @@ export const profileDict: Record<Lang, Record<string, string>> = {
     "pf.share.defaultTitle": "Marcações",
     "pf.share.linkCopied": "Link copiado.",
     "pf.share.yourLink": "O teu link",
+    "pf.share.copy": "Copiar",
     "pf.share.share": "Partilhar",
     "pf.share.preview": "Pré-visualizar",
 
@@ -288,6 +289,7 @@ export const profileDict: Record<Lang, Record<string, string>> = {
     "pf.share.defaultTitle": "Bookings",
     "pf.share.linkCopied": "Link copied.",
     "pf.share.yourLink": "Your link",
+    "pf.share.copy": "Copy",
     "pf.share.share": "Share",
     "pf.share.preview": "Preview",
 

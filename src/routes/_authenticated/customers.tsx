@@ -104,7 +104,16 @@ function CustomersPage() {
 
   return (
     <AppShell>
-      <PageHeader title={t("cust.title")} subtitle={t("cust.subtitle")} />
+      <PageHeader
+        title={t("cust.title")}
+        subtitle={t("cust.subtitle")}
+        action={
+          <Button onClick={() => setCreating(true)}>
+            <Plus className="size-4" strokeWidth={2.6} />
+            <span className="hidden sm:inline">{t("cust.new")}</span>
+          </Button>
+        }
+      />
 
       <div className="relative mb-3">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

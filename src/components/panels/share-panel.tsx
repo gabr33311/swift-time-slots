@@ -2,7 +2,16 @@ import { toast } from "sonner";
 import { usePrefs } from "@/lib/prefs";
 import { useMyBusiness } from "@/hooks/use-business";
 import { QRCodeCanvas } from "qrcode.react";
-import { Share2, Download, Eye } from "lucide-react";
+import { Share2, Download, Eye, Copy } from "lucide-react";
+
+/** Shortened, single-line display of the public booking URL. */
+function shortUrl(url: string): string {
+  const clean = url.replace(/^https?:\/\//, "");
+  const [host, ...rest] = clean.split("/");
+  const path = rest.join("/");
+  const shortHost = (host ?? "").length > 22 ? `${(host ?? "").slice(0, 20)}…` : (host ?? "");
+  return path ? `${shortHost}/${path}` : shortHost;
+}
 
 /** Clean, shareable domain — preview/localhost hosts are never shown to clients. */
 const PUBLIC_ORIGIN = "https://swift-time-slots.lovable.app";
@@ -32,6 +41,11 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
     toast.success(t("pf.share.linkCopied"));
   }
 
+  async function copyLink() {
+    await navigator.clipboard.writeText(url);
+    toast.success(t("pf.share.linkCopied"));
+  }
+
   function downloadQr() {
     const canvas = document.getElementById("booking-qr") as HTMLCanvasElement | null;
     if (!canvas) return;
@@ -48,9 +62,19 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
         <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           {t("pf.share.yourLink")}
         </p>
-        <p className="mt-1.5 break-all text-sm font-bold leading-snug sm:text-base">
-          {url.replace(/^https?:\/\//, "")}
-        </p>
+        <div className="mt-2 flex items-center justify-center gap-2">
+          <p className="max-w-[70%] truncate text-sm font-bold leading-snug sm:text-base">
+            {shortUrl(url)}
+          </p>
+          <button
+            type="button"
+            onClick={copyLink}
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-bold text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Copy className="size-3.5" strokeWidth={2.5} />
+            {t("pf.share.copy")}
+          </button>
+        </div>
       </div>
 
       {/* Giant QR centered, no border/frame */}

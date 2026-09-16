@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,15 +10,17 @@ import { Loader2, MailCheck, ShieldCheck } from "lucide-react";
 import { maskPhonePt, isValidPhonePt } from "@/lib/phone";
 import { usePrefs } from "@/lib/prefs";
 
-const detailsSchema = z.object({
+const emailSchema = z.string().trim().email().max(160);
+
+const signupSchema = z.object({
   name: z.string().trim().min(2, "bk.auth.err.name").max(80),
-  phone: z.string().trim(),
   email: z.string().trim().email("bk.auth.err.email").max(160),
+  password: z.string().min(8, "bk.auth.err.password"),
 });
 
 /**
- * Client account step: name + phone + email, confirmed with a 6-digit code
- * sent by email. Creates the account when it does not exist yet.
+ * Client account step: sign in with Google or email + password, or create an
+ * account (name, phone, email, password) confirmed by a code sent by email.
  */
 export function ClientAuthStep({ onDone }: { onDone: () => void }) {
   const { t } = usePrefs();
@@ -26,39 +29,86 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
 
-  async function sendCode() {
-    if (mode === "signup") {
-      const parsed = detailsSchema.safeParse({ name, phone, email });
-      if (!parsed.success) {
-        toast.error(t(parsed.error.issues[0]?.message ?? "bk.auth.err.check"));
-        return;
-      }
-      if (!isValidPhonePt(phone)) {
-        toast.error(t("bk.auth.err.phone"));
-        return;
-      }
-    } else if (!z.string().email().safeParse(email.trim()).success) {
+  async function google() {
+    setBusy(true);
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.href,
+    });
+    if (result.error) {
+      setBusy(false);
+      toast.error(t("bk.auth.err.google"));
+      return;
+    }
+    if (result.redirected) return;
+    setBusy(false);
+    onDone();
+  }
+
+  async function signIn() {
+    if (!emailSchema.safeParse(email).success) {
       toast.error(t("bk.auth.err.email"));
       return;
     }
+    if (password.length < 8) {
+      toast.error(t("bk.auth.err.password"));
+      return;
+    }
     setBusy(true);
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
-      options:
-        mode === "signup"
-          ? { shouldCreateUser: true, data: { full_name: name.trim() } }
-          : { shouldCreateUser: false },
+      password,
     });
     setBusy(false);
     if (error) {
-      toast.error(mode === "signin" ? t("bk.auth.err.noAccount") : t("bk.auth.err.send"));
+      toast.error(t("bk.auth.err.invalidLogin"));
       return;
     }
-    toast.success(t("bk.auth.codeSent"));
+    onDone();
+  }
+
+  async function signUp() {
+    const parsed = signupSchema.safeParse({ name, email, password });
+    if (!parsed.success) {
+      toast.error(t(parsed.error.issues[0]?.message ?? "bk.auth.err.check"));
+      return;
+    }
+    if (!isValidPhonePt(phone)) {
+      toast.error(t("bk.auth.err.phone"));
+      return;
+    }
+    setBusy(true);
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: {
+        emailRedirectTo: window.location.href,
+        data: { full_name: name.trim(), phone: phone.trim() },
+      },
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message.includes("registered") ? t("bk.auth.err.exists") : t("bk.auth.err.send"));
+      return;
+    }
+    if (data.session) {
+      await saveProfile(data.session.user.id);
+      toast.success(t("bk.auth.confirmed"));
+      onDone();
+      return;
+    }
+    toast.success(t("bk.auth.verifySent"));
     setStage("code");
+  }
+
+  async function saveProfile(userId: string) {
+    await supabase
+      .from("profiles")
+      .update({ full_name: name.trim(), phone: phone.trim() })
+      .eq("id", userId);
   }
 
   async function verify() {
@@ -70,19 +120,14 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
     const { data, error } = await supabase.auth.verifyOtp({
       email: email.trim(),
       token: code.replace(/\D/g, ""),
-      type: "email",
+      type: "signup",
     });
     if (error || !data.user) {
       setBusy(false);
       toast.error(t("bk.auth.err.codeInvalid"));
       return;
     }
-    if (mode === "signup") {
-      await supabase
-        .from("profiles")
-        .update({ full_name: name.trim(), phone: phone.trim() })
-        .eq("id", data.user.id);
-    }
+    await saveProfile(data.user.id);
     setBusy(false);
     toast.success(t("bk.auth.confirmed"));
     onDone();
@@ -95,7 +140,8 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
           <MailCheck className="size-4 text-primary" /> {t("bk.auth.confirmTitle")}
         </div>
         <p className="text-sm text-muted-foreground">
-          {t("bk.auth.sentTo")}<span className="font-bold text-foreground">{email}</span>.
+          {t("bk.auth.sentTo")}
+          <span className="font-bold text-foreground">{email}</span>. {t("bk.auth.linkOrCode")}
         </p>
         <Input
           className="mt-3 h-10 text-center text-lg font-bold tracking-[0.4em]"
@@ -109,6 +155,9 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
         <Button className="mt-3 w-full" onClick={verify} disabled={busy}>
           {busy && <Loader2 className="mr-2 size-4 animate-spin" />} {t("bk.auth.confirmEmail")}
         </Button>
+        <p className="mt-2 text-center text-[11px] font-semibold text-muted-foreground">
+          {t("bk.auth.smsSoon")}
+        </p>
         <button
           onClick={() => setStage("details")}
           className="mt-2 w-full text-xs font-bold text-muted-foreground hover:text-foreground"
@@ -140,6 +189,20 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
           </button>
         ))}
       </div>
+
+      <Button variant="outline" className="w-full" onClick={google} disabled={busy}>
+        <GoogleMark />
+        {t(mode === "signin" ? "bk.auth.google.signin" : "bk.auth.google.signup")}
+      </Button>
+
+      <div className="my-3 flex items-center gap-3">
+        <span className="h-px flex-1 bg-border" />
+        <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+          {t("bk.auth.or")}
+        </span>
+        <span className="h-px flex-1 bg-border" />
+      </div>
+
       <div className="space-y-2.5">
         {mode === "signup" && (
           <>
@@ -178,15 +241,57 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
             id="cemail"
             className="h-9"
             type="email"
+            autoComplete="email"
             value={email}
             maxLength={160}
             onChange={(e) => setEmail(e.target.value)}
           />
         </div>
+        <div className="space-y-1">
+          <Label htmlFor="cpass" className="text-xs font-bold">
+            {t("bk.auth.password")}
+          </Label>
+          <Input
+            id="cpass"
+            className="h-9"
+            type="password"
+            autoComplete={mode === "signin" ? "current-password" : "new-password"}
+            value={password}
+            maxLength={72}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          {mode === "signup" && (
+            <p className="text-[11px] font-medium text-muted-foreground">
+              {t("bk.auth.passwordHint")}
+            </p>
+          )}
+        </div>
       </div>
-      <Button className="mt-3 w-full" onClick={sendCode} disabled={busy}>
-        {busy && <Loader2 className="mr-2 size-4 animate-spin" />} {t("bk.auth.sendCode")}
+
+      <Button className="mt-3 w-full" onClick={mode === "signin" ? signIn : signUp} disabled={busy}>
+        {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
+        {t(mode === "signin" ? "bk.auth.signinCta" : "bk.auth.signupCta")}
       </Button>
     </div>
+  );
+}
+
+function GoogleMark() {
+  return (
+    <svg className="size-4" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#4285F4"
+        d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.7v3h3.9c2.3-2.1 3.5-5.2 3.5-8.9Z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.1-4 1.1-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0 0 12 24Z"
+      />
+      <path fill="#FBBC05" d="M5.4 14.3a7.2 7.2 0 0 1 0-4.6V6.6H1.4a12 12 0 0 0 0 10.8l4-3.1Z" />
+      <path
+        fill="#EA4335"
+        d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.6l4 3.1C6.3 6.9 8.9 4.8 12 4.8Z"
+      />
+    </svg>
   );
 }
