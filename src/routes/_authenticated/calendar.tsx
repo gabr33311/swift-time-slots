@@ -208,10 +208,12 @@ function CalendarPage() {
 
       {business && (
         <NewAppointmentDialog
+          key={`${date}-${newTime}`}
           business={business}
           open={newOpen}
           onOpenChange={setNewOpen}
           defaultDate={date}
+          defaultTime={newTime}
         />
       )}
     </AppShell>
