@@ -40,7 +40,7 @@ export function NewAppointmentDialog({
   const [serviceId, setServiceId] = useState("");
   const [staffId, setStaffId] = useState("");
   const [date, setDate] = useState(defaultDate ?? todayIn(business.timezone));
-  const [time, setTime] = useState("09:00");
+  const [time, setTime] = useState(defaultTime ?? "09:00");
   const [notes, setNotes] = useState("");
 
   const schema = z.object({
