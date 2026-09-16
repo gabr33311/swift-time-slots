@@ -26,6 +26,9 @@ export const Route = createFileRoute("/_authenticated/calendar")({
   component: CalendarPage,
 });
 
+/** Empty-day timeline hours (08:00–20:00) — tap a slot to book straight into it. */
+const HOURS = Array.from({ length: 13 }, (_, i) => `${String(i + 8).padStart(2, "0")}:00`);
+
 function CalendarPage() {
   const { t } = usePrefs();
   const { business } = useMyBusiness();
