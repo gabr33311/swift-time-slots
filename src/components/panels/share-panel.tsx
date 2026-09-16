@@ -48,9 +48,19 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
         <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           {t("pf.share.yourLink")}
         </p>
-        <p className="mt-1.5 break-all text-sm font-bold leading-snug sm:text-base">
-          {url.replace(/^https?:\/\//, "")}
-        </p>
+        <div className="mt-2 flex items-center justify-center gap-2">
+          <p className="max-w-[70%] truncate text-sm font-bold leading-snug sm:text-base">
+            {shortUrl(url)}
+          </p>
+          <button
+            type="button"
+            onClick={copyLink}
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-bold text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Copy className="size-3.5" strokeWidth={2.5} />
+            {t("pf.share.copy")}
+          </button>
+        </div>
       </div>
 
       {/* Giant QR centered, no border/frame */}
