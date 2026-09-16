@@ -596,16 +596,7 @@ function BookPage() {
           {authLoading ? (
             <Skeleton className="h-24 w-full rounded-2xl" />
           ) : !user ? (
-            <div className="space-y-2">
-              <ClientAuthStep onDone={() => {}} />
-              <Link
-                to="/auth"
-                search={{ mode: undefined, next: `/book/${slug}` }}
-                className="flex items-center justify-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground"
-              >
-                <LogIn className="size-3.5" /> {t("bk.loginWithPassword")}
-              </Link>
-            </div>
+            <ClientAuthStep onDone={() => {}} />
           ) : (
             <div className="space-y-2.5">
               <div className="space-y-1">
