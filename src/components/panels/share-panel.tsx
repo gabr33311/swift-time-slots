@@ -2,7 +2,16 @@ import { toast } from "sonner";
 import { usePrefs } from "@/lib/prefs";
 import { useMyBusiness } from "@/hooks/use-business";
 import { QRCodeCanvas } from "qrcode.react";
-import { Share2, Download, Eye } from "lucide-react";
+import { Share2, Download, Eye, Copy } from "lucide-react";
+
+/** Shortened, single-line display of the public booking URL. */
+function shortUrl(url: string): string {
+  const clean = url.replace(/^https?:\/\//, "");
+  const [host, ...rest] = clean.split("/");
+  const path = rest.join("/");
+  const shortHost = (host ?? "").length > 22 ? `${(host ?? "").slice(0, 20)}…` : (host ?? "");
+  return path ? `${shortHost}/${path}` : shortHost;
+}
 
 /** Clean, shareable domain — preview/localhost hosts are never shown to clients. */
 const PUBLIC_ORIGIN = "https://swift-time-slots.lovable.app";
