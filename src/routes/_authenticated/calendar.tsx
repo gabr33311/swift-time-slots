@@ -32,6 +32,7 @@ function CalendarPage() {
   const tz = business?.timezone ?? "Europe/Lisbon";
   const [date, setDate] = useState(todayIn(tz));
   const [newOpen, setNewOpen] = useState(false);
+  const [newTime, setNewTime] = useState("09:00");
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
