@@ -48,6 +48,8 @@ function CustomersPage() {
   const [tab, setTab] = useState<"all" | "cancelled" | "blocked">("all");
   const [editing, setEditing] = useState<EditableCustomer | null>(null);
   const [creating, setCreating] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const { data: cancelledMap } = useQuery({
     queryKey: ["customers-cancelled", business?.id],
