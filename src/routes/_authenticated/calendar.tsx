@@ -8,7 +8,7 @@ import { EmptyState, LoadingRows, PageHeader, StatusBadge } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { displayCustomerName, formatPrice, formatTime } from "@/lib/format";
-import { addDays, todayIn, zonedToUtc } from "@/lib/time";
+import { addDays, minutesToTime, timeToMinutes, todayIn, weekdayOf, zonedToUtc } from "@/lib/time";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -26,8 +26,16 @@ export const Route = createFileRoute("/_authenticated/calendar")({
   component: CalendarPage,
 });
 
-/** Empty-day timeline hours (08:00–20:00) — tap a slot to book straight into it. */
-const HOURS = Array.from({ length: 13 }, (_, i) => `${String(i + 8).padStart(2, "0")}:00`);
+/** Builds the hour list of a free day from the real working hours ranges. */
+function hoursFromRanges(ranges: { start: string; end: string }[]): string[] {
+  const out: string[] = [];
+  for (const r of ranges) {
+    const from = timeToMinutes(r.start.slice(0, 5));
+    const to = timeToMinutes(r.end.slice(0, 5));
+    for (let m = Math.ceil(from / 60) * 60; m < to; m += 60) out.push(minutesToTime(m));
+  }
+  return Array.from(new Set(out)).sort();
+}
 
 function CalendarPage() {
   const { t } = usePrefs();
@@ -45,7 +53,7 @@ function CalendarPage() {
     queryFn: async () => {
       const from = zonedToUtc(date, 0, tz).toISOString();
       const to = zonedToUtc(date, 24 * 60, tz).toISOString();
-      const [{ data: appts }, { data: staff }] = await Promise.all([
+      const [{ data: appts }, { data: staff }, { data: hours }] = await Promise.all([
         supabase
           .from("appointments")
           .select("id, starts_at, ends_at, customer_name, customer_phone, service_name, price_cents, status, staff_id")
@@ -60,8 +68,20 @@ function CalendarPage() {
           .eq("business_id", business!.id)
           .eq("is_active", true)
           .order("sort_order"),
+        supabase
+          .from("working_hours")
+          .select("start_time, end_time")
+          .eq("business_id", business!.id)
+          .eq("weekday", weekdayOf(date))
+          .order("start_time"),
       ]);
-      return { appts: appts ?? [], staff: staff ?? [] };
+      return {
+        appts: appts ?? [],
+        staff: staff ?? [],
+        hours: hoursFromRanges(
+          (hours ?? []).map((h) => ({ start: h.start_time, end: h.end_time })),
+        ),
+      };
     },
   });
 
@@ -117,7 +137,7 @@ function CalendarPage() {
             description={t("cal.empty.hint")}
           />
           <ul className="space-y-2">
-            {HOURS.map((h) => (
+            {(data?.hours ?? []).map((h: string) => (
               <li key={h}>
                 <button
                   onClick={() => {

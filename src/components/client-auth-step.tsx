@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, MailCheck, ShieldCheck } from "lucide-react";
-import { maskPhonePt, isValidPhonePt } from "@/lib/phone";
+import { maskPhonePt, isValidPhonePt, normalizePhonePt } from "@/lib/phone";
 import { usePrefs } from "@/lib/prefs";
 
 const emailSchema = z.string().trim().email().max(160);
@@ -25,13 +25,36 @@ const signupSchema = z.object({
 export function ClientAuthStep({ onDone }: { onDone: () => void }) {
   const { t } = usePrefs();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [stage, setStage] = useState<"details" | "code">("details");
+  const [stage, setStage] = useState<"details" | "code" | "profile">("details");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
+
+  /** Name and phone are mandatory for every client, Google accounts included. */
+  async function requireProfile(): Promise<boolean> {
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) return false;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, phone")
+      .eq("id", auth.user.id)
+      .maybeSingle();
+    const fullName = profile?.full_name?.trim() ?? "";
+    const tel = profile?.phone?.trim() ?? "";
+    if (fullName && tel) return true;
+    setName(fullName || (auth.user.user_metadata?.["full_name"] as string | undefined) || "");
+    setPhone(tel ? maskPhonePt(tel) : "");
+    setStage("profile");
+    return false;
+  }
+
+  useEffect(() => {
+    void requireProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function google() {
     setBusy(true);
@@ -45,6 +68,34 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
     }
     if (result.redirected) return;
     setBusy(false);
+    if (await requireProfile()) onDone();
+  }
+
+  async function saveRequiredProfile() {
+    if (name.trim().length < 2) {
+      toast.error(t("bk.auth.err.name"));
+      return;
+    }
+    if (!isValidPhonePt(phone)) {
+      toast.error(t("bk.auth.err.phone"));
+      return;
+    }
+    setBusy(true);
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) {
+      setBusy(false);
+      setStage("details");
+      return;
+    }
+    const { error } = await supabase
+      .from("profiles")
+      .update({ full_name: name.trim(), phone: normalizePhonePt(phone) })
+      .eq("id", auth.user.id);
+    setBusy(false);
+    if (error) {
+      toast.error(t("bk.auth.err.check"));
+      return;
+    }
     onDone();
   }
 
@@ -67,7 +118,7 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
       toast.error(t("bk.auth.err.invalidLogin"));
       return;
     }
-    onDone();
+    if (await requireProfile()) onDone();
   }
 
   async function signUp() {
@@ -107,7 +158,7 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
   async function saveProfile(userId: string) {
     await supabase
       .from("profiles")
-      .update({ full_name: name.trim(), phone: phone.trim() })
+      .update({ full_name: name.trim(), phone: normalizePhonePt(phone) })
       .eq("id", userId);
   }
 
@@ -131,6 +182,47 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
     setBusy(false);
     toast.success(t("bk.auth.confirmed"));
     onDone();
+  }
+
+  if (stage === "profile") {
+    return (
+      <div className="rounded-2xl border border-border bg-card p-5">
+        <div className="mb-3 flex items-center gap-2 text-sm font-bold">
+          <ShieldCheck className="size-4 text-primary" /> {t("bk.auth.completeTitle")}
+        </div>
+        <p className="text-sm text-muted-foreground">{t("bk.auth.completeDesc")}</p>
+        <div className="mt-3 space-y-2.5">
+          <div className="space-y-1">
+            <Label htmlFor="pname" className="text-xs font-bold">
+              {t("bk.auth.firstName")}
+            </Label>
+            <Input
+              id="pname"
+              className="h-9"
+              value={name}
+              maxLength={80}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="pphone" className="text-xs font-bold">
+              {t("bk.auth.phone")}
+            </Label>
+            <Input
+              id="pphone"
+              className="h-9"
+              inputMode="tel"
+              value={phone}
+              placeholder="912 345 678"
+              onChange={(e) => setPhone(maskPhonePt(e.target.value))}
+            />
+          </div>
+        </div>
+        <Button className="mt-3 w-full" onClick={saveRequiredProfile} disabled={busy}>
+          {busy && <Loader2 className="mr-2 size-4 animate-spin" />} {t("bk.auth.completeCta")}
+        </Button>
+      </div>
+    );
   }
 
   if (stage === "code") {
