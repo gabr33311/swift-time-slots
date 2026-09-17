@@ -8,7 +8,7 @@ import { EmptyState, LoadingRows, PageHeader, StatusBadge } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { displayCustomerName, formatPrice, formatTime } from "@/lib/format";
-import { addDays, todayIn, zonedToUtc } from "@/lib/time";
+import { addDays, minutesToTime, timeToMinutes, todayIn, weekdayOf, zonedToUtc } from "@/lib/time";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -26,8 +26,16 @@ export const Route = createFileRoute("/_authenticated/calendar")({
   component: CalendarPage,
 });
 
-/** Empty-day timeline hours (08:00–20:00) — tap a slot to book straight into it. */
-const HOURS = Array.from({ length: 13 }, (_, i) => `${String(i + 8).padStart(2, "0")}:00`);
+/** Builds the hour list of a free day from the real working hours ranges. */
+function hoursFromRanges(ranges: { start: string; end: string }[]): string[] {
+  const out: string[] = [];
+  for (const r of ranges) {
+    const from = timeToMinutes(r.start.slice(0, 5));
+    const to = timeToMinutes(r.end.slice(0, 5));
+    for (let m = Math.ceil(from / 60) * 60; m < to; m += 60) out.push(minutesToTime(m));
+  }
+  return Array.from(new Set(out)).sort();
+}
 
 function CalendarPage() {
   const { t } = usePrefs();
