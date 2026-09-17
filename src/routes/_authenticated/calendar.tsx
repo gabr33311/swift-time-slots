@@ -53,7 +53,7 @@ function CalendarPage() {
     queryFn: async () => {
       const from = zonedToUtc(date, 0, tz).toISOString();
       const to = zonedToUtc(date, 24 * 60, tz).toISOString();
-      const [{ data: appts }, { data: staff }] = await Promise.all([
+      const [{ data: appts }, { data: staff }, { data: hours }] = await Promise.all([
         supabase
           .from("appointments")
           .select("id, starts_at, ends_at, customer_name, customer_phone, service_name, price_cents, status, staff_id")
@@ -68,8 +68,20 @@ function CalendarPage() {
           .eq("business_id", business!.id)
           .eq("is_active", true)
           .order("sort_order"),
+        supabase
+          .from("working_hours")
+          .select("start_time, end_time")
+          .eq("business_id", business!.id)
+          .eq("weekday", weekdayOf(date))
+          .order("start_time"),
       ]);
-      return { appts: appts ?? [], staff: staff ?? [] };
+      return {
+        appts: appts ?? [],
+        staff: staff ?? [],
+        hours: hoursFromRanges(
+          (hours ?? []).map((h) => ({ start: h.start_time, end: h.end_time })),
+        ),
+      };
     },
   });
 
