@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
@@ -47,6 +48,8 @@ function CustomersPage() {
   const [tab, setTab] = useState<"all" | "cancelled" | "blocked">("all");
   const [editing, setEditing] = useState<EditableCustomer | null>(null);
   const [creating, setCreating] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const { data: cancelledMap } = useQuery({
     queryKey: ["customers-cancelled", business?.id],
@@ -104,16 +107,7 @@ function CustomersPage() {
 
   return (
     <AppShell>
-      <PageHeader
-        title={t("cust.title")}
-        subtitle={t("cust.subtitle")}
-        action={
-          <Button onClick={() => setCreating(true)}>
-            <Plus className="size-4" strokeWidth={2.6} />
-            <span className="hidden sm:inline">{t("cust.new")}</span>
-          </Button>
-        }
-      />
+      <PageHeader title={t("cust.title")} subtitle={t("cust.subtitle")} />
 
       <div className="relative mb-3">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -245,14 +239,17 @@ function CustomersPage() {
         </ul>
       )}
 
-      <Button
-        size="icon"
-        aria-label={t("cust.new")}
-        onClick={() => setCreating(true)}
-        className="fixed bottom-24 right-5 z-40 size-14 rounded-full shadow-lift sm:bottom-8"
-      >
-        <Plus className="size-6" strokeWidth={2.5} />
-      </Button>
+      {mounted &&
+        createPortal(
+          <button
+            onClick={() => setCreating(true)}
+            aria-label={t("cust.new")}
+            className="fixed right-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-50 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lift transition-transform active:scale-95"
+          >
+            <Plus className="size-6" strokeWidth={2.6} />
+          </button>,
+          document.body,
+        )}
 
       <EditCustomerDialog
         key={editing?.id ?? (creating ? "new" : "idle")}
