@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, MailCheck, ShieldCheck } from "lucide-react";
-import { maskPhonePt, isValidPhonePt } from "@/lib/phone";
+import { maskPhonePt, isValidPhonePt, normalizePhonePt } from "@/lib/phone";
 import { usePrefs } from "@/lib/prefs";
 
 const emailSchema = z.string().trim().email().max(160);
