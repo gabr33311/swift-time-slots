@@ -102,6 +102,9 @@ export const bookingDict: Record<Lang, Record<string, string>> = {
     "bk.auth.verifySent": "Enviámos um email para confirmares a tua conta.",
     "bk.auth.linkOrCode": "Clica no link do email ou introduz o código abaixo.",
     "bk.auth.smsSoon": "Confirmação por SMS em breve.",
+    "bk.auth.completeTitle": "Completa os teus dados",
+    "bk.auth.completeDesc": "Para marcares precisamos do teu nome e telemóvel.",
+    "bk.auth.completeCta": "Guardar e continuar",
   },
   en: {
     "bk.notFound.title": "Page not found",
@@ -204,5 +207,8 @@ export const bookingDict: Record<Lang, Record<string, string>> = {
     "bk.auth.verifySent": "We sent you an email to confirm your account.",
     "bk.auth.linkOrCode": "Click the link in the email or enter the code below.",
     "bk.auth.smsSoon": "SMS confirmation coming soon.",
+    "bk.auth.completeTitle": "Complete your details",
+    "bk.auth.completeDesc": "We need your name and phone number to book.",
+    "bk.auth.completeCta": "Save and continue",
   },
 };
