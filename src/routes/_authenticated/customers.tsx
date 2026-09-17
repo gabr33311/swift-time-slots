@@ -239,14 +239,17 @@ function CustomersPage() {
         </ul>
       )}
 
-      <Button
-        size="icon"
-        aria-label={t("cust.new")}
-        onClick={() => setCreating(true)}
-        className="fixed bottom-24 right-5 z-40 size-14 rounded-full shadow-lift sm:bottom-8"
-      >
-        <Plus className="size-6" strokeWidth={2.5} />
-      </Button>
+      {mounted &&
+        createPortal(
+          <button
+            onClick={() => setCreating(true)}
+            aria-label={t("cust.new")}
+            className="fixed right-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-50 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lift transition-transform active:scale-95"
+          >
+            <Plus className="size-6" strokeWidth={2.6} />
+          </button>,
+          document.body,
+        )}
 
       <EditCustomerDialog
         key={editing?.id ?? (creating ? "new" : "idle")}
