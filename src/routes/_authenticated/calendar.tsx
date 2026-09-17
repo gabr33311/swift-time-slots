@@ -137,7 +137,7 @@ function CalendarPage() {
             description={t("cal.empty.hint")}
           />
           <ul className="space-y-2">
-            {HOURS.map((h) => (
+            {(data?.hours ?? []).map((h: string) => (
               <li key={h}>
                 <button
                   onClick={() => {
