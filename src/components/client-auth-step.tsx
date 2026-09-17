@@ -118,7 +118,7 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
       toast.error(t("bk.auth.err.invalidLogin"));
       return;
     }
-    onDone();
+    if (await requireProfile()) onDone();
   }
 
   async function signUp() {
@@ -158,7 +158,7 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
   async function saveProfile(userId: string) {
     await supabase
       .from("profiles")
-      .update({ full_name: name.trim(), phone: phone.trim() })
+      .update({ full_name: name.trim(), phone: normalizePhonePt(phone) })
       .eq("id", userId);
   }
 
@@ -182,6 +182,47 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
     setBusy(false);
     toast.success(t("bk.auth.confirmed"));
     onDone();
+  }
+
+  if (stage === "profile") {
+    return (
+      <div className="rounded-2xl border border-border bg-card p-5">
+        <div className="mb-3 flex items-center gap-2 text-sm font-bold">
+          <ShieldCheck className="size-4 text-primary" /> {t("bk.auth.completeTitle")}
+        </div>
+        <p className="text-sm text-muted-foreground">{t("bk.auth.completeDesc")}</p>
+        <div className="mt-3 space-y-2.5">
+          <div className="space-y-1">
+            <Label htmlFor="pname" className="text-xs font-bold">
+              {t("bk.auth.firstName")}
+            </Label>
+            <Input
+              id="pname"
+              className="h-9"
+              value={name}
+              maxLength={80}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="pphone" className="text-xs font-bold">
+              {t("bk.auth.phone")}
+            </Label>
+            <Input
+              id="pphone"
+              className="h-9"
+              inputMode="tel"
+              value={phone}
+              placeholder="912 345 678"
+              onChange={(e) => setPhone(maskPhonePt(e.target.value))}
+            />
+          </div>
+        </div>
+        <Button className="mt-3 w-full" onClick={saveRequiredProfile} disabled={busy}>
+          {busy && <Loader2 className="mr-2 size-4 animate-spin" />} {t("bk.auth.completeCta")}
+        </Button>
+      </div>
+    );
   }
 
   if (stage === "code") {
