@@ -33,6 +33,29 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
 
+  /** Name and phone are mandatory for every client, Google accounts included. */
+  async function requireProfile(): Promise<boolean> {
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) return false;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, phone")
+      .eq("id", auth.user.id)
+      .maybeSingle();
+    const fullName = profile?.full_name?.trim() ?? "";
+    const tel = profile?.phone?.trim() ?? "";
+    if (fullName && tel) return true;
+    setName(fullName || (auth.user.user_metadata?.["full_name"] as string | undefined) || "");
+    setPhone(tel ? maskPhonePt(tel) : "");
+    setStage("profile");
+    return false;
+  }
+
+  useEffect(() => {
+    void requireProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function google() {
     setBusy(true);
     const result = await lovable.auth.signInWithOAuth("google", {
@@ -45,6 +68,34 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
     }
     if (result.redirected) return;
     setBusy(false);
+    if (await requireProfile()) onDone();
+  }
+
+  async function saveRequiredProfile() {
+    if (name.trim().length < 2) {
+      toast.error(t("bk.auth.err.name"));
+      return;
+    }
+    if (!isValidPhonePt(phone)) {
+      toast.error(t("bk.auth.err.phone"));
+      return;
+    }
+    setBusy(true);
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) {
+      setBusy(false);
+      setStage("details");
+      return;
+    }
+    const { error } = await supabase
+      .from("profiles")
+      .update({ full_name: name.trim(), phone: normalizePhonePt(phone) })
+      .eq("id", auth.user.id);
+    setBusy(false);
+    if (error) {
+      toast.error(t("bk.auth.err.check"));
+      return;
+    }
     onDone();
   }
 
