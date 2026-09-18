@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
-import { EmptyState, LoadingRows, PageHeader, StatusBadge } from "@/components/ui-bits";
+import { LoadingRows, PageHeader } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
-import { displayCustomerName, formatPrice, formatTime } from "@/lib/format";
+import { displayCustomerName } from "@/lib/format";
 import { addDays, minutesToTime, timeToMinutes, todayIn, weekdayOf, zonedToUtc } from "@/lib/time";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
-import { CalendarDays, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
 import { usePrefs } from "@/lib/prefs";
@@ -60,7 +60,6 @@ function CalendarPage() {
           .eq("business_id", business!.id)
           .gte("starts_at", from)
           .lt("starts_at", to)
-          .neq("status", "cancelled")
           .order("starts_at"),
         supabase
           .from("staff")
@@ -130,34 +129,27 @@ function CalendarPage() {
       {isLoading ? (
         <LoadingRows rows={5} />
       ) : (data?.appts.length ?? 0) === 0 ? (
-        <div className="space-y-4">
-          <EmptyState
-            icon={<CalendarDays className="size-6" />}
-            title={t("cal.empty.title")}
-            description={t("cal.empty.hint")}
-          />
-          <ul className="space-y-2">
-            {(data?.hours ?? []).map((h: string) => (
-              <li key={h}>
-                <button
-                  onClick={() => {
-                    setNewTime(h);
-                    setNewOpen(true);
-                  }}
-                  className="surface surface-hover flex w-full items-center gap-3.5 px-4 py-3 text-left"
-                >
-                  <span className="w-14 shrink-0 text-sm font-bold tabular-nums text-muted-foreground">
-                    {h}
-                  </span>
-                  <span className="flex-1 text-sm font-semibold text-muted-foreground/70">
-                    {t("cal.slot.free")}
-                  </span>
-                  <Plus className="size-4 shrink-0 text-primary" strokeWidth={2.6} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <ul className="space-y-2">
+          {(data?.hours ?? []).map((h: string) => (
+            <li key={h}>
+              <button
+                onClick={() => {
+                  setNewTime(h);
+                  setNewOpen(true);
+                }}
+                className="surface surface-hover flex w-full items-center gap-3.5 px-4 py-3 text-left"
+              >
+                <span className="w-14 shrink-0 text-sm font-bold tabular-nums text-muted-foreground">
+                  {h}
+                </span>
+                <span className="flex-1 text-sm font-semibold text-muted-foreground/70">
+                  {t("cal.slot.free")}
+                </span>
+                <Plus className="size-4 shrink-0 text-primary" strokeWidth={2.6} />
+              </button>
+            </li>
+          ))}
+        </ul>
       ) : (
         <div className="space-y-6">
           {(data!.staff.length ? data!.staff : [{ id: "none", name: t("cal.unassigned") }]).map((member) => {
@@ -175,13 +167,11 @@ function CalendarPage() {
                 </h2>
                 <ul className="space-y-2.5">
                   {items.map((a, i) => (
-                    <li key={a.id} className={cn("surface surface-hover flex items-center gap-3.5 p-4")}>
-                      <span className="flex w-14 shrink-0 flex-col items-center rounded-xl bg-accent px-2 py-2 text-sm font-bold leading-tight tabular-nums text-primary">
-                        {formatTime(a.starts_at, tz)}
-                        <span className="text-[11px] font-medium text-muted-foreground">
-                          {formatTime(a.ends_at, tz)}
-                        </span>
-                      </span>
+                    <li
+                      key={a.id}
+                      data-status={a.status}
+                      className={cn("appointment-state surface surface-hover flex items-center gap-3.5 p-4")}
+                    >
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[15px] font-bold leading-snug">
                           {displayCustomerName(a.customer_name, null, i + 1)}
@@ -189,12 +179,6 @@ function CalendarPage() {
                         <p className="truncate text-sm font-normal leading-snug text-muted-foreground">
                           {a.service_name}
                         </p>
-                      </div>
-                      <div className="flex shrink-0 flex-col items-end gap-1.5">
-                        <span className="text-sm font-bold tabular-nums">
-                          {formatPrice(a.price_cents, business!.currency)}
-                        </span>
-                        <StatusBadge status={a.status} />
                       </div>
                       <AppointmentActions
                         id={a.id}

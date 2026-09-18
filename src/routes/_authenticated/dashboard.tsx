@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
@@ -10,7 +10,7 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { useAuth } from "@/hooks/use-auth";
 import { displayCustomerName, formatPrice, formatTime, formatDateLong, greetingPt } from "@/lib/format";
 import { zonedToUtc, todayIn } from "@/lib/time";
-import { Bell, CalendarCheck, CalendarDays, Check, ChevronDown } from "lucide-react";
+import { Bell, CalendarCheck, Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
 import { InstallPrompt } from "@/components/install-prompt";
@@ -99,16 +99,6 @@ function Dashboard() {
     },
   });
 
-  const active = (dayData?.appts ?? []).filter(
-    (a) => a.status === "confirmed" || a.status === "pending" || a.status === "completed",
-  );
-  const cancelled = (dayData?.appts ?? []).filter((a) => a.status === "cancelled").length;
-  const counts = {
-    confirmed: active.filter((a) => a.status === "confirmed").length,
-    pending: requestData?.pending ?? 0,
-    completed: active.filter((a) => a.status === "completed").length,
-  };
-
   const groupedUpcoming = (() => {
     const fmt = (iso: string) =>
       new Intl.DateTimeFormat("en-CA", {
@@ -155,63 +145,6 @@ function Dashboard() {
           }}
         />
       </div>
-
-      <div className="surface p-5">
-        <div className="flex items-center justify-between gap-3">
-          <Link to="/calendar" className="font-display text-base font-bold hover:text-primary">
-            {t("dash.today")}
-          </Link>
-          <span className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground">
-            <CalendarDays className="size-4" />
-            {dayData?.appts.length ?? 0}
-          </span>
-        </div>
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[
-            {
-              label: t("dash.confirmed"),
-              value: counts.confirmed,
-              dot: "bg-success",
-              search: { filter: "confirmed" as const },
-            },
-            {
-              label: t("dash.pending"),
-              value: counts.pending,
-              dot: "bg-warning",
-              search: { filter: "pending" as const },
-            },
-            {
-              label: t("dash.cancelled"),
-              value: cancelled,
-              dot: "bg-destructive",
-              search: { filter: "cancelled" as const },
-            },
-            {
-              label: t("dash.completed"),
-              value: counts.completed,
-              dot: "bg-muted-foreground",
-              search: { filter: "completed" as const },
-            },
-          ].map((s) => (
-            <Link
-              key={s.label}
-              to="/appointments"
-              search={s.search}
-              className="surface-hover flex flex-col rounded-2xl border border-border bg-muted/40 p-3"
-            >
-              <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.05em] text-foreground/70">
-                <span className={cn("size-2.5 rounded-full", s.dot)} />
-                {s.label}
-              </span>
-              <p className="font-display mt-2 text-[28px] font-bold leading-none tabular-nums">
-                {s.value}
-              </p>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-
 
       <InstallPrompt />
 
