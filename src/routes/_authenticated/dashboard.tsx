@@ -4,11 +4,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
-import { EmptyState, LoadingRows, StatusBadge } from "@/components/ui-bits";
+import { EmptyState, LoadingRows } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { useAuth } from "@/hooks/use-auth";
-import { displayCustomerName, formatPrice, formatTime, formatDateLong, greetingPt } from "@/lib/format";
+import { displayCustomerName, formatTime, formatDateLong, greetingPt } from "@/lib/format";
 import { zonedToUtc, todayIn } from "@/lib/time";
 import { Bell, CalendarCheck, Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -191,8 +191,9 @@ function Dashboard() {
                     <li
                       key={a.id}
                       id={`appt-${a.id}`}
+                      data-status={a.status}
                       className={cn(
-                        "surface surface-hover flex items-center gap-3.5 p-4 transition-shadow",
+                        "appointment-state surface surface-hover flex items-center gap-3.5 p-4 transition-shadow",
                         focusId === a.id && "ring-2 ring-primary",
                       )}
                     >
@@ -208,12 +209,6 @@ function Dashboard() {
                         </p>
                       </div>
 
-                      <div className="flex shrink-0 flex-col items-end gap-1.5">
-                        <span className="text-sm font-bold tabular-nums">
-                          {formatPrice(a.price_cents, business!.currency)}
-                        </span>
-                        <StatusBadge status={a.status} />
-                      </div>
                       <AppointmentActions
                         id={a.id}
                         status={a.status}

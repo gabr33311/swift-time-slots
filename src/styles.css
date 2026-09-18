@@ -386,36 +386,36 @@
   &[data-status="confirmed"] {
     background-image: linear-gradient(
       115deg,
-      color-mix(in oklch, var(--color-success) 30%, var(--color-card)),
-      color-mix(in oklch, var(--color-success) 10%, var(--color-card)),
-      color-mix(in oklch, var(--color-success) 42%, var(--color-card))
+      color-mix(in oklch, var(--color-success) 64%, var(--color-card)),
+      color-mix(in oklch, var(--color-success) 28%, var(--color-card)),
+      color-mix(in oklch, var(--color-success) 76%, var(--color-card))
     );
   }
 
   &[data-status="pending"] {
     background-image: linear-gradient(
       115deg,
-      color-mix(in oklch, var(--color-warning) 52%, var(--color-card)),
-      color-mix(in oklch, var(--color-warning) 18%, var(--color-card)),
-      color-mix(in oklch, var(--color-warning) 68%, var(--color-card))
+      color-mix(in oklch, var(--color-warning) 72%, var(--color-card)),
+      color-mix(in oklch, var(--color-warning) 34%, var(--color-card)),
+      color-mix(in oklch, var(--color-warning) 86%, var(--color-card))
     );
   }
 
   &[data-status="cancelled"] {
     background-image: linear-gradient(
       115deg,
-      color-mix(in oklch, var(--color-destructive) 28%, var(--color-card)),
-      color-mix(in oklch, var(--color-destructive) 8%, var(--color-card)),
-      color-mix(in oklch, var(--color-destructive) 40%, var(--color-card))
+      color-mix(in oklch, var(--color-destructive) 62%, var(--color-card)),
+      color-mix(in oklch, var(--color-destructive) 26%, var(--color-card)),
+      color-mix(in oklch, var(--color-destructive) 74%, var(--color-card))
     );
   }
 
   &[data-status="completed"] {
     background-image: linear-gradient(
       115deg,
-      color-mix(in oklch, var(--color-info) 28%, var(--color-card)),
-      color-mix(in oklch, var(--color-info) 8%, var(--color-card)),
-      color-mix(in oklch, var(--color-info) 40%, var(--color-card))
+      color-mix(in oklch, var(--color-primary) 62%, var(--color-card)),
+      color-mix(in oklch, var(--color-primary) 26%, var(--color-card)),
+      color-mix(in oklch, var(--color-primary) 74%, var(--color-card))
     );
   }
 }
