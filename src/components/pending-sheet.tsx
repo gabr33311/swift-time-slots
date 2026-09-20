@@ -130,7 +130,7 @@ export function PendingCapsule({ variant = "bar" }: { variant?: "bar" | "badge" 
                   type="button"
                   aria-label={t("cal.pending.cancel")}
                   onClick={() => decide(a.id, "cancelled")}
-                  className="flex size-10 shrink-0 items-center justify-center rounded-full border border-red-500/60 text-red-500 transition-colors hover:bg-red-500/10"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-muted"
                 >
                   <X className="size-[18px]" strokeWidth={3} />
                 </button>
