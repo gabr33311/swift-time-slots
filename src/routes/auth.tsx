@@ -89,6 +89,16 @@ function AuthPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, next]);
 
+  /** true = account exists, false = no account, null = check unavailable. */
+  async function emailRegistered(value: string): Promise<boolean | null> {
+    const { data, error } = await supabase.rpc("email_has_account", { _email: value });
+    if (error) {
+      console.error("[auth] email_has_account falhou:", error);
+      return null;
+    }
+    return data as boolean;
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -97,6 +107,10 @@ function AuthPage() {
         const parsed = z.string().email().safeParse(email.trim());
         if (!parsed.success) {
           toast.error(t("onb.auth.err.email"));
+          return;
+        }
+        if ((await emailRegistered(email.trim())) === false) {
+          toast.error(t("onb.auth.err.noAccount"));
           return;
         }
         const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
@@ -132,6 +146,10 @@ function AuthPage() {
         toast.success(t("onb.auth.success.accountCreatedGo"));
         goAfterAuth("/onboarding");
       } else {
+        if ((await emailRegistered(parsed.data.email)) === false) {
+          toast.error(t("onb.auth.err.noAccount"));
+          return;
+        }
         const { error } = await supabase.auth.signInWithPassword({
           email: parsed.data.email,
           password: parsed.data.password,

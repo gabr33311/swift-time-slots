@@ -935,6 +935,7 @@ export type Database = {
         Returns: Database["public"]["Enums"]["member_role"]
       }
       can_manage_business: { Args: { _business_id: string }; Returns: boolean }
+      email_has_account: { Args: { _email: string }; Returns: boolean }
       generate_appointment_reminders: { Args: never; Returns: number }
       is_business_member: { Args: { _business_id: string }; Returns: boolean }
       is_business_owner: { Args: { _business_id: string }; Returns: boolean }
@@ -948,6 +949,7 @@ export type Database = {
         }
         Returns: string
       }
+      slug_available: { Args: { _slug: string }; Returns: boolean }
     }
     Enums: {
       appointment_status:

@@ -14,7 +14,6 @@ import { WEEKDAYS_PT } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Check, Loader2, ArrowRight, ArrowLeft, Copy, ExternalLink, Trash2, CircleCheck, CircleX } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { checkSlugAvailable } from "@/lib/booking.functions";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
@@ -110,38 +109,27 @@ function Onboarding() {
 
   useEffect(() => {
     const clean = slug.trim().toLowerCase();
-    if (clean.length < 3) {
+    if (!/^[a-z0-9-]{3,48}$/.test(clean)) {
       setSlugCheck({ state: "invalid", slug: clean });
       return;
     }
     setSlugCheck({ state: "checking", slug: clean });
 
     const id = setTimeout(async () => {
-      try {
-        const res = await checkSlugAvailable({ data: { slug: clean } });
-        setSlugCheck({
-          state: res.invalid ? "invalid" : res.available ? "free" : "taken",
-          slug: clean,
-        });
-      } catch (err) {
-        console.error("Erro no checkSlugAvailable, a tentar fallback direto na BD:", err);
-        try {
-          const { data, error } = await supabase.from("businesses").select("id").eq("slug", clean).maybeSingle();
-
-          if (error) throw error;
-          setSlugCheck({
-            state: data ? "taken" : "free",
-            slug: clean,
-          });
-        } catch (dbErr) {
-          console.error("Erro no fallback da BD:", dbErr);
-          setSlugCheck({ state: "free", slug: clean });
-        }
+      // Real availability check (SECURITY DEFINER RPC): works regardless of the
+      // RLS policies on `businesses` and also rejects reserved app paths.
+      const { data, error } = await supabase.rpc("slug_available", { _slug: clean });
+      if (error) {
+        console.error("[onboarding] slug_available falhou:", error);
+        toast.error(t("onb.s1.slug.checkFailed"));
+        setSlugCheck({ state: "idle", slug: clean });
+        return;
       }
+      setSlugCheck({ state: data ? "free" : "taken", slug: clean });
     }, 450);
 
     return () => clearTimeout(id);
-  }, [slug]);
+  }, [slug, t]);
 
   const step1Valid =
     name.trim().length >= 2 &&
@@ -170,7 +158,7 @@ function Onboarding() {
         : t("onb.hint.step4");
 
   const bookingUrl =
-    typeof window !== "undefined" && createdSlug ? `${window.location.origin}/book/${createdSlug}` : "";
+    typeof window !== "undefined" && createdSlug ? `${window.location.origin}/${createdSlug}` : "";
 
   async function finish() {
     const parsed = z
@@ -357,7 +345,7 @@ function Onboarding() {
               <Copy className="mr-2 size-4" /> Copiar link
             </Button>
             <Button variant="outline" asChild>
-              <a href={`/book/${createdSlug}`} target="_blank" rel="noreferrer">
+              <a href={`/${createdSlug}`} target="_blank" rel="noreferrer">
                 <ExternalLink className="mr-2 size-4" /> Ver página
               </a>
             </Button>
@@ -427,7 +415,7 @@ function Onboarding() {
               {t("onb.s1.slug")} <span className="text-destructive">*</span>
             </Label>
             <div className="flex items-center gap-1 rounded-lg border border-input bg-muted/40 px-3">
-              <span className="text-sm text-muted-foreground">/book/</span>
+              <span className="text-sm text-muted-foreground">sycras.com/</span>
               <Input
                 id="slug"
                 value={slug}
@@ -712,7 +700,7 @@ function Onboarding() {
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-muted-foreground">{t("onb.s5.link")}</dt>
-              <dd className="font-medium">/book/{slug || "—"}</dd>
+              <dd className="font-medium">sycras.com/{slug || "—"}</dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-muted-foreground">{t("onb.s5.services")}</dt>
