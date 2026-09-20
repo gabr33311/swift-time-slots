@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Menu, CheckCircle2, XCircle, CalendarCheck, BellRing } from "lucide-react";
+import { Menu, CheckCircle2, XCircle, CalendarCheck, BellRing, RotateCcw } from "lucide-react";
 import { normalizePhonePt } from "@/lib/phone";
 import { formatDateLong, formatTime } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
@@ -154,6 +154,14 @@ export function AppointmentActions({
               onClick={() => setStatus("completed")}
             >
               <CheckCircle2 className="mr-1 size-4" /> {t("acts.markCompleted")}
+            </DropdownMenuItem>
+          )}
+          {status === "completed" && (
+            <DropdownMenuItem
+              className="py-2.5 font-bold text-foreground"
+              onClick={() => setStatus("confirmed")}
+            >
+              <RotateCcw className="mr-1 size-4" /> {t("acts.revertCompleted")}
             </DropdownMenuItem>
           )}
           {canRemind && (
