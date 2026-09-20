@@ -23,11 +23,12 @@ type PendingAppt = {
 };
 
 /** Floating decision capsule: approve or decline pending bookings from anywhere. */
-export function PendingCapsule() {
+export function PendingCapsule({ variant = "bar" }: { variant?: "bar" | "badge" }) {
   const { business } = useMyBusiness();
   const { t } = usePrefs();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+
   const tz = business?.timezone ?? "Europe/Lisbon";
 
   const { data } = useQuery({
