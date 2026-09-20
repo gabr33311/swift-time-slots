@@ -125,6 +125,33 @@ function Dashboard() {
     return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
   })();
 
+  const tz = business?.timezone ?? "Europe/Lisbon";
+  const liveToday = (dayData?.appts ?? []).filter(
+    (a) => !["cancelled", "no_show", "expired"].includes(a.status),
+  );
+  const ongoing = liveToday.find((a) => {
+    const s = new Date(a.starts_at).getTime();
+    const e = a.ends_at ? new Date(a.ends_at).getTime() : s + 3_600_000;
+    return s <= now && now < e && a.status !== "completed";
+  });
+  const nextUp = liveToday.find(
+    (a) => new Date(a.starts_at).getTime() > now && a.status !== "completed",
+  );
+  const focusAppt = ongoing ?? nextUp;
+  const doneCount = liveToday.filter((a) => a.status === "completed").length;
+  const dayRevenue = liveToday.reduce((sum, a) => sum + (a.price_cents ?? 0), 0);
+  const dayProgress = liveToday.length ? Math.round((doneCount / liveToday.length) * 100) : 0;
+
+  function relativeLabel(iso: string): string {
+    const diff = Math.round((new Date(iso).getTime() - now) / 60_000);
+    if (diff < 0) return t("dash.now.late").replace("{n}", String(Math.abs(diff)));
+    if (diff < 60) return t("dash.now.inMin").replace("{n}", String(diff));
+    return t("dash.now.inHours")
+      .replace("{h}", String(Math.floor(diff / 60)))
+      .replace("{m}", String(diff % 60).padStart(2, "0"));
+  }
+
+
   return (
     <AppShell>
       <div className="mb-6 flex items-start justify-between gap-3">
@@ -156,6 +183,63 @@ function Dashboard() {
       <InstallPrompt />
 
 
+      {focusAppt && (
+        <section
+          data-status={focusAppt.status}
+          className="appointment-state surface mt-4 flex items-center gap-4 p-4"
+        >
+          <span
+            data-status={focusAppt.status}
+            className="appointment-status-disc flex size-12 shrink-0 flex-col items-center justify-center rounded-2xl border border-border text-[13px] font-black tabular-nums text-foreground"
+          >
+            {formatTime(focusAppt.starts_at, tz)}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+              {ongoing ? t("dash.now.ongoing") : t("dash.now.next")} ·{" "}
+              {ongoing ? "" : relativeLabel(focusAppt.starts_at)}
+            </p>
+            <p className="truncate text-[17px] font-bold leading-snug">
+              {displayCustomerName(focusAppt.customer_name, null, 1)}
+            </p>
+            <p className="truncate text-sm leading-snug text-muted-foreground">
+              {focusAppt.service_name}
+            </p>
+          </div>
+          <AppointmentActions
+            id={focusAppt.id}
+            status={focusAppt.status}
+            customerName={displayCustomerName(focusAppt.customer_name, null, 1)}
+            customerPhone={focusAppt.customer_phone}
+            startsAt={focusAppt.starts_at}
+            serviceName={focusAppt.service_name}
+            timezone={tz}
+          />
+        </section>
+      )}
+
+      <section className="surface mt-3 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="flex items-center gap-2 text-sm font-bold">
+            <Sun className="size-4 text-muted-foreground" />
+            {t("dash.progress.title")}
+          </p>
+          <p className="text-sm font-black tabular-nums">{formatPrice(dayRevenue)}</p>
+        </div>
+        <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className="h-full rounded-full bg-foreground transition-[width] duration-500"
+            style={{ width: `${dayProgress}%` }}
+          />
+        </div>
+        <p className="mt-2 text-xs font-semibold text-muted-foreground">
+          {liveToday.length === 0
+            ? t("dash.progress.free")
+            : t("dash.progress.done")
+                .replace("{done}", String(doneCount))
+                .replace("{total}", String(liveToday.length))}
+        </p>
+      </section>
 
 
       <section className="mt-8">
