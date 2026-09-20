@@ -482,16 +482,37 @@ function Onboarding() {
               id="desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              onBlur={markTouched("desc")}
               placeholder={t("onb.s1.desc.placeholder")}
               maxLength={280}
+              aria-invalid={descError || undefined}
+              className={cn(descError && "border-destructive focus-visible:ring-destructive")}
             />
+            {descError ? (
+              <p className="text-xs font-medium text-destructive">{t("onb.s1.err.desc")}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {t("onb.s1.desc.counter", { count: description.trim().length })}
+              </p>
+            )}
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="city" className="font-semibold">
                 {t("onb.s1.city")} <span className="text-destructive">*</span>
               </Label>
-              <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} maxLength={60} />
+              <Input
+                id="city"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                onBlur={markTouched("city")}
+                maxLength={60}
+                aria-invalid={cityError || undefined}
+                className={cn(cityError && "border-destructive focus-visible:ring-destructive")}
+              />
+              {cityError && (
+                <p className="text-xs font-medium text-destructive">{t("onb.s1.err.city")}</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="phone" className="font-semibold">
@@ -511,7 +532,18 @@ function Onboarding() {
               <Label htmlFor="addr" className="font-semibold">
                 Morada <span className="text-destructive">*</span>
               </Label>
-              <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} maxLength={140} />
+              <Input
+                id="addr"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                onBlur={markTouched("addr")}
+                maxLength={140}
+                aria-invalid={addrError || undefined}
+                className={cn(addrError && "border-destructive focus-visible:ring-destructive")}
+              />
+              {addrError && (
+                <p className="text-xs font-medium text-destructive">{t("onb.s1.err.addr")}</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="ig" className="font-semibold">
