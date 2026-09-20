@@ -187,167 +187,222 @@ export function AvailabilityPanel() {
 
   const locked = false;
 
-  return (
-    <div className="space-y-6">
-      <section className="surface p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-base font-semibold">{t("pf.av.weekly")}</h2>
-        </div>
+  function copyMondayToWeekdays() {
+    setDays((prev) => {
+      const mon = prev[1]!;
+      return prev.map((d, i) => (i >= 1 && i <= 5 ? { ...mon } : d));
+    });
+    toast.success(t("pf.av.copied"));
+  }
 
-        <div className="mt-4 space-y-3">
-          {days.map((d, i) => (
-            <div key={i} className="rounded-xl border border-border p-3">
-              <div className="flex flex-wrap items-center gap-3">
-                <Switch
-                  checked={d.enabled}
-                  disabled={locked}
-                  onCheckedChange={(v) =>
-                    setDays((prev) => prev.map((x, j) => (j === i ? { ...x, enabled: v } : x)))
-                  }
-                  aria-label={dayNames[i]}
-                />
-                <span className="w-24 text-sm font-semibold">{dayNames[i]}</span>
+  const TABS = [
+    { id: "hours" as const, label: t("pf.av.tab.hours") },
+    { id: "off" as const, label: t("pf.av.tab.off") },
+    { id: "rules" as const, label: t("pf.av.tab.rules") },
+  ];
+
+  return (
+    <div className="space-y-5">
+      <div className="flex gap-1 rounded-2xl border border-border bg-card p-1">
+        {TABS.map((tb) => (
+          <button
+            key={tb.id}
+            type="button"
+            onClick={() => setTab(tb.id)}
+            className={
+              tab === tb.id
+                ? "flex-1 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-accent-foreground"
+                : "flex-1 rounded-xl px-3 py-2 text-sm font-bold text-muted-foreground transition-colors hover:text-foreground"
+            }
+          >
+            {tb.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "hours" && (
+        <section className="surface p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-base font-semibold">{t("pf.av.weekly")}</h2>
+            <Button variant="outline" size="sm" onClick={copyMondayToWeekdays}>
+              {t("pf.av.copyWeek")}
+            </Button>
+          </div>
+
+          <div className="mt-3 divide-y divide-border">
+            {days.map((d, i) => (
+              <div key={i} className="py-2.5">
+                <div className="flex items-center gap-2.5">
+                  <Switch
+                    checked={d.enabled}
+                    disabled={locked}
+                    onCheckedChange={(v) =>
+                      setDays((prev) => prev.map((x, j) => (j === i ? { ...x, enabled: v } : x)))
+                    }
+                    aria-label={dayNames[i]}
+                  />
+                  <span className="w-16 shrink-0 truncate text-sm font-bold">
+                    {dayNames[i]?.slice(0, 3)}
+                  </span>
+                  {d.enabled ? (
+                    <>
+                      <Input
+                        type="time"
+                        value={d.start}
+                        onChange={(e) =>
+                          setDays((prev) =>
+                            prev.map((x, j) => (j === i ? { ...x, start: e.target.value } : x)),
+                          )
+                        }
+                        className="h-9 w-[86px] px-2 text-sm"
+                      />
+                      <span className="text-xs text-muted-foreground">{t("pf.av.to")}</span>
+                      <Input
+                        type="time"
+                        value={d.end}
+                        onChange={(e) =>
+                          setDays((prev) =>
+                            prev.map((x, j) => (j === i ? { ...x, end: e.target.value } : x)),
+                          )
+                        }
+                        className="h-9 w-[86px] px-2 text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setDays((prev) =>
+                            prev.map((x, j) => (j === i ? { ...x, lunch: !x.lunch } : x)),
+                          )
+                        }
+                        aria-label={t("pf.av.lunch")}
+                        className={
+                          d.lunch
+                            ? "ml-auto flex size-9 items-center justify-center rounded-xl border border-border bg-accent text-accent-foreground"
+                            : "ml-auto flex size-9 items-center justify-center rounded-xl border border-border text-muted-foreground transition-colors hover:text-foreground"
+                        }
+                      >
+                        <Coffee className="size-4" strokeWidth={2.5} />
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">{t("pf.av.closed")}</span>
+                  )}
+                </div>
+
+                {d.enabled && d.lunch && (
+                  <div className="mt-2 flex items-center gap-2.5 pl-[74px]">
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      {t("pf.av.lunch")}
+                    </span>
+                    <Input
+                      type="time"
+                      value={d.lunchStart}
+                      onChange={(e) =>
+                        setDays((prev) =>
+                          prev.map((x, j) => (j === i ? { ...x, lunchStart: e.target.value } : x)),
+                        )
+                      }
+                      className="h-9 w-[86px] px-2 text-sm"
+                    />
+                    <span className="text-xs text-muted-foreground">{t("pf.av.to")}</span>
+                    <Input
+                      type="time"
+                      value={d.lunchEnd}
+                      onChange={(e) =>
+                        setDays((prev) =>
+                          prev.map((x, j) => (j === i ? { ...x, lunchEnd: e.target.value } : x)),
+                        )
+                      }
+                      className="h-9 w-[86px] px-2 text-sm"
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {tab === "off" && (
+        <>
+          <section className="surface p-4">
+            <h2 className="text-base font-semibold">{t("pf.av.blocks")}</h2>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="bf" className="font-semibold">
+                  {t("pf.av.start")}
+                </Label>
                 <Input
-                  type="time"
-                  value={d.start}
-                  disabled={locked || !d.enabled}
-                  onChange={(e) =>
-                    setDays((prev) =>
-                      prev.map((x, j) => (j === i ? { ...x, start: e.target.value } : x)),
-                    )
-                  }
-                  className="w-32"
-                />
-                <span className="text-sm text-muted-foreground">{t("pf.av.to")}</span>
-                <Input
-                  type="time"
-                  value={d.end}
-                  disabled={locked || !d.enabled}
-                  onChange={(e) =>
-                    setDays((prev) =>
-                      prev.map((x, j) => (j === i ? { ...x, end: e.target.value } : x)),
-                    )
-                  }
-                  className="w-32"
+                  id="bf"
+                  type="datetime-local"
+                  value={blockFrom}
+                  onChange={(e) => setBlockFrom(e.target.value)}
                 />
               </div>
-              <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-border pt-3">
-                <Switch
-                  checked={d.lunch}
-                  disabled={locked || !d.enabled}
-                  onCheckedChange={(v) =>
-                    setDays((prev) => prev.map((x, j) => (j === i ? { ...x, lunch: v } : x)))
-                  }
-                  aria-label={`${t("pf.av.lunch")} ${dayNames[i]}`}
+              <div className="space-y-1.5">
+                <Label htmlFor="bt" className="font-semibold">
+                  {t("pf.av.end")}
+                </Label>
+                <Input
+                  id="bt"
+                  type="datetime-local"
+                  value={blockTo}
+                  onChange={(e) => setBlockTo(e.target.value)}
                 />
-                <span className="w-32 text-sm font-bold">{t("pf.av.lunch")}</span>
-
-                  <Input
-                    type="time"
-                    value={d.lunchStart}
-                    disabled={locked || !d.lunch}
-                    onChange={(e) =>
-                      setDays((prev) =>
-                        prev.map((x, j) => (j === i ? { ...x, lunchStart: e.target.value } : x)),
-                      )
-                    }
-                    className="w-32"
-                  />
-                  <span className="text-sm text-muted-foreground">{t("pf.av.to")}</span>
-                  <Input
-                    type="time"
-                    value={d.lunchEnd}
-                    disabled={locked || !d.lunch}
-                    onChange={(e) =>
-                      setDays((prev) =>
-                        prev.map((x, j) => (j === i ? { ...x, lunchEnd: e.target.value } : x)),
-                      )
-                    }
-                    className="w-32"
-                  />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="br" className="font-semibold">
+                  {t("pf.av.reason")}
+                </Label>
+                <Input
+                  id="br"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  maxLength={120}
+                  placeholder={t("pf.av.reason.placeholder")}
+                />
               </div>
             </div>
-          ))}
-        </div>
-      </section>
+            <Button variant="outline" className="mt-3" onClick={addBlock}>
+              {t("pf.av.addBlock")}
+            </Button>
 
-      <section className="surface p-5">
-        <h2 className="text-base font-semibold">{t("pf.av.blocks")}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("pf.av.blocks.desc")}
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="bf" className="font-semibold">
-              {t("pf.av.start")}
-            </Label>
-            <Input
-              id="bf"
-              type="datetime-local"
-              value={blockFrom}
-              onChange={(e) => setBlockFrom(e.target.value)}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="bt" className="font-semibold">
-              {t("pf.av.end")}
-            </Label>
-            <Input
-              id="bt"
-              type="datetime-local"
-              value={blockTo}
-              onChange={(e) => setBlockTo(e.target.value)}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="br" className="font-semibold">
-              {t("pf.av.reason")}
-            </Label>
-            <Input
-              id="br"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              maxLength={120}
-              placeholder={t("pf.av.reason.placeholder")}
-            />
-          </div>
-        </div>
-        <Button variant="outline" className="mt-4" onClick={addBlock}>
-          {t("pf.av.addBlock")}
-        </Button>
+            {(data?.blocks.length ?? 0) > 0 && (
+              <ul className="mt-4 space-y-2">
+                {data!.blocks.map((b) => (
+                  <li
+                    key={b.id}
+                    className="flex items-center gap-3 rounded-lg border border-border p-3 text-sm"
+                  >
+                    <span className="flex-1">
+                      {formatDateShort(b.starts_at, business!.timezone)} —{" "}
+                      {formatDateShort(b.ends_at, business!.timezone)}
+                      {b.reason ? ` · ${b.reason}` : ""}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={t("pf.av.removeBlock")}
+                      onClick={() => removeBlock(b.id)}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
-        {(data?.blocks.length ?? 0) > 0 && (
-          <ul className="mt-5 space-y-2">
-            {data!.blocks.map((b) => (
-              <li
-                key={b.id}
-                className="flex items-center gap-3 rounded-lg border border-border p-3 text-sm"
-              >
-                <span className="flex-1">
-                  {formatDateShort(b.starts_at, business!.timezone)} —{" "}
-                  {formatDateShort(b.ends_at, business!.timezone)}
-                  {b.reason ? ` · ${b.reason}` : ""}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={t("pf.av.removeBlock")}
-                  onClick={() => removeBlock(b.id)}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          <VacationConflicts blocks={data?.blocks ?? []} />
+        </>
+      )}
 
-      <VacationConflicts blocks={data?.blocks ?? []} />
-
-      <BookingRules />
-
-      <PublicPagePanel />
-
+      {tab === "rules" && (
+        <>
+          <BookingRules />
+          <PublicPagePanel />
+        </>
+      )}
     </div>
   );
 }
