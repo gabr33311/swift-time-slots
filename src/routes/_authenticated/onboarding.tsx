@@ -46,6 +46,15 @@ const day = (open: boolean, start: string, end: string, lunch = open): DayHours 
   lunchEnd: "14:00",
 });
 
+// Paths the app itself owns — these can never be a business slug.
+const RESERVED_SLUGS = [
+  "auth", "login", "logout", "register", "reset-password", "book", "booking",
+  "api", "app", "admin", "dashboard", "calendar", "customers", "share",
+  "profile", "onboarding", "analytics", "appointments", "pendentes", "waitlist",
+  "booking-page", "minhas-marcacoes", "settings", "support", "about", "pricing",
+  "terms", "privacy", "assets", "static", "public", "www",
+] as const;
+
 const DEFAULT_HOURS: DayHours[] = [
   day(false, "09:00", "18:00", false),
   day(true, "09:00", "18:00"),
@@ -109,23 +118,30 @@ function Onboarding() {
 
   useEffect(() => {
     const clean = slug.trim().toLowerCase();
-    if (!/^[a-z0-9-]{3,48}$/.test(clean)) {
+    if (
+      !/^[a-z0-9-]{3,48}$/.test(clean) ||
+      RESERVED_SLUGS.includes(clean as (typeof RESERVED_SLUGS)[number])
+    ) {
       setSlugCheck({ state: "invalid", slug: clean });
       return;
     }
     setSlugCheck({ state: "checking", slug: clean });
 
     const id = setTimeout(async () => {
-      // Real availability check (SECURITY DEFINER RPC): works regardless of the
-      // RLS policies on `businesses` and also rejects reserved app paths.
-      const { data, error } = await supabase.rpc("slug_available", { _slug: clean });
+      // Direct table read: no RPC dependency. The unique index on
+      // businesses.slug is the final guard on insert (error 23505).
+      const { data, error } = await supabase
+        .from("businesses")
+        .select("id")
+        .eq("slug", clean)
+        .maybeSingle();
       if (error) {
-        console.error("[onboarding] slug_available falhou:", error);
+        console.error("[onboarding] slug check falhou:", error);
         toast.error(t("onb.s1.slug.checkFailed"));
         setSlugCheck({ state: "idle", slug: clean });
         return;
       }
-      setSlugCheck({ state: data ? "free" : "taken", slug: clean });
+      setSlugCheck({ state: data ? "taken" : "free", slug: clean });
     }, 450);
 
     return () => clearTimeout(id);
