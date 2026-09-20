@@ -14,6 +14,9 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
 import { usePrefs } from "@/lib/prefs";
+import { formatTime } from "@/lib/format";
+import { CalendarOff, StickyNote } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
