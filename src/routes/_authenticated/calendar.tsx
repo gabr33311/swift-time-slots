@@ -237,11 +237,15 @@ function CalendarPage() {
         title={t("cal.title")}
         subtitle={t("cal.subtitle")}
         action={
-          <Button className="hidden lg:inline-flex" onClick={() => setNewOpen(true)}>
-            {t("cal.new")}
-          </Button>
+          <div className="flex items-center gap-2">
+            <PendingCapsule variant="badge" />
+            <Button className="hidden lg:inline-flex" onClick={() => setNewOpen(true)}>
+              {t("cal.new")}
+            </Button>
+          </div>
         }
       />
+
 
       <div className="surface mb-3 p-1.5">
         <div className="flex items-center gap-1">
@@ -294,19 +298,17 @@ function CalendarPage() {
         </div>
       </div>
 
-      <PendingCapsule />
-
       {isToday && focusAppt && (
-        <section
-          data-status={focusAppt.status}
-          className="appointment-state surface mb-3 flex items-center gap-4 p-4"
-        >
+        <section className="surface mb-3 flex items-center gap-3 p-4">
           <span
             data-status={focusAppt.status}
-            className="appointment-status-disc flex size-12 shrink-0 flex-col items-center justify-center rounded-2xl border border-border text-[13px] font-black tabular-nums text-foreground"
-          >
+            className="appointment-rail h-12 w-1 shrink-0"
+            aria-hidden
+          />
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-border bg-muted/40 text-[13px] font-black tabular-nums text-foreground">
             {formatTime(focusAppt.starts_at, tz)}
           </span>
+
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
               {ongoing ? t("dash.now.ongoing") : t("dash.now.next")}
