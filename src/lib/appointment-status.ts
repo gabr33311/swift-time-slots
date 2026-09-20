@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { sendConfirmationEmail } from "@/lib/appointment-email.functions";
 
 export type ApptStatus =
   | "confirmed"
@@ -32,6 +33,11 @@ export async function setAppointmentStatus(input: {
     status: input.status,
     note: input.note ?? null,
   });
+
+  if (input.status === "confirmed") {
+    // Proactive customer notification; never blocks the status change.
+    void sendConfirmationEmail({ data: { appointmentId: input.id } }).catch(() => {});
+  }
 
   return { ok: true };
 }
