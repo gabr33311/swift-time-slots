@@ -57,7 +57,9 @@ function Dashboard() {
       const to = zonedToUtc(today!, 24 * 60, tz).toISOString();
       const { data: appts } = await supabase
         .from("appointments")
-        .select("id, starts_at, customer_name, customer_phone, service_name, price_cents, status")
+        .select(
+          "id, starts_at, ends_at, customer_name, customer_phone, service_name, price_cents, status",
+        )
         .eq("business_id", business!.id)
         .gte("starts_at", from)
         .lt("starts_at", to)
