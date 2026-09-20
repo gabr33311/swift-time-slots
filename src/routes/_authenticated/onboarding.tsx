@@ -117,8 +117,9 @@ function Onboarding() {
   }>({ state: "idle", slug: "" });
 
   // Fields show their error only after the user has interacted with them.
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const markTouched = (key: string) => () =>
+  type FieldKey = "name" | "desc" | "city" | "addr";
+  const [touched, setTouched] = useState<Partial<Record<FieldKey, boolean>>>({});
+  const markTouched = (key: FieldKey) => () =>
     setTouched((prev) => (prev[key] ? prev : { ...prev, [key]: true }));
 
   const nameError = touched.name && name.trim().length < 2;
