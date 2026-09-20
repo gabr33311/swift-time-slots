@@ -151,7 +151,11 @@ function PlanCard({
           </li>
         ))}
       </ul>
-      <Button disabled className="mt-7 w-full" variant={current ? "outline" : "default"}>
+      <Button
+        disabled
+        className="mt-7 w-full cursor-default disabled:opacity-100"
+        variant={current ? "outline" : "default"}
+      >
         {action}
       </Button>
     </article>
