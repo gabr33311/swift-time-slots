@@ -5,15 +5,16 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
-import { EmptyState, LoadingRows, PageHeader, StatusBadge } from "@/components/ui-bits";
+import { EmptyState, LoadingRows, PageHeader } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
-import { formatPrice, formatTime, formatDateLong } from "@/lib/format";
+import { formatTime } from "@/lib/format";
 import { Check, Clock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { setAppointmentStatus } from "@/lib/appointment-status";
 import { z } from "zod";
 import { usePrefs } from "@/lib/prefs";
+import { AppointmentStatusIndicator } from "@/components/appointment-status-indicator";
 
 type Tab = "pending" | "accepted" | "refused";
 
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/pendentes")({
   validateSearch: z.object({ tab: z.enum(["pending", "accepted", "refused"]).optional() }),
   head: () => ({
     meta: [
-      { title: "Pedidos de marcação — Schedivo" },
+      { title: "Pedidos de marcação — SYCRAS" },
       {
         name: "description",
         content: "Aceita ou recusa os pedidos de marcação feitos pelos teus clientes.",
@@ -126,7 +127,7 @@ function PendingPage() {
       ) : (
         <ul className="space-y-2.5">
           {items.map((a) => (
-            <li key={a.id} className="surface p-4">
+            <li key={a.id} data-status={a.status} className="appointment-state surface p-4">
               <div className="flex items-start gap-3">
                 <span className="flex w-16 shrink-0 flex-col items-center rounded-xl bg-accent px-2 py-2 text-sm font-bold tabular-nums text-primary">
                   {formatTime(a.starts_at, business!.timezone)}
@@ -137,18 +138,9 @@ function PendingPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[15px] font-bold leading-snug">{a.customer_name}</p>
                   <p className="truncate text-sm text-muted-foreground">{a.service_name}</p>
-                  <p className="truncate text-xs font-bold text-muted-foreground">
-                    {formatDateLong(a.starts_at, business!.timezone)}
-                  </p>
-                  {a.notes && (
-                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{a.notes}</p>
-                  )}
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1.5">
-                  <span className="text-sm font-bold tabular-nums">
-                    {formatPrice(a.price_cents, business!.currency)}
-                  </span>
-                  <StatusBadge status={a.status} />
+                  <AppointmentStatusIndicator status={a.status} />
                 </div>
               </div>
 

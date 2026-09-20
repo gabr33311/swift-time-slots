@@ -24,7 +24,7 @@ import {
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [
-      { title: "Profile — Schedivo" },
+      { title: "Perfil — SYCRAS" },
       {
         name: "description",
         content: "Business, services, team, hours and stats in one place.",
@@ -106,10 +106,7 @@ function ProfilePage() {
               <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
                 <s.icon className="size-5" />
               </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-bold">{label(s.id)}</span>
-                <span className="block text-sm text-muted-foreground">{desc(s.id)}</span>
-              </span>
+              <span className="min-w-0 flex-1 text-sm font-bold">{label(s.id)}</span>
               <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
             </button>
           ))}

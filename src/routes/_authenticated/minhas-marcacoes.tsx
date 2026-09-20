@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { SaveBar } from "@/components/save-bar";
 import { usePrefs } from "@/lib/prefs";
 import { PrefsToggles } from "@/components/prefs-toggles";
-import { EmptyState, LoadingRows, StatusBadge } from "@/components/ui-bits";
+import { EmptyState, LoadingRows } from "@/components/ui-bits";
 import { maskPhonePt, normalizePhonePt } from "@/lib/phone";
 import {
   AlertDialog,
@@ -24,17 +24,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { formatPrice, formatTime, formatDateLong, initials } from "@/lib/format";
+import { formatTime, formatDateLong, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { CalendarDays, ArrowLeft } from "lucide-react";
+import { AppointmentStatusIndicator } from "@/components/appointment-status-indicator";
 
 export const Route = createFileRoute("/_authenticated/minhas-marcacoes")({
   head: () => ({
     meta: [
-      { title: "As minhas marcações — Schedivo" },
+      { title: "As minhas marcações — SYCRAS" },
       {
         name: "description",
-        content: "Consulta e cancela as tuas marcações na tua conta Schedivo.",
+        content: "Consulta e cancela as tuas marcações na tua conta SYCRAS.",
       },
       { name: "robots", content: "noindex" },
     ],
@@ -94,9 +95,6 @@ function MyBookings() {
       <h1 className="font-display text-[28px] font-bold leading-tight tracking-tight">
         {t("mine.title")}
       </h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {t("mine.subtitle")}
-      </p>
 
       <ClientProfileCard />
 
@@ -134,7 +132,7 @@ function MyBookings() {
             {list.map((a) => {
               const tz = a.business?.timezone ?? "Europe/Lisbon";
               return (
-                <li key={a.id} className="surface p-4">
+                <li key={a.id} data-status={a.status} className="appointment-state surface p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate text-[15px] font-bold">{a.service_name}</p>
@@ -145,12 +143,7 @@ function MyBookings() {
                         {formatDateLong(a.starts_at, tz)} · {formatTime(a.starts_at, tz)}
                       </p>
                     </div>
-                    <div className="flex shrink-0 flex-col items-end gap-1.5">
-                      <span className="text-sm font-bold tabular-nums">
-                        {formatPrice(a.price_cents, a.business?.currency ?? "EUR")}
-                      </span>
-                      <StatusBadge status={a.status} />
-                    </div>
+                    <AppointmentStatusIndicator status={a.status} />
                   </div>
                   {tab === "upcoming" && (
                     <div className="mt-3 flex justify-end">

@@ -21,7 +21,7 @@ import { usePrefs } from "@/lib/prefs";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Painel — Schedivo" },
+      { title: "Painel — SYCRAS" },
       {
         name: "description",
         content: "O resumo do teu dia: marcações, receita prevista e clientes.",
@@ -125,7 +125,6 @@ function Dashboard() {
             {greetingPt(new Date(), lang)}
             {user?.user_metadata?.["full_name"] ? `, ${user.user_metadata["full_name"]}` : ""}
           </h1>
-          <p className="mt-1 text-sm font-normal text-muted-foreground">{t("dash.subtitle")}</p>
         </div>
         <NotificationBell
           notifications={requestData?.notifications ?? []}

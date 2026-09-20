@@ -7,13 +7,13 @@ import { usePrefs } from "@/lib/prefs";
 export const Route = createFileRoute("/_authenticated/share")({
   head: () => ({
     meta: [
-      { title: "Partilhar — Schedivo" },
+      { title: "Partilhar — SYCRAS" },
       {
         name: "description",
         content: "Link público, código QR e personalização da página de marcações.",
       },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: "Partilhar — Schedivo" },
+      { property: "og:title", content: "Partilhar — SYCRAS" },
       {
         property: "og:description",
         content: "Link público, código QR e personalização da página de marcações.",
@@ -31,7 +31,7 @@ function SharePage() {
         title={t("share.title")}
         subtitle={t("share.subtitle")}
       />
-      <div className="mx-auto max-w-xl py-6">
+      <div className="mx-auto flex max-w-xl items-center justify-center py-2 sm:min-h-[calc(100dvh-10rem)]">
         <SharePanel />
       </div>
     </AppShell>

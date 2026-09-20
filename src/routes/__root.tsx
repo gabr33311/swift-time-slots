@@ -81,17 +81,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Schedivo — Marcações online" },
+      { title: "SYCRAS — Marcações online" },
       { name: "description", content: "Marcações online simples para negócios em Portugal." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Schedivo — Marcações online" },
+      { property: "og:title", content: "SYCRAS — Marcações online" },
       { property: "og:description", content: "Marcações online simples para negócios em Portugal." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
-      { name: "theme-color", content: "#7c3aed" },
+      { name: "theme-color", content: "#111111" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-title", content: "Schedivo" },
+      { name: "apple-mobile-web-app-title", content: "SYCRAS" },
     ],
     links: [
       {

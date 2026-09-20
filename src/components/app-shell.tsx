@@ -87,7 +87,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           )}
           <div className="min-w-0">
-            <p className="truncate text-sm font-bold">{business?.name ?? "Schedivo"}</p>
+            <p className="truncate text-sm font-bold">{business?.name ?? "SYCRAS"}</p>
             <p className="truncate text-xs text-muted-foreground">
               {business ? `/${business.slug}` : t("ui.loading")}
             </p>

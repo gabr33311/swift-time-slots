@@ -220,12 +220,12 @@ function BookPage() {
 
   // One view per browser session (refreshes don't count again).
   useEffect(() => {
-    let sid = sessionStorage.getItem("schedivo-sid");
+    let sid = sessionStorage.getItem("sycras-sid");
     if (!sid) {
       sid = crypto.randomUUID();
-      sessionStorage.setItem("schedivo-sid", sid);
+      sessionStorage.setItem("sycras-sid", sid);
     }
-    const key = `schedivo-view-${business.id}`;
+    const key = `sycras-view-${business.id}`;
     if (sessionStorage.getItem(key)) return;
     sessionStorage.setItem(key, "1");
     void trackPageView({ data: { businessId: business.id, sessionId: sid } }).catch(() => {});

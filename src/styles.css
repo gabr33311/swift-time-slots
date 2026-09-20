@@ -5,8 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design system — "Schedivo" booking platform.
- * Light, calm, premium. Violet accent. Inter typography.
+ * Design system — "SYCRAS" booking platform.
+ * Monochrome product UI with status colour reserved for appointments.
  * All colours are oklch semantic tokens. Never hardcode colours in components.
  */
 
@@ -75,90 +75,115 @@
 :root {
   --radius: 1.25rem;
 
-  --background: oklch(0.987 0.003 300);
-  --foreground: oklch(0.2 0.03 295);
+  --background: oklch(0.985 0 0);
+  --foreground: oklch(0.12 0 0);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2 0.03 295);
+  --card-foreground: oklch(0.12 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2 0.03 295);
+  --popover-foreground: oklch(0.12 0 0);
 
-  --primary: oklch(0.52 0.16 295);
-  --primary-foreground: oklch(0.99 0.005 300);
+  --primary: oklch(0.16 0 0);
+  --primary-foreground: oklch(0.99 0 0);
 
-  --secondary: oklch(0.962 0.008 300);
-  --secondary-foreground: oklch(0.3 0.05 295);
+  --secondary: oklch(0.94 0 0);
+  --secondary-foreground: oklch(0.18 0 0);
 
-  --muted: oklch(0.965 0.006 300);
-  --muted-foreground: oklch(0.53 0.03 295);
+  --muted: oklch(0.95 0 0);
+  --muted-foreground: oklch(0.48 0 0);
 
-  --accent: oklch(0.955 0.018 297);
-  --accent-foreground: oklch(0.34 0.08 295);
+  --accent: oklch(0.92 0 0);
+  --accent-foreground: oklch(0.16 0 0);
 
-  --destructive: oklch(0.577 0.21 22);
-  --destructive-foreground: oklch(0.99 0.005 300);
+  --destructive: oklch(0.28 0 0);
+  --destructive-foreground: oklch(0.99 0 0);
 
-  --success: oklch(0.62 0.13 155);
-  --success-foreground: oklch(0.99 0.005 300);
-  --warning: oklch(0.79 0.14 78);
-  --warning-foreground: oklch(0.28 0.05 60);
-  --info: oklch(0.6 0.12 265);
-  --info-foreground: oklch(0.99 0.005 300);
+  --success: oklch(0.32 0 0);
+  --success-foreground: oklch(0.99 0 0);
+  --warning: oklch(0.72 0 0);
+  --warning-foreground: oklch(0.16 0 0);
+  --info: oklch(0.42 0 0);
+  --info-foreground: oklch(0.99 0 0);
 
   --border: oklch(0.92 0.006 300);
   --input: oklch(0.92 0.006 300);
-  --ring: oklch(0.52 0.16 295);
+  --ring: oklch(0.16 0 0);
 
-  --chart-1: oklch(0.52 0.2 295);
-  --chart-2: oklch(0.68 0.14 300);
-  --chart-3: oklch(0.6 0.12 265);
-  --chart-4: oklch(0.79 0.14 78);
-  --chart-5: oklch(0.62 0.13 155);
+  --action-gradient-start: oklch(0.12 0 0);
+  --action-gradient-end: oklch(0.28 0 0);
+  --action-outline-start: oklch(1 0 0);
+  --action-outline-end: oklch(0.91 0 0);
+  --appointment-confirmed-start: oklch(0.77 0.25 144);
+  --appointment-confirmed-end: oklch(0.93 0.12 145);
+  --appointment-pending-start: oklch(0.91 0.2 98);
+  --appointment-pending-end: oklch(0.96 0.1 98);
+  --appointment-cancelled-start: oklch(0.66 0.25 27);
+  --appointment-cancelled-end: oklch(0.88 0.11 25);
+  --appointment-completed-start: oklch(0.58 0.27 296);
+  --appointment-completed-end: oklch(0.82 0.14 298);
+
+  --chart-1: oklch(0.2 0 0);
+  --chart-2: oklch(0.36 0 0);
+  --chart-3: oklch(0.52 0 0);
+  --chart-4: oklch(0.68 0 0);
+  --chart-5: oklch(0.82 0 0);
 
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.2 0.03 295);
-  --sidebar-primary: oklch(0.52 0.16 295);
+  --sidebar-primary: oklch(0.16 0 0);
   --sidebar-primary-foreground: oklch(0.99 0.005 300);
   --sidebar-accent: oklch(0.965 0.008 300);
   --sidebar-accent-foreground: oklch(0.3 0.05 295);
   --sidebar-border: oklch(0.93 0.006 300);
-  --sidebar-ring: oklch(0.52 0.16 295);
+  --sidebar-ring: oklch(0.16 0 0);
 }
 
 .dark {
-  --background: oklch(0.17 0.022 295);
-  --foreground: oklch(0.96 0.006 300);
-  --card: oklch(0.215 0.026 295);
-  --card-foreground: oklch(0.96 0.006 300);
-  --popover: oklch(0.215 0.026 295);
-  --popover-foreground: oklch(0.96 0.006 300);
-  --primary: oklch(0.72 0.15 298);
-  --primary-foreground: oklch(0.18 0.03 295);
-  --secondary: oklch(0.27 0.03 295);
-  --secondary-foreground: oklch(0.96 0.006 300);
-  --muted: oklch(0.26 0.026 295);
-  --muted-foreground: oklch(0.72 0.02 298);
-  --accent: oklch(0.31 0.06 297);
-  --accent-foreground: oklch(0.95 0.015 300);
-  --destructive: oklch(0.68 0.18 22);
+  --background: oklch(0.12 0 0);
+  --foreground: oklch(0.96 0 0);
+  --card: oklch(0.18 0 0);
+  --card-foreground: oklch(0.96 0 0);
+  --popover: oklch(0.18 0 0);
+  --popover-foreground: oklch(0.96 0 0);
+  --primary: oklch(0.94 0 0);
+  --primary-foreground: oklch(0.12 0 0);
+  --secondary: oklch(0.24 0 0);
+  --secondary-foreground: oklch(0.96 0 0);
+  --muted: oklch(0.23 0 0);
+  --muted-foreground: oklch(0.7 0 0);
+  --accent: oklch(0.29 0 0);
+  --accent-foreground: oklch(0.97 0 0);
+  --destructive: oklch(0.76 0 0);
   --destructive-foreground: oklch(0.98 0.005 300);
-  --success: oklch(0.7 0.12 155);
+  --success: oklch(0.78 0 0);
   --success-foreground: oklch(0.17 0.02 295);
-  --warning: oklch(0.82 0.13 78);
+  --warning: oklch(0.72 0 0);
   --warning-foreground: oklch(0.2 0.03 60);
-  --info: oklch(0.7 0.11 265);
+  --info: oklch(0.68 0 0);
   --info-foreground: oklch(0.17 0.02 295);
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.72 0.15 298);
-  --sidebar: oklch(0.2 0.026 295);
-  --sidebar-foreground: oklch(0.96 0.006 300);
-  --sidebar-primary: oklch(0.72 0.15 298);
-  --sidebar-primary-foreground: oklch(0.18 0.03 295);
-  --sidebar-accent: oklch(0.27 0.03 295);
-  --sidebar-accent-foreground: oklch(0.96 0.006 300);
+  --ring: oklch(0.86 0 0);
+  --sidebar: oklch(0.15 0 0);
+  --sidebar-foreground: oklch(0.96 0 0);
+  --sidebar-primary: oklch(0.94 0 0);
+  --sidebar-primary-foreground: oklch(0.12 0 0);
+  --sidebar-accent: oklch(0.23 0 0);
+  --sidebar-accent-foreground: oklch(0.96 0 0);
   --sidebar-border: oklch(1 0 0 / 12%);
-  --sidebar-ring: oklch(0.72 0.15 298);
+  --sidebar-ring: oklch(0.86 0 0);
+  --action-gradient-start: oklch(0.98 0 0);
+  --action-gradient-end: oklch(0.78 0 0);
+  --action-outline-start: oklch(0.24 0 0);
+  --action-outline-end: oklch(0.14 0 0);
+  --appointment-confirmed-start: oklch(0.5 0.18 145);
+  --appointment-confirmed-end: oklch(0.31 0.1 145);
+  --appointment-pending-start: oklch(0.65 0.16 86);
+  --appointment-pending-end: oklch(0.38 0.09 86);
+  --appointment-cancelled-start: oklch(0.51 0.2 27);
+  --appointment-cancelled-end: oklch(0.3 0.11 25);
+  --appointment-completed-start: oklch(0.48 0.22 296);
+  --appointment-completed-end: oklch(0.29 0.12 298);
 }
 
 @layer base {
@@ -186,7 +211,7 @@
   h6 {
     font-family: var(--font-display);
     font-weight: 700;
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
   }
 
   button,
@@ -379,46 +404,51 @@
   animation: confirm-pulse 1.8s ease-in-out infinite;
 }
 
+@utility action-gradient {
+  background-image: linear-gradient(110deg, var(--action-gradient-start), var(--action-gradient-end), var(--action-gradient-start));
+  background-size: 220% 220%;
+  color: var(--primary-foreground);
+  animation: appointment-gradient 5s ease-in-out infinite;
+}
+
+@utility action-gradient-outline {
+  background-image: linear-gradient(110deg, var(--action-outline-start), var(--action-outline-end), var(--action-outline-start));
+  background-size: 220% 220%;
+  color: var(--foreground);
+  animation: appointment-gradient 5s ease-in-out infinite;
+}
+
+@utility monochrome-media {
+  filter: grayscale(1) contrast(1.04);
+}
+
 @utility appointment-state {
   background-size: 220% 220%;
   animation: appointment-gradient 3.8s ease-in-out infinite;
 
   &[data-status="confirmed"] {
-    background-image: linear-gradient(
-      115deg,
-      color-mix(in oklch, var(--color-success) 64%, var(--color-card)),
-      color-mix(in oklch, var(--color-success) 28%, var(--color-card)),
-      color-mix(in oklch, var(--color-success) 76%, var(--color-card))
-    );
+    background-image: linear-gradient(90deg, var(--appointment-confirmed-start), var(--appointment-confirmed-end), var(--appointment-confirmed-start));
   }
 
   &[data-status="pending"] {
-    background-image: linear-gradient(
-      115deg,
-      color-mix(in oklch, var(--color-warning) 72%, var(--color-card)),
-      color-mix(in oklch, var(--color-warning) 34%, var(--color-card)),
-      color-mix(in oklch, var(--color-warning) 86%, var(--color-card))
-    );
+    background-image: linear-gradient(90deg, var(--appointment-pending-start), var(--appointment-pending-end), var(--appointment-pending-start));
   }
 
-  &[data-status="cancelled"] {
-    background-image: linear-gradient(
-      115deg,
-      color-mix(in oklch, var(--color-destructive) 62%, var(--color-card)),
-      color-mix(in oklch, var(--color-destructive) 26%, var(--color-card)),
-      color-mix(in oklch, var(--color-destructive) 74%, var(--color-card))
-    );
+  &[data-status="cancelled"],
+  &[data-status="no_show"],
+  &[data-status="expired"] {
+    background-image: linear-gradient(90deg, var(--appointment-cancelled-start), var(--appointment-cancelled-end), var(--appointment-cancelled-start));
   }
 
   &[data-status="completed"] {
-    background-image: linear-gradient(
-      115deg,
-      color-mix(in oklch, var(--color-primary) 62%, var(--color-card)),
-      color-mix(in oklch, var(--color-primary) 26%, var(--color-card)),
-      color-mix(in oklch, var(--color-primary) 74%, var(--color-card))
-    );
+    background-image: linear-gradient(90deg, var(--appointment-completed-start), var(--appointment-completed-end), var(--appointment-completed-start));
   }
 }
+
+@utility appointment-status-confirmed { color: var(--appointment-confirmed-start); border-color: var(--appointment-confirmed-start); }
+@utility appointment-status-pending { color: var(--appointment-pending-start); border-color: var(--appointment-pending-start); }
+@utility appointment-status-cancelled { color: var(--appointment-cancelled-start); border-color: var(--appointment-cancelled-start); }
+@utility appointment-status-completed { color: var(--appointment-completed-start); border-color: var(--appointment-completed-start); }
 
 @utility animate-exit {
   animation: app-fade-out 220ms ease-in both;

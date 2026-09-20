@@ -2,7 +2,7 @@ import type { Lang } from "../prefs-types";
 
 export const customersDict: Record<Lang, Record<string, string>> = {
   pt: {
-    "cust.meta.title": "Clientes — Schedivo",
+    "cust.meta.title": "Clientes — SYCRAS",
     "cust.meta.desc": "A tua base de clientes, com histórico e contactos.",
     "cust.title": "Clientes",
     "cust.subtitle": "Quem já passou pelo teu negócio.",
@@ -45,7 +45,7 @@ export const customersDict: Record<Lang, Record<string, string>> = {
     "cust.toast.saveError": "Não foi possível guardar o cliente.",
     "cust.toast.updated": "Cliente actualizado.",
     "cust.toast.created": "Cliente criado.",
-    "cust.wait.meta.title": "Lista de espera — Schedivo",
+    "cust.wait.meta.title": "Lista de espera — SYCRAS",
     "cust.wait.meta.desc": "Clientes à espera de vaga para serem contactados.",
     "cust.wait.title": "Lista de espera",
     "cust.wait.subtitle": "Preenche as vagas que ficam livres.",
@@ -57,7 +57,7 @@ export const customersDict: Record<Lang, Record<string, string>> = {
     "cust.wait.toast.updateError": "Não foi possível actualizar.",
   },
   en: {
-    "cust.meta.title": "Customers — Schedivo",
+    "cust.meta.title": "Customers — SYCRAS",
     "cust.meta.desc": "Your customer base, with history and contacts.",
     "cust.title": "Customers",
     "cust.subtitle": "Who has visited your business.",
@@ -100,7 +100,7 @@ export const customersDict: Record<Lang, Record<string, string>> = {
     "cust.toast.saveError": "Could not save the customer.",
     "cust.toast.updated": "Customer updated.",
     "cust.toast.created": "Customer created.",
-    "cust.wait.meta.title": "Waitlist — Schedivo",
+    "cust.wait.meta.title": "Waitlist — SYCRAS",
     "cust.wait.meta.desc": "Customers waiting for an opening to be contacted.",
     "cust.wait.title": "Waitlist",
     "cust.wait.subtitle": "Fill the openings that come up.",

@@ -2,7 +2,7 @@ import type { Lang } from "../prefs-types";
 
 export const profileDict: Record<Lang, Record<string, string>> = {
   pt: {
-    "pf.head.title": "Perfil — Schedivo",
+    "pf.head.title": "Perfil — SYCRAS",
     "pf.head.desc": "Negócio, serviços, equipa, horários e estatísticas num só lugar.",
     "pf.title": "Perfil",
     "pf.subtitle": "Tudo sobre o teu negócio num só sítio.",
@@ -161,7 +161,7 @@ export const profileDict: Record<Lang, Record<string, string>> = {
     "pf.pub.serviceOrder": "Ordem dos serviços",
   },
   en: {
-    "pf.head.title": "Profile — Schedivo",
+    "pf.head.title": "Profile — SYCRAS",
     "pf.head.desc": "Business, services, team, hours and stats in one place.",
     "pf.title": "Profile",
     "pf.subtitle": "Everything about your business in one place.",

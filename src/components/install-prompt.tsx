@@ -8,7 +8,7 @@ type InstallEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
-const DISMISS_KEY = "schedivo-install-dismissed";
+const DISMISS_KEY = "sycras-install-dismissed";
 
 /** Discreet, optional "Add to home screen" card. Never blocks the UI. */
 export function InstallPrompt() {

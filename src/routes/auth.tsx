@@ -23,12 +23,12 @@ export const Route = createFileRoute("/auth")({
 
   head: () => ({
     meta: [
-      { title: "Entrar — Schedivo" },
+      { title: "Entrar — SYCRAS" },
       {
         name: "description",
-        content: "Entra na tua conta Schedivo para gerir marcações, clientes e a tua página pública.",
+        content: "Entra na tua conta SYCRAS para gerir marcações, clientes e a tua página pública.",
       },
-      { property: "og:title", content: "Entrar — Schedivo" },
+      { property: "og:title", content: "Entrar — SYCRAS" },
       { property: "og:description", content: "Gere as tuas marcações num só lugar." },
       { name: "robots", content: "noindex" },
     ],
@@ -239,7 +239,7 @@ function AuthPage() {
         <span className="flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground">
           <CalendarCheck className="size-4" />
         </span>
-        Schedivo
+        SYCRAS
       </Link>
 
       <div className="surface animate-enter w-full max-w-sm p-6">

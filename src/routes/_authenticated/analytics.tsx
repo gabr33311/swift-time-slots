@@ -7,7 +7,7 @@ import { usePrefs } from "@/lib/prefs";
 export const Route = createFileRoute("/_authenticated/analytics")({
   head: () => ({
     meta: [
-      { title: "Relatórios — Schedivo" },
+      { title: "Relatórios — SYCRAS" },
       { name: "description", content: "Receita, ocupação e serviços mais procurados." },
       { name: "robots", content: "noindex" },
     ],

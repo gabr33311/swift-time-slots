@@ -20,7 +20,7 @@ const BASE: Record<Lang, Record<string, string>> = {
     "home.cta.create": "Criar a minha página",
     "home.cta.have": "Já tenho conta",
     "home.cta.start": "Começar agora",
-    "home.footer": "Schedivo · Marcações online para negócios em Portugal",
+    "home.footer": "SYCRAS · Marcações online para negócios em Portugal",
     "f1.title": "Um link, marcações a entrar",
     "f1.body":
       "Partilha a tua página no Instagram ou WhatsApp e recebe marcações 24 horas por dia.",
@@ -75,7 +75,7 @@ const BASE: Record<Lang, Record<string, string>> = {
     "home.cta.create": "Create my page",
     "home.cta.have": "I already have an account",
     "home.cta.start": "Get started",
-    "home.footer": "Schedivo · Online booking for small businesses",
+    "home.footer": "SYCRAS · Online booking for small businesses",
     "f1.title": "One link, bookings coming in",
     "f1.body": "Share your page on Instagram or WhatsApp and take bookings 24 hours a day.",
     "f2.title": "An always-correct agenda",
@@ -154,8 +154,10 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>("pt");
 
   useEffect(() => {
-    const storedTheme = window.localStorage.getItem("schedivo-theme") as Theme | null;
-    const storedLang = window.localStorage.getItem("schedivo-lang") as Lang | null;
+    const storedTheme = (window.localStorage.getItem("sycras-theme") ??
+      window.localStorage.getItem("schedivo-theme")) as Theme | null;
+    const storedLang = (window.localStorage.getItem("sycras-lang") ??
+      window.localStorage.getItem("schedivo-lang")) as Lang | null;
     if (storedTheme === "dark" || storedTheme === "light") setThemeState(storedTheme);
     if (storedLang === "pt" || storedLang === "en") setLangState(storedLang);
   }, []);
@@ -170,12 +172,12 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);
-    window.localStorage.setItem("schedivo-theme", next);
+    window.localStorage.setItem("sycras-theme", next);
   }, []);
 
   const setLang = useCallback((next: Lang) => {
     setLangState(next);
-    window.localStorage.setItem("schedivo-lang", next);
+    window.localStorage.setItem("sycras-lang", next);
     document.documentElement.setAttribute("lang", next);
   }, []);
 

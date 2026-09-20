@@ -3,7 +3,7 @@ import type { Lang } from "../prefs-types";
 export const onboardingDict: Record<Lang, Record<string, string>> = {
   pt: {
     // Onboarding meta
-    "onb.meta.title": "Configurar o teu negócio — Schedivo",
+    "onb.meta.title": "Configurar o teu negócio — SYCRAS",
     "onb.meta.desc": "Configura o teu negócio e cria a tua página de marcações.",
     "onb.stepOf": "Passo",
     "onb.stepOf.of": "de",
@@ -103,8 +103,8 @@ export const onboardingDict: Record<Lang, Record<string, string>> = {
     "onb.create": "Criar a minha página",
 
     // Auth page
-    "onb.auth.meta.title": "Entrar — Schedivo",
-    "onb.auth.meta.desc": "Entra na tua conta Schedivo para gerir marcações, clientes e a tua página pública.",
+    "onb.auth.meta.title": "Entrar — SYCRAS",
+    "onb.auth.meta.desc": "Entra na tua conta SYCRAS para gerir marcações, clientes e a tua página pública.",
     "onb.auth.err.password.min": "A palavra-passe precisa de pelo menos 8 caracteres.",
     "onb.auth.err.password.upper": "A palavra-passe precisa de uma letra maiúscula.",
     "onb.auth.err.password.lower": "A palavra-passe precisa de uma letra minúscula.",
@@ -197,7 +197,7 @@ export const onboardingDict: Record<Lang, Record<string, string>> = {
     "biz.svc.generic": "Serviço",
   },
   en: {
-    "onb.meta.title": "Set up your business — Schedivo",
+    "onb.meta.title": "Set up your business — SYCRAS",
     "onb.meta.desc": "Set up your business and create your booking page.",
     "onb.stepOf": "Step",
     "onb.stepOf.of": "of",
@@ -287,8 +287,8 @@ export const onboardingDict: Record<Lang, Record<string, string>> = {
     "onb.continue": "Continue",
     "onb.create": "Create my page",
 
-    "onb.auth.meta.title": "Sign in — Schedivo",
-    "onb.auth.meta.desc": "Sign in to your Schedivo account to manage bookings, customers and your public page.",
+    "onb.auth.meta.title": "Sign in — SYCRAS",
+    "onb.auth.meta.desc": "Sign in to your SYCRAS account to manage bookings, customers and your public page.",
     "onb.auth.err.password.min": "The password needs at least 8 characters.",
     "onb.auth.err.password.upper": "The password needs an uppercase letter.",
     "onb.auth.err.password.lower": "The password needs a lowercase letter.",
