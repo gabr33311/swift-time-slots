@@ -25,10 +25,16 @@ const NAV = [
   { to: "/profile", label: "nav.manage", icon: Store },
 ] as const;
 
-/** Dock: the flow tab, the magnetic action button, the management tab. */
-const DOCK_LEFT = [{ to: "/calendar", label: "nav.calendar", icon: CalendarDays }] as const;
+/** Dock: flow + people on the left, share + management on the right. */
+const DOCK_LEFT = [
+  { to: "/calendar", label: "nav.calendar", icon: CalendarDays },
+  { to: "/customers", label: "nav.customers", icon: Users },
+] as const;
 
-const DOCK_RIGHT = [{ to: "/profile", label: "nav.manage", icon: Store }] as const;
+const DOCK_RIGHT = [
+  { to: "/share", label: "nav.share", icon: Share2 },
+  { to: "/profile", label: "nav.manage", icon: Store },
+] as const;
 
 function PopIcon({
   Icon,
@@ -83,7 +89,7 @@ function DockTab({
       to={to}
       aria-label={label}
       className={cn(
-        "flex h-12 w-12 flex-col items-center justify-center gap-0.5 rounded-2xl transition-colors duration-200",
+        "flex h-12 w-11 flex-col items-center justify-center gap-0.5 rounded-2xl transition-colors duration-200",
         active ? "text-foreground" : "text-muted-foreground",
       )}
     >
