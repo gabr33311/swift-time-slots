@@ -293,7 +293,9 @@ function CalendarPage() {
                   "flex flex-col items-center gap-0.5 rounded-2xl py-2 transition-colors",
                   active
                     ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    : isTodayCell
+                      ? "border border-foreground/70 text-foreground hover:bg-muted"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
                 <span className="text-[10px] font-bold uppercase tracking-wide">
@@ -302,10 +304,12 @@ function CalendarPage() {
                 <span className="text-sm font-black tabular-nums">{Number(d.slice(8, 10))}</span>
                 <span
                   className={cn(
-                    "size-1 rounded-full",
-                    isTodayCell ? (active ? "bg-background" : "bg-foreground") : "bg-transparent",
+                    "text-[8px] font-black uppercase tracking-wider",
+                    isTodayCell ? "opacity-100" : "opacity-0",
                   )}
-                />
+                >
+                  {t("cal.today")}
+                </span>
               </button>
             );
           })}
