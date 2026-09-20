@@ -91,13 +91,15 @@ function AuthPage() {
 
   /** true = account exists, false = no account, null = check unavailable. */
   async function emailRegistered(value: string): Promise<boolean | null> {
-    const { data, error } = await supabase.rpc("email_has_account", { _email: value });
-    if (error) {
-      console.error("[auth] email_has_account falhou:", error);
+    try {
+      const res = await emailHasAccount({ data: { email: value } });
+      return res.known ? res.registered : null;
+    } catch (err) {
+      console.error("[auth] verificação de email falhou:", err);
       return null;
     }
-    return data as boolean;
   }
+
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
