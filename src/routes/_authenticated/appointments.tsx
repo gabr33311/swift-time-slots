@@ -8,7 +8,7 @@ import { AppShell } from "@/components/app-shell";
 import { EmptyState, LoadingRows, PageHeader } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
-import { formatDateShort, formatTime } from "@/lib/format";
+import { formatDateShort, formatPrice, formatTime } from "@/lib/format";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 import { CalendarX, Check, ChevronLeft, ChevronRight, UserX } from "lucide-react";
 import { cn } from "@/lib/utils";
