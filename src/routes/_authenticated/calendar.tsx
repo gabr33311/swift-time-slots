@@ -222,7 +222,7 @@ function CalendarPage() {
                           ["cancelled", "no_show", "expired"].includes(row.appt.status) && "appointment-status-cancelled",
                         )}
                       >
-                        <StickyNote className="size-[18px]" strokeWidth={2.6} />
+                        <StickyNote className="size-[18px] text-muted-foreground" strokeWidth={2.6} />
                       </button>
                     </PopoverTrigger>
                     <PopoverContent side="top" align="end" className="w-64 text-sm">
