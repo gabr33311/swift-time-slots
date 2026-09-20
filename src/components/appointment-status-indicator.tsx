@@ -89,18 +89,10 @@ export function AppointmentStatusIndicator({
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-56 space-y-1 p-1.5">
-          <DropdownMenuItem
-            className="py-2.5 font-bold"
-            style={{ color: "var(--appointment-confirmed-start)" }}
-            onClick={onConfirm}
-          >
+          <DropdownMenuItem className="py-2.5 font-bold" onClick={onConfirm}>
             <CalendarCheck className="mr-1 size-4" /> {t("acts.confirm")}
           </DropdownMenuItem>
-          <DropdownMenuItem
-            className="py-2.5 font-bold"
-            style={{ color: "var(--appointment-cancelled-start)" }}
-            onClick={onCancel}
-          >
+          <DropdownMenuItem className="py-2.5 font-bold" onClick={onCancel}>
             <XCircle className="mr-1 size-4" /> {t("acts.cancelAppt")}
           </DropdownMenuItem>
         </DropdownMenuContent>
