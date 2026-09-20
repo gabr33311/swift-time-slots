@@ -30,7 +30,7 @@ function formatParts(startsAt: string, timezone: string) {
 /** Sends the black-and-white confirmation email for a newly confirmed appointment. */
 export async function sendAppointmentConfirmationEmail(input: ConfirmationInput) {
   const apiKey = process.env["LOVABLE_API_KEY"];
-  const senderDomain = process.env["EMAIL_SENDER_DOMAIN"] ?? "bookflow.pt";
+  const senderDomain = process.env["EMAIL_SENDER_DOMAIN"] ?? "notify.sycras.com";
   if (!apiKey) return { ok: false as const, message: "Envio de email não configurado." };
 
   const { day, time } = formatParts(input.startsAt, input.timezone);
@@ -65,7 +65,7 @@ export async function sendAppointmentConfirmationEmail(input: ConfirmationInput)
     await sendLovableEmail(
       {
         to: input.to,
-        from: { name: input.businessName, address: `noreply@${senderDomain}` },
+        from: `${input.businessName} <noreply@${senderDomain}>`,
         sender_domain: senderDomain,
         subject: "A sua marcação foi confirmada!",
         html,
