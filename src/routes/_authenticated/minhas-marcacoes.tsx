@@ -24,7 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { formatPrice, formatTime, formatDateLong, initials } from "@/lib/format";
+import { formatTime, formatDateLong, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { CalendarDays, ArrowLeft } from "lucide-react";
 import { AppointmentStatusIndicator } from "@/components/appointment-status-indicator";
@@ -143,12 +143,7 @@ function MyBookings() {
                         {formatDateLong(a.starts_at, tz)} · {formatTime(a.starts_at, tz)}
                       </p>
                     </div>
-                    <div className="flex shrink-0 flex-col items-end gap-1.5">
-                      <span className="text-sm font-bold tabular-nums">
-                        {formatPrice(a.price_cents, a.business?.currency ?? "EUR")}
-                      </span>
-                      <AppointmentStatusIndicator status={a.status} />
-                    </div>
+                    <AppointmentStatusIndicator status={a.status} />
                   </div>
                   {tab === "upcoming" && (
                     <div className="mt-3 flex justify-end">

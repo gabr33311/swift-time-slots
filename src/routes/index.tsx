@@ -95,7 +95,7 @@ function Landing() {
                 loading="lazy"
                 width={928}
                 height={720}
-                className="w-full rounded-2xl"
+                className="monochrome-media w-full rounded-2xl"
               />
               <figcaption className="px-1 pb-1 pt-3 text-sm font-bold">
                 {t("showcase.agenda")}
@@ -108,7 +108,7 @@ function Landing() {
                 loading="lazy"
                 width={928}
                 height={720}
-                className="w-full rounded-2xl"
+                className="monochrome-media w-full rounded-2xl"
               />
               <figcaption className="px-1 pb-1 pt-3 text-sm font-bold">
                 {t("showcase.booking")}
