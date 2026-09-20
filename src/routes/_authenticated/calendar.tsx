@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -414,8 +414,9 @@ function CalendarPage() {
                   timezone={tz}
                 />
               </li>
-            ),
-          )}
+            )}
+            </Fragment>
+          ))}
         </ul>
       )}
 
