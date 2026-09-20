@@ -10,13 +10,10 @@ import { SharePanel } from "@/components/panels/share-panel";
 import { useMyBusiness } from "@/hooks/use-business";
 import { usePrefs } from "@/lib/prefs";
 
-const PUBLIC_ORIGIN = "https://bookflow.pt";
+const PUBLIC_ORIGIN = "https://sycras.com";
 
 function publicOrigin(): string {
-  if (typeof window === "undefined") return PUBLIC_ORIGIN;
-  const host = window.location.hostname;
-  const isPreview = host.includes("id-preview") || host === "localhost" || host.endsWith(".local");
-  return isPreview ? PUBLIC_ORIGIN : window.location.origin;
+  return PUBLIC_ORIGIN;
 }
 
 /** Apple-Wallet style pass that slides up from anywhere in the app. */

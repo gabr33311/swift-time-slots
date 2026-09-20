@@ -4,24 +4,23 @@ import { useState, type ComponentType } from "react";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BusinessPanel } from "@/components/panels/business-panel";
 import { ServicesPanel } from "@/components/panels/services-panel";
 import { TeamPanel } from "@/components/panels/team-panel";
 import { AvailabilityPanel } from "@/components/panels/availability-panel";
 import { AnalyticsPanel } from "@/components/panels/analytics-panel";
 import { SettingsPanel } from "@/components/panels/settings-panel";
-import { useMyBusiness } from "@/hooks/use-business";
-import { useLogoUrl } from "@/hooks/use-logo";
-import { initials } from "@/lib/format";
+import { ShareSheet } from "@/components/share-sheet";
 import {
   Building2,
-  Scissors,
-  UserRound,
+  BriefcaseBusiness,
   Clock,
   ArrowLeft,
   BarChart3,
   Settings,
   Users,
+  Share2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -33,6 +32,13 @@ export const Route = createFileRoute("/_authenticated/profile")({
         content: "Business, services, team, hours and stats in one place.",
       },
       { name: "robots", content: "noindex" },
+      { property: "og:title", content: "Gestão — SYCRAS" },
+      {
+        property: "og:description",
+        content: "Business, services, team, hours and stats in one place.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ProfilePage,
@@ -40,8 +46,7 @@ export const Route = createFileRoute("/_authenticated/profile")({
 
 type SectionId =
   | "info"
-  | "services"
-  | "team"
+  | "servicesTeam"
   | "availability"
   | "analytics"
   | "settings";
@@ -55,13 +60,12 @@ const CATEGORIES: { key: string; tiles: Tile[] }[] = [
     key: "pf.cat.business",
     tiles: [
       { kind: "section", id: "info", icon: Building2 },
-      { kind: "section", id: "services", icon: Scissors },
     ],
   },
   {
     key: "pf.cat.operation",
     tiles: [
-      { kind: "section", id: "team", icon: UserRound },
+      { kind: "section", id: "servicesTeam", icon: BriefcaseBusiness },
       { kind: "section", id: "availability", icon: Clock },
       { kind: "link", to: "/customers", labelKey: "nav.customers", icon: Users },
     ],
@@ -78,9 +82,8 @@ const CATEGORIES: { key: string; tiles: Tile[] }[] = [
 function ProfilePage() {
   const { t } = usePrefs();
   const navigate = useNavigate();
-  const { business } = useMyBusiness();
-  const logoUrl = useLogoUrl(business?.logo_url);
   const [section, setSection] = useState<SectionId | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const label = (id: SectionId) => t(`pf.section.${id}`);
   const desc = (id: SectionId) => t(`pf.section.${id}.desc`);
 
@@ -100,32 +103,22 @@ function ProfilePage() {
             >
               <ArrowLeft className="size-5" strokeWidth={2.5} />
             </Button>
-          ) : undefined
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t("pf.share.share")}
+              className="size-9 text-foreground"
+              onClick={() => setShareOpen(true)}
+            >
+              <Share2 className="size-5" strokeWidth={2.4} />
+            </Button>
+          )
         }
       />
 
       {!section ? (
         <div className="space-y-5">
-          <div className="surface flex items-center gap-3 p-4">
-            {logoUrl ? (
-              <img
-                src={logoUrl}
-                alt={`${t("ui.photoOf")} ${business?.name ?? t("ui.photoOfProfile")}`}
-                className="size-12 rounded-2xl object-cover ring-1 ring-border"
-              />
-            ) : (
-              <div className="flex size-12 items-center justify-center rounded-2xl bg-primary text-sm font-bold text-primary-foreground">
-                {business ? initials(business.name) : "S"}
-              </div>
-            )}
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold">{business?.name ?? "SYCRAS"}</p>
-              <p className="truncate text-xs text-muted-foreground">
-                {business ? `bookflow.pt/b/${business.slug}` : t("ui.loading")}
-              </p>
-            </div>
-          </div>
-
           {CATEGORIES.map((cat) => (
             <section key={cat.key} className="space-y-2">
               <h2 className="px-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -160,13 +153,32 @@ function ProfilePage() {
       ) : (
         <div key={section} className="animate-enter">
           {section === "info" && <BusinessPanel />}
-          {section === "services" && <ServicesPanel />}
-          {section === "team" && <TeamPanel />}
+          {section === "servicesTeam" && <ServicesTeamPanel />}
           {section === "availability" && <AvailabilityPanel />}
           {section === "analytics" && <AnalyticsPanel />}
           {section === "settings" && <SettingsPanel />}
         </div>
       )}
+      <ShareSheet open={shareOpen} onOpenChange={setShareOpen} />
     </AppShell>
+  );
+}
+
+function ServicesTeamPanel() {
+  const { t } = usePrefs();
+
+  return (
+    <Tabs defaultValue="services" className="w-full">
+      <TabsList className="mb-4 grid w-full grid-cols-2">
+        <TabsTrigger value="services">{t("pf.section.services")}</TabsTrigger>
+        <TabsTrigger value="team">{t("pf.section.team")}</TabsTrigger>
+      </TabsList>
+      <TabsContent value="services">
+        <ServicesPanel />
+      </TabsContent>
+      <TabsContent value="team">
+        <TeamPanel />
+      </TabsContent>
+    </Tabs>
   );
 }
