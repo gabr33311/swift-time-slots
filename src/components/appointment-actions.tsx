@@ -20,7 +20,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Menu, CheckCircle2, XCircle, CalendarCheck, BellRing, RotateCcw } from "lucide-react";
+import { Menu, CheckCircle2, XCircle, CalendarCheck, BellRing, RotateCcw, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { normalizePhonePt } from "@/lib/phone";
 import { formatDateLong, formatTime } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
@@ -63,6 +64,7 @@ export function AppointmentActions({
   const { t } = usePrefs();
   const qc = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const { business } = useMyBusiness();
@@ -96,6 +98,24 @@ export function AppointmentActions({
     qc.invalidateQueries({ queryKey: ["appointments"] });
     qc.invalidateQueries({ queryKey: ["requests"] });
     qc.invalidateQueries({ queryKey: ["dashboard-requests"] });
+  }
+
+  async function deleteAppointment() {
+    if (!business) return;
+    setBusy(true);
+    const { error } = await supabase
+      .from("appointments")
+      .delete()
+      .eq("id", id)
+      .eq("business_id", business.id);
+    setBusy(false);
+    if (error) {
+      toast.error(t("appt.toast.updateError"));
+      return;
+    }
+    toast.success(t("acts.toast.deleted"));
+    qc.invalidateQueries({ queryKey: ["calendar"] });
+    qc.invalidateQueries({ queryKey: ["appointments"] });
   }
 
   const canCancel = status !== "cancelled" && status !== "completed";
@@ -164,6 +184,14 @@ export function AppointmentActions({
               <RotateCcw className="mr-1 size-4" /> {t("acts.revertCompleted")}
             </DropdownMenuItem>
           )}
+          {status === "completed" && (
+            <DropdownMenuItem
+              className="py-2.5 font-bold text-foreground"
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2 className="mr-1 size-4" /> {t("acts.deleteAppt")}
+            </DropdownMenuItem>
+          )}
           {canRemind && (
             <DropdownMenuItem className="py-2.5 font-bold text-foreground" onClick={remind}>
               <BellRing className="mr-1 size-4" /> {t("acts.remindWhatsapp")}
@@ -193,6 +221,24 @@ export function AppointmentActions({
             <AlertDialogCancel>{t("acts.dialog.keep")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => setStatus("cancelled")}>
               {t("acts.cancelAppt")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("acts.dialog.deleteTitle")}
+              {customerName}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>{t("acts.dialog.deleteDesc")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("acts.dialog.keep")}</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteAppointment}>
+              {t("acts.deleteAppt")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
