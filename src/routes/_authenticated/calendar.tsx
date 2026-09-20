@@ -144,6 +144,23 @@ function CalendarPage() {
     staffFilter === "all" || id === staffFilter || id === null;
   const appts = (data?.appts ?? []).filter((a) => matchesStaff(a.staff_id));
   const blocks = (data?.blocks ?? []).filter((b) => matchesStaff(b.staff_id));
+  const agendaRows = data ? buildAgenda(data.hours, appts, blocks, tz) : [];
+  const isToday = date === todayIn(tz);
+  const nowHHMM = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: tz,
+  }).format(new Date());
+  const markerIndex = isToday ? agendaRows.findIndex((r) => r.hour > nowHHMM) : -1;
+
+  const weekStart = addDays(date, -((weekdayOf(date) + 6) % 7));
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const dayShort = (d: string) =>
+    new Intl.DateTimeFormat(t("cal.today") === "Today" ? "en-GB" : "pt-PT", {
+      weekday: "short",
+      timeZone: "UTC",
+    }).format(new Date(`${d}T12:00:00Z`));
 
   async function blockHour(hour: string) {
     if (!business) return;
