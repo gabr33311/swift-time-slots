@@ -12,7 +12,7 @@ import { displayCustomerName, formatTime, formatDateLong, greetingPt } from "@/l
 import { zonedToUtc, todayIn } from "@/lib/time";
 import { Bell, CalendarCheck, Check, ChevronDown, CircleCheck, Clock3, Sun, UserX } from "lucide-react";
 import { toast } from "sonner";
-import { setAppointmentStatus } from "@/lib/appointment-status";
+import { setAppointmentStatus, type ApptStatus } from "@/lib/appointment-status";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
@@ -368,7 +368,7 @@ function ApptRow({
     customer_name: string;
     customer_phone: string | null;
     service_name: string;
-    status: string;
+    status: ApptStatus;
   };
   index: number;
   timezone: string;
