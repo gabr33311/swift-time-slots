@@ -2611,7 +2611,7 @@ A aplicação deve estar preparada para crescer de dezenas para milhares de neg�
 
 This project was built with [Lovable](https://lovable.dev).
 
-**Live app**: https://swift-time-slots.lovable.app
+**Live app**: https://sycras.com
 
 ## Build with Lovable
 
