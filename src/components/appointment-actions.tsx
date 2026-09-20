@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Bars3, CheckCircle2, XCircle, CalendarCheck, BellRing } from "lucide-react";
+import { Menu, CheckCircle2, XCircle, CalendarCheck, BellRing } from "lucide-react";
 import { normalizePhonePt } from "@/lib/phone";
 import { formatDateLong, formatTime } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
@@ -119,7 +119,7 @@ export function AppointmentActions({
             aria-label={`${t("acts.opts.forLabel")}${customerName}`}
             disabled={busy}
           >
-            <Bars3 className="size-[18px]" strokeWidth={2.7} />
+            <Menu className="size-[18px]" strokeWidth={2.7} />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-64 space-y-1 p-1.5">
