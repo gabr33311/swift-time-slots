@@ -65,7 +65,7 @@ export async function sendAppointmentConfirmationEmail(input: ConfirmationInput)
     await sendLovableEmail(
       {
         to: input.to,
-        from: { name: input.businessName, address: `noreply@${senderDomain}` },
+        from: `${input.businessName} <noreply@${senderDomain}>`,
         sender_domain: senderDomain,
         subject: "A sua marcação foi confirmada!",
         html,
