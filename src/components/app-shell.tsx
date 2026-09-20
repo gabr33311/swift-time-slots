@@ -98,7 +98,13 @@ function DockTab({
   );
 }
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({
+  children,
+  onPrimaryAction,
+}: {
+  children: ReactNode;
+  onPrimaryAction?: () => void;
+}) {
   const { business } = useMyBusiness();
   const logoUrl = useLogoUrl(business?.logo_url);
   const navigate = useNavigate();
@@ -128,6 +134,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (timer.current) clearTimeout(timer.current);
     if (held.current) return;
     if (startY.current - y > 36) setShareOpen(true);
+    else if (onPrimaryAction) onPrimaryAction();
     else setNewOpen(true);
   }
 
