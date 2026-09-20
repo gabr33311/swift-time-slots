@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils";
 import { Check, Loader2, ArrowRight, ArrowLeft, Copy, ExternalLink, Trash2, CircleCheck, CircleX } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { isReservedSlug } from "@/lib/reserved-slugs";
+import { checkSlugAvailable } from "@/lib/booking.functions";
+
 
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
