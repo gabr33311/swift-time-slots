@@ -181,7 +181,6 @@ function Dashboard() {
                     ? t("dash.todayLabel")
                     : formatDateLong(`${day}T12:00:00Z`, business!.timezone)
                 }
-                count={items.length}
                 confirmedCount={items.filter((a) => a.status === "confirmed").length}
                 pendingCount={items.filter((a) => a.status === "pending").length}
                 collapsibleDefaultOpen={gi === 0}
@@ -343,7 +342,6 @@ function NotificationBell({
 
 function DayGroup({
   dayLabel,
-  count,
   confirmedCount,
   pendingCount,
   collapsibleDefaultOpen,
@@ -351,7 +349,6 @@ function DayGroup({
   children,
 }: {
   dayLabel: string;
-  count: number;
   confirmedCount: number;
   pendingCount: number;
   collapsibleDefaultOpen: boolean;
@@ -370,9 +367,6 @@ function DayGroup({
       >
         <span className="font-display text-sm font-bold uppercase capitalize tracking-[0.05em] text-muted-foreground">
           {dayLabel}
-        </span>
-        <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold tabular-nums text-primary">
-          {count}
         </span>
         {confirmedCount > 0 && (
           <span className="inline-flex items-center gap-1 text-xs font-bold tabular-nums appointment-status-confirmed">
