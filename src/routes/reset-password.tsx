@@ -141,7 +141,7 @@ function ResetPasswordPage() {
 
         <button
           className="mt-5 w-full text-center text-sm font-bold text-muted-foreground hover:text-foreground"
-          onClick={() => navigate({ to: "/auth" })}
+          onClick={() => navigate({ to: "/auth", search: {} })}
         >
           {c.back}
         </button>
