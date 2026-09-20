@@ -133,21 +133,21 @@ function Onboarding() {
     setSlugCheck({ state: "checking", slug: clean });
 
     const id = setTimeout(async () => {
-      // Direct table read: no RPC dependency. The unique index on
-      // businesses.slug is the final guard on insert (error 23505).
-      const { data, error } = await supabase
-        .from("businesses")
-        .select("id")
-        .eq("slug", clean)
-        .maybeSingle();
-      if (error) {
-        console.error("[onboarding] slug check falhou:", error);
+      // Checked on the server: the businesses table is no longer publicly readable.
+      try {
+        const res = await checkSlugAvailable({ data: { slug: clean } });
+        if (res.invalid) {
+          setSlugCheck({ state: "invalid", slug: clean });
+          return;
+        }
+        setSlugCheck({ state: res.available ? "free" : "taken", slug: clean });
+      } catch (err) {
+        console.error("[onboarding] slug check falhou:", err);
         toast.error(t("onb.s1.slug.checkFailed"));
         setSlugCheck({ state: "idle", slug: clean });
-        return;
       }
-      setSlugCheck({ state: data ? "taken" : "free", slug: clean });
     }, 450);
+
 
     return () => clearTimeout(id);
   }, [slug, t]);
