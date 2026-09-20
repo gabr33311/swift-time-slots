@@ -8,15 +8,9 @@ import { AppShell } from "@/components/app-shell";
 import { EmptyState, LoadingRows, PageHeader } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
-import { formatDateShort, formatPrice, formatTime, statusLabel } from "@/lib/format";
+import { formatDateShort, formatPrice, formatTime } from "@/lib/format";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
-import { CalendarX, Check, ChevronLeft, ChevronRight, MoreHorizontal, UserX } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { CalendarX, Check, ChevronLeft, ChevronRight, UserX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { AppointmentActions } from "@/components/appointment-actions";
@@ -41,7 +35,7 @@ type StatusFilter = (typeof STATUS_FILTERS)[number];
 type TimeFilter = (typeof TIME_FILTERS)[number];
 
 function AppointmentsPage() {
-  const { t, lang } = usePrefs();
+  const { t } = usePrefs();
   const search = Route.useSearch();
   const { business } = useMyBusiness();
   const qc = useQueryClient();

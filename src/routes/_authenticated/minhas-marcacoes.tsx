@@ -32,10 +32,10 @@ import { AppointmentStatusIndicator } from "@/components/appointment-status-indi
 export const Route = createFileRoute("/_authenticated/minhas-marcacoes")({
   head: () => ({
     meta: [
-      { title: "As minhas marcações — Schedivo" },
+      { title: "As minhas marcações — SYCRAS" },
       {
         name: "description",
-        content: "Consulta e cancela as tuas marcações na tua conta Schedivo.",
+        content: "Consulta e cancela as tuas marcações na tua conta SYCRAS.",
       },
       { name: "robots", content: "noindex" },
     ],

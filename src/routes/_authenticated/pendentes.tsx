@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
-import { EmptyState, LoadingRows, PageHeader, StatusBadge } from "@/components/ui-bits";
+import { EmptyState, LoadingRows, PageHeader } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { formatPrice, formatTime, formatDateLong } from "@/lib/format";

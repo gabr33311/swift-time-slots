@@ -2,7 +2,7 @@ import type { Lang } from "../prefs-types";
 
 export const calendarDict: Record<Lang, Record<string, string>> = {
   pt: {
-    "cal.head.title": "Agenda — Schedivo",
+    "cal.head.title": "Agenda — SYCRAS",
     "cal.head.desc": "A agenda diária da tua equipa, hora a hora.",
     "cal.title": "Agenda",
     "cal.subtitle": "O dia da tua equipa.",
@@ -42,7 +42,7 @@ export const calendarDict: Record<Lang, Record<string, string>> = {
     "cal.add.ics": "Ficheiro .ics",
   },
   en: {
-    "cal.head.title": "Calendar — Schedivo",
+    "cal.head.title": "Calendar — SYCRAS",
     "cal.head.desc": "Your team's daily calendar, hour by hour.",
     "cal.title": "Calendar",
     "cal.subtitle": "Your team's day.",
