@@ -132,6 +132,16 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  // Password-recovery links carry the token in the URL hash and can land on
+  // any route (old published builds, site URL fallbacks, etc.). Forward them
+  // to /reset-password, preserving the hash so the session is picked up.
+  useEffect(() => {
+    const { pathname, hash } = window.location;
+    if (hash.includes("type=recovery") && pathname !== "/reset-password") {
+      window.location.replace(`/reset-password${hash}`);
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <PrefsProvider>
