@@ -116,6 +116,16 @@ function Onboarding() {
     slug: string;
   }>({ state: "idle", slug: "" });
 
+  // Fields show their error only after the user has interacted with them.
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const markTouched = (key: string) => () =>
+    setTouched((prev) => (prev[key] ? prev : { ...prev, [key]: true }));
+
+  const nameError = touched.name && name.trim().length < 2;
+  const descError = touched.desc && description.trim().length < 10;
+  const cityError = touched.city && city.trim().length < 2;
+  const addrError = touched.addr && address.trim().length < 4;
+
   useEffect(() => {
     const clean = slug.trim().toLowerCase();
     if (
