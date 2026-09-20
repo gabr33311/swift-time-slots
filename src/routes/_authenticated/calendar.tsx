@@ -90,6 +90,11 @@ function CalendarPage() {
   const [staffFilter, setStaffFilter] = useState<string>("all");
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const { data, isLoading } = useQuery({
     queryKey: ["calendar", business?.id, date],
