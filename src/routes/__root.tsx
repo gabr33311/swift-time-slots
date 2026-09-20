@@ -12,7 +12,6 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { PrefsProvider, usePrefs } from "@/lib/prefs";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
   const { t } = usePrefs();
@@ -42,7 +41,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
   const { t } = usePrefs();
   useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    console.error("[app] root error boundary", error);
   }, [error]);
 
   return (
@@ -83,12 +82,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "SYCRAS — Marcações online" },
       { name: "description", content: "Marcações online simples para negócios em Portugal." },
-      { name: "author", content: "Lovable" },
+      { name: "author", content: "SYCRAS" },
       { property: "og:title", content: "SYCRAS — Marcações online" },
       { property: "og:description", content: "Marcações online simples para negócios em Portugal." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
       { name: "theme-color", content: "#111111" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-title", content: "SYCRAS" },
