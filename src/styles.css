@@ -434,7 +434,9 @@
     background-image: linear-gradient(90deg, var(--appointment-pending-start), var(--appointment-pending-end), var(--appointment-pending-start));
   }
 
-  &[data-status="cancelled"] {
+  &[data-status="cancelled"],
+  &[data-status="no_show"],
+  &[data-status="expired"] {
     background-image: linear-gradient(90deg, var(--appointment-cancelled-start), var(--appointment-cancelled-end), var(--appointment-cancelled-start));
   }
 
