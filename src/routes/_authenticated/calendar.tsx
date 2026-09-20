@@ -46,6 +46,8 @@ function hoursFromRanges(ranges: { start: string; end: string }[]): string[] {
 type Appt = {
   id: string;
   starts_at: string;
+  ends_at?: string | null;
+
   customer_name: string;
   customer_phone: string | null;
   service_name: string;
