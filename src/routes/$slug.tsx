@@ -9,6 +9,8 @@ import { trackPageView } from "@/lib/analytics.functions";
 import { AddToCalendar } from "@/components/add-to-calendar";
 import { ClientAuthStep } from "@/components/client-auth-step";
 import { maskPhonePt } from "@/lib/phone";
+import { isReservedSlug } from "@/lib/reserved-slugs";
+
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
