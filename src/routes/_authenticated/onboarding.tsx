@@ -110,38 +110,27 @@ function Onboarding() {
 
   useEffect(() => {
     const clean = slug.trim().toLowerCase();
-    if (clean.length < 3) {
+    if (!/^[a-z0-9-]{3,48}$/.test(clean)) {
       setSlugCheck({ state: "invalid", slug: clean });
       return;
     }
     setSlugCheck({ state: "checking", slug: clean });
 
     const id = setTimeout(async () => {
-      try {
-        const res = await checkSlugAvailable({ data: { slug: clean } });
-        setSlugCheck({
-          state: res.invalid ? "invalid" : res.available ? "free" : "taken",
-          slug: clean,
-        });
-      } catch (err) {
-        console.error("Erro no checkSlugAvailable, a tentar fallback direto na BD:", err);
-        try {
-          const { data, error } = await supabase.from("businesses").select("id").eq("slug", clean).maybeSingle();
-
-          if (error) throw error;
-          setSlugCheck({
-            state: data ? "taken" : "free",
-            slug: clean,
-          });
-        } catch (dbErr) {
-          console.error("Erro no fallback da BD:", dbErr);
-          setSlugCheck({ state: "free", slug: clean });
-        }
+      // Real availability check (SECURITY DEFINER RPC): works regardless of the
+      // RLS policies on `businesses` and also rejects reserved app paths.
+      const { data, error } = await supabase.rpc("slug_available", { _slug: clean });
+      if (error) {
+        console.error("[onboarding] slug_available falhou:", error);
+        toast.error(t("onb.s1.slug.checkFailed"));
+        setSlugCheck({ state: "idle", slug: clean });
+        return;
       }
+      setSlugCheck({ state: data ? "free" : "taken", slug: clean });
     }, 450);
 
     return () => clearTimeout(id);
-  }, [slug]);
+  }, [slug, t]);
 
   const step1Valid =
     name.trim().length >= 2 &&
