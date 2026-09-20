@@ -50,6 +50,10 @@ export const calendarDict: Record<Lang, Record<string, string>> = {
     "cal.add.apple": "Apple Calendar",
     "cal.add.outlook": "Outlook",
     "cal.add.ics": "Ficheiro .ics",
+    "cal.now": "Agora",
+    "cal.week.prev": "Semana anterior",
+    "cal.week.next": "Semana seguinte",
+    "cal.summary": "{appts} marcações · {free} horas livres",
   },
   en: {
     "cal.head.title": "Calendar — SYCRAS",
@@ -100,5 +104,9 @@ export const calendarDict: Record<Lang, Record<string, string>> = {
     "cal.add.apple": "Apple Calendar",
     "cal.add.outlook": "Outlook",
     "cal.add.ics": ".ics file",
+    "cal.now": "Now",
+    "cal.week.prev": "Previous week",
+    "cal.week.next": "Next week",
+    "cal.summary": "{appts} bookings · {free} free hours",
   },
 };

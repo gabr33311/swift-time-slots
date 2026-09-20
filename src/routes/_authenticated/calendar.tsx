@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -144,6 +144,23 @@ function CalendarPage() {
     staffFilter === "all" || id === staffFilter || id === null;
   const appts = (data?.appts ?? []).filter((a) => matchesStaff(a.staff_id));
   const blocks = (data?.blocks ?? []).filter((b) => matchesStaff(b.staff_id));
+  const agendaRows = data ? buildAgenda(data.hours, appts, blocks, tz) : [];
+  const isToday = date === todayIn(tz);
+  const nowHHMM = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: tz,
+  }).format(new Date());
+  const markerIndex = isToday ? agendaRows.findIndex((r) => r.hour > nowHHMM) : -1;
+
+  const weekStart = addDays(date, -((weekdayOf(date) + 6) % 7));
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const dayShort = (d: string) =>
+    new Intl.DateTimeFormat(t("cal.today") === "Today" ? "en-GB" : "pt-PT", {
+      weekday: "short",
+      timeZone: "UTC",
+    }).format(new Date(`${d}T12:00:00Z`));
 
   async function blockHour(hour: string) {
     if (!business) return;
@@ -193,28 +210,57 @@ function CalendarPage() {
         }
       />
 
-      <div className="surface mb-3 flex items-center gap-1 p-1.5">
-        <button
-          onClick={() => setDate(addDays(date, -1))}
-          aria-label={t("cal.prevDay")}
-          className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <ChevronLeft className="size-4" />
-        </button>
-        <p className="min-w-0 flex-1 truncate text-center text-sm font-bold capitalize">{label}</p>
-        <button
-          onClick={() => setDate(addDays(date, 1))}
-          aria-label={t("cal.nextDay")}
-          className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <ChevronRight className="size-4" />
-        </button>
-        {date === todayIn(tz) && (
-          <span className="ml-0.5 flex h-9 shrink-0 items-center rounded-full px-3.5 text-[13px] font-bold text-muted-foreground">
-            {t("cal.today")}
-          </span>
-        )}
+      <div className="surface mb-3 p-1.5">
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setDate(addDays(date, -7))}
+            aria-label={t("cal.week.prev")}
+            className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <ChevronLeft className="size-4" />
+          </button>
+          <p className="min-w-0 flex-1 truncate text-center text-sm font-bold capitalize">
+            {label}
+          </p>
+          <button
+            onClick={() => setDate(addDays(date, 7))}
+            aria-label={t("cal.week.next")}
+            className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <ChevronRight className="size-4" />
+          </button>
+        </div>
+        <div className="mt-1 grid grid-cols-7 gap-1">
+          {weekDays.map((d) => {
+            const active = d === date;
+            const isTodayCell = d === todayIn(tz);
+            return (
+              <button
+                key={d}
+                onClick={() => setDate(d)}
+                className={cn(
+                  "flex flex-col items-center gap-0.5 rounded-2xl py-2 transition-colors",
+                  active
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                <span className="text-[10px] font-bold uppercase tracking-wide">
+                  {dayShort(d).replace(".", "").slice(0, 3)}
+                </span>
+                <span className="text-sm font-black tabular-nums">{Number(d.slice(8, 10))}</span>
+                <span
+                  className={cn(
+                    "size-1 rounded-full",
+                    isTodayCell ? (active ? "bg-background" : "bg-foreground") : "bg-transparent",
+                  )}
+                />
+              </button>
+            );
+          })}
+        </div>
       </div>
+
 
       {staffList.length > 1 && (
         <div className="mb-4 flex items-center gap-1.5 overflow-x-auto rounded-full bg-muted p-1">
@@ -245,30 +291,43 @@ function CalendarPage() {
           <p className="text-sm font-bold text-muted-foreground">{t("cal.freeDay")}</p>
         </div>
       ) : (
-        <ul className="space-y-2.5">
-          {buildAgenda(data!.hours, appts, blocks, tz).map((row, i) =>
-            row.kind === "free" ? (
-              <li key={`free-${row.hour}`} className="flex items-center gap-2">
+        <ul className="space-y-2">
+          {agendaRows.map((row, i) => (
+            <Fragment key={`row-${i}-${row.hour}`}>
+              {i === markerIndex && (
+                <li aria-hidden className="flex items-center gap-2 py-0.5">
+                  <span className="text-[11px] font-black uppercase tracking-[0.1em] text-foreground">
+                    {t("cal.now")}
+                  </span>
+                  <span className="h-px flex-1 bg-foreground/60" />
+                  <span className="size-1.5 rounded-full bg-foreground" />
+                </li>
+              )}
+              {row.kind === "free" ? (
+              <li className="flex items-center gap-2">
                 <button
                   onClick={() => {
                     setNewTime(row.hour);
                     setNewOpen(true);
                   }}
-                  className="surface surface-hover flex min-w-0 flex-1 items-center gap-3.5 px-4 py-3 text-left"
+                  className="group flex min-w-0 flex-1 items-center gap-3.5 rounded-2xl border border-dashed border-border/70 bg-transparent px-4 py-2.5 text-left transition-colors hover:border-foreground/30 hover:bg-muted/40"
                 >
-                  <span className="w-14 shrink-0 text-sm font-bold tabular-nums text-muted-foreground">
+                  <span className="w-14 shrink-0 text-sm font-bold tabular-nums text-muted-foreground/70">
                     {row.hour}
                   </span>
-                  <span className="flex-1 text-sm font-semibold text-muted-foreground/70">
+                  <span className="flex-1 text-sm font-medium text-muted-foreground/50">
                     {t("cal.slot.free")}
                   </span>
-                  <Plus className="size-4 shrink-0 text-primary" strokeWidth={2.6} />
+                  <Plus
+                    className="size-4 shrink-0 text-muted-foreground/40 transition-colors group-hover:text-foreground"
+                    strokeWidth={2.6}
+                  />
                 </button>
                 <button
                   onClick={() => blockHour(row.hour)}
                   aria-label={t("cal.block")}
                   title={t("cal.block")}
-                  className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed border-border text-muted-foreground/60 transition-colors hover:border-solid hover:text-foreground"
                 >
                   <Lock className="size-4" strokeWidth={2.6} />
                 </button>
@@ -355,8 +414,9 @@ function CalendarPage() {
                   timezone={tz}
                 />
               </li>
-            ),
-          )}
+            )}
+            </Fragment>
+          ))}
         </ul>
       )}
 
