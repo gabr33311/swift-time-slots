@@ -66,22 +66,35 @@ export function PendingCapsule({ variant = "bar" }: { variant?: "bar" | "badge" 
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="appointment-state mb-3 flex w-full items-center gap-3 rounded-2xl border border-border px-4 py-3 text-left"
-        data-status="pending"
-      >
-        <span className="appointment-status-disc flex size-9 shrink-0 items-center justify-center rounded-full border border-border">
-          <BellRing className="size-[17px] text-muted-foreground" strokeWidth={2.6} />
-        </span>
-        <span className="min-w-0 flex-1 truncate text-sm font-bold">
-          {t("cal.pending.pill").replace("{n}", String(list.length))}
-        </span>
-        <span className="shrink-0 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-          {t("cal.pending.review")}
-        </span>
-      </button>
+      {variant === "badge" ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label={t("cal.pending.pill").replace("{n}", String(list.length))}
+          className="pending-halo relative flex h-9 items-center gap-1.5 rounded-full border border-border bg-card pl-2.5 pr-3 text-left"
+        >
+          <BellRing className="size-[15px] text-muted-foreground" strokeWidth={2.6} />
+          <span className="text-[13px] font-black tabular-nums">{list.length}</span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="appointment-state mb-3 flex w-full items-center gap-3 rounded-2xl border border-border px-4 py-3 text-left"
+          data-status="pending"
+        >
+          <span className="appointment-status-disc flex size-9 shrink-0 items-center justify-center rounded-full border border-border">
+            <BellRing className="size-[17px] text-muted-foreground" strokeWidth={2.6} />
+          </span>
+          <span className="min-w-0 flex-1 truncate text-sm font-bold">
+            {t("cal.pending.pill").replace("{n}", String(list.length))}
+          </span>
+          <span className="shrink-0 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            {t("cal.pending.review")}
+          </span>
+        </button>
+      )}
+
 
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerContent className="pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
