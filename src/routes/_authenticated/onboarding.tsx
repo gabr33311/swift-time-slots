@@ -14,7 +14,6 @@ import { WEEKDAYS_PT } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Check, Loader2, ArrowRight, ArrowLeft, Copy, ExternalLink, Trash2, CircleCheck, CircleX } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { checkSlugAvailable } from "@/lib/booking.functions";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
