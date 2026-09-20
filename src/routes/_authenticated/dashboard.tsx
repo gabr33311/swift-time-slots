@@ -197,7 +197,7 @@ function Dashboard() {
                         focusId === a.id && "ring-2 ring-primary",
                       )}
                     >
-                      <span className="flex w-14 shrink-0 flex-col items-center rounded-xl bg-accent px-2 py-2 text-sm font-bold tabular-nums text-primary">
+                      <span className="w-14 shrink-0 text-center text-lg font-black tabular-nums text-foreground">
                         {formatTime(a.starts_at, business!.timezone)}
                       </span>
                       <div className="min-w-0 flex-1">
@@ -369,13 +369,13 @@ function DayGroup({
           {dayLabel}
         </span>
         {confirmedCount > 0 && (
-          <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 text-xs font-bold tabular-nums appointment-status-confirmed">
+          <span className="appointment-count-chip appointment-status-confirmed inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs font-bold tabular-nums">
             {confirmedCount}
             <CircleCheck className="size-4" aria-hidden="true" />
           </span>
         )}
         {pendingCount > 0 && (
-          <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 text-xs font-bold tabular-nums appointment-status-pending">
+          <span className="appointment-count-chip appointment-status-pending inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs font-bold tabular-nums">
             {pendingCount}
             <Clock3 className="size-4 animate-status-shake" aria-hidden="true" />
           </span>

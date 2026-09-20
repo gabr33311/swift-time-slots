@@ -29,6 +29,15 @@ import { AppointmentStatusIndicator } from "@/components/appointment-status-indi
 
 type Status = "pending" | "confirmed" | "completed" | "cancelled" | "no_show" | "expired";
 
+const STATUS_STYLES: Record<Status, string> = {
+  pending: "appointment-status-pending",
+  confirmed: "appointment-status-confirmed",
+  completed: "appointment-status-completed",
+  cancelled: "appointment-status-cancelled",
+  no_show: "appointment-status-cancelled",
+  expired: "appointment-status-cancelled",
+};
+
 /** Quick status actions (confirm, complete, cancel, remind) for one appointment. */
 export function AppointmentActions({
   id,
@@ -115,7 +124,10 @@ export function AppointmentActions({
           <Button
             variant="ghost"
             size="icon"
-            className="size-9 shrink-0 rounded-full border border-border bg-card text-muted-foreground"
+            className={cn(
+              "size-9 shrink-0 rounded-full border border-current bg-card",
+              STATUS_STYLES[status],
+            )}
             aria-label={`${t("acts.opts.forLabel")}${customerName}`}
             disabled={busy}
           >
