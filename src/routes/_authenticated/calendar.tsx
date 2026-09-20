@@ -40,6 +40,33 @@ function hoursFromRanges(ranges: { start: string; end: string }[]): string[] {
   return Array.from(new Set(out)).sort();
 }
 
+type Appt = {
+  id: string;
+  starts_at: string;
+  customer_name: string;
+  customer_phone: string | null;
+  service_name: string;
+  status: "pending" | "confirmed" | "completed" | "cancelled" | "no_show" | "expired";
+  notes: string | null;
+};
+
+type AgendaRow = { kind: "free"; hour: string } | { kind: "appt"; appt: Appt; hour: string };
+
+/** Merges the working-hour grid with booked slots into one chronological list. */
+function buildAgenda(hours: string[], appts: Appt[], tz: string): AgendaRow[] {
+  const rows: AgendaRow[] = appts.map((a) => ({
+    kind: "appt" as const,
+    appt: a,
+    hour: formatTime(a.starts_at, tz),
+  }));
+  const takenHours = new Set(rows.map((r) => r.hour.slice(0, 2)));
+  for (const h of hours) {
+    if (takenHours.has(h.slice(0, 2))) continue;
+    rows.push({ kind: "free", hour: h });
+  }
+  return rows.sort((a, b) => a.hour.localeCompare(b.hour));
+}
+
 function CalendarPage() {
   const { t } = usePrefs();
   const { business } = useMyBusiness();
