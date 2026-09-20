@@ -10,7 +10,7 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { useAuth } from "@/hooks/use-auth";
 import { displayCustomerName, formatTime, formatDateLong, greetingPt } from "@/lib/format";
 import { zonedToUtc, todayIn } from "@/lib/time";
-import { Bell, CalendarCheck, Check, ChevronDown } from "lucide-react";
+import { Bell, CalendarCheck, Check, ChevronDown, CircleCheck, Clock3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
 import { InstallPrompt } from "@/components/install-prompt";
@@ -182,6 +182,8 @@ function Dashboard() {
                     : formatDateLong(`${day}T12:00:00Z`, business!.timezone)
                 }
                 count={items.length}
+                confirmedCount={items.filter((a) => a.status === "confirmed").length}
+                pendingCount={items.filter((a) => a.status === "pending").length}
                 collapsibleDefaultOpen={gi === 0}
                 forceOpen={items.some((a) => a.id === focusId)}
               >
@@ -342,12 +344,16 @@ function NotificationBell({
 function DayGroup({
   dayLabel,
   count,
+  confirmedCount,
+  pendingCount,
   collapsibleDefaultOpen,
   forceOpen,
   children,
 }: {
   dayLabel: string;
   count: number;
+  confirmedCount: number;
+  pendingCount: number;
   collapsibleDefaultOpen: boolean;
   forceOpen?: boolean;
   children: React.ReactNode;
@@ -368,6 +374,18 @@ function DayGroup({
         <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold tabular-nums text-primary">
           {count}
         </span>
+        {confirmedCount > 0 && (
+          <span className="inline-flex items-center gap-1 text-xs font-bold tabular-nums appointment-status-confirmed">
+            {confirmedCount}
+            <CircleCheck className="size-4" aria-hidden="true" />
+          </span>
+        )}
+        {pendingCount > 0 && (
+          <span className="inline-flex items-center gap-1 text-xs font-bold tabular-nums appointment-status-pending">
+            {pendingCount}
+            <Clock3 className="size-4 animate-status-shake" aria-hidden="true" />
+          </span>
+        )}
         <ChevronDown
           className={cn("ml-auto size-4 text-muted-foreground transition-transform", !open && "-rotate-90")}
         />

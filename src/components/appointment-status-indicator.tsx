@@ -40,7 +40,7 @@ export function AppointmentStatusIndicator({ status }: { status: string }) {
           variant="ghost"
           size="icon"
           className={cn(
-            "size-9 shrink-0 rounded-full border bg-card/85 shadow-sm backdrop-blur-sm",
+            "size-9 shrink-0 bg-transparent shadow-none hover:bg-transparent",
             STATUS_STYLES[status] ?? "text-muted-foreground",
           )}
           aria-label={statusLabel(status, lang)}
