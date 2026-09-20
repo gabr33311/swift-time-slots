@@ -115,5 +115,12 @@ export const calendarDict: Record<Lang, Record<string, string>> = {
     "cal.week.prev": "Previous week",
     "cal.week.next": "Next week",
     "cal.summary": "{appts} bookings · {free} free hours",
+    "cal.pending.pill": "{n} awaiting approval",
+    "cal.pending.review": "Review",
+    "cal.pending.title": "Bookings awaiting approval",
+    "cal.pending.confirm": "Confirm",
+    "cal.pending.cancel": "Cancel",
+    "cal.pending.confirmed": "Booking confirmed.",
+    "cal.pending.cancelled": "Booking cancelled.",
   },
 };
