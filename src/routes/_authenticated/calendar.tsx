@@ -224,12 +224,20 @@ function CalendarPage() {
     qc.invalidateQueries({ queryKey: ["calendar"] });
   }
 
-  const label = new Intl.DateTimeFormat("pt-PT", {
-    weekday: "long",
+  const isEn = t("cal.today") === "Today";
+  const locale = isEn ? "en-GB" : "pt-PT";
+  const labelDate = new Date(`${date}T12:00:00Z`);
+  const dayMonth = new Intl.DateTimeFormat(locale, {
     day: "numeric",
     month: "long",
     timeZone: tz,
-  }).format(new Date(`${date}T12:00:00Z`));
+  }).format(labelDate);
+  const weekdayLong = new Intl.DateTimeFormat(locale, {
+    weekday: "long",
+    timeZone: tz,
+  }).format(labelDate);
+  const rawLabel = isToday ? `${t("cal.today")}, ${dayMonth}` : `${weekdayLong}, ${dayMonth}`;
+  const label = rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
 
   return (
     <AppShell>
