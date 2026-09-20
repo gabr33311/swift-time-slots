@@ -428,10 +428,17 @@
   animation: appointment-gradient 5s ease-in-out infinite;
 }
 
-@utility appointment-count-chip {
-  background-image: linear-gradient(110deg, var(--action-outline-start), var(--action-outline-end), var(--action-outline-start));
-  background-size: 220% 220%;
-  animation: appointment-gradient 5s ease-in-out infinite;
+@utility appointment-count-pill {
+  &[data-status="confirmed"] {
+    background-color: color-mix(in oklch, var(--appointment-confirmed-start) 16%, transparent);
+    color: var(--appointment-confirmed-start);
+    border-color: color-mix(in oklch, var(--appointment-confirmed-start) 30%, transparent);
+  }
+  &[data-status="pending"] {
+    background-color: color-mix(in oklch, var(--appointment-pending-start) 18%, transparent);
+    color: var(--appointment-pending-start);
+    border-color: color-mix(in oklch, var(--appointment-pending-start) 32%, transparent);
+  }
 }
 
 @utility appointment-status-disc {
