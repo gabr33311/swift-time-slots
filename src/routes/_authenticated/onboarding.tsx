@@ -46,14 +46,8 @@ const day = (open: boolean, start: string, end: string, lunch = open): DayHours 
   lunchEnd: "14:00",
 });
 
-// Paths the app itself owns — these can never be a business slug.
-const RESERVED_SLUGS = [
-  "auth", "login", "logout", "register", "reset-password", "book", "booking",
-  "api", "app", "admin", "dashboard", "calendar", "customers", "share",
-  "profile", "onboarding", "analytics", "appointments", "pendentes", "waitlist",
-  "booking-page", "minhas-marcacoes", "settings", "support", "about", "pricing",
-  "terms", "privacy", "assets", "static", "public", "www",
-] as const;
+// Paths the app itself owns — shared with the public /$slug route.
+
 
 const DEFAULT_HOURS: DayHours[] = [
   day(false, "09:00", "18:00", false),
