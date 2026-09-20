@@ -8,7 +8,7 @@ import { AppShell } from "@/components/app-shell";
 import { EmptyState, LoadingRows, PageHeader } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
-import { formatPrice, formatTime, formatDateLong } from "@/lib/format";
+import { formatTime } from "@/lib/format";
 import { Check, Clock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { setAppointmentStatus } from "@/lib/appointment-status";
