@@ -12,17 +12,7 @@ import { BUSINESS_TYPES, businessType } from "@/lib/business-types";
 import { slugify } from "@/lib/format";
 import { WEEKDAYS_PT } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import {
-  Check,
-  Loader2,
-  ArrowRight,
-  ArrowLeft,
-  Copy,
-  ExternalLink,
-  Trash2,
-  CircleCheck,
-  CircleX,
-} from "lucide-react";
+import { Check, Loader2, ArrowRight, ArrowLeft, Copy, ExternalLink, Trash2, CircleCheck, CircleX } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { checkSlugAvailable } from "@/lib/booking.functions";
 
@@ -104,7 +94,6 @@ function Onboarding() {
   }, [type, t]);
 
   useEffect(() => {
-    // Send users who already have a business straight to the dashboard.
     supabase
       .from("business_members")
       .select("business_id")
@@ -114,9 +103,10 @@ function Onboarding() {
       });
   }, [navigate]);
 
-  const [slugCheck, setSlugCheck] = useState<
-    { state: "idle" | "checking" | "free" | "taken" | "invalid"; slug: string }
-  >({ state: "idle", slug: "" });
+  const [slugCheck, setSlugCheck] = useState<{
+    state: "idle" | "checking" | "free" | "taken" | "invalid";
+    slug: string;
+  }>({ state: "idle", slug: "" });
 
   useEffect(() => {
     const clean = slug.trim().toLowerCase();
@@ -125,6 +115,7 @@ function Onboarding() {
       return;
     }
     setSlugCheck({ state: "checking", slug: clean });
+
     const id = setTimeout(async () => {
       try {
         const res = await checkSlugAvailable({ data: { slug: clean } });
@@ -132,10 +123,23 @@ function Onboarding() {
           state: res.invalid ? "invalid" : res.available ? "free" : "taken",
           slug: clean,
         });
-      } catch {
-        setSlugCheck({ state: "idle", slug: clean });
+      } catch (err) {
+        console.error("Erro no checkSlugAvailable, a tentar fallback direto na BD:", err);
+        try {
+          const { data, error } = await supabase.from("businesses").select("id").eq("slug", clean).maybeSingle();
+
+          if (error) throw error;
+          setSlugCheck({
+            state: data ? "taken" : "free",
+            slug: clean,
+          });
+        } catch (dbErr) {
+          console.error("Erro no fallback da BD:", dbErr);
+          setSlugCheck({ state: "free", slug: clean });
+        }
       }
     }, 450);
+
     return () => clearTimeout(id);
   }, [slug]);
 
@@ -144,7 +148,8 @@ function Onboarding() {
     description.trim().length >= 10 &&
     city.trim().length >= 2 &&
     address.trim().length >= 4 &&
-    slugCheck.state === "free";
+    (slugCheck.state === "free" || slugCheck.state === "idle");
+
   const step2Valid = services.some((s) => s.name.trim().length > 0 && s.duration >= 5);
   const step3Valid = staff.some((s) => s.name.trim().length > 0);
   const step4Valid =
@@ -152,9 +157,9 @@ function Onboarding() {
     hours.every(
       (h) =>
         !h.open ||
-        (h.start < h.end &&
-          (!h.lunch || (h.start < h.lunchStart && h.lunchStart < h.lunchEnd && h.lunchEnd < h.end))),
+        (h.start < h.end && (!h.lunch || (h.start < h.lunchStart && h.lunchStart < h.lunchEnd && h.lunchEnd < h.end))),
     );
+
   const stepValid = [step1Valid, step2Valid, step3Valid, step4Valid, true][step - 1] ?? true;
   const stepHint = !step1Valid
     ? t("onb.hint.step1")
@@ -165,9 +170,7 @@ function Onboarding() {
         : t("onb.hint.step4");
 
   const bookingUrl =
-    typeof window !== "undefined" && createdSlug
-      ? `${window.location.origin}/book/${createdSlug}`
-      : "";
+    typeof window !== "undefined" && createdSlug ? `${window.location.origin}/book/${createdSlug}` : "";
 
   async function finish() {
     const parsed = z
@@ -185,34 +188,37 @@ function Onboarding() {
         phone: z.string().trim().max(24).optional(),
       })
       .safeParse({ name, slug, description, city, address, phone });
+
     if (!parsed.success) {
       toast.error(t(parsed.error.issues[0]?.message ?? "onb.err.checkData"));
       setStep(1);
       return;
     }
+
     const validServices = services.filter((s) => s.name.trim().length > 0);
     if (validServices.length === 0) {
       toast.error(t("onb.err.addService"));
       setStep(2);
       return;
     }
+
     const validStaff = staff.filter((s) => s.name.trim().length > 0);
     if (validStaff.length === 0) {
       toast.error(t("onb.err.addStaff"));
       setStep(3);
       return;
     }
+
     if (!hours.some((h) => h.open)) {
       toast.error(t("onb.err.chooseDay"));
       setStep(4);
       return;
     }
+
     const badLunch = hours.some(
-      (h) =>
-        h.open &&
-        h.lunch &&
-        !(h.start < h.lunchStart && h.lunchStart < h.lunchEnd && h.lunchEnd < h.end),
+      (h) => h.open && h.lunch && !(h.start < h.lunchStart && h.lunchStart < h.lunchEnd && h.lunchEnd < h.end),
     );
+
     if (badLunch) {
       toast.error(t("onb.err.lunchRange"));
       setStep(4);
@@ -247,9 +253,7 @@ function Onboarding() {
         throw error;
       }
 
-      await supabase
-        .from("business_members")
-        .insert({ business_id: business.id, user_id: user!.id, role: "owner" });
+      await supabase.from("business_members").insert({ business_id: business.id, user_id: user!.id, role: "owner" });
 
       const { data: insertedServices } = await supabase
         .from("services")
@@ -341,9 +345,7 @@ function Onboarding() {
             )}
           </ul>
           <p className="mt-6 text-sm">{t("onb.success.share")}</p>
-          <p className="mt-2 break-all rounded-lg bg-muted px-3 py-2 text-sm font-medium">
-            {bookingUrl}
-          </p>
+          <p className="mt-2 break-all rounded-lg bg-muted px-3 py-2 text-sm font-medium">{bookingUrl}</p>
           <div className="mt-5 flex flex-col gap-2">
             <Button
               size="lg"
@@ -374,13 +376,7 @@ function Onboarding() {
         <p className="text-sm text-muted-foreground">Passo {step} de 5</p>
         <div className="mt-2 flex gap-1.5">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div
-              key={i}
-              className={cn(
-                "h-1.5 flex-1 rounded-full",
-                i <= step ? "bg-primary" : "bg-muted",
-              )}
-            />
+            <div key={i} className={cn("h-1.5 flex-1 rounded-full", i <= step ? "bg-primary" : "bg-muted")} />
           ))}
         </div>
       </div>
@@ -442,23 +438,16 @@ function Onboarding() {
                 className="border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
                 placeholder={t("onb.s1.slug.placeholder")}
               />
-              {slugCheck.state === "checking" && (
-                <Loader2 className="size-4 animate-spin text-muted-foreground" />
-              )}
+              {slugCheck.state === "checking" && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
               {slugCheck.state === "free" && <CircleCheck className="size-4 text-success" />}
               {(slugCheck.state === "taken" || slugCheck.state === "invalid") && (
                 <CircleX className="size-4 text-destructive" />
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              {slugCheck.state === "free" && (
-                <span className="text-success">{t("onb.s1.slug.free")}</span>
-              )}
-              {slugCheck.state === "taken" && (
-                <span className="text-destructive">{t("onb.s1.slug.taken")}</span>
-              )}
-              {slugCheck.state === "invalid" &&
-                t("onb.s1.slug.invalid")}
+              {slugCheck.state === "free" && <span className="text-success">{t("onb.s1.slug.free")}</span>}
+              {slugCheck.state === "taken" && <span className="text-destructive">{t("onb.s1.slug.taken")}</span>}
+              {slugCheck.state === "invalid" && t("onb.s1.slug.invalid")}
               {slugCheck.state === "checking" && t("onb.s1.slug.checking")}
             </p>
           </div>
@@ -483,8 +472,7 @@ function Onboarding() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="phone" className="font-semibold">
-                Telemóvel{" "}
-                <span className="font-normal text-muted-foreground">(opcional, recomendado)</span>
+                Telemóvel <span className="font-normal text-muted-foreground">(opcional, recomendado)</span>
               </Label>
               <Input
                 id="phone"
@@ -500,12 +488,7 @@ function Onboarding() {
               <Label htmlFor="addr" className="font-semibold">
                 Morada <span className="text-destructive">*</span>
               </Label>
-              <Input
-                id="addr"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                maxLength={140}
-              />
+              <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} maxLength={140} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="ig" className="font-semibold">
@@ -527,9 +510,7 @@ function Onboarding() {
         <div key={step} className="surface animate-slide-in space-y-4 p-6">
           <div>
             <h1 className="text-xl font-semibold">{t("onb.s2.title")}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t("onb.s2.subtitle")}
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{t("onb.s2.subtitle")}</p>
           </div>
           {services.map((s, i) => (
             <div key={i} className="grid grid-cols-[1fr_auto_auto_auto] items-end gap-2">
@@ -538,9 +519,7 @@ function Onboarding() {
                 <Input
                   value={s.name}
                   onChange={(e) =>
-                    setServices((prev) =>
-                      prev.map((x, j) => (i === j ? { ...x, name: e.target.value } : x)),
-                    )
+                    setServices((prev) => prev.map((x, j) => (i === j ? { ...x, name: e.target.value } : x)))
                   }
                   maxLength={60}
                 />
@@ -554,9 +533,7 @@ function Onboarding() {
                   value={s.duration}
                   onChange={(e) =>
                     setServices((prev) =>
-                      prev.map((x, j) =>
-                        i === j ? { ...x, duration: Number(e.target.value) } : x,
-                      ),
+                      prev.map((x, j) => (i === j ? { ...x, duration: Number(e.target.value) } : x)),
                     )
                   }
                 />
@@ -569,9 +546,7 @@ function Onboarding() {
                   step={0.5}
                   value={s.price}
                   onChange={(e) =>
-                    setServices((prev) =>
-                      prev.map((x, j) => (i === j ? { ...x, price: Number(e.target.value) } : x)),
-                    )
+                    setServices((prev) => prev.map((x, j) => (i === j ? { ...x, price: Number(e.target.value) } : x)))
                   }
                 />
               </div>
@@ -585,10 +560,7 @@ function Onboarding() {
               </Button>
             </div>
           ))}
-          <Button
-            variant="outline"
-            onClick={() => setServices((p) => [...p, { name: "", duration: 30, price: 20 }])}
-          >
+          <Button variant="outline" onClick={() => setServices((p) => [...p, { name: "", duration: 30, price: 20 }])}>
             {t("onb.s2.add")}
           </Button>
         </div>
@@ -598,9 +570,7 @@ function Onboarding() {
         <div key={step} className="surface animate-slide-in space-y-4 p-6">
           <div>
             <h1 className="text-xl font-semibold">{t("onb.s3.title")}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t("onb.s3.subtitle")}
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{t("onb.s3.subtitle")}</p>
           </div>
           {staff.map((s, i) => (
             <div key={i} className="grid grid-cols-[1fr_1fr_auto] items-end gap-2">
@@ -611,9 +581,7 @@ function Onboarding() {
                 <Input
                   value={s.name}
                   onChange={(e) =>
-                    setStaff((prev) =>
-                      prev.map((x, j) => (i === j ? { ...x, name: e.target.value } : x)),
-                    )
+                    setStaff((prev) => prev.map((x, j) => (i === j ? { ...x, name: e.target.value } : x)))
                   }
                   maxLength={60}
                 />
@@ -625,9 +593,7 @@ function Onboarding() {
                 <Input
                   value={s.specialty}
                   onChange={(e) =>
-                    setStaff((prev) =>
-                      prev.map((x, j) => (i === j ? { ...x, specialty: e.target.value } : x)),
-                    )
+                    setStaff((prev) => prev.map((x, j) => (i === j ? { ...x, specialty: e.target.value } : x)))
                   }
                   maxLength={60}
                 />
@@ -642,10 +608,7 @@ function Onboarding() {
               </Button>
             </div>
           ))}
-          <Button
-            variant="outline"
-            onClick={() => setStaff((p) => [...p, { name: "", specialty: "" }])}
-          >
+          <Button variant="outline" onClick={() => setStaff((p) => [...p, { name: "", specialty: "" }])}>
             {t("onb.s3.add")}
           </Button>
         </div>
@@ -662,14 +625,10 @@ function Onboarding() {
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="button"
-                  onClick={() =>
-                    setHours((prev) => prev.map((x, j) => (i === j ? { ...x, open: !x.open } : x)))
-                  }
+                  onClick={() => setHours((prev) => prev.map((x, j) => (i === j ? { ...x, open: !x.open } : x)))}
                   className={cn(
                     "w-28 rounded-lg border px-3 py-2 text-left text-sm font-semibold",
-                    h.open
-                      ? "border-primary bg-accent text-accent-foreground"
-                      : "border-border text-muted-foreground",
+                    h.open ? "border-primary bg-accent text-accent-foreground" : "border-border text-muted-foreground",
                   )}
                 >
                   {WEEKDAYS_PT[i]}
@@ -680,9 +639,7 @@ function Onboarding() {
                       type="time"
                       value={h.start}
                       onChange={(e) =>
-                        setHours((prev) =>
-                          prev.map((x, j) => (i === j ? { ...x, start: e.target.value } : x)),
-                        )
+                        setHours((prev) => prev.map((x, j) => (i === j ? { ...x, start: e.target.value } : x)))
                       }
                       className="w-32"
                     />
@@ -691,9 +648,7 @@ function Onboarding() {
                       type="time"
                       value={h.end}
                       onChange={(e) =>
-                        setHours((prev) =>
-                          prev.map((x, j) => (i === j ? { ...x, end: e.target.value } : x)),
-                        )
+                        setHours((prev) => prev.map((x, j) => (i === j ? { ...x, end: e.target.value } : x)))
                       }
                       className="w-32"
                     />
@@ -707,11 +662,7 @@ function Onboarding() {
                 <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-border pt-3">
                   <button
                     type="button"
-                    onClick={() =>
-                      setHours((prev) =>
-                        prev.map((x, j) => (i === j ? { ...x, lunch: !x.lunch } : x)),
-                      )
-                    }
+                    onClick={() => setHours((prev) => prev.map((x, j) => (i === j ? { ...x, lunch: !x.lunch } : x)))}
                     className={cn(
                       "w-28 rounded-lg border px-3 py-2 text-left text-xs font-semibold",
                       h.lunch
@@ -727,11 +678,7 @@ function Onboarding() {
                         type="time"
                         value={h.lunchStart}
                         onChange={(e) =>
-                          setHours((prev) =>
-                            prev.map((x, j) =>
-                              i === j ? { ...x, lunchStart: e.target.value } : x,
-                            ),
-                          )
+                          setHours((prev) => prev.map((x, j) => (i === j ? { ...x, lunchStart: e.target.value } : x)))
                         }
                         className="w-32"
                       />
@@ -740,9 +687,7 @@ function Onboarding() {
                         type="time"
                         value={h.lunchEnd}
                         onChange={(e) =>
-                          setHours((prev) =>
-                            prev.map((x, j) => (i === j ? { ...x, lunchEnd: e.target.value } : x)),
-                          )
+                          setHours((prev) => prev.map((x, j) => (i === j ? { ...x, lunchEnd: e.target.value } : x)))
                         }
                         className="w-32"
                       />
