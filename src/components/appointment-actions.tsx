@@ -21,8 +21,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Menu, XCircle, CalendarCheck } from "lucide-react";
-import { normalizePhonePt } from "@/lib/phone";
-import { formatDateLong, formatTime } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
 import { cn } from "@/lib/utils";
 import { AppointmentStatusIndicator } from "@/components/appointment-status-indicator";
