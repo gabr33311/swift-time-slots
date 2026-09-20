@@ -28,6 +28,12 @@ export const commonDict: Record<Lang, Record<string, string>> = {
     "ui.save.cancel": "Cancelar",
     "ui.save.save": "Guardar",
     "ui.save.auto": "Guardado automaticamente",
+    "dock.new": "Nova marcação",
+    "dock.pass": "Passe de partilha",
+    "dock.passHint": "Desliza para cima ou mantém premido para o QR",
+    "dock.whatsapp": "Enviar no WhatsApp",
+    "dock.whatsappMsg": "Olá! Podes agendar o teu horário aqui:",
+    "nav.manage": "Negócio",
   },
   en: {
     "ui.loading": "Loading…",
