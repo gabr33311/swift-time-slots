@@ -159,6 +159,33 @@ function CalendarPage() {
   }).format(new Date());
   const markerIndex = isToday ? agendaRows.findIndex((r) => r.hour > nowHHMM) : -1;
 
+  // Live cockpit — only meaningful while looking at today.
+  const liveToday = isToday
+    ? appts.filter((a) => !["cancelled", "no_show", "expired"].includes(a.status))
+    : [];
+  const ongoing = liveToday.find((a) => {
+    const s = new Date(a.starts_at).getTime();
+    const e = a.ends_at ? new Date(a.ends_at).getTime() : s + 3_600_000;
+    return s <= now && now < e && a.status !== "completed";
+  });
+  const nextUp = liveToday.find(
+    (a) => new Date(a.starts_at).getTime() > now && a.status !== "completed",
+  );
+  const focusAppt = ongoing ?? nextUp;
+  const doneCount = liveToday.filter((a) => a.status === "completed").length;
+  const dayRevenue = liveToday.reduce((sum, a) => sum + (a.price_cents ?? 0), 0);
+  const dayProgress = liveToday.length ? Math.round((doneCount / liveToday.length) * 100) : 0;
+
+  function relativeLabel(iso: string): string {
+    const diff = Math.round((new Date(iso).getTime() - now) / 60_000);
+    if (diff < 0) return t("dash.now.late").replace("{n}", String(Math.abs(diff)));
+    if (diff < 60) return t("dash.now.inMin").replace("{n}", String(diff));
+    return t("dash.now.inHours")
+      .replace("{h}", String(Math.floor(diff / 60)))
+      .replace("{m}", String(diff % 60).padStart(2, "0"));
+  }
+
+
   const weekStart = addDays(date, -((weekdayOf(date) + 6) % 7));
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const dayShort = (d: string) =>
