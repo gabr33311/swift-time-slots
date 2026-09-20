@@ -293,6 +293,62 @@ function CalendarPage() {
         </div>
       </div>
 
+      <PendingCapsule />
+
+      {isToday && focusAppt && (
+        <section
+          data-status={focusAppt.status}
+          className="appointment-state surface mb-3 flex items-center gap-4 p-4"
+        >
+          <span
+            data-status={focusAppt.status}
+            className="appointment-status-disc flex size-12 shrink-0 flex-col items-center justify-center rounded-2xl border border-border text-[13px] font-black tabular-nums text-foreground"
+          >
+            {formatTime(focusAppt.starts_at, tz)}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+              {ongoing ? t("dash.now.ongoing") : t("dash.now.next")}
+              {ongoing ? "" : ` · ${relativeLabel(focusAppt.starts_at)}`}
+            </p>
+            <p className="truncate text-[17px] font-bold leading-snug">
+              {displayCustomerName(focusAppt.customer_name, null, 1)}
+            </p>
+            <p className="truncate text-sm leading-snug text-muted-foreground">
+              {focusAppt.service_name}
+            </p>
+          </div>
+          <AppointmentActions
+            id={focusAppt.id}
+            status={focusAppt.status}
+            customerName={displayCustomerName(focusAppt.customer_name, null, 1)}
+            customerPhone={focusAppt.customer_phone}
+            startsAt={focusAppt.starts_at}
+            serviceName={focusAppt.service_name}
+            timezone={tz}
+          />
+        </section>
+      )}
+
+      {isToday && liveToday.length > 0 && (
+        <section className="surface mb-4 flex items-center gap-3 p-4">
+          <Sun className="size-4 shrink-0 text-muted-foreground" />
+          <div className="min-w-0 flex-1">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-foreground transition-[width] duration-500"
+                style={{ width: `${dayProgress}%` }}
+              />
+            </div>
+            <p className="mt-1.5 truncate text-xs font-semibold text-muted-foreground">
+              {t("dash.progress.done")
+                .replace("{done}", String(doneCount))
+                .replace("{total}", String(liveToday.length))}
+            </p>
+          </div>
+          <p className="shrink-0 text-sm font-black tabular-nums">{formatPrice(dayRevenue)}</p>
+        </section>
+      )}
 
       {staffList.length > 1 && (
         <div className="mb-4 flex items-center gap-1.5 overflow-x-auto rounded-full bg-muted p-1">
