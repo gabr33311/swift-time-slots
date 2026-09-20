@@ -17,10 +17,7 @@ function shortUrl(url: string): string {
 const PUBLIC_ORIGIN = "https://sycras.com";
 
 function publicOrigin(): string {
-  if (typeof window === "undefined") return PUBLIC_ORIGIN;
-  const host = window.location.hostname;
-  const isPreview = host.includes("id-preview") || host === "localhost" || host.endsWith(".local");
-  return isPreview ? PUBLIC_ORIGIN : window.location.origin;
+  return PUBLIC_ORIGIN;
 }
 
 export function SharePanel({ compact = false }: { compact?: boolean }) {
