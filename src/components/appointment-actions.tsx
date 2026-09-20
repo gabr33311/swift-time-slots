@@ -30,15 +30,6 @@ import { AppointmentStatusIndicator } from "@/components/appointment-status-indi
 
 type Status = "pending" | "confirmed" | "completed" | "cancelled" | "no_show" | "expired";
 
-const STATUS_STYLES: Record<Status, string> = {
-  pending: "appointment-status-pending",
-  confirmed: "appointment-status-confirmed",
-  completed: "appointment-status-completed",
-  cancelled: "appointment-status-cancelled",
-  no_show: "appointment-status-cancelled",
-  expired: "appointment-status-cancelled",
-};
-
 /** Quick status actions (confirm, complete, cancel, remind) for one appointment. */
 export function AppointmentActions({
   id,
