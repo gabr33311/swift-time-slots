@@ -210,28 +210,57 @@ function CalendarPage() {
         }
       />
 
-      <div className="surface mb-3 flex items-center gap-1 p-1.5">
-        <button
-          onClick={() => setDate(addDays(date, -1))}
-          aria-label={t("cal.prevDay")}
-          className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <ChevronLeft className="size-4" />
-        </button>
-        <p className="min-w-0 flex-1 truncate text-center text-sm font-bold capitalize">{label}</p>
-        <button
-          onClick={() => setDate(addDays(date, 1))}
-          aria-label={t("cal.nextDay")}
-          className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <ChevronRight className="size-4" />
-        </button>
-        {date === todayIn(tz) && (
-          <span className="ml-0.5 flex h-9 shrink-0 items-center rounded-full px-3.5 text-[13px] font-bold text-muted-foreground">
-            {t("cal.today")}
-          </span>
-        )}
+      <div className="surface mb-3 p-1.5">
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setDate(addDays(date, -7))}
+            aria-label={t("cal.week.prev")}
+            className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <ChevronLeft className="size-4" />
+          </button>
+          <p className="min-w-0 flex-1 truncate text-center text-sm font-bold capitalize">
+            {label}
+          </p>
+          <button
+            onClick={() => setDate(addDays(date, 7))}
+            aria-label={t("cal.week.next")}
+            className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <ChevronRight className="size-4" />
+          </button>
+        </div>
+        <div className="mt-1 grid grid-cols-7 gap-1">
+          {weekDays.map((d) => {
+            const active = d === date;
+            const isTodayCell = d === todayIn(tz);
+            return (
+              <button
+                key={d}
+                onClick={() => setDate(d)}
+                className={cn(
+                  "flex flex-col items-center gap-0.5 rounded-2xl py-2 transition-colors",
+                  active
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                <span className="text-[10px] font-bold uppercase tracking-wide">
+                  {dayShort(d).replace(".", "").slice(0, 3)}
+                </span>
+                <span className="text-sm font-black tabular-nums">{Number(d.slice(8, 10))}</span>
+                <span
+                  className={cn(
+                    "size-1 rounded-full",
+                    isTodayCell ? (active ? "bg-background" : "bg-foreground") : "bg-transparent",
+                  )}
+                />
+              </button>
+            );
+          })}
+        </div>
       </div>
+
 
       {staffList.length > 1 && (
         <div className="mb-4 flex items-center gap-1.5 overflow-x-auto rounded-full bg-muted p-1">
