@@ -1,13 +1,4 @@
-import {
-  BadgeCheck,
-  CalendarCheck,
-  CircleCheck,
-  CircleX,
-  Clock3,
-  HelpCircle,
-  UserX,
-  XCircle,
-} from "lucide-react";
+import { CalendarCheck, XCircle } from "lucide-react";
 import { statusLabel } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
 import { cn } from "@/lib/utils";
@@ -23,24 +14,23 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-const STATUS_STYLES: Record<string, string> = {
-  pending: "appointment-status-pending",
-  confirmed: "appointment-status-confirmed",
-  completed: "appointment-status-completed",
-  cancelled: "appointment-status-cancelled",
-  no_show: "appointment-status-cancelled",
+/**
+ * Monochrome status differentiation (no color, pure contrast):
+ * - confirmed: solid filled chip (strongest)
+ * - pending: outlined chip, pulsing halo
+ * - completed: soft filled chip, dimmed
+ * - cancelled / no_show: faint text, strikethrough
+ */
+const STATUS_CHIP: Record<string, string> = {
+  confirmed: "bg-foreground text-background border-transparent",
+  pending: "border-foreground/50 text-foreground pending-halo",
+  completed: "bg-muted text-muted-foreground border-transparent",
+  cancelled: "border-transparent text-muted-foreground/60 line-through",
+  no_show: "border-transparent text-muted-foreground/60 line-through",
 };
 
-const STATUS_ICONS = {
-  pending: Clock3,
-  confirmed: CircleCheck,
-  completed: BadgeCheck,
-  cancelled: CircleX,
-  no_show: UserX,
-} as const;
-
 /**
- * Status disc — colored background by status, gray icon inside.
+ * Status text chip — the label replaces the old icon disc.
  * When pending + onConfirm/onCancel provided: clickable dropdown (Confirm/Cancel).
  * Otherwise: clickable popover showing the status label text.
  */
@@ -56,23 +46,12 @@ export function AppointmentStatusIndicator({
   customerName?: string;
 }) {
   const { lang, t } = usePrefs();
-  const Icon = STATUS_ICONS[status as keyof typeof STATUS_ICONS] ?? HelpCircle;
   const isInteractivePending = status === "pending" && !!onConfirm && !!onCancel;
   const label = statusLabel(status, lang);
 
-  const discClass = cn(
-    "appointment-status-disc flex size-9 shrink-0 items-center justify-center rounded-full border border-current",
-    STATUS_STYLES[status] ?? "bg-card text-muted-foreground",
-  );
-
-  const icon = (
-    <Icon
-      className={cn(
-        "size-[18px] text-muted-foreground",
-        status === "pending" && "animate-status-shake",
-      )}
-      strokeWidth={2.7}
-    />
+  const chipClass = cn(
+    "flex h-9 shrink-0 items-center rounded-full border px-3 text-[11px] font-black uppercase tracking-wider whitespace-nowrap",
+    STATUS_CHIP[status] ?? "bg-card text-muted-foreground border-border",
   );
 
   if (isInteractivePending) {
@@ -82,10 +61,10 @@ export function AppointmentStatusIndicator({
           <button
             type="button"
             data-status={status}
-            className={discClass}
+            className={chipClass}
             aria-label={`${t("acts.opts.forLabel")}${customerName ?? ""}`}
           >
-            {icon}
+            {label}
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-56 space-y-1 p-1.5">
@@ -106,10 +85,10 @@ export function AppointmentStatusIndicator({
         <button
           type="button"
           data-status={status}
-          className={discClass}
+          className={chipClass}
           aria-label={label}
         >
-          {icon}
+          {label}
         </button>
       </PopoverTrigger>
       <PopoverContent side="top" align="end" className="w-auto text-sm font-bold">
