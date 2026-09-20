@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Menu, CheckCircle2, XCircle, CalendarCheck, BellRing, RotateCcw, Trash2 } from "lucide-react";
+import { PencilLine, CheckCircle2, XCircle, CalendarCheck, BellRing, RotateCcw, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizePhonePt } from "@/lib/phone";
 import { formatDateLong, formatTime } from "@/lib/format";
@@ -149,14 +149,17 @@ export function AppointmentActions({
           <Button
             variant="ghost"
             size="icon"
-            className={cn(
-              "size-9 shrink-0 rounded-full border border-current bg-card",
-              STATUS_STYLES[status],
-            )}
+            className="size-9 shrink-0 rounded-full hover:bg-transparent"
             aria-label={`${t("acts.opts.forLabel")}${customerName}`}
             disabled={busy}
           >
-            <Menu className="size-[18px] text-muted-foreground" strokeWidth={2.7} />
+            <PencilLine
+              className={cn(
+                "size-[18px]",
+                status === "completed" ? "text-muted-foreground" : "text-foreground",
+              )}
+              strokeWidth={2.5}
+            />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-64 space-y-1 p-1.5">
