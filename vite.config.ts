@@ -14,7 +14,7 @@ const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
 // Load ALL env vars (not only VITE_*) into process.env for server-side code
 // (server routes / server functions). Never add these to the client define block.
-const serverEnv = loadEnv(process.env.NODE_ENV ?? "development", process.cwd(), "");
+const serverEnv = loadEnv(process.env["NODE_ENV"] ?? "development", process.cwd(), "");
 Object.assign(process.env, serverEnv);
 
 export default defineConfig({
