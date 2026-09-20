@@ -535,6 +535,22 @@
   transform-origin: 50% 20%;
 }
 
+@keyframes pending-halo {
+  0%, 100% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--appointment-pending-start) 55%, transparent);
+  }
+  55% {
+    box-shadow: 0 0 0 7px color-mix(in oklch, var(--appointment-pending-start) 0%, transparent);
+  }
+}
+
+/* Soft pulsing halo for the header pending badge. */
+@utility pending-halo {
+  border-color: color-mix(in oklch, var(--appointment-pending-start) 45%, var(--border));
+  animation: pending-halo 2s ease-out infinite;
+}
+
+
 @utility appointment-status-confirmed { color: var(--appointment-confirmed-start); border-color: var(--appointment-confirmed-start); }
 @utility appointment-status-pending { color: var(--appointment-pending-start); border-color: var(--appointment-pending-start); }
 @utility appointment-status-cancelled { color: var(--appointment-cancelled-start); border-color: var(--appointment-cancelled-start); }
