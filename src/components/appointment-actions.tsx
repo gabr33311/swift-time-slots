@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Menu, CheckCircle2, XCircle, CalendarCheck, BellRing } from "lucide-react";
+import { Menu, XCircle, CalendarCheck } from "lucide-react";
 import { normalizePhonePt } from "@/lib/phone";
 import { formatDateLong, formatTime } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
