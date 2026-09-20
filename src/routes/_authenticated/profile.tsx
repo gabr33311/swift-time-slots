@@ -60,6 +60,7 @@ const CATEGORIES: { key: string; tiles: Tile[] }[] = [
     key: "pf.cat.business",
     tiles: [
       { kind: "section", id: "info", icon: Building2 },
+      { kind: "link", to: "/customers", labelKey: "nav.customers", icon: Users },
     ],
   },
   {
@@ -67,7 +68,6 @@ const CATEGORIES: { key: string; tiles: Tile[] }[] = [
     tiles: [
       { kind: "section", id: "servicesTeam", icon: BriefcaseBusiness },
       { kind: "section", id: "availability", icon: Clock },
-      { kind: "link", to: "/customers", labelKey: "nav.customers", icon: Users },
     ],
   },
   {
