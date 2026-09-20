@@ -492,7 +492,7 @@ function Onboarding() {
               <p className="text-xs font-medium text-destructive">{t("onb.s1.err.desc")}</p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                {t("onb.s1.desc.counter", { count: description.trim().length })}
+                {description.trim().length}/10+ · {description.length}/280
               </p>
             )}
           </div>
