@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { setAppointmentStatus } from "@/lib/appointment-status";
 import { z } from "zod";
 import { usePrefs } from "@/lib/prefs";
+import { AppointmentStatusIndicator } from "@/components/appointment-status-indicator";
 
 type Tab = "pending" | "accepted" | "refused";
 
@@ -126,7 +127,7 @@ function PendingPage() {
       ) : (
         <ul className="space-y-2.5">
           {items.map((a) => (
-            <li key={a.id} className="surface p-4">
+            <li key={a.id} data-status={a.status} className="appointment-state surface p-4">
               <div className="flex items-start gap-3">
                 <span className="flex w-16 shrink-0 flex-col items-center rounded-xl bg-accent px-2 py-2 text-sm font-bold tabular-nums text-primary">
                   {formatTime(a.starts_at, business!.timezone)}
@@ -148,7 +149,7 @@ function PendingPage() {
                   <span className="text-sm font-bold tabular-nums">
                     {formatPrice(a.price_cents, business!.currency)}
                   </span>
-                  <StatusBadge status={a.status} />
+                  <AppointmentStatusIndicator status={a.status} />
                 </div>
               </div>
 

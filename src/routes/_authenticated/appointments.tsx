@@ -5,7 +5,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { usePrefs } from "@/lib/prefs";
 import { AppShell } from "@/components/app-shell";
-import { EmptyState, LoadingRows, PageHeader, StatusBadge } from "@/components/ui-bits";
+import { EmptyState, LoadingRows, PageHeader } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { formatDateShort, formatPrice, formatTime, statusLabel } from "@/lib/format";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { AppointmentActions } from "@/components/appointment-actions";
 
 const filterSchema = z.enum(["upcoming", "today", "past", "cancelled", "confirmed", "pending", "completed"]);
 
@@ -194,7 +195,7 @@ function AppointmentsPage() {
       ) : (
         <ul className="space-y-2">
           {data!.map((a) => (
-            <li key={a.id} className="surface flex flex-wrap items-center gap-3 p-4">
+            <li key={a.id} data-status={a.status} className="appointment-state surface flex flex-wrap items-center gap-3 p-4">
               <div className="w-20">
                 <p className="text-sm font-semibold tabular-nums">
                   {formatTime(a.starts_at, business!.timezone)}
@@ -213,21 +214,15 @@ function AppointmentsPage() {
               <span className="text-sm font-medium tabular-nums">
                 {formatPrice(a.price_cents, business!.currency)}
               </span>
-              <StatusBadge status={a.status} />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label={t("appt.actions.label")}>
-                    <MoreHorizontal className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {["confirmed", "completed", "no_show", "cancelled"].map((s) => (
-                    <DropdownMenuItem key={s} onClick={() => setStatus(a.id, s)}>
-                      {t("appt.markAs")}{statusLabel(s, lang).toLowerCase()}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <AppointmentActions
+                id={a.id}
+                status={a.status as "pending" | "confirmed" | "completed" | "cancelled" | "no_show" | "expired"}
+                customerName={a.customer_name}
+                customerPhone={a.customer_phone}
+                startsAt={a.starts_at}
+                serviceName={a.service_name}
+                timezone={business!.timezone}
+              />
             </li>
           ))}
         </ul>

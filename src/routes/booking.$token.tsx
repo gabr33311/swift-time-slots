@@ -11,7 +11,7 @@ import {
 } from "@/lib/booking.functions";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StatusBadge } from "@/components/ui-bits";
+import { AppointmentStatusIndicator } from "@/components/appointment-status-indicator";
 import { formatDateLong, formatPrice, formatTime } from "@/lib/format";
 import { addDays, todayIn } from "@/lib/time";
 import { cn } from "@/lib/utils";
@@ -121,7 +121,7 @@ function BookingPage() {
       <p className="text-sm text-muted-foreground">{data.business?.name}</p>
       <h1 className="mt-1 text-2xl font-semibold tracking-tight">{t("bk.tk.title")}</h1>
 
-      <div className="surface mt-6 p-5">
+      <div data-status={appt.status} className="appointment-state surface mt-6 p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-base font-medium">{appt.service_name}</p>
@@ -132,7 +132,7 @@ function BookingPage() {
               <p className="mt-0.5 text-sm text-muted-foreground">{t("bk.tk.with")}{data.staffName}</p>
             )}
           </div>
-          <StatusBadge status={appt.status} />
+          <AppointmentStatusIndicator status={appt.status} />
         </div>
         <p className="mt-4 text-sm font-semibold tabular-nums">
           {formatPrice(appt.price_cents)}

@@ -125,7 +125,6 @@ function Dashboard() {
             {greetingPt(new Date(), lang)}
             {user?.user_metadata?.["full_name"] ? `, ${user.user_metadata["full_name"]}` : ""}
           </h1>
-          <p className="mt-1 text-sm font-normal text-muted-foreground">{t("dash.subtitle")}</p>
         </div>
         <NotificationBell
           notifications={requestData?.notifications ?? []}

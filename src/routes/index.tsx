@@ -9,13 +9,13 @@ import bookingShot from "@/assets/app-booking.jpg";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Schedivo — Marcações online para o teu negócio" },
+      { title: "SYCRAS — Marcações online para o teu negócio" },
       {
         name: "description",
         content:
           "Cria a tua página de marcações em minutos. Agenda, clientes e lembretes num só sítio, feito para negócios em Portugal.",
       },
-      { property: "og:title", content: "Schedivo — Marcações online para o teu negócio" },
+      { property: "og:title", content: "SYCRAS — Marcações online para o teu negócio" },
       {
         property: "og:description",
         content:
@@ -43,7 +43,7 @@ function Landing() {
   return (
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-6">
-        <span className="text-lg font-bold tracking-tight">Schedivo</span>
+        <span className="text-lg font-bold tracking-tight">SYCRAS</span>
         <PrefsToggles />
       </header>
 

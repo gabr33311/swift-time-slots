@@ -51,9 +51,9 @@ export function icsContent(e: CalendarEvent): string {
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Schedivo//PT",
+    "PRODID:-//SYCRAS//PT",
     "BEGIN:VEVENT",
-    `UID:${crypto.randomUUID()}@schedivo`,
+    `UID:${crypto.randomUUID()}@sycras`,
     `DTSTAMP:${toIcsStamp(new Date().toISOString())}`,
     `DTSTART:${toIcsStamp(e.startIso)}`,
     `DTEND:${toIcsStamp(e.endIso)}`,

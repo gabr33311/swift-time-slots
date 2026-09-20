@@ -14,7 +14,7 @@ function shortUrl(url: string): string {
 }
 
 /** Clean, shareable domain — preview/localhost hosts are never shown to clients. */
-const PUBLIC_ORIGIN = "https://swift-time-slots.lovable.app";
+const PUBLIC_ORIGIN = "https://bookflow.pt";
 
 function publicOrigin(): string {
   if (typeof window === "undefined") return PUBLIC_ORIGIN;
@@ -50,13 +50,13 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
     const canvas = document.getElementById("booking-qr") as HTMLCanvasElement | null;
     if (!canvas) return;
     const link = document.createElement("a");
-    link.download = `${business?.slug ?? "schedivo"}-qr.png`;
+    link.download = `${business?.slug ?? "sycras"}-qr.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
   }
 
   return (
-    <section className="animate-enter flex flex-col items-center gap-8 text-center">
+    <section className="animate-enter flex flex-col items-center gap-6 text-center sm:gap-8">
       {/* Link above */}
       <div className="w-full min-w-0">
         <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
@@ -69,7 +69,7 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
           <button
             type="button"
             onClick={copyLink}
-            className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-bold text-muted-foreground transition-colors hover:text-foreground"
+            className="action-gradient-outline flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-bold text-foreground"
           >
             <Copy className="size-3.5" strokeWidth={2.5} />
             {t("pf.share.copy")}
@@ -82,7 +82,7 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
         <QRCodeCanvas
           id="booking-qr"
           value={url}
-          size={compact ? 180 : 256}
+          size={compact ? 180 : 240}
           level="M"
         />
       )}
@@ -92,7 +92,7 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
         <button
           type="button"
           onClick={share}
-          className="flex w-24 flex-col items-center justify-center gap-1.5 rounded-2xl border border-border bg-card px-3 py-3.5 text-muted-foreground transition-colors hover:text-foreground"
+          className="action-gradient-outline flex w-24 flex-col items-center justify-center gap-1.5 rounded-2xl border border-border px-3 py-3 text-foreground"
         >
           <Share2 className="size-6" strokeWidth={2.5} />
           <span className="text-xs font-bold">{t("pf.share.share")}</span>
@@ -100,7 +100,7 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
         <button
           type="button"
           onClick={() => window.open(url, "_blank", "noopener")}
-          className="flex w-24 flex-col items-center justify-center gap-1.5 rounded-2xl border border-border bg-card px-3 py-3.5 text-muted-foreground transition-colors hover:text-foreground"
+          className="action-gradient-outline flex w-24 flex-col items-center justify-center gap-1.5 rounded-2xl border border-border px-3 py-3 text-foreground"
         >
           <Eye className="size-6" strokeWidth={2.5} />
           <span className="text-xs font-bold">{t("pf.share.preview")}</span>
@@ -108,7 +108,7 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
         <button
           type="button"
           onClick={downloadQr}
-          className="flex w-24 flex-col items-center justify-center gap-1.5 rounded-2xl border border-border bg-card px-3 py-3.5 text-muted-foreground transition-colors hover:text-foreground"
+          className="action-gradient-outline flex w-24 flex-col items-center justify-center gap-1.5 rounded-2xl border border-border px-3 py-3 text-foreground"
         >
           <Download className="size-6" strokeWidth={2.5} />
           <span className="text-xs font-bold">PNG</span>
