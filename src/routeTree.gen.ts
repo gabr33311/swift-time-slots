@@ -23,6 +23,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedMinhasMarcacoesRouteImport } from './routes/_authenticated/minhas-marcacoes'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedPendentesRouteImport } from './routes/_authenticated/pendentes'
+import { Route as AuthenticatedPlansRouteImport } from './routes/_authenticated/plans'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedShareRouteImport } from './routes/_authenticated/share'
 import { Route as AuthenticatedWaitlistRouteImport } from './routes/_authenticated/waitlist'
@@ -101,6 +102,11 @@ const AuthenticatedPendentesRoute = AuthenticatedPendentesRouteImport.update({
   path: '/pendentes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPlansRoute = AuthenticatedPlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/minhas-marcacoes': typeof AuthenticatedMinhasMarcacoesRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/pendentes': typeof AuthenticatedPendentesRoute
+  '/plans': typeof AuthenticatedPlansRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/share': typeof AuthenticatedShareRoute
   '/waitlist': typeof AuthenticatedWaitlistRoute
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   '/minhas-marcacoes': typeof AuthenticatedMinhasMarcacoesRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/pendentes': typeof AuthenticatedPendentesRoute
+  '/plans': typeof AuthenticatedPlansRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/share': typeof AuthenticatedShareRoute
   '/waitlist': typeof AuthenticatedWaitlistRoute
@@ -183,6 +191,7 @@ export interface FileRoutesById {
   '/_authenticated/minhas-marcacoes': typeof AuthenticatedMinhasMarcacoesRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/pendentes': typeof AuthenticatedPendentesRoute
+  '/_authenticated/plans': typeof AuthenticatedPlansRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/share': typeof AuthenticatedShareRoute
   '/_authenticated/waitlist': typeof AuthenticatedWaitlistRoute
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/minhas-marcacoes'
     | '/onboarding'
     | '/pendentes'
+    | '/plans'
     | '/profile'
     | '/share'
     | '/waitlist'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
     | '/minhas-marcacoes'
     | '/onboarding'
     | '/pendentes'
+    | '/plans'
     | '/profile'
     | '/share'
     | '/waitlist'
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '/_authenticated/minhas-marcacoes'
     | '/_authenticated/onboarding'
     | '/_authenticated/pendentes'
+    | '/_authenticated/plans'
     | '/_authenticated/profile'
     | '/_authenticated/share'
     | '/_authenticated/waitlist'
@@ -363,6 +375,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPendentesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/plans': {
+      id: '/_authenticated/plans'
+      path: '/plans'
+      fullPath: '/plans'
+      preLoaderRoute: typeof AuthenticatedPlansRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/profile': {
       id: '/_authenticated/profile'
       path: '/profile'
@@ -411,6 +430,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMinhasMarcacoesRoute: typeof AuthenticatedMinhasMarcacoesRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPendentesRoute: typeof AuthenticatedPendentesRoute
+  AuthenticatedPlansRoute: typeof AuthenticatedPlansRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedShareRoute: typeof AuthenticatedShareRoute
   AuthenticatedWaitlistRoute: typeof AuthenticatedWaitlistRoute
@@ -426,6 +446,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMinhasMarcacoesRoute: AuthenticatedMinhasMarcacoesRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPendentesRoute: AuthenticatedPendentesRoute,
+  AuthenticatedPlansRoute: AuthenticatedPlansRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedShareRoute: AuthenticatedShareRoute,
   AuthenticatedWaitlistRoute: AuthenticatedWaitlistRoute,
