@@ -51,32 +51,12 @@ type SectionId =
   | "analytics"
   | "settings";
 
-type Tile =
-  | { kind: "section"; id: SectionId; icon: ComponentType<{ className?: string }> }
-  | { kind: "link"; to: "/customers"; labelKey: string; icon: ComponentType<{ className?: string }> };
-
-const CATEGORIES: { key: string; tiles: Tile[] }[] = [
-  {
-    key: "pf.cat.business",
-    tiles: [
-      { kind: "section", id: "info", icon: Building2 },
-      { kind: "link", to: "/customers", labelKey: "nav.customers", icon: Users },
-    ],
-  },
-  {
-    key: "pf.cat.operation",
-    tiles: [
-      { kind: "section", id: "servicesTeam", icon: BriefcaseBusiness },
-      { kind: "section", id: "availability", icon: Clock },
-    ],
-  },
-  {
-    key: "pf.cat.system",
-    tiles: [
-      { kind: "section", id: "analytics", icon: BarChart3 },
-      { kind: "section", id: "settings", icon: Settings },
-    ],
-  },
+const ROWS: { id: SectionId; icon: ComponentType<{ className?: string }> }[] = [
+  { id: "info", icon: Building2 },
+  { id: "servicesTeam", icon: BriefcaseBusiness },
+  { id: "availability", icon: Clock },
+  { id: "analytics", icon: BarChart3 },
+  { id: "settings", icon: Settings },
 ];
 
 function ProfilePage() {
