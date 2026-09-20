@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { usePrefs } from "@/lib/prefs";
 import { useState, type ComponentType } from "react";
 import { AppShell } from "@/components/app-shell";
@@ -11,7 +11,6 @@ import { TeamPanel } from "@/components/panels/team-panel";
 import { AvailabilityPanel } from "@/components/panels/availability-panel";
 import { AnalyticsPanel } from "@/components/panels/analytics-panel";
 import { SettingsPanel } from "@/components/panels/settings-panel";
-import { ShareSheet } from "@/components/share-sheet";
 import {
   Building2,
   BriefcaseBusiness,
@@ -19,8 +18,7 @@ import {
   ArrowLeft,
   BarChart3,
   Settings,
-  Users,
-  Share2,
+  ChevronRight,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/profile")({
