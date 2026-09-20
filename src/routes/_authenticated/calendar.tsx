@@ -264,9 +264,15 @@ function CalendarPage() {
           >
             <ChevronLeft className="size-4" />
           </button>
-          <p className="min-w-0 flex-1 truncate text-center text-sm font-bold capitalize">
-            {label}
-          </p>
+          <p className="min-w-0 flex-1 truncate text-center text-sm font-bold">{label}</p>
+          {!isToday && (
+            <button
+              onClick={() => setDate(todayIn(tz))}
+              className="shrink-0 rounded-full border border-border px-3 py-1.5 text-[11px] font-bold text-foreground transition-colors hover:bg-muted"
+            >
+              {t("cal.today")}
+            </button>
+          )}
           <button
             onClick={() => setDate(addDays(date, 7))}
             aria-label={t("cal.week.next")}
