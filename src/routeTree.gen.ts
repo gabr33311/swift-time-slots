@@ -27,7 +27,6 @@ import { Route as AuthenticatedShareRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedWaitlistRouteImport } from './routes/_authenticated/waitlist'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as BookingTokenRouteImport } from './routes/booking.$token'
-import { Route as ApiPublicSlugtestRouteImport } from './routes/api/public/slugtest'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -121,11 +120,6 @@ const BookingTokenRoute = BookingTokenRouteImport.update({
   path: '/booking/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicSlugtestRoute = ApiPublicSlugtestRouteImport.update({
-  id: '/api/public/slugtest',
-  path: '/api/public/slugtest',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -145,7 +139,6 @@ export interface FileRoutesByFullPath {
   '/waitlist': typeof AuthenticatedWaitlistRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
-  '/api/public/slugtest': typeof ApiPublicSlugtestRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -165,7 +158,6 @@ export interface FileRoutesByTo {
   '/waitlist': typeof AuthenticatedWaitlistRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
-  '/api/public/slugtest': typeof ApiPublicSlugtestRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -187,7 +179,6 @@ export interface FileRoutesById {
   '/_authenticated/waitlist': typeof AuthenticatedWaitlistRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
-  '/api/public/slugtest': typeof ApiPublicSlugtestRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -209,7 +200,6 @@ export interface FileRouteTypes {
     | '/waitlist'
     | '/book/$slug'
     | '/booking/$token'
-    | '/api/public/slugtest'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -229,7 +219,6 @@ export interface FileRouteTypes {
     | '/waitlist'
     | '/book/$slug'
     | '/booking/$token'
-    | '/api/public/slugtest'
   id:
     | '__root__'
     | '/'
@@ -250,7 +239,6 @@ export interface FileRouteTypes {
     | '/_authenticated/waitlist'
     | '/book/$slug'
     | '/booking/$token'
-    | '/api/public/slugtest'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -260,7 +248,6 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   BookSlugRoute: typeof BookSlugRoute
   BookingTokenRoute: typeof BookingTokenRoute
-  ApiPublicSlugtestRoute: typeof ApiPublicSlugtestRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -391,13 +378,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookingTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/slugtest': {
-      id: '/api/public/slugtest'
-      path: '/api/public/slugtest'
-      fullPath: '/api/public/slugtest'
-      preLoaderRoute: typeof ApiPublicSlugtestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -441,7 +421,6 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   BookSlugRoute: BookSlugRoute,
   BookingTokenRoute: BookingTokenRoute,
-  ApiPublicSlugtestRoute: ApiPublicSlugtestRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
