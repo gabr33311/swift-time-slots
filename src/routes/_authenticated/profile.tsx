@@ -32,6 +32,13 @@ export const Route = createFileRoute("/_authenticated/profile")({
         content: "Business, services, team, hours and stats in one place.",
       },
       { name: "robots", content: "noindex" },
+      { property: "og:title", content: "Gestão — SYCRAS" },
+      {
+        property: "og:description",
+        content: "Business, services, team, hours and stats in one place.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ProfilePage,
