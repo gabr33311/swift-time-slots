@@ -410,9 +410,15 @@ function Onboarding() {
               id="bname"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onBlur={markTouched("name")}
               placeholder={t("onb.s1.name.placeholder")}
               maxLength={80}
+              aria-invalid={nameError || undefined}
+              className={cn(nameError && "border-destructive focus-visible:ring-destructive")}
             />
+            {nameError && (
+              <p className="text-xs font-medium text-destructive">{t("onb.s1.err.name")}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label className="font-semibold">
@@ -462,7 +468,9 @@ function Onboarding() {
             <p className="text-xs text-muted-foreground">
               {slugCheck.state === "free" && <span className="text-success">{t("onb.s1.slug.free")}</span>}
               {slugCheck.state === "taken" && <span className="text-destructive">{t("onb.s1.slug.taken")}</span>}
-              {slugCheck.state === "invalid" && t("onb.s1.slug.invalid")}
+              {slugCheck.state === "invalid" && (
+                <span className="text-destructive">{t("onb.s1.slug.invalid")}</span>
+              )}
               {slugCheck.state === "checking" && t("onb.s1.slug.checking")}
             </p>
           </div>
