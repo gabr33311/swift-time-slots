@@ -54,6 +54,20 @@ export const checkSlugAvailable = createServerFn({ method: "GET" })
     return { available: !(await slugTaken(clean)), invalid: false };
   });
 
+/** Server-side account existence check (the DB helper is no longer client-callable). */
+export const emailHasAccount = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({ email: z.string().trim().email().max(160) }).parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: exists, error } = await supabaseAdmin.rpc("email_has_account", {
+      _email: data.email,
+    });
+    if (error) return { known: false as const, registered: false };
+    return { known: true as const, registered: !!exists };
+  });
+
+
+
 export const getAvailableSlots = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => slotsSchema.parse(d))
   .handler(async ({ data }) => {
