@@ -10,7 +10,9 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { useAuth } from "@/hooks/use-auth";
 import { displayCustomerName, formatTime, formatDateLong, greetingPt } from "@/lib/format";
 import { zonedToUtc, todayIn } from "@/lib/time";
-import { Bell, CalendarCheck, Check, ChevronDown, CircleCheck, Clock3, Sun } from "lucide-react";
+import { Bell, CalendarCheck, Check, ChevronDown, CircleCheck, Clock3, Sun, UserX } from "lucide-react";
+import { toast } from "sonner";
+import { setAppointmentStatus, type ApptStatus } from "@/lib/appointment-status";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
@@ -152,41 +154,61 @@ function Dashboard() {
   }
 
 
+  const todayList = liveToday;
+  const overdueList = liveToday.filter((a) => {
+    const end = a.ends_at ? new Date(a.ends_at).getTime() : new Date(a.starts_at).getTime() + 3_600_000;
+    return end < now && (a.status === "pending" || a.status === "confirmed");
+  });
+  const nextDays = groupedUpcoming.filter(([day]) => day !== today);
+
+  async function closeAppointment(id: string, status: "completed" | "no_show") {
+    if (!business) return;
+    const res = await setAppointmentStatus({ id, businessId: business.id, status });
+    if (!res.ok) {
+      toast.error(t("pf.common.saveError"));
+      return;
+    }
+    toast.success(t("dash.overdue.saved"));
+    qc.invalidateQueries({ queryKey: ["dashboard-day"] });
+  }
+
   return (
     <AppShell>
-      <div className="mb-6 flex items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display text-[28px] font-bold leading-tight tracking-tight">
-            {greetingPt(new Date(), lang)}
-            {user?.user_metadata?.["full_name"] ? `, ${user.user_metadata["full_name"]}` : ""}
-          </h1>
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <h1 className="min-w-0 truncate font-display text-[26px] font-bold leading-tight tracking-tight">
+          {greetingPt(new Date(), lang)}
+          {user?.user_metadata?.["full_name"] ? `, ${user.user_metadata["full_name"]}` : ""}
+        </h1>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button size="sm" onClick={() => setNewOpen(true)}>
+            <CalendarCheck className="size-4" /> {t("dash.new")}
+          </Button>
+          <NotificationBell
+            notifications={requestData?.notifications ?? []}
+            pending={requestData?.pending ?? 0}
+            onSelectAppointment={(apptId) => {
+              setFocusId(apptId);
+              window.setTimeout(() => {
+                document
+                  .getElementById(`appt-${apptId}`)
+                  ?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }, 120);
+            }}
+            onMarkRead={async () => {
+              if (!business) return;
+              const result = await markNotificationsRead({ data: { businessId: business.id } });
+              if (result.ok) qc.invalidateQueries({ queryKey: ["dashboard-requests"] });
+            }}
+          />
         </div>
-        <NotificationBell
-          notifications={requestData?.notifications ?? []}
-          pending={requestData?.pending ?? 0}
-          onSelectAppointment={(apptId) => {
-            setFocusId(apptId);
-            window.setTimeout(() => {
-              document
-                .getElementById(`appt-${apptId}`)
-                ?.scrollIntoView({ behavior: "smooth", block: "center" });
-            }, 120);
-          }}
-          onMarkRead={async () => {
-            if (!business) return;
-            const result = await markNotificationsRead({ data: { businessId: business.id } });
-            if (result.ok) qc.invalidateQueries({ queryKey: ["dashboard-requests"] });
-          }}
-        />
       </div>
 
       <InstallPrompt />
 
-
       {focusAppt && (
         <section
           data-status={focusAppt.status}
-          className="appointment-state surface mt-4 flex items-center gap-4 p-4"
+          className="appointment-state surface flex items-center gap-4 p-4"
         >
           <span
             data-status={focusAppt.status}
@@ -196,8 +218,8 @@ function Dashboard() {
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
-              {ongoing ? t("dash.now.ongoing") : t("dash.now.next")} ·{" "}
-              {ongoing ? "" : relativeLabel(focusAppt.starts_at)}
+              {ongoing ? t("dash.now.ongoing") : t("dash.now.next")}
+              {ongoing ? "" : ` · ${relativeLabel(focusAppt.starts_at)}`}
             </p>
             <p className="truncate text-[17px] font-bold leading-snug">
               {displayCustomerName(focusAppt.customer_name, null, 1)}
@@ -218,44 +240,60 @@ function Dashboard() {
         </section>
       )}
 
-      <section className="surface mt-3 p-4">
-        <div className="flex items-center justify-between gap-3">
-          <p className="flex items-center gap-2 text-sm font-bold">
-            <Sun className="size-4 text-muted-foreground" />
-            {t("dash.progress.title")}
+      {overdueList.length > 0 && (
+        <section className="surface mt-3 p-4">
+          <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+            <Clock3 className="size-4" /> {t("dash.overdue.title")}
           </p>
-          <p className="text-sm font-black tabular-nums">{formatPrice(dayRevenue)}</p>
+          <ul className="mt-3 space-y-2">
+            {overdueList.map((a) => (
+              <li key={a.id} className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-black tabular-nums">{formatTime(a.starts_at, tz)}</span>
+                <span className="min-w-0 flex-1 truncate text-sm font-bold">
+                  {displayCustomerName(a.customer_name, null, 1)}
+                </span>
+                <Button size="sm" variant="outline" onClick={() => closeAppointment(a.id, "completed")}>
+                  <Check className="size-4" /> {t("dash.overdue.done")}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => closeAppointment(a.id, "no_show")}>
+                  <UserX className="size-4" /> {t("dash.overdue.noshow")}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section className="surface mt-3 flex items-center gap-3 p-4">
+        <Sun className="size-4 shrink-0 text-muted-foreground" />
+        <div className="min-w-0 flex-1">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-foreground transition-[width] duration-500"
+              style={{ width: `${dayProgress}%` }}
+            />
+          </div>
+          <p className="mt-1.5 truncate text-xs font-semibold text-muted-foreground">
+            {liveToday.length === 0
+              ? t("dash.progress.free")
+              : t("dash.progress.done")
+                  .replace("{done}", String(doneCount))
+                  .replace("{total}", String(liveToday.length))}
+          </p>
         </div>
-        <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
-          <div
-            className="h-full rounded-full bg-foreground transition-[width] duration-500"
-            style={{ width: `${dayProgress}%` }}
-          />
-        </div>
-        <p className="mt-2 text-xs font-semibold text-muted-foreground">
-          {liveToday.length === 0
-            ? t("dash.progress.free")
-            : t("dash.progress.done")
-                .replace("{done}", String(doneCount))
-                .replace("{total}", String(liveToday.length))}
-        </p>
+        <p className="shrink-0 text-sm font-black tabular-nums">{formatPrice(dayRevenue)}</p>
       </section>
 
-
-      <section className="mt-8">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="font-display text-lg font-bold tracking-tight">{t("dash.upcoming")}</h2>
-          <Button size="sm" onClick={() => setNewOpen(true)}>
-            <CalendarCheck className="size-4" /> {t("dash.new")}
-          </Button>
-        </div>
-
+      <section className="mt-6">
+        <h2 className="mb-2.5 px-1 font-display text-sm font-bold uppercase tracking-[0.05em] text-muted-foreground">
+          {t("dash.todayList")}
+        </h2>
         {loadingDay ? (
           <LoadingRows />
-        ) : (dayData?.upcoming.length ?? 0) === 0 ? (
+        ) : todayList.length === 0 ? (
           <EmptyState
             icon={<CalendarCheck className="size-6" />}
-            title={t("dash.empty.title")}
+            title={t("dash.today.empty")}
             description={t("dash.empty.body")}
             action={
               <Button onClick={() => setNewOpen(true)}>
@@ -264,68 +302,110 @@ function Dashboard() {
             }
           />
         ) : (
-          <div className="space-y-5">
-            {groupedUpcoming.map(([day, items], gi) => (
-              <DayGroup
-                key={day}
-                dayLabel={
-                  day === today
-                    ? t("dash.todayLabel")
-                    : formatDateLong(`${day}T12:00:00Z`, business!.timezone)
-                }
-                confirmedCount={items.filter((a) => a.status === "confirmed").length}
-                pendingCount={items.filter((a) => a.status === "pending").length}
-                collapsibleDefaultOpen={gi === 0}
-                forceOpen={items.some((a) => a.id === focusId)}
-              >
-                <ul className="space-y-2.5">
-                  {items.map((a, i) => (
-                    <li
-                      key={a.id}
-                      id={`appt-${a.id}`}
-                      data-status={a.status}
-                      className={cn(
-                        "appointment-state surface surface-hover flex items-center gap-3.5 p-4 transition-shadow",
-                        focusId === a.id && "ring-2 ring-primary",
-                      )}
-                    >
-                      <span className="w-14 shrink-0 text-center text-lg font-black tabular-nums text-foreground">
-                        {formatTime(a.starts_at, business!.timezone)}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[15px] font-bold leading-snug">
-                          {displayCustomerName(a.customer_name, null, i + 1)}
-                        </p>
-                        <p className="truncate text-sm font-normal leading-snug text-muted-foreground">
-                          {a.service_name}
-                        </p>
-                      </div>
-
-                      <AppointmentActions
-                        id={a.id}
-                        status={a.status}
-                        customerName={displayCustomerName(a.customer_name, null, i + 1)}
-                        customerPhone={a.customer_phone}
-                        startsAt={a.starts_at}
-                        serviceName={a.service_name}
-                        timezone={business!.timezone}
-                        autoOpen={focusId === a.id}
-                        onAutoOpenDone={() => setFocusId(null)}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </DayGroup>
+          <ul className="space-y-2.5">
+            {todayList.map((a, i) => (
+              <ApptRow
+                key={a.id}
+                appt={a}
+                index={i}
+                timezone={tz}
+                focused={focusId === a.id}
+                onAutoOpenDone={() => setFocusId(null)}
+              />
             ))}
-          </div>
+          </ul>
         )}
-
       </section>
+
+      {nextDays.length > 0 && (
+        <section className="mt-6 space-y-4">
+          <h2 className="px-1 font-display text-sm font-bold uppercase tracking-[0.05em] text-muted-foreground">
+            {t("dash.nextDays")}
+          </h2>
+          {nextDays.map(([day, items]) => (
+            <DayGroup
+              key={day}
+              dayLabel={formatDateLong(`${day}T12:00:00Z`, business!.timezone)}
+              confirmedCount={items.filter((a) => a.status === "confirmed").length}
+              pendingCount={items.filter((a) => a.status === "pending").length}
+              collapsibleDefaultOpen={false}
+              forceOpen={items.some((a) => a.id === focusId)}
+            >
+              <ul className="space-y-2.5">
+                {items.map((a, i) => (
+                  <ApptRow
+                    key={a.id}
+                    appt={a}
+                    index={i}
+                    timezone={business!.timezone}
+                    focused={focusId === a.id}
+                    onAutoOpenDone={() => setFocusId(null)}
+                  />
+                ))}
+              </ul>
+            </DayGroup>
+          ))}
+        </section>
+      )}
 
       {business && (
         <NewAppointmentDialog business={business} open={newOpen} onOpenChange={setNewOpen} />
       )}
     </AppShell>
+  );
+}
+
+function ApptRow({
+  appt,
+  index,
+  timezone,
+  focused,
+  onAutoOpenDone,
+}: {
+  appt: {
+    id: string;
+    starts_at: string;
+    customer_name: string;
+    customer_phone: string | null;
+    service_name: string;
+    status: ApptStatus;
+  };
+  index: number;
+  timezone: string;
+  focused: boolean;
+  onAutoOpenDone: () => void;
+}) {
+  const name = displayCustomerName(appt.customer_name, null, index + 1);
+  return (
+    <li
+      id={`appt-${appt.id}`}
+      data-status={appt.status}
+      className={cn(
+        "appointment-state surface surface-hover flex items-center gap-3.5 p-4 transition-shadow",
+        focused && "ring-2 ring-primary",
+      )}
+    >
+      <span className="w-14 shrink-0 text-center text-lg font-black tabular-nums text-foreground">
+        {formatTime(appt.starts_at, timezone)}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[15px] font-bold leading-snug">{name}</p>
+        <p className="truncate text-sm font-normal leading-snug text-muted-foreground">
+          {appt.service_name}
+        </p>
+      </div>
+      <AppointmentActions
+        id={appt.id}
+        status={appt.status}
+        customerName={name}
+        customerPhone={appt.customer_phone}
+        startsAt={appt.starts_at}
+        serviceName={appt.service_name}
+        timezone={timezone}
+        autoOpen={focused}
+        onAutoOpenDone={onAutoOpenDone}
+      />
+    </li>
   );
 }
 
