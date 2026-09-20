@@ -14,6 +14,9 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
 import { usePrefs } from "@/lib/prefs";
+import { formatTime } from "@/lib/format";
+import { CalendarOff, StickyNote } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
@@ -37,6 +40,33 @@ function hoursFromRanges(ranges: { start: string; end: string }[]): string[] {
   return Array.from(new Set(out)).sort();
 }
 
+type Appt = {
+  id: string;
+  starts_at: string;
+  customer_name: string;
+  customer_phone: string | null;
+  service_name: string;
+  status: "pending" | "confirmed" | "completed" | "cancelled" | "no_show" | "expired";
+  notes: string | null;
+};
+
+type AgendaRow = { kind: "free"; hour: string } | { kind: "appt"; appt: Appt; hour: string };
+
+/** Merges the working-hour grid with booked slots into one chronological list. */
+function buildAgenda(hours: string[], appts: Appt[], tz: string): AgendaRow[] {
+  const rows: AgendaRow[] = appts.map((a) => ({
+    kind: "appt" as const,
+    appt: a,
+    hour: formatTime(a.starts_at, tz),
+  }));
+  const takenHours = new Set(rows.map((r) => r.hour.slice(0, 2)));
+  for (const h of hours) {
+    if (takenHours.has(h.slice(0, 2))) continue;
+    rows.push({ kind: "free", hour: h });
+  }
+  return rows.sort((a, b) => a.hour.localeCompare(b.hour));
+}
+
 function CalendarPage() {
   const { t } = usePrefs();
   const { business } = useMyBusiness();
@@ -56,7 +86,9 @@ function CalendarPage() {
       const [{ data: appts }, { data: staff }, { data: hours }] = await Promise.all([
         supabase
           .from("appointments")
-          .select("id, starts_at, ends_at, customer_name, customer_phone, service_name, price_cents, status, staff_id")
+          .select(
+            "id, starts_at, ends_at, customer_name, customer_phone, service_name, price_cents, status, staff_id, notes",
+          )
           .eq("business_id", business!.id)
           .gte("starts_at", from)
           .lt("starts_at", to)
@@ -128,74 +160,85 @@ function CalendarPage() {
 
       {isLoading ? (
         <LoadingRows rows={5} />
-      ) : (data?.appts.length ?? 0) === 0 ? (
-        <ul className="space-y-2">
-          {(data?.hours ?? []).map((h: string) => (
-            <li key={h}>
-              <button
-                onClick={() => {
-                  setNewTime(h);
-                  setNewOpen(true);
-                }}
-                className="surface surface-hover flex w-full items-center gap-3.5 px-4 py-3 text-left"
-              >
-                <span className="w-14 shrink-0 text-sm font-bold tabular-nums text-muted-foreground">
-                  {h}
-                </span>
-                <span className="flex-1 text-sm font-semibold text-muted-foreground/70">
-                  {t("cal.slot.free")}
-                </span>
-                <Plus className="size-4 shrink-0 text-primary" strokeWidth={2.6} />
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <div className="space-y-6">
-          {(data!.staff.length ? data!.staff : [{ id: "none", name: t("cal.unassigned") }]).map((member) => {
-            const items = data!.appts.filter((a) =>
-              member.id === "none" ? true : a.staff_id === member.id,
-            );
-            if (items.length === 0) return null;
-            return (
-              <section key={member.id}>
-                <h2 className="font-display mb-2.5 flex items-center gap-2 px-1 text-sm font-bold uppercase tracking-[0.06em] text-muted-foreground">
-                  {member.name}
-                  <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold tabular-nums text-primary">
-                    {items.length}
-                  </span>
-                </h2>
-                <ul className="space-y-2.5">
-                  {items.map((a, i) => (
-                    <li
-                      key={a.id}
-                      data-status={a.status}
-                      className={cn("appointment-state surface surface-hover flex items-center gap-3.5 p-4")}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[15px] font-bold leading-snug">
-                          {displayCustomerName(a.customer_name, null, i + 1)}
-                        </p>
-                        <p className="truncate text-sm font-normal leading-snug text-muted-foreground">
-                          {a.service_name}
-                        </p>
-                      </div>
-                      <AppointmentActions
-                        id={a.id}
-                        status={a.status}
-                        customerName={displayCustomerName(a.customer_name, null, i + 1)}
-                        customerPhone={a.customer_phone}
-                        startsAt={a.starts_at}
-                        serviceName={a.service_name}
-                        timezone={tz}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            );
-          })}
+      ) : (data?.hours.length ?? 0) === 0 && (data?.appts.length ?? 0) === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
+          <span className="flex size-16 items-center justify-center rounded-full border border-border bg-muted/40 text-muted-foreground/70">
+            <CalendarOff className="size-7" strokeWidth={2.2} />
+          </span>
+          <p className="text-sm font-bold text-muted-foreground">{t("cal.freeDay")}</p>
         </div>
+      ) : (
+        <ul className="space-y-2.5">
+          {buildAgenda(data!.hours, data!.appts, tz).map((row, i) =>
+            row.kind === "free" ? (
+              <li key={`free-${row.hour}`}>
+                <button
+                  onClick={() => {
+                    setNewTime(row.hour);
+                    setNewOpen(true);
+                  }}
+                  className="surface surface-hover flex w-full items-center gap-3.5 px-4 py-3 text-left"
+                >
+                  <span className="w-14 shrink-0 text-sm font-bold tabular-nums text-muted-foreground">
+                    {row.hour}
+                  </span>
+                  <span className="flex-1 text-sm font-semibold text-muted-foreground/70">
+                    {t("cal.slot.free")}
+                  </span>
+                  <Plus className="size-4 shrink-0 text-primary" strokeWidth={2.6} />
+                </button>
+              </li>
+            ) : (
+              <li
+                key={row.appt.id}
+                data-status={row.appt.status}
+                className={cn(
+                  "appointment-state surface surface-hover flex items-center gap-3 p-4",
+                )}
+              >
+                <span className="w-14 shrink-0 text-sm font-bold tabular-nums">
+                  {formatTime(row.appt.starts_at, tz)}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[15px] font-bold leading-snug">
+                    {displayCustomerName(row.appt.customer_name, null, i + 1)}
+                  </p>
+                  <p className="truncate text-sm font-normal leading-snug text-muted-foreground">
+                    {row.appt.service_name}
+                  </p>
+                </div>
+                {row.appt.notes?.trim() && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={t("cal.note.label")}
+                        className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground"
+                      >
+                        <StickyNote className="size-[18px]" strokeWidth={2.6} />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent side="top" align="end" className="w-64 text-sm">
+                      <p className="mb-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                        {t("cal.note.label")}
+                      </p>
+                      <p className="whitespace-pre-wrap font-medium">{row.appt.notes}</p>
+                    </PopoverContent>
+                  </Popover>
+                )}
+                <AppointmentActions
+                  id={row.appt.id}
+                  status={row.appt.status}
+                  customerName={displayCustomerName(row.appt.customer_name, null, i + 1)}
+                  customerPhone={row.appt.customer_phone}
+                  startsAt={row.appt.starts_at}
+                  serviceName={row.appt.service_name}
+                  timezone={tz}
+                />
+              </li>
+            ),
+          )}
+        </ul>
       )}
 
       {mounted &&

@@ -45,7 +45,10 @@ export function AppointmentStatusIndicator({ status }: { status: string }) {
           )}
           aria-label={statusLabel(status, lang)}
         >
-          <Icon className="size-[18px]" strokeWidth={2.7} />
+          <Icon
+            className={cn("size-[18px]", status === "pending" && "animate-status-shake")}
+            strokeWidth={2.7}
+          />
         </Button>
       </PopoverTrigger>
       <PopoverContent side="top" align="center" className="w-auto rounded-full px-3 py-1.5">

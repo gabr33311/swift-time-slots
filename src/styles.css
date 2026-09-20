@@ -423,26 +423,61 @@
 }
 
 @utility appointment-state {
+  --appointment-soft: 55%;
   background-size: 220% 220%;
   animation: appointment-gradient 3.8s ease-in-out infinite;
 
   &[data-status="confirmed"] {
-    background-image: linear-gradient(90deg, var(--appointment-confirmed-start), var(--appointment-confirmed-end), var(--appointment-confirmed-start));
+    background-image: linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--appointment-confirmed-start) var(--appointment-soft), transparent),
+      color-mix(in oklab, var(--appointment-confirmed-end) var(--appointment-soft), transparent),
+      color-mix(in oklab, var(--appointment-confirmed-start) var(--appointment-soft), transparent)
+    );
   }
 
   &[data-status="pending"] {
-    background-image: linear-gradient(90deg, var(--appointment-pending-start), var(--appointment-pending-end), var(--appointment-pending-start));
+    background-image: linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--appointment-pending-start) var(--appointment-soft), transparent),
+      color-mix(in oklab, var(--appointment-pending-end) var(--appointment-soft), transparent),
+      color-mix(in oklab, var(--appointment-pending-start) var(--appointment-soft), transparent)
+    );
   }
 
   &[data-status="cancelled"],
   &[data-status="no_show"],
   &[data-status="expired"] {
-    background-image: linear-gradient(90deg, var(--appointment-cancelled-start), var(--appointment-cancelled-end), var(--appointment-cancelled-start));
+    background-image: linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--appointment-cancelled-start) var(--appointment-soft), transparent),
+      color-mix(in oklab, var(--appointment-cancelled-end) var(--appointment-soft), transparent),
+      color-mix(in oklab, var(--appointment-cancelled-start) var(--appointment-soft), transparent)
+    );
   }
 
   &[data-status="completed"] {
-    background-image: linear-gradient(90deg, var(--appointment-completed-start), var(--appointment-completed-end), var(--appointment-completed-start));
+    background-image: linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--appointment-completed-start) var(--appointment-soft), transparent),
+      color-mix(in oklab, var(--appointment-completed-end) var(--appointment-soft), transparent),
+      color-mix(in oklab, var(--appointment-completed-start) var(--appointment-soft), transparent)
+    );
   }
+}
+
+@keyframes status-shake {
+  0%, 62%, 100% { transform: rotate(0deg); }
+  68% { transform: rotate(-11deg); }
+  74% { transform: rotate(9deg); }
+  80% { transform: rotate(-7deg); }
+  86% { transform: rotate(5deg); }
+  92% { transform: rotate(-3deg); }
+}
+
+@utility animate-status-shake {
+  animation: status-shake 2.4s ease-in-out infinite;
+  transform-origin: 50% 20%;
 }
 
 @utility appointment-status-confirmed { color: var(--appointment-confirmed-start); border-color: var(--appointment-confirmed-start); }
