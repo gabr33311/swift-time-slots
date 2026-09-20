@@ -17,6 +17,7 @@ import { useLogoUrl } from "@/hooks/use-logo";
 import { usePrefs } from "@/lib/prefs";
 import { ShareSheet } from "@/components/share-sheet";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
+import { SubscriptionAlertsPreview } from "@/components/subscription-alerts";
 
 const NAV = [
   { to: "/calendar", label: "nav.calendar", icon: CalendarDays },
@@ -176,6 +177,7 @@ export function AppShell({
 
       <div className="lg:pl-64">
         <main className="animate-enter mx-auto w-full max-w-5xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-5 lg:pb-12">
+          <SubscriptionAlertsPreview />
           {children}
         </main>
       </div>
