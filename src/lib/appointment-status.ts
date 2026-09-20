@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { sendConfirmationEmail } from "@/lib/appointment-email.functions";
 
 export type ApptStatus =
   | "confirmed"
