@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
 import { LoadingRows, PageHeader } from "@/components/ui-bits";
@@ -10,7 +11,7 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { displayCustomerName } from "@/lib/format";
 import { addDays, minutesToTime, timeToMinutes, todayIn, weekdayOf, zonedToUtc } from "@/lib/time";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Lock, Plus, Unlock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
 import { usePrefs } from "@/lib/prefs";
@@ -48,17 +49,28 @@ type Appt = {
   service_name: string;
   status: "pending" | "confirmed" | "completed" | "cancelled" | "no_show" | "expired";
   notes: string | null;
+  staff_id: string | null;
 };
 
-type AgendaRow = { kind: "free"; hour: string } | { kind: "appt"; appt: Appt; hour: string };
+type Block = {
+  id: string;
+  starts_at: string;
+  ends_at: string;
+  reason: string | null;
+  staff_id: string | null;
+};
 
-/** Merges the working-hour grid with booked slots into one chronological list. */
-function buildAgenda(hours: string[], appts: Appt[], tz: string): AgendaRow[] {
-  const rows: AgendaRow[] = appts.map((a) => ({
-    kind: "appt" as const,
-    appt: a,
-    hour: formatTime(a.starts_at, tz),
-  }));
+type AgendaRow =
+  | { kind: "free"; hour: string }
+  | { kind: "appt"; appt: Appt; hour: string }
+  | { kind: "block"; block: Block; hour: string };
+
+/** Merges the working-hour grid with booked and blocked slots into one chronological list. */
+function buildAgenda(hours: string[], appts: Appt[], blocks: Block[], tz: string): AgendaRow[] {
+  const rows: AgendaRow[] = [
+    ...appts.map((a) => ({ kind: "appt" as const, appt: a, hour: formatTime(a.starts_at, tz) })),
+    ...blocks.map((b) => ({ kind: "block" as const, block: b, hour: formatTime(b.starts_at, tz) })),
+  ];
   const takenHours = new Set(rows.map((r) => r.hour.slice(0, 2)));
   for (const h of hours) {
     if (takenHours.has(h.slice(0, 2))) continue;
@@ -70,10 +82,12 @@ function buildAgenda(hours: string[], appts: Appt[], tz: string): AgendaRow[] {
 function CalendarPage() {
   const { t } = usePrefs();
   const { business } = useMyBusiness();
+  const qc = useQueryClient();
   const tz = business?.timezone ?? "Europe/Lisbon";
   const [date, setDate] = useState(todayIn(tz));
   const [newOpen, setNewOpen] = useState(false);
   const [newTime, setNewTime] = useState("09:00");
+  const [staffFilter, setStaffFilter] = useState<string>("all");
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -83,38 +97,82 @@ function CalendarPage() {
     queryFn: async () => {
       const from = zonedToUtc(date, 0, tz).toISOString();
       const to = zonedToUtc(date, 24 * 60, tz).toISOString();
-      const [{ data: appts }, { data: staff }, { data: hours }] = await Promise.all([
-        supabase
-          .from("appointments")
-          .select(
-            "id, starts_at, ends_at, customer_name, customer_phone, service_name, price_cents, status, staff_id, notes",
-          )
-          .eq("business_id", business!.id)
-          .gte("starts_at", from)
-          .lt("starts_at", to)
-          .order("starts_at"),
-        supabase
-          .from("staff")
-          .select("id, name")
-          .eq("business_id", business!.id)
-          .eq("is_active", true)
-          .order("sort_order"),
-        supabase
-          .from("working_hours")
-          .select("start_time, end_time")
-          .eq("business_id", business!.id)
-          .eq("weekday", weekdayOf(date))
-          .order("start_time"),
-      ]);
+      const [{ data: appts }, { data: staff }, { data: hours }, { data: blocks }] =
+        await Promise.all([
+          supabase
+            .from("appointments")
+            .select(
+              "id, starts_at, ends_at, customer_name, customer_phone, service_name, price_cents, status, staff_id, notes",
+            )
+            .eq("business_id", business!.id)
+            .gte("starts_at", from)
+            .lt("starts_at", to)
+            .order("starts_at"),
+          supabase
+            .from("staff")
+            .select("id, name")
+            .eq("business_id", business!.id)
+            .eq("is_active", true)
+            .order("sort_order"),
+          supabase
+            .from("working_hours")
+            .select("start_time, end_time")
+            .eq("business_id", business!.id)
+            .eq("weekday", weekdayOf(date))
+            .order("start_time"),
+          supabase
+            .from("blocked_times")
+            .select("id, starts_at, ends_at, reason, staff_id")
+            .eq("business_id", business!.id)
+            .gte("starts_at", from)
+            .lt("starts_at", to)
+            .order("starts_at"),
+        ]);
       return {
         appts: appts ?? [],
         staff: staff ?? [],
+        blocks: blocks ?? [],
         hours: hoursFromRanges(
           (hours ?? []).map((h) => ({ start: h.start_time, end: h.end_time })),
         ),
       };
     },
   });
+
+  const staffList = data?.staff ?? [];
+  const matchesStaff = (id: string | null) =>
+    staffFilter === "all" || id === staffFilter || id === null;
+  const appts = (data?.appts ?? []).filter((a) => matchesStaff(a.staff_id));
+  const blocks = (data?.blocks ?? []).filter((b) => matchesStaff(b.staff_id));
+
+  async function blockHour(hour: string) {
+    if (!business) return;
+    const start = zonedToUtc(date, timeToMinutes(hour), tz);
+    const end = zonedToUtc(date, timeToMinutes(hour) + 60, tz);
+    const { error } = await supabase.from("blocked_times").insert({
+      business_id: business.id,
+      staff_id: staffFilter === "all" ? null : staffFilter,
+      starts_at: start.toISOString(),
+      ends_at: end.toISOString(),
+      reason: t("cal.block.reason"),
+    });
+    if (error) {
+      toast.error(t("cal.toast.blockError"));
+      return;
+    }
+    toast.success(t("cal.toast.blocked"));
+    qc.invalidateQueries({ queryKey: ["calendar"] });
+  }
+
+  async function unblock(id: string) {
+    const { error } = await supabase.from("blocked_times").delete().eq("id", id);
+    if (error) {
+      toast.error(t("cal.toast.blockError"));
+      return;
+    }
+    toast.success(t("cal.toast.unblocked"));
+    qc.invalidateQueries({ queryKey: ["calendar"] });
+  }
 
   const label = new Intl.DateTimeFormat("pt-PT", {
     weekday: "long",
@@ -135,7 +193,7 @@ function CalendarPage() {
         }
       />
 
-      <div className="surface mb-5 flex items-center gap-1 p-1.5">
+      <div className="surface mb-3 flex items-center gap-1 p-1.5">
         <button
           onClick={() => setDate(addDays(date, -1))}
           aria-label={t("cal.prevDay")}
@@ -158,9 +216,28 @@ function CalendarPage() {
         )}
       </div>
 
+      {staffList.length > 1 && (
+        <div className="mb-4 flex items-center gap-1.5 overflow-x-auto rounded-full bg-muted p-1">
+          {[{ id: "all", name: t("cal.staff.all") }, ...staffList].map((s) => (
+            <button
+              key={s.id}
+              onClick={() => setStaffFilter(s.id)}
+              className={cn(
+                "h-9 shrink-0 rounded-full px-4 text-[13px] font-bold transition-all duration-200",
+                staffFilter === s.id
+                  ? "bg-card text-foreground shadow-soft"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {s.name}
+            </button>
+          ))}
+        </div>
+      )}
+
       {isLoading ? (
         <LoadingRows rows={5} />
-      ) : (data?.hours.length ?? 0) === 0 && (data?.appts.length ?? 0) === 0 ? (
+      ) : (data?.hours.length ?? 0) === 0 && appts.length === 0 && blocks.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
           <span className="flex size-16 items-center justify-center rounded-full border border-border bg-muted/40 text-muted-foreground/70">
             <CalendarOff className="size-7" strokeWidth={2.2} />
@@ -169,15 +246,15 @@ function CalendarPage() {
         </div>
       ) : (
         <ul className="space-y-2.5">
-          {buildAgenda(data!.hours, data!.appts, tz).map((row, i) =>
+          {buildAgenda(data!.hours, appts, blocks, tz).map((row, i) =>
             row.kind === "free" ? (
-              <li key={`free-${row.hour}`}>
+              <li key={`free-${row.hour}`} className="flex items-center gap-2">
                 <button
                   onClick={() => {
                     setNewTime(row.hour);
                     setNewOpen(true);
                   }}
-                  className="surface surface-hover flex w-full items-center gap-3.5 px-4 py-3 text-left"
+                  className="surface surface-hover flex min-w-0 flex-1 items-center gap-3.5 px-4 py-3 text-left"
                 >
                   <span className="w-14 shrink-0 text-sm font-bold tabular-nums text-muted-foreground">
                     {row.hour}
@@ -186,6 +263,41 @@ function CalendarPage() {
                     {t("cal.slot.free")}
                   </span>
                   <Plus className="size-4 shrink-0 text-primary" strokeWidth={2.6} />
+                </button>
+                <button
+                  onClick={() => blockHour(row.hour)}
+                  aria-label={t("cal.block")}
+                  title={t("cal.block")}
+                  className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Lock className="size-4" strokeWidth={2.6} />
+                </button>
+              </li>
+            ) : row.kind === "block" ? (
+              <li
+                key={row.block.id}
+                className="surface flex items-center gap-3 border-dashed p-4 opacity-80"
+              >
+                <span className="w-14 shrink-0 text-center text-lg font-black tabular-nums text-muted-foreground">
+                  {row.hour}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[15px] font-bold leading-snug text-muted-foreground">
+                    {t("cal.blocked")}
+                  </p>
+                  {row.block.reason && (
+                    <p className="truncate text-sm leading-snug text-muted-foreground/70">
+                      {row.block.reason}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => unblock(row.block.id)}
+                  aria-label={t("cal.unblock")}
+                  title={t("cal.unblock")}
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Unlock className="size-4" strokeWidth={2.6} />
                 </button>
               </li>
             ) : (

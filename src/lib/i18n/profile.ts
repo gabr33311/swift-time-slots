@@ -147,6 +147,8 @@ export const profileDict: Record<Lang, Record<string, string>> = {
     "pf.an.revenue": "Receita",
     "pf.an.cancellations": "Cancelamentos",
     "pf.an.noShows": "Faltas",
+    "pf.an.avgTicket": "Ticket médio",
+    "pf.an.byStaff": "Receita por profissional",
     "pf.an.topServices": "Serviços mais rentáveis",
     "pf.an.noData": "Ainda sem dados suficientes.",
 
@@ -306,6 +308,8 @@ export const profileDict: Record<Lang, Record<string, string>> = {
     "pf.an.revenue": "Revenue",
     "pf.an.cancellations": "Cancellations",
     "pf.an.noShows": "No shows",
+    "pf.an.avgTicket": "Average ticket",
+    "pf.an.byStaff": "Revenue per staff member",
     "pf.an.topServices": "Top-earning services",
     "pf.an.noData": "Not enough data yet.",
 
