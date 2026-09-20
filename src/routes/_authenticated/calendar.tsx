@@ -8,7 +8,9 @@ import { AppShell } from "@/components/app-shell";
 import { LoadingRows, PageHeader } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
-import { displayCustomerName } from "@/lib/format";
+import { displayCustomerName, formatPrice } from "@/lib/format";
+import { PendingCapsule } from "@/components/pending-sheet";
+import { Sun } from "lucide-react";
 import { addDays, minutesToTime, timeToMinutes, todayIn, weekdayOf, zonedToUtc } from "@/lib/time";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 import { ChevronLeft, ChevronRight, Lock, Plus, Unlock } from "lucide-react";
@@ -90,6 +92,11 @@ function CalendarPage() {
   const [staffFilter, setStaffFilter] = useState<string>("all");
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const { data, isLoading } = useQuery({
     queryKey: ["calendar", business?.id, date],
@@ -153,6 +160,33 @@ function CalendarPage() {
     timeZone: tz,
   }).format(new Date());
   const markerIndex = isToday ? agendaRows.findIndex((r) => r.hour > nowHHMM) : -1;
+
+  // Live cockpit — only meaningful while looking at today.
+  const liveToday = isToday
+    ? appts.filter((a) => !["cancelled", "no_show", "expired"].includes(a.status))
+    : [];
+  const ongoing = liveToday.find((a) => {
+    const s = new Date(a.starts_at).getTime();
+    const e = a.ends_at ? new Date(a.ends_at).getTime() : s + 3_600_000;
+    return s <= now && now < e && a.status !== "completed";
+  });
+  const nextUp = liveToday.find(
+    (a) => new Date(a.starts_at).getTime() > now && a.status !== "completed",
+  );
+  const focusAppt = ongoing ?? nextUp;
+  const doneCount = liveToday.filter((a) => a.status === "completed").length;
+  const dayRevenue = liveToday.reduce((sum, a) => sum + (a.price_cents ?? 0), 0);
+  const dayProgress = liveToday.length ? Math.round((doneCount / liveToday.length) * 100) : 0;
+
+  function relativeLabel(iso: string): string {
+    const diff = Math.round((new Date(iso).getTime() - now) / 60_000);
+    if (diff < 0) return t("dash.now.late").replace("{n}", String(Math.abs(diff)));
+    if (diff < 60) return t("dash.now.inMin").replace("{n}", String(diff));
+    return t("dash.now.inHours")
+      .replace("{h}", String(Math.floor(diff / 60)))
+      .replace("{m}", String(diff % 60).padStart(2, "0"));
+  }
+
 
   const weekStart = addDays(date, -((weekdayOf(date) + 6) % 7));
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -261,6 +295,62 @@ function CalendarPage() {
         </div>
       </div>
 
+      <PendingCapsule />
+
+      {isToday && focusAppt && (
+        <section
+          data-status={focusAppt.status}
+          className="appointment-state surface mb-3 flex items-center gap-4 p-4"
+        >
+          <span
+            data-status={focusAppt.status}
+            className="appointment-status-disc flex size-12 shrink-0 flex-col items-center justify-center rounded-2xl border border-border text-[13px] font-black tabular-nums text-foreground"
+          >
+            {formatTime(focusAppt.starts_at, tz)}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+              {ongoing ? t("dash.now.ongoing") : t("dash.now.next")}
+              {ongoing ? "" : ` · ${relativeLabel(focusAppt.starts_at)}`}
+            </p>
+            <p className="truncate text-[17px] font-bold leading-snug">
+              {displayCustomerName(focusAppt.customer_name, null, 1)}
+            </p>
+            <p className="truncate text-sm leading-snug text-muted-foreground">
+              {focusAppt.service_name}
+            </p>
+          </div>
+          <AppointmentActions
+            id={focusAppt.id}
+            status={focusAppt.status}
+            customerName={displayCustomerName(focusAppt.customer_name, null, 1)}
+            customerPhone={focusAppt.customer_phone}
+            startsAt={focusAppt.starts_at}
+            serviceName={focusAppt.service_name}
+            timezone={tz}
+          />
+        </section>
+      )}
+
+      {isToday && liveToday.length > 0 && (
+        <section className="surface mb-4 flex items-center gap-3 p-4">
+          <Sun className="size-4 shrink-0 text-muted-foreground" />
+          <div className="min-w-0 flex-1">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-foreground transition-[width] duration-500"
+                style={{ width: `${dayProgress}%` }}
+              />
+            </div>
+            <p className="mt-1.5 truncate text-xs font-semibold text-muted-foreground">
+              {t("dash.progress.done")
+                .replace("{done}", String(doneCount))
+                .replace("{total}", String(liveToday.length))}
+            </p>
+          </div>
+          <p className="shrink-0 text-sm font-black tabular-nums">{formatPrice(dayRevenue)}</p>
+        </section>
+      )}
 
       {staffList.length > 1 && (
         <div className="mb-4 flex items-center gap-1.5 overflow-x-auto rounded-full bg-muted p-1">
