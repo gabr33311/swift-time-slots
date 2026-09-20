@@ -88,7 +88,7 @@ function ProfilePage() {
     <AppShell>
       <PageHeader
         title={section ? label(section) : t("pf.manage.title")}
-        subtitle={section ? desc(section) : undefined}
+        subtitle={section ? desc(section) : ""}
         action={
           section ? (
             <Button
