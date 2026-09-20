@@ -9,6 +9,8 @@ import { trackPageView } from "@/lib/analytics.functions";
 import { AddToCalendar } from "@/components/add-to-calendar";
 import { ClientAuthStep } from "@/components/client-auth-step";
 import { maskPhonePt } from "@/lib/phone";
+import { isReservedSlug } from "@/lib/reserved-slugs";
+
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +39,7 @@ import {
 
 export const Route = createFileRoute("/$slug")({
   loader: async ({ params }) => {
+    if (isReservedSlug(params.slug)) throw notFound();
     const data = await getPublicBusiness({ data: { slug: params.slug } });
     if (!data) throw notFound();
     return data;

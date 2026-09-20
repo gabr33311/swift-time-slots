@@ -14,6 +14,8 @@ import { WEEKDAYS_PT } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Check, Loader2, ArrowRight, ArrowLeft, Copy, ExternalLink, Trash2, CircleCheck, CircleX } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { isReservedSlug } from "@/lib/reserved-slugs";
+
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
@@ -46,14 +48,8 @@ const day = (open: boolean, start: string, end: string, lunch = open): DayHours 
   lunchEnd: "14:00",
 });
 
-// Paths the app itself owns — these can never be a business slug.
-const RESERVED_SLUGS = [
-  "auth", "login", "logout", "register", "reset-password", "book", "booking",
-  "api", "app", "admin", "dashboard", "calendar", "customers", "share",
-  "profile", "onboarding", "analytics", "appointments", "pendentes", "waitlist",
-  "booking-page", "minhas-marcacoes", "settings", "support", "about", "pricing",
-  "terms", "privacy", "assets", "static", "public", "www",
-] as const;
+// Paths the app itself owns — shared with the public /$slug route.
+
 
 const DEFAULT_HOURS: DayHours[] = [
   day(false, "09:00", "18:00", false),
@@ -129,10 +125,8 @@ function Onboarding() {
 
   useEffect(() => {
     const clean = slug.trim().toLowerCase();
-    if (
-      !/^[a-z0-9-]{3,48}$/.test(clean) ||
-      RESERVED_SLUGS.includes(clean as (typeof RESERVED_SLUGS)[number])
-    ) {
+    if (!/^[a-z0-9-]{3,48}$/.test(clean) || isReservedSlug(clean)) {
+
       setSlugCheck({ state: "invalid", slug: clean });
       return;
     }
