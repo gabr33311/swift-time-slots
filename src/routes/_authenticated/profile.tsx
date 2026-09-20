@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { usePrefs } from "@/lib/prefs";
 import { useState, type ComponentType } from "react";
 import { AppShell } from "@/components/app-shell";
@@ -19,6 +19,8 @@ import {
   BarChart3,
   Settings,
   ChevronRight,
+  Crown,
+  ArrowUpRight,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -104,6 +106,29 @@ function ProfilePage() {
               <ChevronRight className="size-4 shrink-0 text-muted-foreground" strokeWidth={2.5} />
             </button>
           ))}
+          <Link
+            to="/plans"
+            className="group relative flex min-h-36 w-full items-center gap-4 overflow-hidden bg-gradient-to-br from-subscription-accent-soft via-card to-card px-5 py-6 text-left transition-colors hover:bg-muted/40"
+          >
+            <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-subscription-accent/15 text-subscription-accent ring-1 ring-subscription-accent/20">
+              <Crown className="size-7" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-base font-bold leading-tight">{t("sub.menu.title")}</span>
+              <span className="mt-1.5 block max-w-md text-xs leading-relaxed text-muted-foreground">
+                {t("sub.menu.desc")}
+              </span>
+              <span className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-subscription-accent/15 px-2.5 py-1 text-[10px] font-black uppercase text-subscription-accent">
+                  {t("sub.menu.current")}
+                </span>
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-foreground">
+                  {t("sub.menu.upgrade")} <ArrowUpRight className="size-3.5" />
+                </span>
+              </span>
+            </span>
+            <ChevronRight className="size-5 shrink-0 text-subscription-accent transition-transform group-hover:translate-x-0.5" />
+          </Link>
         </div>
       ) : (
         <div key={section} className="animate-enter">
