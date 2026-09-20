@@ -2,7 +2,7 @@ import { toast } from "sonner";
 import { usePrefs } from "@/lib/prefs";
 import { useMyBusiness } from "@/hooks/use-business";
 import { QRCodeCanvas } from "qrcode.react";
-import { Share2, Download, Eye, Copy } from "lucide-react";
+import { Share2, Download, Eye, Copy, MessageCircle } from "lucide-react";
 
 /** Shortened, single-line display of the public booking URL. */
 function shortUrl(url: string): string {
@@ -83,6 +83,22 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
           level="M"
         />
       )}
+
+      {/* Primary action: send the link to a client */}
+      <button
+        type="button"
+        onClick={() =>
+          window.open(
+            `https://wa.me/?text=${encodeURIComponent(`${business?.name ?? ""} — ${t("pf.share.inviteText")} ${url}`)}`,
+            "_blank",
+            "noopener",
+          )
+        }
+        className="flex w-full max-w-xs items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3.5 text-sm font-bold text-primary-foreground"
+      >
+        <MessageCircle className="size-5" strokeWidth={2.5} />
+        {t("pf.share.sendWhatsapp")}
+      </button>
 
       {/* 3 buttons below, larger */}
       <div className="flex flex-wrap items-center justify-center gap-4">

@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { usePrefs } from "@/lib/prefs";
 import { useState, type ComponentType } from "react";
 import { AppShell } from "@/components/app-shell";
@@ -11,7 +11,6 @@ import { TeamPanel } from "@/components/panels/team-panel";
 import { AvailabilityPanel } from "@/components/panels/availability-panel";
 import { AnalyticsPanel } from "@/components/panels/analytics-panel";
 import { SettingsPanel } from "@/components/panels/settings-panel";
-import { ShareSheet } from "@/components/share-sheet";
 import {
   Building2,
   BriefcaseBusiness,
@@ -19,8 +18,7 @@ import {
   ArrowLeft,
   BarChart3,
   Settings,
-  Users,
-  Share2,
+  ChevronRight,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -51,39 +49,17 @@ type SectionId =
   | "analytics"
   | "settings";
 
-type Tile =
-  | { kind: "section"; id: SectionId; icon: ComponentType<{ className?: string }> }
-  | { kind: "link"; to: "/customers"; labelKey: string; icon: ComponentType<{ className?: string }> };
-
-const CATEGORIES: { key: string; tiles: Tile[] }[] = [
-  {
-    key: "pf.cat.business",
-    tiles: [
-      { kind: "section", id: "info", icon: Building2 },
-      { kind: "link", to: "/customers", labelKey: "nav.customers", icon: Users },
-    ],
-  },
-  {
-    key: "pf.cat.operation",
-    tiles: [
-      { kind: "section", id: "servicesTeam", icon: BriefcaseBusiness },
-      { kind: "section", id: "availability", icon: Clock },
-    ],
-  },
-  {
-    key: "pf.cat.system",
-    tiles: [
-      { kind: "section", id: "analytics", icon: BarChart3 },
-      { kind: "section", id: "settings", icon: Settings },
-    ],
-  },
+const ROWS: { id: SectionId; icon: ComponentType<{ className?: string }> }[] = [
+  { id: "info", icon: Building2 },
+  { id: "servicesTeam", icon: BriefcaseBusiness },
+  { id: "availability", icon: Clock },
+  { id: "analytics", icon: BarChart3 },
+  { id: "settings", icon: Settings },
 ];
 
 function ProfilePage() {
   const { t } = usePrefs();
-  const navigate = useNavigate();
   const [section, setSection] = useState<SectionId | null>(null);
-  const [shareOpen, setShareOpen] = useState(false);
   const label = (id: SectionId) => t(`pf.section.${id}`);
   const desc = (id: SectionId) => t(`pf.section.${id}.desc`);
 
@@ -103,51 +79,30 @@ function ProfilePage() {
             >
               <ArrowLeft className="size-5" strokeWidth={2.5} />
             </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={t("pf.share.share")}
-              className="size-9 text-foreground"
-              onClick={() => setShareOpen(true)}
-            >
-              <Share2 className="size-5" strokeWidth={2.4} />
-            </Button>
-          )
+          ) : null
         }
       />
 
       {!section ? (
-        <div className="space-y-5">
-          {CATEGORIES.map((cat) => (
-            <section key={cat.key} className="space-y-2">
-              <h2 className="px-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                {t(cat.key)}
-              </h2>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {cat.tiles.map((tile) => {
-                  const text =
-                    tile.kind === "section" ? label(tile.id) : t(tile.labelKey);
-                  return (
-                    <button
-                      key={tile.kind === "section" ? tile.id : tile.to}
-                      type="button"
-                      onClick={() =>
-                        tile.kind === "section"
-                          ? setSection(tile.id)
-                          : navigate({ to: tile.to })
-                      }
-                      className="surface surface-hover flex flex-col items-start gap-2.5 p-3.5 text-left"
-                    >
-                      <span className="flex size-9 items-center justify-center rounded-xl bg-accent text-accent-foreground">
-                        <tile.icon className="size-[18px]" />
-                      </span>
-                      <span className="text-[13px] font-bold leading-tight">{text}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
+        <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
+          {ROWS.map((row) => (
+            <button
+              key={row.id}
+              type="button"
+              onClick={() => setSection(row.id)}
+              className="flex w-full items-center gap-3.5 px-4 py-4 text-left transition-colors hover:bg-muted/50"
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+                <row.icon className="size-[18px]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-bold leading-tight">{label(row.id)}</span>
+                <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                  {desc(row.id)}
+                </span>
+              </span>
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground" strokeWidth={2.5} />
+            </button>
           ))}
         </div>
       ) : (
@@ -159,7 +114,6 @@ function ProfilePage() {
           {section === "settings" && <SettingsPanel />}
         </div>
       )}
-      <ShareSheet open={shareOpen} onOpenChange={setShareOpen} />
     </AppShell>
   );
 }

@@ -146,6 +146,8 @@ export const profileDict: Record<Lang, Record<string, string>> = {
     "pf.share.copy": "Copiar",
     "pf.share.share": "Partilhar",
     "pf.share.preview": "Pré-visualizar",
+    "pf.share.sendWhatsapp": "Enviar por WhatsApp",
+    "pf.share.inviteText": "marca aqui o teu horário:",
 
     "pf.an.period.today": "Hoje",
     "pf.an.period.7": "7 dias",
@@ -320,6 +322,8 @@ export const profileDict: Record<Lang, Record<string, string>> = {
     "pf.share.copy": "Copy",
     "pf.share.share": "Share",
     "pf.share.preview": "Preview",
+    "pf.share.sendWhatsapp": "Send on WhatsApp",
+    "pf.share.inviteText": "book your slot here:",
 
     "pf.an.period.today": "Today",
     "pf.an.period.7": "7 days",
