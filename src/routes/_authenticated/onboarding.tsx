@@ -14,6 +14,8 @@ import { WEEKDAYS_PT } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Check, Loader2, ArrowRight, ArrowLeft, Copy, ExternalLink, Trash2, CircleCheck, CircleX } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { isReservedSlug } from "@/lib/reserved-slugs";
+
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
@@ -123,10 +125,8 @@ function Onboarding() {
 
   useEffect(() => {
     const clean = slug.trim().toLowerCase();
-    if (
-      !/^[a-z0-9-]{3,48}$/.test(clean) ||
-      RESERVED_SLUGS.includes(clean as (typeof RESERVED_SLUGS)[number])
-    ) {
+    if (!/^[a-z0-9-]{3,48}$/.test(clean) || isReservedSlug(clean)) {
+
       setSlugCheck({ state: "invalid", slug: clean });
       return;
     }

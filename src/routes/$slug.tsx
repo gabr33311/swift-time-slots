@@ -37,6 +37,7 @@ import {
 
 export const Route = createFileRoute("/$slug")({
   loader: async ({ params }) => {
+    if (isReservedSlug(params.slug)) throw notFound();
     const data = await getPublicBusiness({ data: { slug: params.slug } });
     if (!data) throw notFound();
     return data;
