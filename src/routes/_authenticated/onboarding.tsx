@@ -170,7 +170,7 @@ function Onboarding() {
         : t("onb.hint.step4");
 
   const bookingUrl =
-    typeof window !== "undefined" && createdSlug ? `${window.location.origin}/book/${createdSlug}` : "";
+    typeof window !== "undefined" && createdSlug ? `${window.location.origin}/${createdSlug}` : "";
 
   async function finish() {
     const parsed = z
@@ -357,7 +357,7 @@ function Onboarding() {
               <Copy className="mr-2 size-4" /> Copiar link
             </Button>
             <Button variant="outline" asChild>
-              <a href={`/book/${createdSlug}`} target="_blank" rel="noreferrer">
+              <a href={`/${createdSlug}`} target="_blank" rel="noreferrer">
                 <ExternalLink className="mr-2 size-4" /> Ver página
               </a>
             </Button>
@@ -427,7 +427,7 @@ function Onboarding() {
               {t("onb.s1.slug")} <span className="text-destructive">*</span>
             </Label>
             <div className="flex items-center gap-1 rounded-lg border border-input bg-muted/40 px-3">
-              <span className="text-sm text-muted-foreground">/book/</span>
+              <span className="text-sm text-muted-foreground">sycras.com/</span>
               <Input
                 id="slug"
                 value={slug}
@@ -712,7 +712,7 @@ function Onboarding() {
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-muted-foreground">{t("onb.s5.link")}</dt>
-              <dd className="font-medium">/book/{slug || "—"}</dd>
+              <dd className="font-medium">sycras.com/{slug || "—"}</dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-muted-foreground">{t("onb.s5.services")}</dt>

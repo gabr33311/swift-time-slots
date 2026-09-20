@@ -23,7 +23,7 @@ function publicOrigin(): string {
 export function SharePanel({ compact = false }: { compact?: boolean }) {
   const { business } = useMyBusiness();
   const { t } = usePrefs();
-  const url = business ? `${publicOrigin()}/book/${business.slug}` : "";
+  const url = business ? `${publicOrigin()}/${business.slug}` : "";
 
   async function share() {
     if (typeof navigator !== "undefined" && navigator.share) {

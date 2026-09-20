@@ -26,7 +26,7 @@ export function ShareSheet({
 }) {
   const { business } = useMyBusiness();
   const { t } = usePrefs();
-  const url = business ? `${publicOrigin()}/book/${business.slug}` : "";
+  const url = business ? `${publicOrigin()}/${business.slug}` : "";
 
   function whatsapp() {
     if (!url) return;
