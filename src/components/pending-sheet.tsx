@@ -122,7 +122,7 @@ export function PendingCapsule({ variant = "bar" }: { variant?: "bar" | "badge" 
                   type="button"
                   aria-label={t("cal.pending.confirm")}
                   onClick={() => decide(a.id, "confirmed")}
-                  className="flex size-10 shrink-0 items-center justify-center rounded-full border border-emerald-500/60 text-emerald-500 transition-colors hover:bg-emerald-500/10"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-85"
                 >
                   <Check className="size-[18px]" strokeWidth={3} />
                 </button>
