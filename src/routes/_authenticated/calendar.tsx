@@ -291,30 +291,43 @@ function CalendarPage() {
           <p className="text-sm font-bold text-muted-foreground">{t("cal.freeDay")}</p>
         </div>
       ) : (
-        <ul className="space-y-2.5">
-          {buildAgenda(data!.hours, appts, blocks, tz).map((row, i) =>
-            row.kind === "free" ? (
-              <li key={`free-${row.hour}`} className="flex items-center gap-2">
+        <ul className="space-y-2">
+          {agendaRows.map((row, i) => (
+            <Fragment key={`row-${i}-${row.hour}`}>
+              {i === markerIndex && (
+                <li aria-hidden className="flex items-center gap-2 py-0.5">
+                  <span className="text-[11px] font-black uppercase tracking-[0.1em] text-foreground">
+                    {t("cal.now")}
+                  </span>
+                  <span className="h-px flex-1 bg-foreground/60" />
+                  <span className="size-1.5 rounded-full bg-foreground" />
+                </li>
+              )}
+              {row.kind === "free" ? (
+              <li className="flex items-center gap-2">
                 <button
                   onClick={() => {
                     setNewTime(row.hour);
                     setNewOpen(true);
                   }}
-                  className="surface surface-hover flex min-w-0 flex-1 items-center gap-3.5 px-4 py-3 text-left"
+                  className="group flex min-w-0 flex-1 items-center gap-3.5 rounded-2xl border border-dashed border-border/70 bg-transparent px-4 py-2.5 text-left transition-colors hover:border-foreground/30 hover:bg-muted/40"
                 >
-                  <span className="w-14 shrink-0 text-sm font-bold tabular-nums text-muted-foreground">
+                  <span className="w-14 shrink-0 text-sm font-bold tabular-nums text-muted-foreground/70">
                     {row.hour}
                   </span>
-                  <span className="flex-1 text-sm font-semibold text-muted-foreground/70">
+                  <span className="flex-1 text-sm font-medium text-muted-foreground/50">
                     {t("cal.slot.free")}
                   </span>
-                  <Plus className="size-4 shrink-0 text-primary" strokeWidth={2.6} />
+                  <Plus
+                    className="size-4 shrink-0 text-muted-foreground/40 transition-colors group-hover:text-foreground"
+                    strokeWidth={2.6}
+                  />
                 </button>
                 <button
                   onClick={() => blockHour(row.hour)}
                   aria-label={t("cal.block")}
                   title={t("cal.block")}
-                  className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed border-border text-muted-foreground/60 transition-colors hover:border-solid hover:text-foreground"
                 >
                   <Lock className="size-4" strokeWidth={2.6} />
                 </button>
