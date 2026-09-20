@@ -455,59 +455,74 @@ function CalendarPage() {
               <li
                 key={row.appt.id}
                 data-status={row.appt.status}
-                className={cn(
-                  "appointment-state surface surface-hover flex items-center gap-3 p-4",
-                )}
+                className="appointment-state surface surface-hover flex items-stretch gap-3 p-3.5"
               >
-                <span className="w-14 shrink-0 text-center text-lg font-black tabular-nums">
-                  {formatTime(row.appt.starts_at, tz)}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] font-bold leading-snug">
+                <span
+                  data-status={row.appt.status}
+                  aria-hidden
+                  className="appointment-rail w-1 shrink-0 self-stretch"
+                />
+                <div className="w-[3.25rem] shrink-0 self-center">
+                  <p className="text-[17px] font-black leading-none tabular-nums">
+                    {formatTime(row.appt.starts_at, tz)}
+                  </p>
+                  {row.appt.ends_at && (
+                    <p className="mt-1.5 text-[11px] font-semibold leading-none tabular-nums text-muted-foreground">
+                      {Math.max(
+                        0,
+                        Math.round(
+                          (new Date(row.appt.ends_at).getTime() -
+                            new Date(row.appt.starts_at).getTime()) /
+                            60000,
+                        ),
+                      )}{" "}
+                      min
+                    </p>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1 self-center">
+                  <p className="line-clamp-2 text-[15px] font-bold leading-snug">
                     {displayCustomerName(row.appt.customer_name, null, i + 1)}
                   </p>
                   <p className="truncate text-sm font-normal leading-snug text-muted-foreground">
                     {row.appt.service_name}
                   </p>
+                  {row.appt.notes?.trim() && (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label={t("cal.note.label")}
+                          className="mt-1.5 flex max-w-full items-center gap-1.5 rounded-full border border-border bg-card px-2 py-1 text-[11px] font-semibold text-muted-foreground"
+                        >
+                          <StickyNote className="size-3 shrink-0" strokeWidth={2.6} />
+                          <span className="truncate">{row.appt.notes}</span>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent side="top" align="start" className="w-64 text-sm">
+                        <p className="mb-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                          {t("cal.note.label")}
+                        </p>
+                        <p className="whitespace-pre-wrap font-medium">{row.appt.notes}</p>
+                      </PopoverContent>
+                    </Popover>
+                  )}
                 </div>
-                {row.appt.notes?.trim() && (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button
-                        type="button"
-                        data-status={row.appt.status}
-                        aria-label={t("cal.note.label")}
-                        className={cn(
-                          "flex size-9 shrink-0 items-center justify-center rounded-full border border-current bg-card",
-                          row.appt.status === "confirmed" && "appointment-status-confirmed",
-                          row.appt.status === "pending" && "appointment-status-pending",
-                          row.appt.status === "completed" && "appointment-status-completed",
-                          ["cancelled", "no_show", "expired"].includes(row.appt.status) && "appointment-status-cancelled",
-                        )}
-                      >
-                        <StickyNote className="size-[18px] text-muted-foreground" strokeWidth={2.6} />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent side="top" align="end" className="w-64 text-sm">
-                      <p className="mb-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                        {t("cal.note.label")}
-                      </p>
-                      <p className="whitespace-pre-wrap font-medium">{row.appt.notes}</p>
-                    </PopoverContent>
-                  </Popover>
-                )}
-                <AppointmentActions
-                  id={row.appt.id}
-                  status={row.appt.status}
-                  customerName={displayCustomerName(row.appt.customer_name, null, i + 1)}
-                  customerPhone={row.appt.customer_phone}
-                  startsAt={row.appt.starts_at}
-                  serviceName={row.appt.service_name}
-                  timezone={tz}
-                />
+                <div className="flex shrink-0 items-center gap-1.5 self-center">
+                  <AppointmentActions
+                    id={row.appt.id}
+                    status={row.appt.status}
+                    customerName={displayCustomerName(row.appt.customer_name, null, i + 1)}
+                    customerPhone={row.appt.customer_phone}
+                    startsAt={row.appt.starts_at}
+                    serviceName={row.appt.service_name}
+                    timezone={tz}
+                  />
+                </div>
               </li>
             )}
             </Fragment>
+
           ))}
         </ul>
       )}
