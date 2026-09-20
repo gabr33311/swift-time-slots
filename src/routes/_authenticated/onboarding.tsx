@@ -116,6 +116,17 @@ function Onboarding() {
     slug: string;
   }>({ state: "idle", slug: "" });
 
+  // Fields show their error only after the user has interacted with them.
+  type FieldKey = "name" | "desc" | "city" | "addr";
+  const [touched, setTouched] = useState<Partial<Record<FieldKey, boolean>>>({});
+  const markTouched = (key: FieldKey) => () =>
+    setTouched((prev) => (prev[key] ? prev : { ...prev, [key]: true }));
+
+  const nameError = touched.name && name.trim().length < 2;
+  const descError = touched.desc && description.trim().length < 10;
+  const cityError = touched.city && city.trim().length < 2;
+  const addrError = touched.addr && address.trim().length < 4;
+
   useEffect(() => {
     const clean = slug.trim().toLowerCase();
     if (
@@ -399,9 +410,15 @@ function Onboarding() {
               id="bname"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onBlur={markTouched("name")}
               placeholder={t("onb.s1.name.placeholder")}
               maxLength={80}
+              aria-invalid={nameError || undefined}
+              className={cn(nameError && "border-destructive focus-visible:ring-destructive")}
             />
+            {nameError && (
+              <p className="text-xs font-medium text-destructive">{t("onb.s1.err.name")}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label className="font-semibold">
@@ -451,7 +468,9 @@ function Onboarding() {
             <p className="text-xs text-muted-foreground">
               {slugCheck.state === "free" && <span className="text-success">{t("onb.s1.slug.free")}</span>}
               {slugCheck.state === "taken" && <span className="text-destructive">{t("onb.s1.slug.taken")}</span>}
-              {slugCheck.state === "invalid" && t("onb.s1.slug.invalid")}
+              {slugCheck.state === "invalid" && (
+                <span className="text-destructive">{t("onb.s1.slug.invalid")}</span>
+              )}
               {slugCheck.state === "checking" && t("onb.s1.slug.checking")}
             </p>
           </div>
@@ -463,16 +482,37 @@ function Onboarding() {
               id="desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              onBlur={markTouched("desc")}
               placeholder={t("onb.s1.desc.placeholder")}
               maxLength={280}
+              aria-invalid={descError || undefined}
+              className={cn(descError && "border-destructive focus-visible:ring-destructive")}
             />
+            {descError ? (
+              <p className="text-xs font-medium text-destructive">{t("onb.s1.err.desc")}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {description.trim().length}/10+ · {description.length}/280
+              </p>
+            )}
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="city" className="font-semibold">
                 {t("onb.s1.city")} <span className="text-destructive">*</span>
               </Label>
-              <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} maxLength={60} />
+              <Input
+                id="city"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                onBlur={markTouched("city")}
+                maxLength={60}
+                aria-invalid={cityError || undefined}
+                className={cn(cityError && "border-destructive focus-visible:ring-destructive")}
+              />
+              {cityError && (
+                <p className="text-xs font-medium text-destructive">{t("onb.s1.err.city")}</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="phone" className="font-semibold">
@@ -492,7 +532,18 @@ function Onboarding() {
               <Label htmlFor="addr" className="font-semibold">
                 Morada <span className="text-destructive">*</span>
               </Label>
-              <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} maxLength={140} />
+              <Input
+                id="addr"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                onBlur={markTouched("addr")}
+                maxLength={140}
+                aria-invalid={addrError || undefined}
+                className={cn(addrError && "border-destructive focus-visible:ring-destructive")}
+              />
+              {addrError && (
+                <p className="text-xs font-medium text-destructive">{t("onb.s1.err.addr")}</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="ig" className="font-semibold">
