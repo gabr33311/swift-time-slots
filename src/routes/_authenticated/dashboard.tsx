@@ -10,7 +10,8 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { useAuth } from "@/hooks/use-auth";
 import { displayCustomerName, formatTime, formatDateLong, greetingPt } from "@/lib/format";
 import { zonedToUtc, todayIn } from "@/lib/time";
-import { Bell, CalendarCheck, Check, ChevronDown, CircleCheck, Clock3 } from "lucide-react";
+import { Bell, CalendarCheck, Check, ChevronDown, CircleCheck, Clock3, Sun } from "lucide-react";
+import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
 import { InstallPrompt } from "@/components/install-prompt";
@@ -41,6 +42,11 @@ function Dashboard() {
   const [focusId, setFocusId] = useState<string | null>(null);
   const markNotificationsRead = useServerFn(markBusinessNotificationsRead);
   const { t, lang } = usePrefs();
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   useEffect(() => {
     if (!isLoading && data && data.count === 0) navigate({ to: "/onboarding" });
