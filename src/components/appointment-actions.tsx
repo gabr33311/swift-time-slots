@@ -131,34 +131,23 @@ export function AppointmentActions({
             aria-label={`${t("acts.opts.forLabel")}${customerName}`}
             disabled={busy}
           >
-            <Menu className="size-[18px]" strokeWidth={2.7} />
+            <Menu className="size-[18px] text-muted-foreground" strokeWidth={2.7} />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-64 space-y-1 p-1.5">
+        <DropdownMenuContent align="end" className="min-w-56 space-y-1 p-1.5">
           {status === "pending" && (
             <DropdownMenuItem
-              className="py-2.5 font-bold text-foreground"
+              className="py-2.5 font-bold"
+              style={{ color: "var(--appointment-confirmed-start)" }}
               onClick={() => setStatus("confirmed")}
             >
               <CalendarCheck className="mr-1 size-4" /> {t("acts.confirm")}
             </DropdownMenuItem>
           )}
-          {status !== "completed" && status !== "cancelled" && (
-            <DropdownMenuItem
-              className="py-2.5 font-bold text-foreground"
-              onClick={() => setStatus("completed")}
-            >
-              <CheckCircle2 className="mr-1 size-4" /> {t("acts.markCompleted")}
-            </DropdownMenuItem>
-          )}
-          {canRemind && (
-            <DropdownMenuItem className="py-2.5 font-bold text-foreground" onClick={remind}>
-              <BellRing className="mr-1 size-4" /> {t("acts.remindWhatsapp")}
-            </DropdownMenuItem>
-          )}
           {canCancel && (
             <DropdownMenuItem
-              className="py-2.5 font-bold text-foreground"
+              className="py-2.5 font-bold"
+              style={{ color: "var(--appointment-cancelled-start)" }}
               onClick={() => setConfirmOpen(true)}
             >
               <XCircle className="mr-1 size-4" /> {t("acts.cancelAppt")}
