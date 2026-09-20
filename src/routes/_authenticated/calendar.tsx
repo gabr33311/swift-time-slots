@@ -237,11 +237,15 @@ function CalendarPage() {
         title={t("cal.title")}
         subtitle={t("cal.subtitle")}
         action={
-          <Button className="hidden lg:inline-flex" onClick={() => setNewOpen(true)}>
-            {t("cal.new")}
-          </Button>
+          <div className="flex items-center gap-2">
+            <PendingCapsule variant="badge" />
+            <Button className="hidden lg:inline-flex" onClick={() => setNewOpen(true)}>
+              {t("cal.new")}
+            </Button>
+          </div>
         }
       />
+
 
       <div className="surface mb-3 p-1.5">
         <div className="flex items-center gap-1">
