@@ -20,23 +20,16 @@ import { ShareSheet } from "@/components/share-sheet";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 
 const NAV = [
-  { to: "/dashboard", label: "nav.today", icon: LayoutDashboard },
   { to: "/calendar", label: "nav.calendar", icon: CalendarDays },
   { to: "/customers", label: "nav.customers", icon: Users },
   { to: "/share", label: "nav.share", icon: Share2 },
   { to: "/profile", label: "nav.manage", icon: Store },
 ] as const;
 
-/** Dock: two flow tabs, the magnetic action button, two management tabs. */
-const DOCK_LEFT = [
-  { to: "/dashboard", label: "nav.today", icon: LayoutDashboard },
-  { to: "/calendar", label: "nav.calendar", icon: CalendarDays },
-] as const;
+/** Dock: the flow tab, the magnetic action button, the management tab. */
+const DOCK_LEFT = [{ to: "/calendar", label: "nav.calendar", icon: CalendarDays }] as const;
 
-const DOCK_RIGHT = [
-  { to: "/customers", label: "nav.customers", icon: Users },
-  { to: "/profile", label: "nav.manage", icon: Store },
-] as const;
+const DOCK_RIGHT = [{ to: "/profile", label: "nav.manage", icon: Store }] as const;
 
 function PopIcon({
   Icon,
