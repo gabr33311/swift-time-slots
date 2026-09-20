@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -72,6 +72,12 @@ export function NewAppointmentDialog({
       return { services: services ?? [], staff: staff ?? [] };
     },
   });
+
+  // With a single active professional there is nothing to pick: select it.
+  const onlyStaffId = data?.staff.length === 1 ? data.staff[0]!.id : null;
+  useEffect(() => {
+    if (onlyStaffId && !staffId) setStaffId(onlyStaffId);
+  }, [onlyStaffId, staffId]);
 
   async function save() {
     const parsed = schema.safeParse({ customerName, phone, serviceId, staffId, date, time });
