@@ -54,6 +54,13 @@ export const calendarDict: Record<Lang, Record<string, string>> = {
     "cal.week.prev": "Semana anterior",
     "cal.week.next": "Semana seguinte",
     "cal.summary": "{appts} marcações · {free} horas livres",
+    "cal.pending.pill": "{n} por aprovar",
+    "cal.pending.review": "Rever",
+    "cal.pending.title": "Marcações por aprovar",
+    "cal.pending.confirm": "Confirmar",
+    "cal.pending.cancel": "Cancelar",
+    "cal.pending.confirmed": "Marcação confirmada.",
+    "cal.pending.cancelled": "Marcação cancelada.",
   },
   en: {
     "cal.head.title": "Calendar — SYCRAS",
