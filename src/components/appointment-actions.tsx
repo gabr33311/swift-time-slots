@@ -20,7 +20,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Menu, XCircle, CalendarCheck } from "lucide-react";
+import { Menu, CheckCircle2, XCircle, CalendarCheck, BellRing } from "lucide-react";
+import { normalizePhonePt } from "@/lib/phone";
+import { formatDateLong, formatTime } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
 import { cn } from "@/lib/utils";
 import { AppointmentStatusIndicator } from "@/components/appointment-status-indicator";
@@ -98,10 +100,30 @@ export function AppointmentActions({
 
   const canCancel = status !== "cancelled" && status !== "completed";
 
+  const tz = timezone ?? "Europe/Lisbon";
+  const phone = customerPhone ? normalizePhonePt(customerPhone) : null;
+  const canRemind = !!phone && !!startsAt && status !== "cancelled" && status !== "completed";
+
+  function remind() {
+    if (!phone || !startsAt) return;
+    const message = `${t("acts.remind.hello")}${customerName}${t("acts.remind.body1")}${
+      serviceName ? `${t("acts.remind.of")}${serviceName}` : ""
+    }${t("acts.remind.on")}${formatDateLong(startsAt, tz)}${t("acts.remind.at")}${formatTime(startsAt, tz)}${t("acts.remind.bye")}`;
+    window.open(
+      `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`,
+      "_blank",
+      "noopener",
+    );
+  }
 
   return (
     <>
-      <AppointmentStatusIndicator status={status} />
+      <AppointmentStatusIndicator
+        status={status}
+        customerName={customerName}
+        onConfirm={() => setStatus("confirmed")}
+        onCancel={() => setConfirmOpen(true)}
+      />
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild>
           <Button
@@ -117,20 +139,31 @@ export function AppointmentActions({
             <Menu className="size-[18px] text-muted-foreground" strokeWidth={2.7} />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-56 space-y-1 p-1.5">
+        <DropdownMenuContent align="end" className="min-w-64 space-y-1 p-1.5">
           {status === "pending" && (
             <DropdownMenuItem
-              className="py-2.5 font-bold"
-              style={{ color: "var(--appointment-confirmed-start)" }}
+              className="py-2.5 font-bold text-foreground"
               onClick={() => setStatus("confirmed")}
             >
               <CalendarCheck className="mr-1 size-4" /> {t("acts.confirm")}
             </DropdownMenuItem>
           )}
+          {status !== "completed" && status !== "cancelled" && (
+            <DropdownMenuItem
+              className="py-2.5 font-bold text-foreground"
+              onClick={() => setStatus("completed")}
+            >
+              <CheckCircle2 className="mr-1 size-4" /> {t("acts.markCompleted")}
+            </DropdownMenuItem>
+          )}
+          {canRemind && (
+            <DropdownMenuItem className="py-2.5 font-bold text-foreground" onClick={remind}>
+              <BellRing className="mr-1 size-4" /> {t("acts.remindWhatsapp")}
+            </DropdownMenuItem>
+          )}
           {canCancel && (
             <DropdownMenuItem
-              className="py-2.5 font-bold"
-              style={{ color: "var(--appointment-cancelled-start)" }}
+              className="py-2.5 font-bold text-foreground"
               onClick={() => setConfirmOpen(true)}
             >
               <XCircle className="mr-1 size-4" /> {t("acts.cancelAppt")}
