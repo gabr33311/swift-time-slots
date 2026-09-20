@@ -14,7 +14,7 @@ function shortUrl(url: string): string {
 }
 
 /** Clean, shareable domain — preview/localhost hosts are never shown to clients. */
-const PUBLIC_ORIGIN = "https://bookflow.pt";
+const PUBLIC_ORIGIN = "https://sycras.com";
 
 function publicOrigin(): string {
   if (typeof window === "undefined") return PUBLIC_ORIGIN;
