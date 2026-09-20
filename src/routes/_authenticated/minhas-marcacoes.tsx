@@ -57,6 +57,8 @@ function MyBookings() {
   const { data, isLoading } = useQuery({
     queryKey: ["my-client-appointments"],
     queryFn: () => fetchMine({}),
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
   });
 
   async function cancel(id: string) {
