@@ -1,4 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { usePrefs } from "@/lib/prefs";
+import { formatPrice } from "@/lib/format";
 
 export type EditableCustomer = {
   id: string;
@@ -24,7 +25,7 @@ export type EditableCustomer = {
   notes: string | null;
 };
 
-/** Edit a customer's name, contacts and notes. */
+/** Edit a customer's name, contacts, record notes and review their history. */
 export function EditCustomerDialog({
   customer,
   open,
@@ -51,6 +52,24 @@ export function EditCustomerDialog({
     setEmail(customer?.email ?? "");
     setNotes(customer?.notes ?? "");
   }, [customer]);
+
+  const { data: history } = useQuery({
+    queryKey: ["customer-history", customer?.id],
+    enabled: !!customer && open,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("appointments")
+        .select("id, starts_at, service_name, price_cents, status")
+        .eq("customer_id", customer!.id)
+        .order("starts_at", { ascending: false })
+        .limit(20);
+      return data ?? [];
+    },
+  });
+
+  const spent = (history ?? [])
+    .filter((a) => a.status === "completed" || a.status === "confirmed")
+    .reduce((s, a) => s + a.price_cents, 0);
 
   async function save() {
     if (!customer && !businessId) return;
@@ -80,7 +99,7 @@ export function EditCustomerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{customer ? t("cust.dialog.editTitle") : t("cust.dialog.newTitle")}</DialogTitle>
           <DialogDescription>
@@ -133,6 +152,42 @@ export function EditCustomerDialog({
               placeholder={t("cust.field.notes.placeholder")}
             />
           </div>
+
+          {customer && (
+            <section className="rounded-2xl border border-border p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold">{t("cust.history.title")}</h3>
+                <span className="text-xs font-bold tabular-nums text-muted-foreground">
+                  {t("cust.history.total")}: {formatPrice(spent, "EUR")}
+                </span>
+              </div>
+              {(history ?? []).length === 0 ? (
+                <p className="mt-3 text-sm text-muted-foreground">{t("cust.history.empty")}</p>
+              ) : (
+                <ul className="mt-3 space-y-2">
+                  {(history ?? []).map((a) => (
+                    <li
+                      key={a.id}
+                      data-status={a.status}
+                      className="flex items-center justify-between gap-3 text-sm"
+                    >
+                      <span className="tabular-nums text-muted-foreground">
+                        {new Intl.DateTimeFormat("pt-PT", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "2-digit",
+                        }).format(new Date(a.starts_at))}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate font-semibold">{a.service_name}</span>
+                      <span className="tabular-nums text-muted-foreground">
+                        {formatPrice(a.price_cents, "EUR")}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
         </div>
 
         <DialogFooter>

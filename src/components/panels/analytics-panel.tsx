@@ -35,7 +35,7 @@ export function AnalyticsPanel() {
 
       let apptQuery = supabase
         .from("appointments")
-        .select("service_name, price_cents, status, created_at")
+        .select("service_name, price_cents, status, created_at, staff_id")
         .eq("business_id", business!.id)
         .limit(2000);
       if (from) apptQuery = apptQuery.gte("created_at", from);
@@ -46,8 +46,17 @@ export function AnalyticsPanel() {
         .eq("business_id", business!.id);
       if (from) viewQuery = viewQuery.gte("created_at", from);
 
-      const [{ data: appts }, { count: views }] = await Promise.all([apptQuery, viewQuery]);
-      return { appts: appts ?? [], views: views ?? 0 };
+      const staffQuery = supabase
+        .from("staff")
+        .select("id, name")
+        .eq("business_id", business!.id);
+
+      const [{ data: appts }, { count: views }, { data: staff }] = await Promise.all([
+        apptQuery,
+        viewQuery,
+        staffQuery,
+      ]);
+      return { appts: appts ?? [], views: views ?? 0, staff: staff ?? [] };
     },
   });
 
@@ -58,8 +67,22 @@ export function AnalyticsPanel() {
 
   const done = rows.filter((r) => r.status === "completed" || r.status === "confirmed");
   const revenue = done.reduce((s, r) => s + r.price_cents, 0);
+  const avgTicket = done.length > 0 ? Math.round(revenue / done.length) : 0;
   const cancelled = rows.filter((r) => r.status === "cancelled").length;
   const noShow = rows.filter((r) => r.status === "no_show").length;
+
+  const staffNames = new Map((data?.staff ?? []).map((s) => [s.id, s.name]));
+  const byStaff = Object.entries(
+    done.reduce<Record<string, { count: number; cents: number }>>((acc, r) => {
+      const key = r.staff_id ?? "none";
+      const cur = acc[key] ?? { count: 0, cents: 0 };
+      cur.count += 1;
+      cur.cents += r.price_cents;
+      acc[key] = cur;
+      return acc;
+    }, {}),
+  ).sort((a, b) => b[1].cents - a[1].cents);
+  const staffMax = byStaff[0]?.[1].cents ?? 1;
 
   const byService = Object.entries(
     done.reduce<Record<string, { count: number; cents: number }>>((acc, r) => {
@@ -72,6 +95,7 @@ export function AnalyticsPanel() {
   ).sort((a, b) => b[1].cents - a[1].cents);
 
   const max = byService[0]?.[1].cents ?? 1;
+  const currency = business?.currency ?? "EUR";
 
   return (
     <>
@@ -113,12 +137,41 @@ export function AnalyticsPanel() {
             </div>
           </section>
 
-          <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
             <StatCard label={t("pf.an.completed")} value={done.length} />
-            <StatCard label={t("pf.an.revenue")} value={formatPrice(revenue, business?.currency ?? "EUR")} />
+            <StatCard label={t("pf.an.revenue")} value={formatPrice(revenue, currency)} />
+            <StatCard label={t("pf.an.avgTicket")} value={formatPrice(avgTicket, currency)} />
             <StatCard label={t("pf.an.cancellations")} value={cancelled} />
             <StatCard label={t("pf.an.noShows")} value={noShow} />
           </div>
+
+          <section className="surface mt-6 p-5">
+            <h2 className="text-base font-bold">{t("pf.an.byStaff")}</h2>
+            {byStaff.length === 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground">{t("pf.an.noData")}</p>
+            ) : (
+              <ul className="mt-4 space-y-3">
+                {byStaff.map(([id, v]) => (
+                  <li key={id}>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="truncate font-bold">
+                        {staffNames.get(id) ?? t("pf.an.noData")}
+                      </span>
+                      <span className="tabular-nums text-muted-foreground">
+                        {v.count} · {formatPrice(v.cents, currency)}
+                      </span>
+                    </div>
+                    <div className="mt-1.5 h-2 rounded-full bg-muted">
+                      <div
+                        className="h-2 rounded-full bg-primary"
+                        style={{ width: `${Math.max(4, (v.cents / staffMax) * 100)}%` }}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
           <section className="surface mt-6 p-5">
             <h2 className="text-base font-bold">{t("pf.an.topServices")}</h2>
@@ -131,7 +184,7 @@ export function AnalyticsPanel() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="truncate font-bold">{name}</span>
                       <span className="tabular-nums text-muted-foreground">
-                        {v.count} · {formatPrice(v.cents, business?.currency ?? "EUR")}
+                        {v.count} · {formatPrice(v.cents, currency)}
                       </span>
                     </div>
                     <div className="mt-1.5 h-2 rounded-full bg-muted">
