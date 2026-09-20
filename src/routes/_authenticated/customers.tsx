@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
@@ -10,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMyBusiness } from "@/hooks/use-business";
 import { initials } from "@/lib/format";
-import { Users, Ban, ShieldCheck, Search, Pencil, Plus } from "lucide-react";
+import { Users, Ban, ShieldCheck, Search, Pencil } from "lucide-react";
 import {
   EditCustomerDialog,
   type EditableCustomer,
@@ -48,8 +47,6 @@ function CustomersPage() {
   const [tab, setTab] = useState<"all" | "cancelled" | "blocked">("all");
   const [editing, setEditing] = useState<EditableCustomer | null>(null);
   const [creating, setCreating] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
 
   const { data: cancelledMap } = useQuery({
     queryKey: ["customers-cancelled", business?.id],
@@ -106,7 +103,7 @@ function CustomersPage() {
   }
 
   return (
-    <AppShell>
+    <AppShell onPrimaryAction={() => setCreating(true)}>
       <PageHeader title={t("cust.title")} subtitle={t("cust.subtitle")} />
 
       <div className="relative mb-3">
@@ -238,18 +235,6 @@ function CustomersPage() {
           </li>
         </ul>
       )}
-
-      {mounted &&
-        createPortal(
-          <button
-            onClick={() => setCreating(true)}
-            aria-label={t("cust.new")}
-            className="fixed right-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-50 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lift transition-transform active:scale-95"
-          >
-            <Plus className="size-6" strokeWidth={2.6} />
-          </button>,
-          document.body,
-        )}
 
       <EditCustomerDialog
         key={editing?.id ?? (creating ? "new" : "idle")}
