@@ -369,13 +369,13 @@ function DayGroup({
           {dayLabel}
         </span>
         {confirmedCount > 0 && (
-          <span className="inline-flex items-center gap-1 text-xs font-bold tabular-nums appointment-status-confirmed">
+          <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 text-xs font-bold tabular-nums appointment-status-confirmed">
             {confirmedCount}
             <CircleCheck className="size-4" aria-hidden="true" />
           </span>
         )}
         {pendingCount > 0 && (
-          <span className="inline-flex items-center gap-1 text-xs font-bold tabular-nums appointment-status-pending">
+          <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 text-xs font-bold tabular-nums appointment-status-pending">
             {pendingCount}
             <Clock3 className="size-4 animate-status-shake" aria-hidden="true" />
           </span>

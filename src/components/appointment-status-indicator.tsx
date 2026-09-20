@@ -6,8 +6,6 @@ import {
   HelpCircle,
   UserX,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { statusLabel } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
 import { cn } from "@/lib/utils";
@@ -28,32 +26,24 @@ const STATUS_ICONS = {
   no_show: UserX,
 } as const;
 
+/** Non-interactive status icon styled exactly like the action trigger button. */
 export function AppointmentStatusIndicator({ status }: { status: string }) {
   const { lang } = usePrefs();
   const Icon = STATUS_ICONS[status as keyof typeof STATUS_ICONS] ?? HelpCircle;
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className={cn(
-            "size-9 shrink-0 bg-transparent shadow-none hover:bg-transparent",
-            STATUS_STYLES[status] ?? "text-muted-foreground",
-          )}
-          aria-label={statusLabel(status, lang)}
-        >
-          <Icon
-            className={cn("size-[18px]", status === "pending" && "animate-status-shake")}
-            strokeWidth={2.7}
-          />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent side="top" align="center" className="w-auto rounded-full px-3 py-1.5">
-        <span className="text-xs font-bold">{statusLabel(status, lang)}</span>
-      </PopoverContent>
-    </Popover>
+    <span
+      className={cn(
+        "flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground",
+        STATUS_STYLES[status] ?? "text-muted-foreground",
+      )}
+      role="img"
+      aria-label={statusLabel(status, lang)}
+    >
+      <Icon
+        className={cn("size-[18px]", status === "pending" && "animate-status-shake")}
+        strokeWidth={2.7}
+      />
+    </span>
   );
 }
