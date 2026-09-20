@@ -154,8 +154,10 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>("pt");
 
   useEffect(() => {
-    const storedTheme = window.localStorage.getItem("sycras-theme") as Theme | null;
-    const storedLang = window.localStorage.getItem("sycras-lang") as Lang | null;
+    const storedTheme = (window.localStorage.getItem("sycras-theme") ??
+      window.localStorage.getItem("schedivo-theme")) as Theme | null;
+    const storedLang = (window.localStorage.getItem("sycras-lang") ??
+      window.localStorage.getItem("schedivo-lang")) as Lang | null;
     if (storedTheme === "dark" || storedTheme === "light") setThemeState(storedTheme);
     if (storedLang === "pt" || storedLang === "en") setLangState(storedLang);
   }, []);

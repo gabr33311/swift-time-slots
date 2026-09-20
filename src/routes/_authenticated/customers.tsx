@@ -32,7 +32,7 @@ import {
 export const Route = createFileRoute("/_authenticated/customers")({
   head: () => ({
     meta: [
-      { title: "Clientes — Schedivo" },
+      { title: "Clientes — SYCRAS" },
       { name: "description", content: "A tua base de clientes, com histórico e contactos." },
       { name: "robots", content: "noindex" },
     ],

@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authenticated/appointments")({
   validateSearch: z.object({ new: z.boolean().optional(), filter: filterSchema.optional() }),
   head: () => ({
     meta: [
-      { title: "Marcações — Schedivo" },
+      { title: "Marcações — SYCRAS" },
       { name: "description", content: "Todas as marcações do teu negócio num só lugar." },
       { name: "robots", content: "noindex" },
     ],
@@ -200,14 +200,8 @@ function AppointmentsPage() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{a.customer_name}</p>
-                <p className="truncate text-sm text-muted-foreground">
-                  {a.service_name}
-                  {a.customer_phone ? ` · ${a.customer_phone}` : ""}
-                </p>
+                <p className="truncate text-sm text-muted-foreground">{a.service_name}</p>
               </div>
-              <span className="text-sm font-medium tabular-nums">
-                {formatPrice(a.price_cents, business!.currency)}
-              </span>
               <AppointmentActions
                 id={a.id}
                 status={a.status as "pending" | "confirmed" | "completed" | "cancelled" | "no_show" | "expired"}

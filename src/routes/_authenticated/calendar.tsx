@@ -18,7 +18,7 @@ import { usePrefs } from "@/lib/prefs";
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
     meta: [
-      { title: "Calendar — Schedivo" },
+      { title: "Agenda — SYCRAS" },
       { name: "description", content: "Your team's daily calendar, hour by hour." },
       { name: "robots", content: "noindex" },
     ],

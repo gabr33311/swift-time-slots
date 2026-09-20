@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/pendentes")({
   validateSearch: z.object({ tab: z.enum(["pending", "accepted", "refused"]).optional() }),
   head: () => ({
     meta: [
-      { title: "Pedidos de marcação — Schedivo" },
+      { title: "Pedidos de marcação — SYCRAS" },
       {
         name: "description",
         content: "Aceita ou recusa os pedidos de marcação feitos pelos teus clientes.",
@@ -138,17 +138,8 @@ function PendingPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[15px] font-bold leading-snug">{a.customer_name}</p>
                   <p className="truncate text-sm text-muted-foreground">{a.service_name}</p>
-                  <p className="truncate text-xs font-bold text-muted-foreground">
-                    {formatDateLong(a.starts_at, business!.timezone)}
-                  </p>
-                  {a.notes && (
-                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{a.notes}</p>
-                  )}
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1.5">
-                  <span className="text-sm font-bold tabular-nums">
-                    {formatPrice(a.price_cents, business!.currency)}
-                  </span>
                   <AppointmentStatusIndicator status={a.status} />
                 </div>
               </div>

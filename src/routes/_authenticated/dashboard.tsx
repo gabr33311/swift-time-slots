@@ -21,7 +21,7 @@ import { usePrefs } from "@/lib/prefs";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Painel — Schedivo" },
+      { title: "Painel — SYCRAS" },
       {
         name: "description",
         content: "O resumo do teu dia: marcações, receita prevista e clientes.",

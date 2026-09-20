@@ -24,7 +24,7 @@ import {
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [
-      { title: "Profile — Schedivo" },
+      { title: "Perfil — SYCRAS" },
       {
         name: "description",
         content: "Business, services, team, hours and stats in one place.",

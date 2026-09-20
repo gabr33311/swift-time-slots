@@ -29,7 +29,7 @@ import { checkSlugAvailable } from "@/lib/booking.functions";
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
     meta: [
-      { title: "Configurar o teu negócio — Schedivo" },
+      { title: "Configurar o teu negócio — SYCRAS" },
       { name: "description", content: "Configura o teu negócio e cria a tua página de marcações." },
       { name: "robots", content: "noindex" },
     ],

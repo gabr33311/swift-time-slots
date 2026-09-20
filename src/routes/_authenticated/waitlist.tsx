@@ -12,7 +12,7 @@ import { usePrefs } from "@/lib/prefs";
 export const Route = createFileRoute("/_authenticated/waitlist")({
   head: () => ({
     meta: [
-      { title: "Lista de espera — Schedivo" },
+      { title: "Lista de espera — SYCRAS" },
       { name: "description", content: "Clientes à espera de vaga para serem contactados." },
       { name: "robots", content: "noindex" },
     ],
