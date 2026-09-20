@@ -93,8 +93,17 @@ export async function loadPublicBusiness(slug: string): Promise<{
     signedImage(business.cover_url),
   ]);
 
+  // Contacts only leave the server when the owner enables "show contacts".
+  const showContacts = business.show_contacts === true;
+
   return {
-    business: { ...business, logo_url, cover_url } as PublicBusiness,
+    business: {
+      ...business,
+      logo_url,
+      cover_url,
+      phone: showContacts ? business.phone : null,
+      email: showContacts ? business.email : null,
+    } as PublicBusiness,
     services: (services ?? []) as PublicService[],
     staff: (staff ?? []).map((s) => ({
       ...s,
