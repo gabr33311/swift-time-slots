@@ -56,5 +56,11 @@ export const commonDict: Record<Lang, Record<string, string>> = {
     "ui.save.cancel": "Cancel",
     "ui.save.save": "Save",
     "ui.save.auto": "Saved automatically",
+    "dock.new": "New booking",
+    "dock.pass": "Sharing pass",
+    "dock.passHint": "Swipe up or hold for the QR code",
+    "dock.whatsapp": "Send on WhatsApp",
+    "dock.whatsappMsg": "Hi! You can book your slot here:",
+    "nav.manage": "Business",
   },
 };
