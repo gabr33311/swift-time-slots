@@ -25,6 +25,7 @@ import { normalizePhonePt } from "@/lib/phone";
 import { formatDateLong, formatTime } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
 import { cn } from "@/lib/utils";
+import { AppointmentStatusIndicator } from "@/components/appointment-status-indicator";
 
 type Status = "pending" | "confirmed" | "completed" | "cancelled" | "no_show" | "expired";
 
@@ -108,6 +109,7 @@ export function AppointmentActions({
 
   return (
     <>
+      <AppointmentStatusIndicator status={status} />
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild>
           <Button

@@ -7,7 +7,6 @@ import { usePrefs } from "@/lib/prefs";
 
 export function PageHeader({
   title,
-  subtitle,
   action,
 }: {
   title: string;
@@ -18,9 +17,6 @@ export function PageHeader({
     <div className="mb-6 flex items-start justify-between gap-3">
       <div className="min-w-0 flex-1">
         <h1 className="font-display text-[28px] font-bold leading-tight tracking-tight">{title}</h1>
-        {subtitle && (
-          <p className="mt-1 text-sm font-normal text-muted-foreground">{subtitle}</p>
-        )}
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </div>
