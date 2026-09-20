@@ -52,9 +52,7 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
 
   useEffect(() => {
     void requireProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
 
   async function saveRequiredProfile() {
     if (name.trim().length < 2) {
@@ -127,7 +125,9 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
     });
     setBusy(false);
     if (error) {
-      toast.error(error.message.includes("registered") ? t("bk.auth.err.exists") : t("bk.auth.err.send"));
+      toast.error(
+        error.message.includes("registered") ? t("bk.auth.err.exists") : t("bk.auth.err.send"),
+      );
       return;
     }
     if (data.session) {
@@ -267,7 +267,6 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
         ))}
       </div>
 
-
       <div className="space-y-2.5">
         {mode === "signup" && (
           <>
@@ -340,4 +339,3 @@ export function ClientAuthStep({ onDone }: { onDone: () => void }) {
     </div>
   );
 }
-

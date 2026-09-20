@@ -89,10 +89,6 @@ function AuthPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, next]);
 
-
-
-
-
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -230,9 +226,7 @@ function AuthPage() {
           {mode === "forgot" && t("onb.auth.title.forgot")}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {mode === "register"
-            ? t("onb.auth.subtitle.register")
-            : t("onb.auth.subtitle.other")}
+          {mode === "register" ? t("onb.auth.subtitle.register") : t("onb.auth.subtitle.other")}
         </p>
 
         <form onSubmit={submit} className="mt-6 space-y-4">
@@ -305,9 +299,6 @@ function AuthPage() {
             {mode === "forgot" && t("onb.auth.submit.forgot")}
           </Button>
         </form>
-
-
-
 
         <div className="mt-5 space-y-2 text-center text-sm">
           {mode === "login" && (

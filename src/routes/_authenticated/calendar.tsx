@@ -86,7 +86,9 @@ function CalendarPage() {
       const [{ data: appts }, { data: staff }, { data: hours }] = await Promise.all([
         supabase
           .from("appointments")
-          .select("id, starts_at, ends_at, customer_name, customer_phone, service_name, price_cents, status, staff_id, notes")
+          .select(
+            "id, starts_at, ends_at, customer_name, customer_phone, service_name, price_cents, status, staff_id, notes",
+          )
           .eq("business_id", business!.id)
           .gte("starts_at", from)
           .lt("starts_at", to)
@@ -190,7 +192,9 @@ function CalendarPage() {
               <li
                 key={row.appt.id}
                 data-status={row.appt.status}
-                className={cn("appointment-state surface surface-hover flex items-center gap-3 p-4")}
+                className={cn(
+                  "appointment-state surface surface-hover flex items-center gap-3 p-4",
+                )}
               >
                 <span className="w-14 shrink-0 text-sm font-bold tabular-nums">
                   {formatTime(row.appt.starts_at, tz)}
@@ -236,7 +240,6 @@ function CalendarPage() {
           )}
         </ul>
       )}
-
 
       {mounted &&
         createPortal(

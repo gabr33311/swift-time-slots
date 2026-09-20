@@ -140,10 +140,7 @@ export function AppointmentActions({
             </DropdownMenuItem>
           )}
           {canRemind && (
-            <DropdownMenuItem
-              className="py-2.5 font-bold text-foreground"
-              onClick={remind}
-            >
+            <DropdownMenuItem className="py-2.5 font-bold text-foreground" onClick={remind}>
               <BellRing className="mr-1 size-4" /> {t("acts.remindWhatsapp")}
             </DropdownMenuItem>
           )}
@@ -161,7 +158,10 @@ export function AppointmentActions({
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("acts.dialog.cancelTitle")}{customerName}?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t("acts.dialog.cancelTitle")}
+              {customerName}?
+            </AlertDialogTitle>
             <AlertDialogDescription>{t("acts.dialog.cancelDesc")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
