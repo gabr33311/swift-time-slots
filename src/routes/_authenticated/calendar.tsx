@@ -196,7 +196,7 @@ function CalendarPage() {
                   "appointment-state surface surface-hover flex items-center gap-3 p-4",
                 )}
               >
-                <span className="w-14 shrink-0 text-sm font-bold tabular-nums">
+                <span className="w-14 shrink-0 text-center text-lg font-black tabular-nums">
                   {formatTime(row.appt.starts_at, tz)}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -212,8 +212,15 @@ function CalendarPage() {
                     <PopoverTrigger asChild>
                       <button
                         type="button"
+                        data-status={row.appt.status}
                         aria-label={t("cal.note.label")}
-                        className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground"
+                        className={cn(
+                          "flex size-9 shrink-0 items-center justify-center rounded-full border border-current bg-card",
+                          row.appt.status === "confirmed" && "appointment-status-confirmed",
+                          row.appt.status === "pending" && "appointment-status-pending",
+                          row.appt.status === "completed" && "appointment-status-completed",
+                          ["cancelled", "no_show", "expired"].includes(row.appt.status) && "appointment-status-cancelled",
+                        )}
                       >
                         <StickyNote className="size-[18px]" strokeWidth={2.6} />
                       </button>

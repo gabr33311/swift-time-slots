@@ -33,9 +33,10 @@ export function AppointmentStatusIndicator({ status }: { status: string }) {
 
   return (
     <span
+      data-status={status}
       className={cn(
-        "flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground",
-        STATUS_STYLES[status] ?? "text-muted-foreground",
+        "appointment-status-disc flex size-9 shrink-0 items-center justify-center rounded-full border border-current",
+        STATUS_STYLES[status] ?? "bg-card text-muted-foreground",
       )}
       role="img"
       aria-label={statusLabel(status, lang)}
