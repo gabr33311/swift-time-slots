@@ -9,16 +9,15 @@ import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { displayCustomerName, formatPrice } from "@/lib/format";
 import { PendingCapsule } from "@/components/pending-sheet";
-import { Sun } from "lucide-react";
 import { addDays, minutesToTime, timeToMinutes, todayIn, weekdayOf, zonedToUtc } from "@/lib/time";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
-import { ChevronLeft, ChevronRight, Lock, Plus, Unlock } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Copy, Lock, Plus, StickyNote, Unlock, UserX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
 import { usePrefs } from "@/lib/prefs";
 import { formatTime } from "@/lib/format";
-import { CalendarOff, StickyNote } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { setAppointmentStatus } from "@/lib/appointment-status";
 
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
@@ -50,6 +49,7 @@ type Appt = {
   customer_name: string;
   customer_phone: string | null;
   service_name: string;
+  price_cents: number | null;
   status: "pending" | "confirmed" | "completed" | "cancelled" | "no_show" | "expired";
   notes: string | null;
   staff_id: string | null;
@@ -172,19 +172,12 @@ function CalendarPage() {
   const nextUp = liveToday.find(
     (a) => new Date(a.starts_at).getTime() > now && a.status !== "completed",
   );
-  const focusAppt = ongoing ?? nextUp;
   const doneCount = liveToday.filter((a) => a.status === "completed").length;
   const dayRevenue = liveToday.reduce((sum, a) => sum + (a.price_cents ?? 0), 0);
-  const dayProgress = liveToday.length ? Math.round((doneCount / liveToday.length) * 100) : 0;
-
-  function relativeLabel(iso: string): string {
-    const diff = Math.round((new Date(iso).getTime() - now) / 60_000);
-    if (diff < 0) return t("dash.now.late").replace("{n}", String(Math.abs(diff)));
-    if (diff < 60) return t("dash.now.inMin").replace("{n}", String(diff));
-    return t("dash.now.inHours")
-      .replace("{h}", String(Math.floor(diff / 60)))
-      .replace("{m}", String(diff % 60).padStart(2, "0"));
-  }
+  const progressPill = t("cal.progress.pill")
+    .replace("{done}", String(doneCount))
+    .replace("{total}", String(liveToday.length))
+    .replace("{revenue}", formatPrice(dayRevenue));
 
 
   const weekStart = addDays(date, -((weekdayOf(date) + 6) % 7));
@@ -197,6 +190,7 @@ function CalendarPage() {
 
   async function blockHour(hour: string) {
     if (!business) return;
+    if (isPastHour(hour)) return;
     const start = zonedToUtc(date, timeToMinutes(hour), tz);
     const end = zonedToUtc(date, timeToMinutes(hour) + 60, tz);
     const { error } = await supabase.from("blocked_times").insert({
@@ -212,6 +206,46 @@ function CalendarPage() {
     }
     toast.success(t("cal.toast.blocked"));
     qc.invalidateQueries({ queryKey: ["calendar"] });
+  }
+
+  function isPastHour(hour: string) {
+    return zonedToUtc(date, timeToMinutes(hour), tz).getTime() <= now;
+  }
+
+  function needsValidation(appt: Appt) {
+    if (["completed", "cancelled", "no_show", "expired"].includes(appt.status)) return false;
+    const start = new Date(appt.starts_at).getTime();
+    const end = appt.ends_at ? new Date(appt.ends_at).getTime() : start + 3_600_000;
+    return end <= now;
+  }
+
+  async function validateAppointment(id: string, status: "completed" | "no_show") {
+    if (!business) return;
+    const result = await setAppointmentStatus({
+      id,
+      businessId: business.id,
+      status,
+      note: t("acts.note.changed"),
+    });
+    if (!result.ok) {
+      toast.error(result.message);
+      return;
+    }
+    toast.success(t("acts.toast.updated"));
+    qc.invalidateQueries({ queryKey: ["calendar"] });
+    qc.invalidateQueries({ queryKey: ["appointments"] });
+    qc.invalidateQueries({ queryKey: ["customers"] });
+  }
+
+  async function copyPublicLink() {
+    if (!business) return;
+    try {
+      await navigator.clipboard.writeText(`https://sycras.com/${business.slug}`);
+      toast.success(t("cal.empty.copyDone"));
+    } catch (error) {
+      console.error("Could not copy booking link", error);
+      toast.error(t("cal.empty.copyError"));
+    }
   }
 
   async function unblock(id: string) {
@@ -246,6 +280,11 @@ function CalendarPage() {
         subtitle={t("cal.subtitle")}
         action={
           <div className="flex items-center gap-2">
+            {isToday && liveToday.length > 0 && (
+              <span className="hidden shrink-0 rounded-full border border-border bg-card px-3 py-2 text-[11px] font-black tabular-nums text-muted-foreground sm:inline-flex">
+                {progressPill}
+              </span>
+            )}
             <PendingCapsule variant="badge" />
             <Button className="hidden lg:inline-flex" onClick={() => setNewOpen(true)}>
               {t("cal.new")}
@@ -255,7 +294,7 @@ function CalendarPage() {
       />
 
 
-      <div className="surface mb-3 p-1.5">
+      <div className="surface mb-2 p-1">
         <div className="flex items-center gap-1">
           <button
             onClick={() => setDate(addDays(date, -7))}
@@ -290,7 +329,7 @@ function CalendarPage() {
                 key={d}
                 onClick={() => setDate(d)}
                 className={cn(
-                  "flex flex-col items-center gap-0.5 rounded-2xl py-2 transition-colors",
+                  "flex flex-col items-center gap-0.5 rounded-2xl py-1.5 transition-colors",
                   active
                     ? "bg-foreground text-background"
                     : isTodayCell
@@ -302,74 +341,11 @@ function CalendarPage() {
                   {dayShort(d).replace(".", "").slice(0, 3)}
                 </span>
                 <span className="text-sm font-black tabular-nums">{Number(d.slice(8, 10))}</span>
-                <span
-                  className={cn(
-                    "text-[8px] font-black uppercase tracking-wider",
-                    isTodayCell ? "opacity-100" : "opacity-0",
-                  )}
-                >
-                  {t("cal.today")}
-                </span>
               </button>
             );
           })}
         </div>
       </div>
-
-      {isToday && focusAppt && (
-        <section className="surface mb-3 flex items-center gap-3 p-4">
-          <span
-            data-status={focusAppt.status}
-            className="appointment-rail h-12 w-1 shrink-0"
-            aria-hidden
-          />
-          <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-border bg-muted/40 text-[13px] font-black tabular-nums text-foreground">
-            {formatTime(focusAppt.starts_at, tz)}
-          </span>
-
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
-              {ongoing ? t("dash.now.ongoing") : t("dash.now.next")}
-              {ongoing ? "" : ` · ${relativeLabel(focusAppt.starts_at)}`}
-            </p>
-            <p className="truncate text-[17px] font-bold leading-snug">
-              {displayCustomerName(focusAppt.customer_name, null, 1)}
-            </p>
-            <p className="truncate text-sm leading-snug text-muted-foreground">
-              {focusAppt.service_name}
-            </p>
-          </div>
-          <AppointmentActions
-            id={focusAppt.id}
-            status={focusAppt.status}
-            customerName={displayCustomerName(focusAppt.customer_name, null, 1)}
-            customerPhone={focusAppt.customer_phone}
-            startsAt={focusAppt.starts_at}
-            serviceName={focusAppt.service_name}
-            timezone={tz}
-          />
-        </section>
-      )}
-
-      {isToday && liveToday.length > 0 && (
-        <section className="surface mb-4 flex items-center gap-3 p-4">
-          <Sun className="size-4 shrink-0 text-muted-foreground" />
-          <div className="min-w-0 flex-1">
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-foreground transition-[width] duration-500"
-                style={{ width: `${dayProgress}%` }}
-              />
-            </div>
-            <p className="mt-1.5 truncate text-xs font-semibold text-muted-foreground">
-              {t("dash.progress.done")
-                .replace("{done}", String(doneCount))
-                .replace("{total}", String(liveToday.length))}
-            </p>
-          </div>
-          <p className="shrink-0 text-sm font-black tabular-nums">{formatPrice(dayRevenue)}</p>
-        </section>
-      )}
 
       {staffList.length > 1 && (
         <div className="mb-4 flex items-center gap-1.5 overflow-x-auto rounded-full bg-muted p-1">
@@ -392,156 +368,216 @@ function CalendarPage() {
 
       {isLoading ? (
         <LoadingRows rows={5} />
-      ) : (data?.hours.length ?? 0) === 0 && appts.length === 0 && blocks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
-          <span className="flex size-16 items-center justify-center rounded-full border border-border bg-muted/40 text-muted-foreground/70">
-            <CalendarOff className="size-7" strokeWidth={2.2} />
-          </span>
-          <p className="text-sm font-bold text-muted-foreground">{t("cal.freeDay")}</p>
-        </div>
       ) : (
-        <ul className="space-y-2">
-          {agendaRows.map((row, i) => (
-            <Fragment key={`row-${i}-${row.hour}`}>
-              {i === markerIndex && (
-                <li aria-hidden className="flex items-center gap-2 py-0.5">
-                  <span className="text-[11px] font-black uppercase tracking-[0.1em] text-foreground">
-                    {t("cal.now")}
-                  </span>
-                  <span className="h-px flex-1 bg-foreground/60" />
-                  <span className="size-1.5 rounded-full bg-foreground" />
-                </li>
-              )}
-              {row.kind === "free" ? (
-              <li className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    setNewTime(row.hour);
-                    setNewOpen(true);
-                  }}
-                  className="group flex min-w-0 flex-1 items-center gap-3.5 rounded-2xl border border-dashed border-border/70 bg-transparent px-4 py-2.5 text-left transition-colors hover:border-foreground/30 hover:bg-muted/40"
-                >
-                  <span className="w-14 shrink-0 text-sm font-bold tabular-nums text-muted-foreground/70">
-                    {row.hour}
-                  </span>
-                  <span className="flex-1 text-sm font-medium text-muted-foreground/50">
-                    {t("cal.slot.free")}
-                  </span>
-                  <Plus
-                    className="size-4 shrink-0 text-muted-foreground/40 transition-colors group-hover:text-foreground"
-                    strokeWidth={2.6}
-                  />
-                </button>
-                <button
-                  onClick={() => blockHour(row.hour)}
-                  aria-label={t("cal.block")}
-                  title={t("cal.block")}
-                  className="flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed border-border text-muted-foreground/60 transition-colors hover:border-solid hover:text-foreground"
-                >
-                  <Lock className="size-4" strokeWidth={2.6} />
-                </button>
-              </li>
-            ) : row.kind === "block" ? (
-              <li
-                key={row.block.id}
-                className="surface flex items-center gap-3 border-dashed p-4 opacity-80"
-              >
-                <span className="w-14 shrink-0 text-center text-lg font-black tabular-nums text-muted-foreground">
-                  {row.hour}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] font-bold leading-snug text-muted-foreground">
-                    {t("cal.blocked")}
-                  </p>
-                  {row.block.reason && (
-                    <p className="truncate text-sm leading-snug text-muted-foreground/70">
-                      {row.block.reason}
-                    </p>
-                  )}
-                </div>
-                <button
-                  onClick={() => unblock(row.block.id)}
-                  aria-label={t("cal.unblock")}
-                  title={t("cal.unblock")}
-                  className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <Unlock className="size-4" strokeWidth={2.6} />
-                </button>
-              </li>
-            ) : (
-              <li
-                key={row.appt.id}
-                data-status={row.appt.status}
-                className="appointment-state surface surface-hover flex items-stretch gap-3 p-3.5"
-              >
-                <span
-                  data-status={row.appt.status}
-                  aria-hidden
-                  className="appointment-rail w-1 shrink-0 self-stretch"
-                />
-                <div className="w-[3.25rem] shrink-0 self-center">
-                  <p className="text-[17px] font-black leading-none tabular-nums">
-                    {formatTime(row.appt.starts_at, tz)}
-                  </p>
-                  {row.appt.ends_at && (
-                    <p className="mt-1.5 text-[11px] font-semibold leading-none tabular-nums text-muted-foreground">
-                      {Math.max(
-                        0,
-                        Math.round(
-                          (new Date(row.appt.ends_at).getTime() -
-                            new Date(row.appt.starts_at).getTime()) /
-                            60000,
-                        ),
-                      )}{" "}
-                      min
-                    </p>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1 self-center">
-                  <p className="line-clamp-2 text-[15px] font-bold leading-snug">
-                    {displayCustomerName(row.appt.customer_name, null, i + 1)}
-                  </p>
-                  <p className="truncate text-sm font-normal leading-snug text-muted-foreground">
-                    {row.appt.service_name}
-                  </p>
-                  {row.appt.notes?.trim() && (
-                    <Popover>
-                      <PopoverTrigger asChild>
+        <>
+          {appts.length === 0 && (
+            <section className="surface mb-3 flex flex-col items-start gap-4 p-5">
+              <div>
+                <p className="font-display text-[18px] font-bold leading-snug">
+                  {t("cal.empty.welcome")}
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={copyPublicLink} disabled={!business}>
+                <Copy className="size-4" />
+                {t("cal.empty.copy")}
+              </Button>
+            </section>
+          )}
+          {(data?.hours.length ?? 0) === 0 && blocks.length === 0 ? null : (
+            <ul className="space-y-2">
+              {agendaRows.map((row, i) => {
+                const pastFreeHour = row.kind === "free" && isPastHour(row.hour);
+                const pastBlock = row.kind === "block" && new Date(row.block.ends_at).getTime() <= now;
+                const due = row.kind === "appt" && needsValidation(row.appt);
+                const isNext = row.kind === "appt" && isToday && nextUp?.id === row.appt.id;
+                return (
+                  <Fragment key={`row-${i}-${row.hour}`}>
+                    {i === markerIndex && (
+                      <li aria-hidden className="flex items-center gap-2 py-0.5">
+                        <span className="text-[11px] font-black uppercase tracking-[0.1em] text-foreground">
+                          {t("cal.now")}
+                        </span>
+                        <span className="h-px flex-1 bg-foreground/60" />
+                        <span className="size-1.5 rounded-full bg-foreground" />
+                      </li>
+                    )}
+                    {row.kind === "free" ? (
+                      <li className={cn("flex items-center gap-2", pastFreeHour && "opacity-45")}>
                         <button
-                          type="button"
-                          aria-label={t("cal.note.label")}
-                          className="mt-1.5 flex max-w-full items-center gap-1.5 rounded-full border border-border bg-card px-2 py-1 text-[11px] font-semibold text-muted-foreground"
+                          disabled={pastFreeHour}
+                          onClick={() => {
+                            if (pastFreeHour) return;
+                            setNewTime(row.hour);
+                            setNewOpen(true);
+                          }}
+                          className="group flex min-w-0 flex-1 items-center gap-3.5 rounded-2xl border border-dashed border-border/70 bg-transparent px-4 py-2.5 text-left transition-colors hover:border-foreground/30 hover:bg-muted/40 disabled:cursor-not-allowed disabled:hover:border-border/70 disabled:hover:bg-transparent"
                         >
-                          <StickyNote className="size-3 shrink-0" strokeWidth={2.6} />
-                          <span className="truncate">{row.appt.notes}</span>
+                          <span className="w-14 shrink-0 text-sm font-bold tabular-nums text-muted-foreground/70">
+                            {row.hour}
+                          </span>
+                          <span className="flex-1 text-sm font-medium text-muted-foreground/50">
+                            {pastFreeHour ? t("cal.slot.past") : t("cal.slot.free")}
+                          </span>
+                          <Plus
+                            className="size-4 shrink-0 text-muted-foreground/40 transition-colors group-hover:text-foreground"
+                            strokeWidth={2.6}
+                          />
                         </button>
-                      </PopoverTrigger>
-                      <PopoverContent side="top" align="start" className="w-64 text-sm">
-                        <p className="mb-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                          {t("cal.note.label")}
-                        </p>
-                        <p className="whitespace-pre-wrap font-medium">{row.appt.notes}</p>
-                      </PopoverContent>
-                    </Popover>
-                  )}
-                </div>
-                <div className="flex shrink-0 items-center gap-1.5 self-center">
-                  <AppointmentActions
-                    id={row.appt.id}
-                    status={row.appt.status}
-                    customerName={displayCustomerName(row.appt.customer_name, null, i + 1)}
-                    customerPhone={row.appt.customer_phone}
-                    startsAt={row.appt.starts_at}
-                    serviceName={row.appt.service_name}
-                    timezone={tz}
-                  />
-                </div>
-              </li>
-            )}
-            </Fragment>
-
-          ))}
-        </ul>
+                        <button
+                          disabled={pastFreeHour}
+                          onClick={() => blockHour(row.hour)}
+                          aria-label={t("cal.block")}
+                          title={t("cal.block")}
+                          className="flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed border-border text-muted-foreground/60 transition-colors hover:border-solid hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-dashed disabled:hover:text-muted-foreground/60"
+                        >
+                          <Lock className="size-4" strokeWidth={2.6} />
+                        </button>
+                      </li>
+                    ) : row.kind === "block" ? (
+                      <li
+                        key={row.block.id}
+                        className={cn(
+                          "surface flex items-center gap-3 border-dashed p-4 opacity-80",
+                          pastBlock && "opacity-45",
+                        )}
+                      >
+                        <span className="w-14 shrink-0 text-center text-lg font-black tabular-nums text-muted-foreground">
+                          {row.hour}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[15px] font-bold leading-snug text-muted-foreground">
+                            {t("cal.blocked")}
+                          </p>
+                          {row.block.reason && (
+                            <p className="truncate text-sm leading-snug text-muted-foreground/70">
+                              {row.block.reason}
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => unblock(row.block.id)}
+                          aria-label={t("cal.unblock")}
+                          title={t("cal.unblock")}
+                          className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          <Unlock className="size-4" strokeWidth={2.6} />
+                        </button>
+                      </li>
+                    ) : (
+                      <li
+                        key={row.appt.id}
+                        data-status={row.appt.status}
+                        className={cn(
+                          "appointment-state surface surface-hover flex items-stretch gap-3 p-3.5",
+                          isNext && "ring-1 ring-foreground/30",
+                          due && "bg-muted/30",
+                        )}
+                      >
+                        <span
+                          data-status={due ? "pending" : row.appt.status}
+                          aria-hidden
+                          className={cn("appointment-rail w-1 shrink-0 self-stretch", isNext && "w-1.5")}
+                        />
+                        <div className="w-[3.25rem] shrink-0 self-center">
+                          <p className="text-[17px] font-black leading-none tabular-nums">
+                            {formatTime(row.appt.starts_at, tz)}
+                          </p>
+                          {row.appt.ends_at && (
+                            <p className="mt-1.5 text-[11px] font-semibold leading-none tabular-nums text-muted-foreground">
+                              {Math.max(
+                                0,
+                                Math.round(
+                                  (new Date(row.appt.ends_at).getTime() -
+                                    new Date(row.appt.starts_at).getTime()) /
+                                    60000,
+                                ),
+                              )}{" "}
+                              min
+                            </p>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1 self-center">
+                          <div className="mb-1 flex flex-wrap items-center gap-1.5">
+                            {isNext && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-foreground/30 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-foreground">
+                                <span className="size-1.5 rounded-full bg-foreground" />
+                                {t("cal.next.inline")}
+                              </span>
+                            )}
+                            {due && (
+                              <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-foreground">
+                                {t("cal.validate.label")}
+                              </span>
+                            )}
+                          </div>
+                          <p className="line-clamp-2 text-[15px] font-bold leading-snug">
+                            {displayCustomerName(row.appt.customer_name, null, i + 1)}
+                          </p>
+                          <p className="truncate text-sm font-normal leading-snug text-muted-foreground">
+                            {row.appt.service_name}
+                          </p>
+                          {row.appt.notes?.trim() && (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button
+                                  type="button"
+                                  aria-label={t("cal.note.label")}
+                                  className="mt-1.5 flex max-w-full items-center gap-1.5 rounded-full border border-border bg-card px-2 py-1 text-[11px] font-semibold text-muted-foreground"
+                                >
+                                  <StickyNote className="size-3 shrink-0" strokeWidth={2.6} />
+                                  <span className="truncate">{row.appt.notes}</span>
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent side="top" align="start" className="w-64 text-sm">
+                                <p className="mb-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                                  {t("cal.note.label")}
+                                </p>
+                                <p className="whitespace-pre-wrap font-medium">{row.appt.notes}</p>
+                              </PopoverContent>
+                            </Popover>
+                          )}
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1.5 self-center">
+                          {due ? (
+                            <div className="flex flex-col gap-1.5 sm:flex-row">
+                              <Button
+                                size="sm"
+                                className="h-8 px-3 text-[12px]"
+                                onClick={() => validateAppointment(row.appt.id, "completed")}
+                              >
+                                <Check className="size-3.5" />
+                                {t("cal.validate.complete")}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-3 text-[12px]"
+                                onClick={() => validateAppointment(row.appt.id, "no_show")}
+                              >
+                                <UserX className="size-3.5" />
+                                {t("cal.validate.noShow")}
+                              </Button>
+                            </div>
+                          ) : (
+                            <AppointmentActions
+                              id={row.appt.id}
+                              status={row.appt.status}
+                              customerName={displayCustomerName(row.appt.customer_name, null, i + 1)}
+                              customerPhone={row.appt.customer_phone}
+                              startsAt={row.appt.starts_at}
+                              serviceName={row.appt.service_name}
+                              timezone={tz}
+                            />
+                          )}
+                        </div>
+                      </li>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </ul>
+          )}
+        </>
       )}
 
 
