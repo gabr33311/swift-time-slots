@@ -41,7 +41,7 @@ export function EditCustomerDialog({
   mode?: "edit" | "history";
 }) {
   const qc = useQueryClient();
-  const { t } = usePrefs();
+  const { lang, t } = usePrefs();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -59,18 +59,21 @@ export function EditCustomerDialog({
     queryKey: ["customer-history", customer?.id],
     enabled: !!customer && open,
     queryFn: async () => {
-      const { data } = await supabase
+      if (!customer) return [];
+      let query = supabase
         .from("appointments")
         .select("id, starts_at, service_name, price_cents, status")
-        .eq("customer_id", customer!.id)
+        .eq("customer_id", customer.id)
         .order("starts_at", { ascending: false })
         .limit(20);
+      if (mode === "history") query = query.eq("status", "completed");
+      const { data } = await query;
       return data ?? [];
     },
   });
 
   const spent = (history ?? [])
-    .filter((a) => a.status === "completed" || a.status === "confirmed")
+    .filter((a) => a.status === "completed")
     .reduce((s, a) => s + a.price_cents, 0);
 
   async function save() {
@@ -88,7 +91,7 @@ export function EditCustomerDialog({
     };
     const { error } = customer
       ? await supabase.from("customers").update(payload).eq("id", customer.id)
-      : await supabase.from("customers").insert({ ...payload, business_id: businessId! });
+      : await supabase.from("customers").insert({ ...payload, business_id: businessId });
     setBusy(false);
     if (error) {
       toast.error(t("cust.toast.saveError"));
@@ -182,7 +185,7 @@ export function EditCustomerDialog({
                       className="flex items-center justify-between gap-3 text-sm"
                     >
                       <span className="tabular-nums text-muted-foreground">
-                        {new Intl.DateTimeFormat("pt-PT", {
+                        {new Intl.DateTimeFormat(lang === "en" ? "en-GB" : "pt-PT", {
                           day: "2-digit",
                           month: "2-digit",
                           year: "2-digit",
