@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMyBusiness } from "@/hooks/use-business";
 import { initials } from "@/lib/format";
-import { Users, Ban, ShieldCheck, Search, Pencil } from "lucide-react";
+import { Users, Ban, ShieldCheck, Search, Pencil, History } from "lucide-react";
 import {
   EditCustomerDialog,
   type EditableCustomer,
@@ -46,6 +46,7 @@ function CustomersPage() {
   const [term, setTerm] = useState("");
   const [tab, setTab] = useState<"all" | "cancelled" | "blocked">("all");
   const [editing, setEditing] = useState<EditableCustomer | null>(null);
+  const [historyCustomer, setHistoryCustomer] = useState<EditableCustomer | null>(null);
   const [creating, setCreating] = useState(false);
 
   const { data: cancelledMap } = useQuery({
@@ -184,6 +185,16 @@ function CustomersPage() {
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label={`${t("cust.history.open")} ${c.name}`}
+                title={t("cust.history.open")}
+                className="size-9 shrink-0 text-muted-foreground"
+                onClick={() => setHistoryCustomer(c)}
+              >
+                <History className="size-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 aria-label={`${t("cust.edit")} ${c.name}`}
                 className="size-9 shrink-0 text-muted-foreground"
                 onClick={() => setEditing(c)}
@@ -246,6 +257,15 @@ function CustomersPage() {
             setEditing(null);
             setCreating(false);
           }
+        }}
+      />
+      <EditCustomerDialog
+        key={`history-${historyCustomer?.id ?? "idle"}`}
+        customer={historyCustomer}
+        open={!!historyCustomer}
+        mode="history"
+        onOpenChange={(v) => {
+          if (!v) setHistoryCustomer(null);
         }}
       />
     </AppShell>

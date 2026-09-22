@@ -31,12 +31,14 @@ export function EditCustomerDialog({
   open,
   onOpenChange,
   businessId,
+  mode = "edit",
 }: {
   customer: EditableCustomer | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   /** When set and no customer is given, the dialog creates a new customer. */
   businessId?: string | undefined;
+  mode?: "edit" | "history";
 }) {
   const qc = useQueryClient();
   const { t } = usePrefs();
@@ -101,13 +103,19 @@ export function EditCustomerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{customer ? t("cust.dialog.editTitle") : t("cust.dialog.newTitle")}</DialogTitle>
-          <DialogDescription>
-            {t("cust.dialog.desc")}
-          </DialogDescription>
+          <DialogTitle>
+            {mode === "history"
+              ? `${t("cust.history.title")} · ${customer?.name ?? ""}`
+              : customer
+                ? t("cust.dialog.editTitle")
+                : t("cust.dialog.newTitle")}
+          </DialogTitle>
+          {mode === "edit" && <DialogDescription>{t("cust.dialog.desc")}</DialogDescription>}
         </DialogHeader>
 
         <div className="space-y-4">
+          {mode === "edit" && (
+            <>
           <div className="space-y-1.5">
             <Label htmlFor="cname" className="font-bold">
               {t("cust.field.name")}
@@ -152,6 +160,8 @@ export function EditCustomerDialog({
               placeholder={t("cust.field.notes.placeholder")}
             />
           </div>
+            </>
+          )}
 
           {customer && (
             <section className="rounded-2xl border border-border p-4">
@@ -190,14 +200,16 @@ export function EditCustomerDialog({
           )}
         </div>
 
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={busy}>
-            {t("cust.cancel")}
-          </Button>
-          <Button onClick={save} disabled={busy}>
-            {t("cust.save")}
-          </Button>
-        </DialogFooter>
+        {mode === "edit" && (
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={busy}>
+              {t("cust.cancel")}
+            </Button>
+            <Button onClick={save} disabled={busy}>
+              {t("cust.save")}
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );
