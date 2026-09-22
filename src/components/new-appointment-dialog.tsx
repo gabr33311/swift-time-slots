@@ -14,10 +14,20 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Loader2 } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2, Users, X } from "lucide-react";
 import { zonedToUtc, todayIn } from "@/lib/time";
 import type { Business } from "@/hooks/use-business";
 import { usePrefs } from "@/lib/prefs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 export function NewAppointmentDialog({
   business,
@@ -37,6 +47,8 @@ export function NewAppointmentDialog({
   const [busy, setBusy] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
   const [serviceId, setServiceId] = useState("");
   const [staffId, setStaffId] = useState("");
   const [date, setDate] = useState(defaultDate ?? todayIn(business.timezone));
@@ -73,8 +85,41 @@ export function NewAppointmentDialog({
     },
   });
 
+  const { data: customers = [] } = useQuery({
+    queryKey: ["appointment-customers", business.id],
+    enabled: open,
+    queryFn: async () => {
+      const { data: rows, error } = await supabase
+        .from("customers")
+        .select("id, name, phone, email")
+        .eq("business_id", business.id)
+        .eq("is_blocked", false)
+        .order("name")
+        .limit(200);
+      if (error) throw error;
+      return rows ?? [];
+    },
+  });
+
+  const selectedCustomer = customers.find((customer) => customer.id === customerId) ?? null;
+
+  function chooseCustomer(id: string) {
+    const customer = customers.find((item) => item.id === id);
+    if (!customer) return;
+    setCustomerId(customer.id);
+    setCustomerName(customer.name);
+    setPhone(customer.phone ?? "");
+    setCustomerPickerOpen(false);
+  }
+
+  function clearCustomer() {
+    setCustomerId(null);
+    setCustomerName("");
+    setPhone("");
+  }
+
   // With a single active professional there is nothing to pick: select it.
-  const onlyStaffId = data?.staff.length === 1 ? data.staff[0]!.id : null;
+  const onlyStaffId = data?.staff.length === 1 ? data.staff[0]?.id ?? null : null;
   useEffect(() => {
     if (onlyStaffId && !staffId) setStaffId(onlyStaffId);
   }, [onlyStaffId, staffId]);
@@ -94,17 +139,17 @@ export function NewAppointmentDialog({
       const startsAt = zonedToUtc(date, (h ?? 0) * 60 + (m ?? 0), business.timezone);
       const endsAt = new Date(startsAt.getTime() + service.duration_minutes * 60000);
 
-      let customerId: string | null = null;
-      if (phone.trim()) {
+      let savedCustomerId: string | null = customerId;
+      if (!savedCustomerId && phone.trim()) {
         const { data: existing } = await supabase
           .from("customers")
           .select("id")
           .eq("business_id", business.id)
           .eq("phone", phone.trim())
           .maybeSingle();
-        if (existing) customerId = existing.id;
+        if (existing) savedCustomerId = existing.id;
       }
-      if (!customerId) {
+      if (!savedCustomerId) {
         const { data: created } = await supabase
           .from("customers")
           .insert({
@@ -114,14 +159,14 @@ export function NewAppointmentDialog({
           })
           .select("id")
           .single();
-        customerId = created?.id ?? null;
+        savedCustomerId = created?.id ?? null;
       }
 
       const { error } = await supabase.from("appointments").insert({
         business_id: business.id,
         service_id: service.id,
         staff_id: staffId,
-        customer_id: customerId,
+        customer_id: savedCustomerId,
         service_name: service.name,
         customer_name: customerName.trim(),
         customer_phone: phone.trim() || null,
@@ -146,6 +191,7 @@ export function NewAppointmentDialog({
       onOpenChange(false);
       setCustomerName("");
       setPhone("");
+      setCustomerId(null);
       setNotes("");
     } catch {
       toast.error(t("cal.err.create"));
@@ -162,6 +208,76 @@ export function NewAppointmentDialog({
           <DialogDescription>{t("cal.dialog.desc")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label>{t("cal.customer.existing")}</Label>
+            <div className="flex items-center gap-2">
+              <Popover open={customerPickerOpen} onOpenChange={setCustomerPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={customerPickerOpen}
+                    className="min-w-0 flex-1 justify-between px-3 font-medium"
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      <Users className="size-4 shrink-0 text-muted-foreground" />
+                      <span className="truncate">
+                        {selectedCustomer?.name ?? t("cal.customer.select")}
+                      </span>
+                    </span>
+                    <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-0">
+                  <Command>
+                    <CommandInput placeholder={t("cal.customer.search")} />
+                    <CommandList>
+                      <CommandEmpty>{t("cal.customer.empty")}</CommandEmpty>
+                      <CommandGroup>
+                        {customers.map((customer) => (
+                          <CommandItem
+                            key={customer.id}
+                            value={`${customer.name} ${customer.phone ?? ""} ${customer.email ?? ""}`}
+                            onSelect={() => chooseCustomer(customer.id)}
+                            className="py-2.5"
+                          >
+                            <Check
+                              className={cn(
+                                "size-4",
+                                customerId === customer.id ? "opacity-100" : "opacity-0",
+                              )}
+                            />
+                            <div className="min-w-0">
+                              <p className="truncate font-semibold">{customer.name}</p>
+                              {(customer.phone || customer.email) && (
+                                <p className="truncate text-xs text-muted-foreground">
+                                  {customer.phone ?? customer.email}
+                                </p>
+                              )}
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              {selectedCustomer && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={clearCustomer}
+                  aria-label={t("cal.customer.clear")}
+                  title={t("cal.customer.clear")}
+                  className="size-10 shrink-0"
+                >
+                  <X className="size-4" />
+                </Button>
+              )}
+            </div>
+          </div>
           <div className="space-y-1.5">
             <Label htmlFor="cname">{t("cal.field.client")}</Label>
             <Input

@@ -4,5 +4,5 @@
 - [x] Mostrar marcações terminadas como "Por validar" com botões rápidos Concluir/Faltou
 - [x] Criar empty state de agenda com copiar link
 - [x] Adicionar histórico de vindas por cliente na aba Clientes
-- [ ] Centrar o estado vazio e agrupar a navegação da Agenda
-- [ ] Permitir selecionar e preencher clientes existentes numa nova marcação
+- [x] Centrar o estado vazio e agrupar a navegação da Agenda
+- [x] Permitir selecionar e preencher clientes existentes numa nova marcação
