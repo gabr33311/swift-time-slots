@@ -164,11 +164,6 @@ function CalendarPage() {
   const liveToday = isToday
     ? appts.filter((a) => !["cancelled", "no_show", "expired"].includes(a.status))
     : [];
-  const ongoing = liveToday.find((a) => {
-    const s = new Date(a.starts_at).getTime();
-    const e = a.ends_at ? new Date(a.ends_at).getTime() : s + 3_600_000;
-    return s <= now && now < e && a.status !== "completed";
-  });
   const nextUp = liveToday.find(
     (a) => new Date(a.starts_at).getTime() > now && a.status !== "completed",
   );
@@ -281,7 +276,7 @@ function CalendarPage() {
         action={
           <div className="flex items-center gap-2">
             {isToday && liveToday.length > 0 && (
-              <span className="hidden shrink-0 rounded-full border border-border bg-card px-3 py-2 text-[11px] font-black tabular-nums text-muted-foreground sm:inline-flex">
+              <span className="inline-flex shrink-0 rounded-full border border-border bg-card px-2.5 py-2 text-[10px] font-black tabular-nums text-muted-foreground sm:px-3 sm:text-[11px]">
                 {progressPill}
               </span>
             )}

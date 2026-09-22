@@ -31,15 +31,17 @@ export function EditCustomerDialog({
   open,
   onOpenChange,
   businessId,
+  mode = "edit",
 }: {
   customer: EditableCustomer | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   /** When set and no customer is given, the dialog creates a new customer. */
   businessId?: string | undefined;
+  mode?: "edit" | "history";
 }) {
   const qc = useQueryClient();
-  const { t } = usePrefs();
+  const { lang, t } = usePrefs();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -57,18 +59,21 @@ export function EditCustomerDialog({
     queryKey: ["customer-history", customer?.id],
     enabled: !!customer && open,
     queryFn: async () => {
-      const { data } = await supabase
+      if (!customer) return [];
+      let query = supabase
         .from("appointments")
         .select("id, starts_at, service_name, price_cents, status")
-        .eq("customer_id", customer!.id)
+        .eq("customer_id", customer.id)
         .order("starts_at", { ascending: false })
         .limit(20);
+      if (mode === "history") query = query.eq("status", "completed");
+      const { data } = await query;
       return data ?? [];
     },
   });
 
   const spent = (history ?? [])
-    .filter((a) => a.status === "completed" || a.status === "confirmed")
+    .filter((a) => a.status === "completed")
     .reduce((s, a) => s + a.price_cents, 0);
 
   async function save() {
@@ -84,9 +89,15 @@ export function EditCustomerDialog({
       email: email.trim() ? email.trim().slice(0, 120) : null,
       notes: notes.trim() ? notes.trim().slice(0, 500) : null,
     };
-    const { error } = customer
-      ? await supabase.from("customers").update(payload).eq("id", customer.id)
-      : await supabase.from("customers").insert({ ...payload, business_id: businessId! });
+    let error: { message: string } | null;
+    if (customer) {
+      ({ error } = await supabase.from("customers").update(payload).eq("id", customer.id));
+    } else if (businessId) {
+      ({ error } = await supabase.from("customers").insert({ ...payload, business_id: businessId }));
+    } else {
+      setBusy(false);
+      return;
+    }
     setBusy(false);
     if (error) {
       toast.error(t("cust.toast.saveError"));
@@ -101,13 +112,19 @@ export function EditCustomerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{customer ? t("cust.dialog.editTitle") : t("cust.dialog.newTitle")}</DialogTitle>
-          <DialogDescription>
-            {t("cust.dialog.desc")}
-          </DialogDescription>
+          <DialogTitle>
+            {mode === "history"
+              ? `${t("cust.history.title")} · ${customer?.name ?? ""}`
+              : customer
+                ? t("cust.dialog.editTitle")
+                : t("cust.dialog.newTitle")}
+          </DialogTitle>
+          {mode === "edit" && <DialogDescription>{t("cust.dialog.desc")}</DialogDescription>}
         </DialogHeader>
 
         <div className="space-y-4">
+          {mode === "edit" && (
+            <>
           <div className="space-y-1.5">
             <Label htmlFor="cname" className="font-bold">
               {t("cust.field.name")}
@@ -152,6 +169,8 @@ export function EditCustomerDialog({
               placeholder={t("cust.field.notes.placeholder")}
             />
           </div>
+            </>
+          )}
 
           {customer && (
             <section className="rounded-2xl border border-border p-4">
@@ -172,7 +191,7 @@ export function EditCustomerDialog({
                       className="flex items-center justify-between gap-3 text-sm"
                     >
                       <span className="tabular-nums text-muted-foreground">
-                        {new Intl.DateTimeFormat("pt-PT", {
+                        {new Intl.DateTimeFormat(lang === "en" ? "en-GB" : "pt-PT", {
                           day: "2-digit",
                           month: "2-digit",
                           year: "2-digit",
@@ -190,14 +209,16 @@ export function EditCustomerDialog({
           )}
         </div>
 
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={busy}>
-            {t("cust.cancel")}
-          </Button>
-          <Button onClick={save} disabled={busy}>
-            {t("cust.save")}
-          </Button>
-        </DialogFooter>
+        {mode === "edit" && (
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={busy}>
+              {t("cust.cancel")}
+            </Button>
+            <Button onClick={save} disabled={busy}>
+              {t("cust.save")}
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );
