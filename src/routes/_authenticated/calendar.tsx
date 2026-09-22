@@ -265,7 +265,7 @@ function CalendarPage() {
     weekday: "long",
     timeZone: tz,
   }).format(labelDate);
-  const rawLabel = isToday ? `${t("cal.today")}, ${dayMonth}` : `${weekdayLong}, ${dayMonth}`;
+  const rawLabel = `${weekdayLong}, ${dayMonth}`;
   const label = rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
 
   return (
@@ -290,26 +290,30 @@ function CalendarPage() {
 
 
       <div className="surface mb-2 p-1">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center justify-center gap-1">
           <button
-            onClick={() => setDate(addDays(date, -7))}
-            aria-label={t("cal.week.prev")}
+            onClick={() => setDate(addDays(date, -1))}
+            aria-label={t("cal.prevDay")}
             className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <ChevronLeft className="size-4" />
           </button>
-          <p className="min-w-0 flex-1 truncate text-center text-sm font-bold">{label}</p>
-          {!isToday && (
-            <button
+          <div className="flex min-w-0 flex-1 items-center justify-center gap-2">
+            <p className="min-w-0 truncate text-center text-sm font-bold">{label}</p>
+            <Button
+              type="button"
+              variant={isToday ? "default" : "outline"}
+              size="sm"
               onClick={() => setDate(todayIn(tz))}
-              className="shrink-0 rounded-full border border-border px-3 py-1.5 text-[11px] font-bold text-foreground transition-colors hover:bg-muted"
+              disabled={isToday}
+              className="h-8 shrink-0 px-3 text-[11px] disabled:opacity-100"
             >
               {t("cal.today")}
-            </button>
-          )}
+            </Button>
+          </div>
           <button
-            onClick={() => setDate(addDays(date, 7))}
-            aria-label={t("cal.week.next")}
+            onClick={() => setDate(addDays(date, 1))}
+            aria-label={t("cal.nextDay")}
             className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <ChevronRight className="size-4" />
@@ -366,12 +370,10 @@ function CalendarPage() {
       ) : (
         <>
           {appts.length === 0 && (
-            <section className="surface mb-3 flex flex-col items-start gap-4 p-5">
-              <div>
-                <p className="font-display text-[18px] font-bold leading-snug">
-                  {t("cal.empty.welcome")}
-                </p>
-              </div>
+            <section className="surface mb-3 flex flex-col items-center gap-5 px-5 py-7 text-center">
+              <p className="max-w-sm font-display text-[18px] font-bold leading-snug">
+                {t("cal.empty.welcome")}
+              </p>
               <Button variant="outline" size="sm" onClick={copyPublicLink} disabled={!business}>
                 <Copy className="size-4" />
                 {t("cal.empty.copy")}
