@@ -89,9 +89,15 @@ export function EditCustomerDialog({
       email: email.trim() ? email.trim().slice(0, 120) : null,
       notes: notes.trim() ? notes.trim().slice(0, 500) : null,
     };
-    const { error } = customer
-      ? await supabase.from("customers").update(payload).eq("id", customer.id)
-      : await supabase.from("customers").insert({ ...payload, business_id: businessId });
+    let error: { message: string } | null;
+    if (customer) {
+      ({ error } = await supabase.from("customers").update(payload).eq("id", customer.id));
+    } else if (businessId) {
+      ({ error } = await supabase.from("customers").insert({ ...payload, business_id: businessId }));
+    } else {
+      setBusy(false);
+      return;
+    }
     setBusy(false);
     if (error) {
       toast.error(t("cust.toast.saveError"));
