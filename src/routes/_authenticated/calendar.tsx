@@ -541,18 +541,16 @@ function CalendarPage() {
                             {formatTime(row.appt.starts_at, tz)}
                           </p>
                           {row.appt.ends_at && (
-                            <p className="mt-1.5 text-[11px] font-semibold leading-none tabular-nums text-muted-foreground">
-                              {Math.max(
-                                0,
-                                Math.round(
-                                  (new Date(row.appt.ends_at).getTime() -
-                                    new Date(row.appt.starts_at).getTime()) /
-                                    60000,
-                                ),
-                              )}{" "}
-                              min
-                            </p>
+                            <>
+                              <p className="mt-1 text-[12px] font-bold leading-none tabular-nums text-muted-foreground">
+                                {formatTime(row.appt.ends_at, tz)}
+                              </p>
+                              <p className="mt-1 text-[10px] font-semibold leading-none tabular-nums text-muted-foreground/70">
+                                {durationLabel(Math.max(0, row.end - row.start))}
+                              </p>
+                            </>
                           )}
+
                         </div>
                         <div className="min-w-0 flex-1 self-center">
                           <div className="mb-1 flex flex-wrap items-center gap-1.5">
