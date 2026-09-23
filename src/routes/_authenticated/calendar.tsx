@@ -30,15 +30,12 @@ export const Route = createFileRoute("/_authenticated/calendar")({
   component: CalendarPage,
 });
 
-/** Builds the hour list of a free day from the real working hours ranges. */
-function hoursFromRanges(ranges: { start: string; end: string }[]): string[] {
-  const out: string[] = [];
-  for (const r of ranges) {
-    const from = timeToMinutes(r.start.slice(0, 5));
-    const to = timeToMinutes(r.end.slice(0, 5));
-    for (let m = Math.ceil(from / 60) * 60; m < to; m += 60) out.push(minutesToTime(m));
-  }
-  return Array.from(new Set(out)).sort();
+/** Parses the real working ranges of the day into minutes from midnight. */
+function rangesFromRows(rows: { start: string; end: string }[]): { start: number; end: number }[] {
+  return rows
+    .map((r) => ({ start: timeToMinutes(r.start.slice(0, 5)), end: timeToMinutes(r.end.slice(0, 5)) }))
+    .filter((r) => r.end > r.start)
+    .sort((a, b) => a.start - b.start);
 }
 
 type Appt = {
@@ -64,23 +61,65 @@ type Block = {
 };
 
 type AgendaRow =
-  | { kind: "free"; hour: string }
-  | { kind: "appt"; appt: Appt; hour: string }
-  | { kind: "block"; block: Block; hour: string };
+  | { kind: "free"; start: number; end: number }
+  | { kind: "appt"; appt: Appt; start: number; end: number }
+  | { kind: "block"; block: Block; start: number; end: number };
 
-/** Merges the working-hour grid with booked and blocked slots into one chronological list. */
-function buildAgenda(hours: string[], appts: Appt[], blocks: Block[], tz: string): AgendaRow[] {
-  const rows: AgendaRow[] = [
-    ...appts.map((a) => ({ kind: "appt" as const, appt: a, hour: formatTime(a.starts_at, tz) })),
-    ...blocks.map((b) => ({ kind: "block" as const, block: b, hour: formatTime(b.starts_at, tz) })),
-  ];
-  const takenHours = new Set(rows.map((r) => r.hour.slice(0, 2)));
-  for (const h of hours) {
-    if (takenHours.has(h.slice(0, 2))) continue;
-    rows.push({ kind: "free", hour: h });
-  }
-  return rows.sort((a, b) => a.hour.localeCompare(b.hour));
+/** Minutes from midnight of an ISO instant, as seen in the business timezone. */
+function minuteOfDay(iso: string, tz: string): number {
+  return timeToMinutes(formatTime(iso, tz));
 }
+
+/** Splits an empty stretch into readable slices: short gaps stay whole, long ones are sliced. */
+function freeChunks(start: number, end: number, step: number): AgendaRow[] {
+  const out: AgendaRow[] = [];
+  let cursor = start;
+  while (end - cursor > step * 1.5) {
+    out.push({ kind: "free", start: cursor, end: cursor + step });
+    cursor += step;
+  }
+  if (end - cursor > 0) out.push({ kind: "free", start: cursor, end });
+  return out;
+}
+
+/**
+ * Dynamic timeline: real appointment/block spans, with the actual empty gaps
+ * between them surfaced as bookable slots.
+ */
+function buildAgenda(
+  ranges: { start: number; end: number }[],
+  appts: Appt[],
+  blocks: Block[],
+  tz: string,
+  step: number,
+): AgendaRow[] {
+  const busy: AgendaRow[] = [
+    ...appts.map((a) => {
+      const start = minuteOfDay(a.starts_at, tz);
+      const rawEnd = a.ends_at ? minuteOfDay(a.ends_at, tz) : start + 60;
+      return { kind: "appt" as const, appt: a, start, end: rawEnd > start ? rawEnd : start + 60 };
+    }),
+    ...blocks.map((b) => {
+      const start = minuteOfDay(b.starts_at, tz);
+      const rawEnd = minuteOfDay(b.ends_at, tz);
+      return { kind: "block" as const, block: b, start, end: rawEnd > start ? rawEnd : 24 * 60 };
+    }),
+  ].sort((a, b) => a.start - b.start);
+
+  const rows: AgendaRow[] = [...busy];
+  for (const range of ranges) {
+    let cursor = range.start;
+    for (const item of busy) {
+      if (item.end <= range.start || item.start >= range.end) continue;
+      if (item.start > cursor) rows.push(...freeChunks(cursor, Math.min(item.start, range.end), step));
+      cursor = Math.max(cursor, item.end);
+      if (cursor >= range.end) break;
+    }
+    if (cursor < range.end) rows.push(...freeChunks(cursor, range.end, step));
+  }
+  return rows.sort((a, b) => a.start - b.start || a.end - b.end);
+}
+
 
 function CalendarPage() {
   const { t } = usePrefs();
