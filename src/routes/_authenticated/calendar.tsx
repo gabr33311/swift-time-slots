@@ -226,11 +226,11 @@ function CalendarPage() {
       timeZone: "UTC",
     }).format(new Date(`${d}T12:00:00Z`));
 
-  async function blockHour(hour: string) {
+  async function blockSlot(startMin: number, endMin: number) {
     if (!business) return;
-    if (isPastHour(hour)) return;
-    const start = zonedToUtc(date, timeToMinutes(hour), tz);
-    const end = zonedToUtc(date, timeToMinutes(hour) + 60, tz);
+    if (isPastMinute(startMin)) return;
+    const start = zonedToUtc(date, startMin, tz);
+    const end = zonedToUtc(date, endMin, tz);
     const { error } = await supabase.from("blocked_times").insert({
       business_id: business.id,
       staff_id: staffFilter === "all" ? null : staffFilter,
@@ -246,9 +246,10 @@ function CalendarPage() {
     qc.invalidateQueries({ queryKey: ["calendar"] });
   }
 
-  function isPastHour(hour: string) {
-    return zonedToUtc(date, timeToMinutes(hour), tz).getTime() <= now;
+  function isPastMinute(minute: number) {
+    return zonedToUtc(date, minute, tz).getTime() <= now;
   }
+
 
   function needsValidation(appt: Appt) {
     if (["completed", "cancelled", "no_show", "expired"].includes(appt.status)) return false;
