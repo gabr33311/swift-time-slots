@@ -424,15 +424,15 @@ function CalendarPage() {
               </Button>
             </section>
           )}
-          {(data?.hours.length ?? 0) === 0 && blocks.length === 0 ? null : (
+          {(data?.ranges.length ?? 0) === 0 && agendaRows.length === 0 ? null : (
             <ul className="space-y-2">
               {agendaRows.map((row, i) => {
-                const pastFreeHour = row.kind === "free" && isPastHour(row.hour);
+                const pastFreeHour = row.kind === "free" && isPastMinute(row.start);
                 const pastBlock = row.kind === "block" && new Date(row.block.ends_at).getTime() <= now;
                 const due = row.kind === "appt" && needsValidation(row.appt);
                 const isNext = row.kind === "appt" && isToday && nextUp?.id === row.appt.id;
                 return (
-                  <Fragment key={`row-${i}-${row.hour}`}>
+                  <Fragment key={`row-${i}-${row.start}`}>
                     {i === markerIndex && (
                       <li aria-hidden className="flex items-center gap-2 py-0.5">
                         <span className="text-[11px] font-black uppercase tracking-[0.1em] text-foreground">
@@ -448,16 +448,18 @@ function CalendarPage() {
                           disabled={pastFreeHour}
                           onClick={() => {
                             if (pastFreeHour) return;
-                            setNewTime(row.hour);
+                            setNewTime(minutesToTime(row.start));
                             setNewOpen(true);
                           }}
                           className="group flex min-w-0 flex-1 items-center gap-3.5 rounded-2xl border border-dashed border-border/70 bg-transparent px-4 py-2.5 text-left transition-colors hover:border-foreground/30 hover:bg-muted/40 disabled:cursor-not-allowed disabled:hover:border-border/70 disabled:hover:bg-transparent"
                         >
-                          <span className="w-14 shrink-0 text-sm font-bold tabular-nums text-muted-foreground/70">
-                            {row.hour}
+                          <span className="w-[3.25rem] shrink-0 text-sm font-bold tabular-nums text-muted-foreground/70">
+                            {minutesToTime(row.start)}
                           </span>
-                          <span className="flex-1 text-sm font-medium text-muted-foreground/50">
-                            {pastFreeHour ? t("cal.slot.past") : t("cal.slot.free")}
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium text-muted-foreground/50">
+                            {pastFreeHour
+                              ? t("cal.slot.past")
+                              : `${t("cal.slot.free")} · ${durationLabel(row.end - row.start)}`}
                           </span>
                           <Plus
                             className="size-4 shrink-0 text-muted-foreground/40 transition-colors group-hover:text-foreground"
@@ -466,7 +468,7 @@ function CalendarPage() {
                         </button>
                         <button
                           disabled={pastFreeHour}
-                          onClick={() => blockHour(row.hour)}
+                          onClick={() => blockSlot(row.start, row.end)}
                           aria-label={t("cal.block")}
                           title={t("cal.block")}
                           className="flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed border-border text-muted-foreground/60 transition-colors hover:border-solid hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-dashed disabled:hover:text-muted-foreground/60"
@@ -482,9 +484,15 @@ function CalendarPage() {
                           pastBlock && "opacity-45",
                         )}
                       >
-                        <span className="w-14 shrink-0 text-center text-lg font-black tabular-nums text-muted-foreground">
-                          {row.hour}
-                        </span>
+                        <div className="w-[3.25rem] shrink-0 text-center">
+                          <p className="text-lg font-black leading-none tabular-nums text-muted-foreground">
+                            {minutesToTime(row.start)}
+                          </p>
+                          <p className="mt-1 text-[11px] font-bold tabular-nums text-muted-foreground/60">
+                            {durationLabel(row.end - row.start)}
+                          </p>
+                        </div>
+
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-[15px] font-bold leading-snug text-muted-foreground">
                             {t("cal.blocked")}
