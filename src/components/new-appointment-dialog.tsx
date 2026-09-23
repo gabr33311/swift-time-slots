@@ -217,6 +217,7 @@ export function NewAppointmentDialog({
                     type="button"
                     variant="outline"
                     role="combobox"
+                    aria-label={t("cal.customer.select")}
                     aria-expanded={customerPickerOpen}
                     className="min-w-0 flex-1 justify-between px-3 font-medium"
                   >
