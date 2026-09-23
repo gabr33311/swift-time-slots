@@ -177,7 +177,7 @@ function CalendarPage() {
         appts: appts ?? [],
         staff: staff ?? [],
         blocks: blocks ?? [],
-        hours: hoursFromRanges(
+        ranges: rangesFromRows(
           (hours ?? []).map((h) => ({ start: h.start_time, end: h.end_time })),
         ),
       };
@@ -189,15 +189,19 @@ function CalendarPage() {
     staffFilter === "all" || id === staffFilter || id === null;
   const appts = (data?.appts ?? []).filter((a) => matchesStaff(a.staff_id));
   const blocks = (data?.blocks ?? []).filter((b) => matchesStaff(b.staff_id));
-  const agendaRows = data ? buildAgenda(data.hours, appts, blocks, tz) : [];
+  const step = Math.min(60, Math.max(15, business?.slot_interval_minutes ?? 30));
+  const agendaRows = data ? buildAgenda(data.ranges, appts, blocks, tz, step) : [];
   const isToday = date === todayIn(tz);
-  const nowHHMM = new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: tz,
-  }).format(new Date());
-  const markerIndex = isToday ? agendaRows.findIndex((r) => r.hour > nowHHMM) : -1;
+  const nowMinutes = timeToMinutes(
+    new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: tz,
+    }).format(new Date()),
+  );
+  const markerIndex = isToday ? agendaRows.findIndex((r) => r.start > nowMinutes) : -1;
+
 
   // Live cockpit — only meaningful while looking at today.
   const liveToday = isToday
