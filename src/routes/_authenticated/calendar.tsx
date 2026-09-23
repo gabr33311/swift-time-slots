@@ -30,16 +30,22 @@ export const Route = createFileRoute("/_authenticated/calendar")({
   component: CalendarPage,
 });
 
-/** Builds the hour list of a free day from the real working hours ranges. */
-function hoursFromRanges(ranges: { start: string; end: string }[]): string[] {
-  const out: string[] = [];
-  for (const r of ranges) {
-    const from = timeToMinutes(r.start.slice(0, 5));
-    const to = timeToMinutes(r.end.slice(0, 5));
-    for (let m = Math.ceil(from / 60) * 60; m < to; m += 60) out.push(minutesToTime(m));
-  }
-  return Array.from(new Set(out)).sort();
+/** Parses the real working ranges of the day into minutes from midnight. */
+function rangesFromRows(rows: { start: string; end: string }[]): { start: number; end: number }[] {
+  return rows
+    .map((r) => ({ start: timeToMinutes(r.start.slice(0, 5)), end: timeToMinutes(r.end.slice(0, 5)) }))
+    .filter((r) => r.end > r.start)
+    .sort((a, b) => a.start - b.start);
 }
+
+/** Compact, language-neutral duration label: 45 min, 1h, 1h30. */
+function durationLabel(minutes: number): string {
+  if (minutes < 60) return `${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, "0")}`;
+}
+
 
 type Appt = {
   id: string;
@@ -64,23 +70,65 @@ type Block = {
 };
 
 type AgendaRow =
-  | { kind: "free"; hour: string }
-  | { kind: "appt"; appt: Appt; hour: string }
-  | { kind: "block"; block: Block; hour: string };
+  | { kind: "free"; start: number; end: number }
+  | { kind: "appt"; appt: Appt; start: number; end: number }
+  | { kind: "block"; block: Block; start: number; end: number };
 
-/** Merges the working-hour grid with booked and blocked slots into one chronological list. */
-function buildAgenda(hours: string[], appts: Appt[], blocks: Block[], tz: string): AgendaRow[] {
-  const rows: AgendaRow[] = [
-    ...appts.map((a) => ({ kind: "appt" as const, appt: a, hour: formatTime(a.starts_at, tz) })),
-    ...blocks.map((b) => ({ kind: "block" as const, block: b, hour: formatTime(b.starts_at, tz) })),
-  ];
-  const takenHours = new Set(rows.map((r) => r.hour.slice(0, 2)));
-  for (const h of hours) {
-    if (takenHours.has(h.slice(0, 2))) continue;
-    rows.push({ kind: "free", hour: h });
-  }
-  return rows.sort((a, b) => a.hour.localeCompare(b.hour));
+/** Minutes from midnight of an ISO instant, as seen in the business timezone. */
+function minuteOfDay(iso: string, tz: string): number {
+  return timeToMinutes(formatTime(iso, tz));
 }
+
+/** Splits an empty stretch into readable slices: short gaps stay whole, long ones are sliced. */
+function freeChunks(start: number, end: number, step: number): AgendaRow[] {
+  const out: AgendaRow[] = [];
+  let cursor = start;
+  while (end - cursor > step * 1.5) {
+    out.push({ kind: "free", start: cursor, end: cursor + step });
+    cursor += step;
+  }
+  if (end - cursor > 0) out.push({ kind: "free", start: cursor, end });
+  return out;
+}
+
+/**
+ * Dynamic timeline: real appointment/block spans, with the actual empty gaps
+ * between them surfaced as bookable slots.
+ */
+function buildAgenda(
+  ranges: { start: number; end: number }[],
+  appts: Appt[],
+  blocks: Block[],
+  tz: string,
+  step: number,
+): AgendaRow[] {
+  const busy: AgendaRow[] = [
+    ...appts.map((a) => {
+      const start = minuteOfDay(a.starts_at, tz);
+      const rawEnd = a.ends_at ? minuteOfDay(a.ends_at, tz) : start + 60;
+      return { kind: "appt" as const, appt: a, start, end: rawEnd > start ? rawEnd : start + 60 };
+    }),
+    ...blocks.map((b) => {
+      const start = minuteOfDay(b.starts_at, tz);
+      const rawEnd = minuteOfDay(b.ends_at, tz);
+      return { kind: "block" as const, block: b, start, end: rawEnd > start ? rawEnd : 24 * 60 };
+    }),
+  ].sort((a, b) => a.start - b.start);
+
+  const rows: AgendaRow[] = [...busy];
+  for (const range of ranges) {
+    let cursor = range.start;
+    for (const item of busy) {
+      if (item.end <= range.start || item.start >= range.end) continue;
+      if (item.start > cursor) rows.push(...freeChunks(cursor, Math.min(item.start, range.end), step));
+      cursor = Math.max(cursor, item.end);
+      if (cursor >= range.end) break;
+    }
+    if (cursor < range.end) rows.push(...freeChunks(cursor, range.end, step));
+  }
+  return rows.sort((a, b) => a.start - b.start || a.end - b.end);
+}
+
 
 function CalendarPage() {
   const { t } = usePrefs();
@@ -138,7 +186,7 @@ function CalendarPage() {
         appts: appts ?? [],
         staff: staff ?? [],
         blocks: blocks ?? [],
-        hours: hoursFromRanges(
+        ranges: rangesFromRows(
           (hours ?? []).map((h) => ({ start: h.start_time, end: h.end_time })),
         ),
       };
@@ -150,15 +198,19 @@ function CalendarPage() {
     staffFilter === "all" || id === staffFilter || id === null;
   const appts = (data?.appts ?? []).filter((a) => matchesStaff(a.staff_id));
   const blocks = (data?.blocks ?? []).filter((b) => matchesStaff(b.staff_id));
-  const agendaRows = data ? buildAgenda(data.hours, appts, blocks, tz) : [];
+  const step = Math.min(60, Math.max(15, business?.slot_interval_minutes ?? 30));
+  const agendaRows = data ? buildAgenda(data.ranges, appts, blocks, tz, step) : [];
   const isToday = date === todayIn(tz);
-  const nowHHMM = new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: tz,
-  }).format(new Date());
-  const markerIndex = isToday ? agendaRows.findIndex((r) => r.hour > nowHHMM) : -1;
+  const nowMinutes = timeToMinutes(
+    new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: tz,
+    }).format(new Date()),
+  );
+  const markerIndex = isToday ? agendaRows.findIndex((r) => r.start > nowMinutes) : -1;
+
 
   // Live cockpit — only meaningful while looking at today.
   const liveToday = isToday
@@ -183,11 +235,11 @@ function CalendarPage() {
       timeZone: "UTC",
     }).format(new Date(`${d}T12:00:00Z`));
 
-  async function blockHour(hour: string) {
+  async function blockSlot(startMin: number, endMin: number) {
     if (!business) return;
-    if (isPastHour(hour)) return;
-    const start = zonedToUtc(date, timeToMinutes(hour), tz);
-    const end = zonedToUtc(date, timeToMinutes(hour) + 60, tz);
+    if (isPastMinute(startMin)) return;
+    const start = zonedToUtc(date, startMin, tz);
+    const end = zonedToUtc(date, endMin, tz);
     const { error } = await supabase.from("blocked_times").insert({
       business_id: business.id,
       staff_id: staffFilter === "all" ? null : staffFilter,
@@ -203,9 +255,10 @@ function CalendarPage() {
     qc.invalidateQueries({ queryKey: ["calendar"] });
   }
 
-  function isPastHour(hour: string) {
-    return zonedToUtc(date, timeToMinutes(hour), tz).getTime() <= now;
+  function isPastMinute(minute: number) {
+    return zonedToUtc(date, minute, tz).getTime() <= now;
   }
+
 
   function needsValidation(appt: Appt) {
     if (["completed", "cancelled", "no_show", "expired"].includes(appt.status)) return false;
@@ -380,15 +433,15 @@ function CalendarPage() {
               </Button>
             </section>
           )}
-          {(data?.hours.length ?? 0) === 0 && blocks.length === 0 ? null : (
+          {(data?.ranges.length ?? 0) === 0 && agendaRows.length === 0 ? null : (
             <ul className="space-y-2">
               {agendaRows.map((row, i) => {
-                const pastFreeHour = row.kind === "free" && isPastHour(row.hour);
+                const pastFreeHour = row.kind === "free" && isPastMinute(row.start);
                 const pastBlock = row.kind === "block" && new Date(row.block.ends_at).getTime() <= now;
                 const due = row.kind === "appt" && needsValidation(row.appt);
                 const isNext = row.kind === "appt" && isToday && nextUp?.id === row.appt.id;
                 return (
-                  <Fragment key={`row-${i}-${row.hour}`}>
+                  <Fragment key={`row-${i}-${row.start}`}>
                     {i === markerIndex && (
                       <li aria-hidden className="flex items-center gap-2 py-0.5">
                         <span className="text-[11px] font-black uppercase tracking-[0.1em] text-foreground">
@@ -404,16 +457,18 @@ function CalendarPage() {
                           disabled={pastFreeHour}
                           onClick={() => {
                             if (pastFreeHour) return;
-                            setNewTime(row.hour);
+                            setNewTime(minutesToTime(row.start));
                             setNewOpen(true);
                           }}
                           className="group flex min-w-0 flex-1 items-center gap-3.5 rounded-2xl border border-dashed border-border/70 bg-transparent px-4 py-2.5 text-left transition-colors hover:border-foreground/30 hover:bg-muted/40 disabled:cursor-not-allowed disabled:hover:border-border/70 disabled:hover:bg-transparent"
                         >
-                          <span className="w-14 shrink-0 text-sm font-bold tabular-nums text-muted-foreground/70">
-                            {row.hour}
+                          <span className="w-[3.25rem] shrink-0 text-sm font-bold tabular-nums text-muted-foreground/70">
+                            {minutesToTime(row.start)}
                           </span>
-                          <span className="flex-1 text-sm font-medium text-muted-foreground/50">
-                            {pastFreeHour ? t("cal.slot.past") : t("cal.slot.free")}
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium text-muted-foreground/50">
+                            {pastFreeHour
+                              ? t("cal.slot.past")
+                              : `${t("cal.slot.free")} · ${durationLabel(row.end - row.start)}`}
                           </span>
                           <Plus
                             className="size-4 shrink-0 text-muted-foreground/40 transition-colors group-hover:text-foreground"
@@ -422,7 +477,7 @@ function CalendarPage() {
                         </button>
                         <button
                           disabled={pastFreeHour}
-                          onClick={() => blockHour(row.hour)}
+                          onClick={() => blockSlot(row.start, row.end)}
                           aria-label={t("cal.block")}
                           title={t("cal.block")}
                           className="flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed border-border text-muted-foreground/60 transition-colors hover:border-solid hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-dashed disabled:hover:text-muted-foreground/60"
@@ -438,9 +493,15 @@ function CalendarPage() {
                           pastBlock && "opacity-45",
                         )}
                       >
-                        <span className="w-14 shrink-0 text-center text-lg font-black tabular-nums text-muted-foreground">
-                          {row.hour}
-                        </span>
+                        <div className="w-[3.25rem] shrink-0 text-center">
+                          <p className="text-lg font-black leading-none tabular-nums text-muted-foreground">
+                            {minutesToTime(row.start)}
+                          </p>
+                          <p className="mt-1 text-[11px] font-bold tabular-nums text-muted-foreground/60">
+                            {durationLabel(row.end - row.start)}
+                          </p>
+                        </div>
+
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-[15px] font-bold leading-snug text-muted-foreground">
                             {t("cal.blocked")}
@@ -480,18 +541,16 @@ function CalendarPage() {
                             {formatTime(row.appt.starts_at, tz)}
                           </p>
                           {row.appt.ends_at && (
-                            <p className="mt-1.5 text-[11px] font-semibold leading-none tabular-nums text-muted-foreground">
-                              {Math.max(
-                                0,
-                                Math.round(
-                                  (new Date(row.appt.ends_at).getTime() -
-                                    new Date(row.appt.starts_at).getTime()) /
-                                    60000,
-                                ),
-                              )}{" "}
-                              min
-                            </p>
+                            <>
+                              <p className="mt-1 text-[12px] font-bold leading-none tabular-nums text-muted-foreground">
+                                {formatTime(row.appt.ends_at, tz)}
+                              </p>
+                              <p className="mt-1 text-[10px] font-semibold leading-none tabular-nums text-muted-foreground/70">
+                                {durationLabel(Math.max(0, row.end - row.start))}
+                              </p>
+                            </>
                           )}
+
                         </div>
                         <div className="min-w-0 flex-1 self-center">
                           <div className="mb-1 flex flex-wrap items-center gap-1.5">
