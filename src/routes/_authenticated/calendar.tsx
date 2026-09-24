@@ -92,23 +92,24 @@ function minuteOfDay(iso: string, tz: string): number {
 }
 
 /**
- * Empty stretches stay compact: short gaps are sliced into bookable steps,
- * long stretches collapse into a single row so the day never turns into an
- * endless list of identical placeholders.
+ * Empty stretches stay bookable slot by slot: short gaps use the business
+ * step, long stretches widen to hourly slices so a full empty day is a
+ * handful of tappable rows instead of dozens of identical placeholders.
  */
 function freeChunks(start: number, end: number, step: number): AgendaRow[] {
   const span = end - start;
   if (span <= 0) return [];
-  if (span > step * 3) return [{ kind: "free", start, end }];
+  const size = span > 240 ? Math.max(60, step) : step;
   const out: AgendaRow[] = [];
   let cursor = start;
-  while (end - cursor > step * 1.5) {
-    out.push({ kind: "free", start: cursor, end: cursor + step });
-    cursor += step;
+  while (end - cursor > size * 1.5) {
+    out.push({ kind: "free", start: cursor, end: cursor + size });
+    cursor += size;
   }
   if (end - cursor > 0) out.push({ kind: "free", start: cursor, end });
   return out;
 }
+
 
 /**
  * Dynamic timeline: real appointment/block spans, with the actual empty gaps
