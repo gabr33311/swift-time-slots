@@ -234,7 +234,10 @@ function CalendarPage() {
   const appts = (data?.appts ?? []).filter((a) => matchesStaff(a.staff_id));
   const blocks = (data?.blocks ?? []).filter((b) => matchesStaff(b.staff_id));
   const step = Math.min(60, Math.max(15, business?.slot_interval_minutes ?? 30));
-  const agendaRows = data ? buildAgenda(data.ranges, appts, blocks, tz, step) : [];
+  const agendaRows = data
+    ? buildAgenda(data.ranges, appts, blocks, tz, step, data.from, data.to)
+    : [];
+
   const isToday = date === todayIn(tz);
   const nowMinutes = timeToMinutes(
     new Intl.DateTimeFormat("en-GB", {
