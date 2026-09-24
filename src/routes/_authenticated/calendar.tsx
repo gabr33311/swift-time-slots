@@ -210,11 +210,13 @@ function CalendarPage() {
             .from("blocked_times")
             .select("id, starts_at, ends_at, reason, staff_id")
             .eq("business_id", business!.id)
-            .gte("starts_at", from)
             .lt("starts_at", to)
+            .gt("ends_at", from)
             .order("starts_at"),
         ]);
       return {
+        from,
+        to,
         appts: appts ?? [],
         staff: staff ?? [],
         blocks: blocks ?? [],
@@ -222,6 +224,7 @@ function CalendarPage() {
           (hours ?? []).map((h) => ({ start: h.start_time, end: h.end_time })),
         ),
       };
+
     },
   });
 
