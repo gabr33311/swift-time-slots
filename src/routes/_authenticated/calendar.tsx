@@ -237,6 +237,19 @@ function CalendarPage() {
   const visibleRows = agendaRows.slice(hiddenPast);
   const visibleMarkerIndex = markerIndex >= 0 ? markerIndex - hiddenPast : -1;
 
+  useEffect(() => {
+    setShowPast(false);
+  }, [date]);
+
+  // On today's agenda, land on the current moment instead of the top of the day.
+  useEffect(() => {
+    if (!isToday || isLoading || scrolledFor.current === date) return;
+    const node = nowRef.current;
+    if (!node) return;
+    scrolledFor.current = date;
+    node.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [date, isToday, isLoading, visibleMarkerIndex]);
+
 
   // Live cockpit — only meaningful while looking at today.
   const liveToday = isToday
