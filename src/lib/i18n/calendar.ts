@@ -15,6 +15,8 @@ export const calendarDict: Record<Lang, Record<string, string>> = {
     "cal.empty.hint": "Toca numa hora para marcar diretamente.",
     "cal.slot.free": "Livre",
     "cal.slot.past": "Hora passada",
+    "cal.past.show": "Ver {n} horários anteriores",
+    "cal.past.hide": "Ocultar horários anteriores",
     "cal.progress.pill": "{revenue} · {done}/{total}",
     "cal.next.inline": "A seguir",
     "cal.validate.label": "Por validar",
