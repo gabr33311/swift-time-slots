@@ -90,6 +90,8 @@ export const calendarDict: Record<Lang, Record<string, string>> = {
     "cal.prevDay": "Previous day",
     "cal.nextDay": "Next day",
     "cal.today": "Today",
+    "cal.today.back": "Back to today",
+
     "cal.empty.title": "Free day.",
     "cal.empty.desc": "There are no appointments for this day.",
     "cal.empty.hint": "Tap an hour to book straight into it.",
