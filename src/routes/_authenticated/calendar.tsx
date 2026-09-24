@@ -472,17 +472,28 @@ function CalendarPage() {
               </Button>
             </section>
           )}
+          {(leadingPastFree > 0 || showPast) && (
+            <button
+              type="button"
+              onClick={() => setShowPast((v) => !v)}
+              className="mb-2 w-full rounded-2xl border border-dashed border-border/70 py-2 text-[12px] font-bold text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+            >
+              {showPast
+                ? t("cal.past.hide")
+                : t("cal.past.show").replace("{n}", String(leadingPastFree))}
+            </button>
+          )}
           {(data?.ranges.length ?? 0) === 0 && agendaRows.length === 0 ? null : (
             <ul className="space-y-2">
-              {agendaRows.map((row, i) => {
+              {visibleRows.map((row, i) => {
                 const pastFreeHour = row.kind === "free" && isPastMinute(row.start);
                 const pastBlock = row.kind === "block" && new Date(row.block.ends_at).getTime() <= now;
                 const due = row.kind === "appt" && needsValidation(row.appt);
                 const isNext = row.kind === "appt" && isToday && nextUp?.id === row.appt.id;
                 return (
                   <Fragment key={`row-${i}-${row.start}`}>
-                    {i === markerIndex && (
-                      <li aria-hidden className="flex items-center gap-2 py-0.5">
+                    {i === visibleMarkerIndex && (
+                      <li ref={nowRef} aria-hidden className="flex items-center gap-2 py-0.5">
                         <span className="text-[11px] font-black uppercase tracking-[0.1em] text-foreground">
                           {t("cal.now")}
                         </span>
