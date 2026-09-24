@@ -381,7 +381,7 @@ function CalendarPage() {
       />
 
 
-      <div className="surface mb-2 p-1">
+      <div className="surface sticky top-0 z-20 mb-2 p-1 backdrop-blur-xl supports-[backdrop-filter]:bg-card/85">
         <div className="flex items-center justify-center gap-1">
           <button
             onClick={() => setDate(addDays(date, -1))}
