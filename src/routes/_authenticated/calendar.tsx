@@ -30,13 +30,25 @@ export const Route = createFileRoute("/_authenticated/calendar")({
   component: CalendarPage,
 });
 
-/** Parses the real working ranges of the day into minutes from midnight. */
+/**
+ * Parses the real working ranges of the day into minutes from midnight and
+ * merges overlapping/duplicated rows (business-wide + per-staff entries can
+ * describe the same window), so the agenda never renders the same slot twice.
+ */
 function rangesFromRows(rows: { start: string; end: string }[]): { start: number; end: number }[] {
-  return rows
+  const sorted = rows
     .map((r) => ({ start: timeToMinutes(r.start.slice(0, 5)), end: timeToMinutes(r.end.slice(0, 5)) }))
     .filter((r) => r.end > r.start)
     .sort((a, b) => a.start - b.start);
+  const merged: { start: number; end: number }[] = [];
+  for (const r of sorted) {
+    const last = merged[merged.length - 1];
+    if (last && r.start <= last.end) last.end = Math.max(last.end, r.end);
+    else merged.push({ ...r });
+  }
+  return merged;
 }
+
 
 /** Compact, language-neutral duration label: 45 min, 1h, 1h30. */
 function durationLabel(minutes: number): string {
