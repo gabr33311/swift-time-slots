@@ -121,19 +121,28 @@ function buildAgenda(
   blocks: Block[],
   tz: string,
   step: number,
+  dayFrom: string,
+  dayTo: string,
 ): AgendaRow[] {
+  const fromMs = new Date(dayFrom).getTime();
+  const toMs = new Date(dayTo).getTime();
   const busy: AgendaRow[] = [
     ...appts.map((a) => {
       const start = minuteOfDay(a.starts_at, tz);
       const rawEnd = a.ends_at ? minuteOfDay(a.ends_at, tz) : start + 60;
       return { kind: "appt" as const, appt: a, start, end: rawEnd > start ? rawEnd : start + 60 };
     }),
+    // Multi-day blocks are clamped to the visible day, so they show up on every
+    // day they cover instead of only the one they started on.
     ...blocks.map((b) => {
-      const start = minuteOfDay(b.starts_at, tz);
-      const rawEnd = minuteOfDay(b.ends_at, tz);
-      return { kind: "block" as const, block: b, start, end: rawEnd > start ? rawEnd : 24 * 60 };
+      const startMs = new Date(b.starts_at).getTime();
+      const endMs = new Date(b.ends_at).getTime();
+      const start = startMs <= fromMs ? 0 : minuteOfDay(b.starts_at, tz);
+      const end = endMs >= toMs ? 24 * 60 : minuteOfDay(b.ends_at, tz);
+      return { kind: "block" as const, block: b, start, end: end > start ? end : 24 * 60 };
     }),
   ].sort((a, b) => a.start - b.start);
+
 
   const rows: AgendaRow[] = [...busy];
   for (const range of ranges) {
