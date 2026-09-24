@@ -79,8 +79,15 @@ function minuteOfDay(iso: string, tz: string): number {
   return timeToMinutes(formatTime(iso, tz));
 }
 
-/** Splits an empty stretch into readable slices: short gaps stay whole, long ones are sliced. */
+/**
+ * Empty stretches stay compact: short gaps are sliced into bookable steps,
+ * long stretches collapse into a single row so the day never turns into an
+ * endless list of identical placeholders.
+ */
 function freeChunks(start: number, end: number, step: number): AgendaRow[] {
+  const span = end - start;
+  if (span <= 0) return [];
+  if (span > step * 3) return [{ kind: "free", start, end }];
   const out: AgendaRow[] = [];
   let cursor = start;
   while (end - cursor > step * 1.5) {
