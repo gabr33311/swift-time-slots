@@ -93,6 +93,8 @@ export const calendarDict: Record<Lang, Record<string, string>> = {
     "cal.empty.hint": "Tap an hour to book straight into it.",
     "cal.slot.free": "Free",
     "cal.slot.past": "Past time",
+    "cal.past.show": "Show {n} earlier slots",
+    "cal.past.hide": "Hide earlier slots",
     "cal.progress.pill": "{revenue} · {done}/{total}",
     "cal.next.inline": "Next",
     "cal.validate.label": "To validate",
