@@ -514,7 +514,14 @@ function CalendarPage() {
           {(data?.ranges.length ?? 0) === 0 && agendaRows.length === 0 ? null : (
             <ul className="space-y-2">
               {visibleRows.map((row, i) => {
-                const pastFreeHour = row.kind === "free" && isPastMinute(row.start);
+                // A slot is only spent once its whole window is gone; a wide
+                // slot that is still running stays bookable from now onwards.
+                const pastFreeHour = row.kind === "free" && isPastMinute(row.end);
+                const bookFrom =
+                  row.kind === "free" && isToday && row.start < nowMinutes
+                    ? Math.min(row.end - 5, Math.ceil(nowMinutes / 5) * 5)
+                    : row.start;
+
                 const pastBlock = row.kind === "block" && new Date(row.block.ends_at).getTime() <= now;
                 const due = row.kind === "appt" && needsValidation(row.appt);
                 const isNext = row.kind === "appt" && isToday && nextUp?.id === row.appt.id;
