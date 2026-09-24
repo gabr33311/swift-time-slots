@@ -30,13 +30,25 @@ export const Route = createFileRoute("/_authenticated/calendar")({
   component: CalendarPage,
 });
 
-/** Parses the real working ranges of the day into minutes from midnight. */
+/**
+ * Parses the real working ranges of the day into minutes from midnight and
+ * merges overlapping/duplicated rows (business-wide + per-staff entries can
+ * describe the same window), so the agenda never renders the same slot twice.
+ */
 function rangesFromRows(rows: { start: string; end: string }[]): { start: number; end: number }[] {
-  return rows
+  const sorted = rows
     .map((r) => ({ start: timeToMinutes(r.start.slice(0, 5)), end: timeToMinutes(r.end.slice(0, 5)) }))
     .filter((r) => r.end > r.start)
     .sort((a, b) => a.start - b.start);
+  const merged: { start: number; end: number }[] = [];
+  for (const r of sorted) {
+    const last = merged[merged.length - 1];
+    if (last && r.start <= last.end) last.end = Math.max(last.end, r.end);
+    else merged.push({ ...r });
+  }
+  return merged;
 }
+
 
 /** Compact, language-neutral duration label: 45 min, 1h, 1h30. */
 function durationLabel(minutes: number): string {
@@ -80,23 +92,24 @@ function minuteOfDay(iso: string, tz: string): number {
 }
 
 /**
- * Empty stretches stay compact: short gaps are sliced into bookable steps,
- * long stretches collapse into a single row so the day never turns into an
- * endless list of identical placeholders.
+ * Empty stretches stay bookable slot by slot: short gaps use the business
+ * step, long stretches widen to hourly slices so a full empty day is a
+ * handful of tappable rows instead of dozens of identical placeholders.
  */
 function freeChunks(start: number, end: number, step: number): AgendaRow[] {
   const span = end - start;
   if (span <= 0) return [];
-  if (span > step * 3) return [{ kind: "free", start, end }];
+  const size = span > 240 ? Math.max(60, step) : step;
   const out: AgendaRow[] = [];
   let cursor = start;
-  while (end - cursor > step * 1.5) {
-    out.push({ kind: "free", start: cursor, end: cursor + step });
-    cursor += step;
+  while (end - cursor > size * 1.5) {
+    out.push({ kind: "free", start: cursor, end: cursor + size });
+    cursor += size;
   }
   if (end - cursor > 0) out.push({ kind: "free", start: cursor, end });
   return out;
 }
+
 
 /**
  * Dynamic timeline: real appointment/block spans, with the actual empty gaps
@@ -108,19 +121,28 @@ function buildAgenda(
   blocks: Block[],
   tz: string,
   step: number,
+  dayFrom: string,
+  dayTo: string,
 ): AgendaRow[] {
+  const fromMs = new Date(dayFrom).getTime();
+  const toMs = new Date(dayTo).getTime();
   const busy: AgendaRow[] = [
     ...appts.map((a) => {
       const start = minuteOfDay(a.starts_at, tz);
       const rawEnd = a.ends_at ? minuteOfDay(a.ends_at, tz) : start + 60;
       return { kind: "appt" as const, appt: a, start, end: rawEnd > start ? rawEnd : start + 60 };
     }),
+    // Multi-day blocks are clamped to the visible day, so they show up on every
+    // day they cover instead of only the one they started on.
     ...blocks.map((b) => {
-      const start = minuteOfDay(b.starts_at, tz);
-      const rawEnd = minuteOfDay(b.ends_at, tz);
-      return { kind: "block" as const, block: b, start, end: rawEnd > start ? rawEnd : 24 * 60 };
+      const startMs = new Date(b.starts_at).getTime();
+      const endMs = new Date(b.ends_at).getTime();
+      const start = startMs <= fromMs ? 0 : minuteOfDay(b.starts_at, tz);
+      const end = endMs >= toMs ? 24 * 60 : minuteOfDay(b.ends_at, tz);
+      return { kind: "block" as const, block: b, start, end: end > start ? end : 24 * 60 };
     }),
   ].sort((a, b) => a.start - b.start);
+
 
   const rows: AgendaRow[] = [...busy];
   for (const range of ranges) {
@@ -188,11 +210,13 @@ function CalendarPage() {
             .from("blocked_times")
             .select("id, starts_at, ends_at, reason, staff_id")
             .eq("business_id", business!.id)
-            .gte("starts_at", from)
             .lt("starts_at", to)
+            .gt("ends_at", from)
             .order("starts_at"),
         ]);
       return {
+        from,
+        to,
         appts: appts ?? [],
         staff: staff ?? [],
         blocks: blocks ?? [],
@@ -200,6 +224,7 @@ function CalendarPage() {
           (hours ?? []).map((h) => ({ start: h.start_time, end: h.end_time })),
         ),
       };
+
     },
   });
 
@@ -209,7 +234,10 @@ function CalendarPage() {
   const appts = (data?.appts ?? []).filter((a) => matchesStaff(a.staff_id));
   const blocks = (data?.blocks ?? []).filter((b) => matchesStaff(b.staff_id));
   const step = Math.min(60, Math.max(15, business?.slot_interval_minutes ?? 30));
-  const agendaRows = data ? buildAgenda(data.ranges, appts, blocks, tz, step) : [];
+  const agendaRows = data
+    ? buildAgenda(data.ranges, appts, blocks, tz, step, data.from, data.to)
+    : [];
+
   const isToday = date === todayIn(tz);
   const nowMinutes = timeToMinutes(
     new Intl.DateTimeFormat("en-GB", {
@@ -276,9 +304,11 @@ function CalendarPage() {
 
   async function blockSlot(startMin: number, endMin: number) {
     if (!business) return;
-    if (isPastMinute(startMin)) return;
-    const start = zonedToUtc(date, startMin, tz);
+    if (isPastMinute(endMin)) return;
+    const from = isToday ? Math.max(startMin, nowMinutes) : startMin;
+    const start = zonedToUtc(date, from, tz);
     const end = zonedToUtc(date, endMin, tz);
+
     const { error } = await supabase.from("blocked_times").insert({
       business_id: business.id,
       staff_id: staffFilter === "all" ? null : staffFilter,
@@ -382,7 +412,7 @@ function CalendarPage() {
 
 
       <div className="surface sticky top-0 z-20 mb-2 p-1 backdrop-blur-xl supports-[backdrop-filter]:bg-card/85">
-        <div className="flex items-center justify-center gap-1">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => setDate(addDays(date, -1))}
             aria-label={t("cal.prevDay")}
@@ -390,19 +420,7 @@ function CalendarPage() {
           >
             <ChevronLeft className="size-4" />
           </button>
-          <div className="flex min-w-0 flex-1 items-center justify-center gap-2">
-            <p className="min-w-0 truncate text-center text-sm font-bold">{label}</p>
-            <Button
-              type="button"
-              variant={isToday ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDate(todayIn(tz))}
-              disabled={isToday}
-              className="h-8 shrink-0 px-3 text-[11px] disabled:opacity-100"
-            >
-              {t("cal.today")}
-            </Button>
-          </div>
+          <p className="min-w-0 flex-1 truncate text-center text-sm font-bold">{label}</p>
           <button
             onClick={() => setDate(addDays(date, 1))}
             aria-label={t("cal.nextDay")}
@@ -411,6 +429,21 @@ function CalendarPage() {
             <ChevronRight className="size-4" />
           </button>
         </div>
+        {!isToday && (
+          <div className="flex justify-center pb-0.5">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setDate(todayIn(tz))}
+              className="h-7 rounded-full px-3 text-[11px]"
+            >
+              <RotateCcw className="size-3.5" />
+              {t("cal.today.back")}
+            </Button>
+          </div>
+        )}
+
         <div className="mt-1 grid grid-cols-7 gap-1">
           {weekDays.map((d) => {
             const active = d === date;
@@ -486,7 +519,14 @@ function CalendarPage() {
           {(data?.ranges.length ?? 0) === 0 && agendaRows.length === 0 ? null : (
             <ul className="space-y-2">
               {visibleRows.map((row, i) => {
-                const pastFreeHour = row.kind === "free" && isPastMinute(row.start);
+                // A slot is only spent once its whole window is gone; a wide
+                // slot that is still running stays bookable from now onwards.
+                const pastFreeHour = row.kind === "free" && isPastMinute(row.end);
+                const bookFrom =
+                  row.kind === "free" && isToday && row.start < nowMinutes
+                    ? Math.min(row.end - 5, Math.ceil(nowMinutes / 5) * 5)
+                    : row.start;
+
                 const pastBlock = row.kind === "block" && new Date(row.block.ends_at).getTime() <= now;
                 const due = row.kind === "appt" && needsValidation(row.appt);
                 const isNext = row.kind === "appt" && isToday && nextUp?.id === row.appt.id;
@@ -507,9 +547,10 @@ function CalendarPage() {
                           disabled={pastFreeHour}
                           onClick={() => {
                             if (pastFreeHour) return;
-                            setNewTime(minutesToTime(row.start));
+                            setNewTime(minutesToTime(bookFrom));
                             setNewOpen(true);
                           }}
+
                           className="group flex min-w-0 flex-1 items-center gap-3.5 rounded-2xl border border-dashed border-border/70 bg-transparent px-4 py-2.5 text-left transition-colors hover:border-foreground/30 hover:bg-muted/40 disabled:cursor-not-allowed disabled:hover:border-border/70 disabled:hover:bg-transparent"
                         >
                           <span className="w-[3.25rem] shrink-0 text-sm font-bold tabular-nums text-muted-foreground/70">
