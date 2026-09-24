@@ -412,7 +412,7 @@ function CalendarPage() {
 
 
       <div className="surface sticky top-0 z-20 mb-2 p-1 backdrop-blur-xl supports-[backdrop-filter]:bg-card/85">
-        <div className="flex items-center justify-center gap-1">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => setDate(addDays(date, -1))}
             aria-label={t("cal.prevDay")}
@@ -420,19 +420,7 @@ function CalendarPage() {
           >
             <ChevronLeft className="size-4" />
           </button>
-          <div className="flex min-w-0 flex-1 items-center justify-center gap-2">
-            <p className="min-w-0 truncate text-center text-sm font-bold">{label}</p>
-            <Button
-              type="button"
-              variant={isToday ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDate(todayIn(tz))}
-              disabled={isToday}
-              className="h-8 shrink-0 px-3 text-[11px] disabled:opacity-100"
-            >
-              {t("cal.today")}
-            </Button>
-          </div>
+          <p className="min-w-0 flex-1 truncate text-center text-sm font-bold">{label}</p>
           <button
             onClick={() => setDate(addDays(date, 1))}
             aria-label={t("cal.nextDay")}
@@ -441,6 +429,21 @@ function CalendarPage() {
             <ChevronRight className="size-4" />
           </button>
         </div>
+        {!isToday && (
+          <div className="flex justify-center pb-0.5">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setDate(todayIn(tz))}
+              className="h-7 rounded-full px-3 text-[11px]"
+            >
+              <RotateCcw className="size-3.5" />
+              {t("cal.today.back")}
+            </Button>
+          </div>
+        )}
+
         <div className="mt-1 grid grid-cols-7 gap-1">
           {weekDays.map((d) => {
             const active = d === date;
