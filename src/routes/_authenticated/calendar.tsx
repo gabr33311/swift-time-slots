@@ -304,9 +304,11 @@ function CalendarPage() {
 
   async function blockSlot(startMin: number, endMin: number) {
     if (!business) return;
-    if (isPastMinute(startMin)) return;
-    const start = zonedToUtc(date, startMin, tz);
+    if (isPastMinute(endMin)) return;
+    const from = isToday ? Math.max(startMin, nowMinutes) : startMin;
+    const start = zonedToUtc(date, from, tz);
     const end = zonedToUtc(date, endMin, tz);
+
     const { error } = await supabase.from("blocked_times").insert({
       business_id: business.id,
       staff_id: staffFilter === "all" ? null : staffFilter,
