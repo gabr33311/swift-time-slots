@@ -542,9 +542,10 @@ function CalendarPage() {
                           disabled={pastFreeHour}
                           onClick={() => {
                             if (pastFreeHour) return;
-                            setNewTime(minutesToTime(row.start));
+                            setNewTime(minutesToTime(bookFrom));
                             setNewOpen(true);
                           }}
+
                           className="group flex min-w-0 flex-1 items-center gap-3.5 rounded-2xl border border-dashed border-border/70 bg-transparent px-4 py-2.5 text-left transition-colors hover:border-foreground/30 hover:bg-muted/40 disabled:cursor-not-allowed disabled:hover:border-border/70 disabled:hover:bg-transparent"
                         >
                           <span className="w-[3.25rem] shrink-0 text-sm font-bold tabular-nums text-muted-foreground/70">
