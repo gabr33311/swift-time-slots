@@ -218,6 +218,22 @@ function CalendarPage() {
   );
   const markerIndex = isToday ? agendaRows.findIndex((r) => r.start > nowMinutes) : -1;
 
+  // Morning slots that are already gone collapse behind a single control, so the
+  // day opens on what is still ahead. Past appointments are never hidden.
+  let leadingPastFree = 0;
+  if (isToday) {
+    while (
+      leadingPastFree < agendaRows.length &&
+      agendaRows[leadingPastFree]!.kind === "free" &&
+      agendaRows[leadingPastFree]!.end <= nowMinutes
+    ) {
+      leadingPastFree += 1;
+    }
+  }
+  const hiddenPast = showPast ? 0 : leadingPastFree;
+  const visibleRows = agendaRows.slice(hiddenPast);
+  const visibleMarkerIndex = markerIndex >= 0 ? markerIndex - hiddenPast : -1;
+
 
   // Live cockpit — only meaningful while looking at today.
   const liveToday = isToday
