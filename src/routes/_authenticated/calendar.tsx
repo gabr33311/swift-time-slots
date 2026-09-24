@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
@@ -79,8 +79,15 @@ function minuteOfDay(iso: string, tz: string): number {
   return timeToMinutes(formatTime(iso, tz));
 }
 
-/** Splits an empty stretch into readable slices: short gaps stay whole, long ones are sliced. */
+/**
+ * Empty stretches stay compact: short gaps are sliced into bookable steps,
+ * long stretches collapse into a single row so the day never turns into an
+ * endless list of identical placeholders.
+ */
 function freeChunks(start: number, end: number, step: number): AgendaRow[] {
+  const span = end - start;
+  if (span <= 0) return [];
+  if (span > step * 3) return [{ kind: "free", start, end }];
   const out: AgendaRow[] = [];
   let cursor = start;
   while (end - cursor > step * 1.5) {
@@ -139,6 +146,9 @@ function CalendarPage() {
   const [newOpen, setNewOpen] = useState(false);
   const [newTime, setNewTime] = useState("09:00");
   const [staffFilter, setStaffFilter] = useState<string>("all");
+  const [showPast, setShowPast] = useState(false);
+  const nowRef = useRef<HTMLLIElement | null>(null);
+  const scrolledFor = useRef<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 30_000);
@@ -210,6 +220,35 @@ function CalendarPage() {
     }).format(new Date()),
   );
   const markerIndex = isToday ? agendaRows.findIndex((r) => r.start > nowMinutes) : -1;
+
+  // Morning slots that are already gone collapse behind a single control, so the
+  // day opens on what is still ahead. Past appointments are never hidden.
+  let leadingPastFree = 0;
+  if (isToday) {
+    while (
+      leadingPastFree < agendaRows.length &&
+      agendaRows[leadingPastFree]!.kind === "free" &&
+      agendaRows[leadingPastFree]!.end <= nowMinutes
+    ) {
+      leadingPastFree += 1;
+    }
+  }
+  const hiddenPast = showPast ? 0 : leadingPastFree;
+  const visibleRows = agendaRows.slice(hiddenPast);
+  const visibleMarkerIndex = markerIndex >= 0 ? markerIndex - hiddenPast : -1;
+
+  useEffect(() => {
+    setShowPast(false);
+  }, [date]);
+
+  // On today's agenda, land on the current moment instead of the top of the day.
+  useEffect(() => {
+    if (!isToday || isLoading || scrolledFor.current === date) return;
+    const node = nowRef.current;
+    if (!node) return;
+    scrolledFor.current = date;
+    node.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [date, isToday, isLoading, visibleMarkerIndex]);
 
 
   // Live cockpit — only meaningful while looking at today.
@@ -342,7 +381,7 @@ function CalendarPage() {
       />
 
 
-      <div className="surface mb-2 p-1">
+      <div className="surface sticky top-0 z-20 mb-2 p-1 backdrop-blur-xl supports-[backdrop-filter]:bg-card/85">
         <div className="flex items-center justify-center gap-1">
           <button
             onClick={() => setDate(addDays(date, -1))}
@@ -433,17 +472,28 @@ function CalendarPage() {
               </Button>
             </section>
           )}
+          {(leadingPastFree > 0 || showPast) && (
+            <button
+              type="button"
+              onClick={() => setShowPast((v) => !v)}
+              className="mb-2 w-full rounded-2xl border border-dashed border-border/70 py-2 text-[12px] font-bold text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+            >
+              {showPast
+                ? t("cal.past.hide")
+                : t("cal.past.show").replace("{n}", String(leadingPastFree))}
+            </button>
+          )}
           {(data?.ranges.length ?? 0) === 0 && agendaRows.length === 0 ? null : (
             <ul className="space-y-2">
-              {agendaRows.map((row, i) => {
+              {visibleRows.map((row, i) => {
                 const pastFreeHour = row.kind === "free" && isPastMinute(row.start);
                 const pastBlock = row.kind === "block" && new Date(row.block.ends_at).getTime() <= now;
                 const due = row.kind === "appt" && needsValidation(row.appt);
                 const isNext = row.kind === "appt" && isToday && nextUp?.id === row.appt.id;
                 return (
                   <Fragment key={`row-${i}-${row.start}`}>
-                    {i === markerIndex && (
-                      <li aria-hidden className="flex items-center gap-2 py-0.5">
+                    {i === visibleMarkerIndex && (
+                      <li ref={nowRef} aria-hidden className="flex items-center gap-2 py-0.5">
                         <span className="text-[11px] font-black uppercase tracking-[0.1em] text-foreground">
                           {t("cal.now")}
                         </span>
