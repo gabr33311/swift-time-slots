@@ -146,6 +146,9 @@ function CalendarPage() {
   const [newOpen, setNewOpen] = useState(false);
   const [newTime, setNewTime] = useState("09:00");
   const [staffFilter, setStaffFilter] = useState<string>("all");
+  const [showPast, setShowPast] = useState(false);
+  const nowRef = useRef<HTMLLIElement | null>(null);
+  const scrolledFor = useRef<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 30_000);
