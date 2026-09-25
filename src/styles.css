@@ -603,3 +603,15 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Native-app feel: scrolling stays fluid, the grey scrollbar never shows. */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}

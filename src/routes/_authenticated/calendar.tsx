@@ -11,7 +11,7 @@ import { displayCustomerName, formatPrice } from "@/lib/format";
 import { PendingCapsule } from "@/components/pending-sheet";
 import { addDays, minutesToTime, timeToMinutes, todayIn, weekdayOf, zonedToUtc } from "@/lib/time";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
-import { Check, ChevronLeft, ChevronRight, Copy, Lock, Plus, RotateCcw, StickyNote, Unlock, UserX } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Copy, Lock, Moon, Plus, RotateCcw, StickyNote, Unlock, UserX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
 import { usePrefs } from "@/lib/prefs";
@@ -169,6 +169,9 @@ function CalendarPage() {
   const [newTime, setNewTime] = useState("09:00");
   const [staffFilter, setStaffFilter] = useState<string>("all");
   const [showPast, setShowPast] = useState(false);
+  // Pinch-to-zoom scales the timeline density (two fingers apart = more detail).
+  const [zoom, setZoom] = useState(1);
+  const pinchRef = useRef<{ dist: number; zoom: number } | null>(null);
   const nowRef = useRef<HTMLLIElement | null>(null);
   const scrolledFor = useRef<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -237,6 +240,10 @@ function CalendarPage() {
   const agendaRows = data
     ? buildAgenda(data.ranges, appts, blocks, tz, step, data.from, data.to)
     : [];
+
+  // Weekends / closed days: nothing is scheduled and nothing is bookable.
+  const isDayOff =
+    !!data && data.ranges.length === 0 && appts.length === 0 && blocks.length === 0;
 
   const isToday = date === todayIn(tz);
   const nowMinutes = timeToMinutes(
@@ -326,6 +333,27 @@ function CalendarPage() {
 
   function isPastMinute(minute: number) {
     return zonedToUtc(date, minute, tz).getTime() <= now;
+  }
+
+  function touchDistance(e: React.TouchEvent) {
+    const [a, b] = [e.touches[0]!, e.touches[1]!];
+    return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+  }
+
+  function onPinchStart(e: React.TouchEvent) {
+    if (e.touches.length !== 2) return;
+    pinchRef.current = { dist: touchDistance(e), zoom };
+  }
+
+  function onPinchMove(e: React.TouchEvent) {
+    const base = pinchRef.current;
+    if (!base || e.touches.length !== 2) return;
+    const ratio = touchDistance(e) / (base.dist || 1);
+    setZoom(Math.min(1.6, Math.max(0.75, base.zoom * ratio)));
+  }
+
+  function onPinchEnd() {
+    pinchRef.current = null;
   }
 
 
@@ -492,6 +520,14 @@ function CalendarPage() {
 
       {isLoading ? (
         <LoadingRows rows={5} />
+      ) : isDayOff ? (
+        <section className="surface flex flex-col items-center gap-2 px-6 py-12 text-center">
+          <Moon className="size-7 text-muted-foreground" strokeWidth={2.2} />
+          <p className="font-display text-[20px] font-black leading-snug">{t("cal.offday.title")}</p>
+          <p className="max-w-xs text-sm leading-snug text-muted-foreground">
+            {t("cal.offday.desc")}
+          </p>
+        </section>
       ) : (
         <>
           {appts.length === 0 && (
@@ -517,7 +553,21 @@ function CalendarPage() {
             </button>
           )}
           {(data?.ranges.length ?? 0) === 0 && agendaRows.length === 0 ? null : (
-            <ul className="space-y-2">
+            <ul
+              onTouchStart={onPinchStart}
+              onTouchMove={onPinchMove}
+              onTouchEnd={onPinchEnd}
+              onTouchCancel={onPinchEnd}
+              style={{
+                transform: `scale(${zoom})`,
+                transformOrigin: "top center",
+                width: `${100 / zoom}%`,
+                marginLeft: `${(100 / zoom - 100) / 2}%`,
+                transition: pinchRef.current ? "none" : "transform 160ms ease-out",
+                touchAction: "pan-y",
+              }}
+              className="space-y-2"
+            >
               {visibleRows.map((row, i) => {
                 // A slot is only spent once its whole window is gone; a wide
                 // slot that is still running stays bookable from now onwards.
@@ -617,105 +667,120 @@ function CalendarPage() {
                         key={row.appt.id}
                         data-status={row.appt.status}
                         className={cn(
-                          "appointment-state surface surface-hover flex items-stretch gap-3 p-3.5",
+                          "appointment-state surface surface-hover overflow-hidden p-0",
                           isNext && "ring-1 ring-foreground/30",
                           due && "bg-muted/30",
                         )}
                       >
-                        <span
-                          data-status={due ? "pending" : row.appt.status}
-                          aria-hidden
-                          className={cn("appointment-rail w-1 shrink-0 self-stretch", isNext && "w-1.5")}
-                        />
-                        <div className="w-[3.25rem] shrink-0 self-center">
-                          <p className="text-[17px] font-black leading-none tabular-nums">
-                            {formatTime(row.appt.starts_at, tz)}
-                          </p>
-                          {row.appt.ends_at && (
-                            <>
-                              <p className="mt-1 text-[12px] font-bold leading-none tabular-nums text-muted-foreground">
-                                {formatTime(row.appt.ends_at, tz)}
-                              </p>
-                              <p className="mt-1 text-[10px] font-semibold leading-none tabular-nums text-muted-foreground/70">
-                                {durationLabel(Math.max(0, row.end - row.start))}
-                              </p>
-                            </>
-                          )}
-
-                        </div>
-                        <div className="min-w-0 flex-1 self-center">
-                          <div className="mb-1 flex flex-wrap items-center gap-1.5">
-                            {isNext && (
-                              <span className="inline-flex items-center gap-1 rounded-full border border-foreground/30 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-foreground">
-                                <span className="size-1.5 rounded-full bg-foreground" />
-                                {t("cal.next.inline")}
-                              </span>
+                        <div className="flex items-stretch">
+                          <span
+                            data-status={due ? "pending" : row.appt.status}
+                            aria-hidden
+                            className={cn(
+                              "appointment-rail w-1 shrink-0 self-stretch",
+                              isNext && "w-1.5",
                             )}
-                            {due && (
-                              <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-foreground">
-                                {t("cal.validate.label")}
-                              </span>
+                          />
+                          <div className="min-w-0 flex-1 px-4 py-3.5">
+                            <div className="flex items-start gap-2">
+                              <p className="min-w-0 flex-1 text-[15px] font-black leading-none tabular-nums">
+                                {formatTime(row.appt.starts_at, tz)}
+                                {row.appt.ends_at && ` - ${formatTime(row.appt.ends_at, tz)}`}
+                                <span className="ml-2 text-[11px] font-bold text-muted-foreground">
+                                  {durationLabel(Math.max(0, row.end - row.start))}
+                                </span>
+                              </p>
+                              <div className="flex shrink-0 items-center gap-1.5">
+                                {due ? (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      className="h-8 px-3 text-[12px]"
+                                      onClick={() => validateAppointment(row.appt.id, "completed")}
+                                    >
+                                      <Check className="size-3.5" />
+                                      {t("cal.validate.complete")}
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-8 px-3 text-[12px]"
+                                      onClick={() => validateAppointment(row.appt.id, "no_show")}
+                                    >
+                                      <UserX className="size-3.5" />
+                                      {t("cal.validate.noShow")}
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <AppointmentActions
+                                    id={row.appt.id}
+                                    status={row.appt.status}
+                                    customerName={displayCustomerName(
+                                      row.appt.customer_name,
+                                      null,
+                                      i + 1,
+                                    )}
+                                    customerPhone={row.appt.customer_phone}
+                                    startsAt={row.appt.starts_at}
+                                    serviceName={row.appt.service_name}
+                                    timezone={tz}
+                                  />
+                                )}
+                              </div>
+                            </div>
+
+                            {(isNext || due) && (
+                              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                                {isNext && (
+                                  <span className="inline-flex items-center gap-1 rounded-full border border-foreground/30 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-foreground">
+                                    <span className="size-1.5 rounded-full bg-foreground" />
+                                    {t("cal.next.inline")}
+                                  </span>
+                                )}
+                                {due && (
+                                  <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-foreground">
+                                    {t("cal.validate.label")}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            <p className="mt-3 line-clamp-2 font-display text-[22px] font-black leading-tight">
+                              {displayCustomerName(row.appt.customer_name, null, i + 1)}
+                            </p>
+
+                            <div className="mt-1 flex items-end gap-3">
+                              <p className="min-w-0 flex-1 truncate text-[13px] font-bold uppercase tracking-wide text-muted-foreground">
+                                {row.appt.service_name}
+                              </p>
+                              {row.appt.price_cents != null && (
+                                <p className="shrink-0 text-[15px] font-black tabular-nums">
+                                  {formatPrice(row.appt.price_cents)}
+                                </p>
+                              )}
+                            </div>
+
+                            {row.appt.notes?.trim() && (
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <button
+                                    type="button"
+                                    aria-label={t("cal.note.label")}
+                                    className="mt-2.5 flex max-w-full items-center gap-1.5 rounded-full border border-border bg-card px-2 py-1 text-[11px] font-semibold text-muted-foreground"
+                                  >
+                                    <StickyNote className="size-3 shrink-0" strokeWidth={2.6} />
+                                    <span className="truncate">{row.appt.notes}</span>
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent side="top" align="start" className="w-64 text-sm">
+                                  <p className="mb-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                                    {t("cal.note.label")}
+                                  </p>
+                                  <p className="whitespace-pre-wrap font-medium">{row.appt.notes}</p>
+                                </PopoverContent>
+                              </Popover>
                             )}
                           </div>
-                          <p className="line-clamp-2 text-[15px] font-bold leading-snug">
-                            {displayCustomerName(row.appt.customer_name, null, i + 1)}
-                          </p>
-                          <p className="truncate text-sm font-normal leading-snug text-muted-foreground">
-                            {row.appt.service_name}
-                          </p>
-                          {row.appt.notes?.trim() && (
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <button
-                                  type="button"
-                                  aria-label={t("cal.note.label")}
-                                  className="mt-1.5 flex max-w-full items-center gap-1.5 rounded-full border border-border bg-card px-2 py-1 text-[11px] font-semibold text-muted-foreground"
-                                >
-                                  <StickyNote className="size-3 shrink-0" strokeWidth={2.6} />
-                                  <span className="truncate">{row.appt.notes}</span>
-                                </button>
-                              </PopoverTrigger>
-                              <PopoverContent side="top" align="start" className="w-64 text-sm">
-                                <p className="mb-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                                  {t("cal.note.label")}
-                                </p>
-                                <p className="whitespace-pre-wrap font-medium">{row.appt.notes}</p>
-                              </PopoverContent>
-                            </Popover>
-                          )}
-                        </div>
-                        <div className="flex shrink-0 items-center gap-1.5 self-center">
-                          {due ? (
-                            <div className="flex flex-col gap-1.5 sm:flex-row">
-                              <Button
-                                size="sm"
-                                className="h-8 px-3 text-[12px]"
-                                onClick={() => validateAppointment(row.appt.id, "completed")}
-                              >
-                                <Check className="size-3.5" />
-                                {t("cal.validate.complete")}
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 px-3 text-[12px]"
-                                onClick={() => validateAppointment(row.appt.id, "no_show")}
-                              >
-                                <UserX className="size-3.5" />
-                                {t("cal.validate.noShow")}
-                              </Button>
-                            </div>
-                          ) : (
-                            <AppointmentActions
-                              id={row.appt.id}
-                              status={row.appt.status}
-                              customerName={displayCustomerName(row.appt.customer_name, null, i + 1)}
-                              customerPhone={row.appt.customer_phone}
-                              startsAt={row.appt.starts_at}
-                              serviceName={row.appt.service_name}
-                              timezone={tz}
-                            />
-                          )}
                         </div>
                       </li>
                     )}

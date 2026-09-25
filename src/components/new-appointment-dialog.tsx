@@ -133,10 +133,16 @@ export function NewAppointmentDialog({
     const service = data?.services.find((s) => s.id === serviceId);
     if (!service) return;
 
+    const [h, m] = time.split(":").map(Number);
+    const startsAt = zonedToUtc(date, (h ?? 0) * 60 + (m ?? 0), business.timezone);
+    // Never allow a manual booking in the past, even from the admin agenda.
+    if (startsAt.getTime() <= Date.now()) {
+      toast.error(t("cal.err.past"));
+      return;
+    }
+
     setBusy(true);
     try {
-      const [h, m] = time.split(":").map(Number);
-      const startsAt = zonedToUtc(date, (h ?? 0) * 60 + (m ?? 0), business.timezone);
       const endsAt = new Date(startsAt.getTime() + service.duration_minutes * 60000);
 
       let savedCustomerId: string | null = customerId;
