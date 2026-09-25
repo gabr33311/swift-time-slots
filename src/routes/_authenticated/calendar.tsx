@@ -516,6 +516,14 @@ function CalendarPage() {
 
       {isLoading ? (
         <LoadingRows rows={5} />
+      ) : isDayOff ? (
+        <section className="surface flex flex-col items-center gap-2 px-6 py-12 text-center">
+          <Moon className="size-7 text-muted-foreground" strokeWidth={2.2} />
+          <p className="font-display text-[20px] font-black leading-snug">{t("cal.offday.title")}</p>
+          <p className="max-w-xs text-sm leading-snug text-muted-foreground">
+            {t("cal.offday.desc")}
+          </p>
+        </section>
       ) : (
         <>
           {appts.length === 0 && (
