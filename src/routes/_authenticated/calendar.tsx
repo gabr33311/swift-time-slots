@@ -331,6 +331,27 @@ function CalendarPage() {
     return zonedToUtc(date, minute, tz).getTime() <= now;
   }
 
+  function touchDistance(e: React.TouchEvent) {
+    const [a, b] = [e.touches[0]!, e.touches[1]!];
+    return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+  }
+
+  function onPinchStart(e: React.TouchEvent) {
+    if (e.touches.length !== 2) return;
+    pinchRef.current = { dist: touchDistance(e), zoom };
+  }
+
+  function onPinchMove(e: React.TouchEvent) {
+    const base = pinchRef.current;
+    if (!base || e.touches.length !== 2) return;
+    const ratio = touchDistance(e) / (base.dist || 1);
+    setZoom(Math.min(1.6, Math.max(0.75, base.zoom * ratio)));
+  }
+
+  function onPinchEnd() {
+    pinchRef.current = null;
+  }
+
 
   function needsValidation(appt: Appt) {
     if (["completed", "cancelled", "no_show", "expired"].includes(appt.status)) return false;
