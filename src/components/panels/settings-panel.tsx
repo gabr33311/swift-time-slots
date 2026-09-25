@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { useNavigate } from "@tanstack/react-router";
+import { LogOut } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
@@ -10,6 +12,13 @@ export function SettingsPanel() {
   const { business } = useMyBusiness();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
+  const navigate = useNavigate();
+  async function signOut() {
+    await qc.cancelQueries();
+    qc.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", search: { mode: undefined, next: undefined }, replace: true });
+  }
   const { theme, setTheme, lang, setLang, t } = usePrefs();
 
   async function toggle(field: "is_published" | "seo_indexable", value: boolean) {
@@ -70,6 +79,9 @@ export function SettingsPanel() {
           ))}
         </div>
       </div>
+      <button type="button" onClick={signOut} className="flex w-full items-center gap-3 p-5 text-left text-sm font-bold text-destructive hover:bg-muted">
+        <LogOut className="size-4" /> {t("nav.logout")}
+      </button>
     </section>
   );
 }

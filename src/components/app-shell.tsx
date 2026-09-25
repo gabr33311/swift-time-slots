@@ -7,7 +7,7 @@ import {
   Share2,
   Plus,
 } from "lucide-react";
-import { useRef, useState, type ComponentType, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -112,7 +112,7 @@ export function AppShell({
   children: ReactNode;
   onPrimaryAction?: () => void;
 }) {
-  const { business } = useMyBusiness();
+  const { business, isSuccess } = useMyBusiness();
   const logoUrl = useLogoUrl(business?.logo_url);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -122,6 +122,10 @@ export function AppShell({
   const startY = useRef(0);
   const held = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (isSuccess && !business) navigate({ to: "/onboarding", replace: true });
+  }, [isSuccess, business, navigate]);
 
   async function signOut() {
     await supabase.auth.signOut();

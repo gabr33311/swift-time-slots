@@ -11,7 +11,7 @@ import { displayCustomerName, formatPrice } from "@/lib/format";
 import { PendingCapsule } from "@/components/pending-sheet";
 import { addDays, minutesToTime, timeToMinutes, todayIn, weekdayOf, zonedToUtc } from "@/lib/time";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
-import { Check, ChevronLeft, ChevronRight, Copy, Lock, Plus, StickyNote, Unlock, UserX } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Copy, Lock, Plus, RotateCcw, StickyNote, Unlock, UserX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
 import { usePrefs } from "@/lib/prefs";
