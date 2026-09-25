@@ -559,7 +559,6 @@ function CalendarPage() {
               onTouchEnd={onPinchEnd}
               onTouchCancel={onPinchEnd}
               style={{
-                fontSize: `${zoom}rem`,
                 transform: `scale(${zoom})`,
                 transformOrigin: "top center",
                 width: `${100 / zoom}%`,
