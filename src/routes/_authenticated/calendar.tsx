@@ -169,6 +169,9 @@ function CalendarPage() {
   const [newTime, setNewTime] = useState("09:00");
   const [staffFilter, setStaffFilter] = useState<string>("all");
   const [showPast, setShowPast] = useState(false);
+  // Pinch-to-zoom scales the timeline density (two fingers apart = more detail).
+  const [zoom, setZoom] = useState(1);
+  const pinchRef = useRef<{ dist: number; zoom: number } | null>(null);
   const nowRef = useRef<HTMLLIElement | null>(null);
   const scrolledFor = useRef<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
