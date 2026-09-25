@@ -553,7 +553,22 @@ function CalendarPage() {
             </button>
           )}
           {(data?.ranges.length ?? 0) === 0 && agendaRows.length === 0 ? null : (
-            <ul className="space-y-2">
+            <ul
+              onTouchStart={onPinchStart}
+              onTouchMove={onPinchMove}
+              onTouchEnd={onPinchEnd}
+              onTouchCancel={onPinchEnd}
+              style={{
+                fontSize: `${zoom}rem`,
+                transform: `scale(${zoom})`,
+                transformOrigin: "top center",
+                width: `${100 / zoom}%`,
+                marginLeft: `${(100 / zoom - 100) / 2}%`,
+                transition: pinchRef.current ? "none" : "transform 160ms ease-out",
+                touchAction: "pan-y",
+              }}
+              className="space-y-2"
+            >
               {visibleRows.map((row, i) => {
                 // A slot is only spent once its whole window is gone; a wide
                 // slot that is still running stays bookable from now onwards.
