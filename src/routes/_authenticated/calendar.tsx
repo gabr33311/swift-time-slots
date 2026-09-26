@@ -91,12 +91,8 @@ function minuteOfDay(iso: string, tz: string): number {
   return timeToMinutes(formatTime(iso, tz));
 }
 
-/**
- * Empty stretches stay bookable slot by slot: short gaps use the business
- * step, long stretches widen to hourly slices so a full empty day is a
- * handful of tappable rows instead of dozens of identical placeholders.
- */
 /** Vertical density of the time grid: one minute = this many pixels. */
+
 const PX_PER_MIN = 0.95;
 const ZOOM_MIN = 0.85;
 const ZOOM_MAX = 1.3;
