@@ -254,27 +254,24 @@ function CalendarPage() {
       timeZone: tz,
     }).format(new Date()),
   );
-  const markerIndex = isToday ? agendaRows.findIndex((r) => r.start > nowMinutes) : -1;
 
-  // Morning slots that are already gone collapse behind a single control, so the
-  // day opens on what is still ahead. Past appointments are never hidden.
-  let leadingPastFree = 0;
-  if (isToday) {
-    while (
-      leadingPastFree < agendaRows.length &&
-      agendaRows[leadingPastFree]!.kind === "free" &&
-      agendaRows[leadingPastFree]!.end <= nowMinutes
-    ) {
-      leadingPastFree += 1;
-    }
-  }
-  const hiddenPast = showPast ? 0 : leadingPastFree;
-  const visibleRows = agendaRows.slice(hiddenPast);
-  const visibleMarkerIndex = markerIndex >= 0 ? markerIndex - hiddenPast : -1;
-
-  useEffect(() => {
-    setShowPast(false);
-  }, [date]);
+  // Grid geometry: the day spans the working hours, widened to fit anything
+  // scheduled outside them, snapped to whole hours.
+  const spanStarts = [
+    ...(data?.ranges ?? []).map((r) => r.start),
+    ...agendaRows.map((r) => r.start),
+  ];
+  const spanEnds = [...(data?.ranges ?? []).map((r) => r.end), ...agendaRows.map((r) => r.end)];
+  const dayStart = Math.max(0, Math.floor(Math.min(8 * 60, ...spanStarts) / 60) * 60);
+  const dayEnd = Math.min(24 * 60, Math.ceil(Math.max(20 * 60, ...spanEnds) / 60) * 60);
+  const gridHeight = (dayEnd - dayStart) * PX_PER_MIN;
+  const hourMarks = Array.from(
+    { length: Math.max(1, Math.floor((dayEnd - dayStart) / 60) + 1) },
+    (_, i) => dayStart + i * 60,
+  );
+  const freeRows = agendaRows.filter((r) => r.kind === "free");
+  const blockRows = agendaRows.filter((r) => r.kind === "block");
+  const apptRows = agendaRows.filter((r) => r.kind === "appt");
 
   // On today's agenda, land on the current moment instead of the top of the day.
   useEffect(() => {
@@ -283,7 +280,8 @@ function CalendarPage() {
     if (!node) return;
     scrolledFor.current = date;
     node.scrollIntoView({ block: "center", behavior: "smooth" });
-  }, [date, isToday, isLoading, visibleMarkerIndex]);
+  }, [date, isToday, isLoading, gridHeight]);
+
 
 
   // Live cockpit — only meaningful while looking at today.
