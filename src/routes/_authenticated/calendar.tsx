@@ -541,256 +541,256 @@ function CalendarPage() {
               </Button>
             </section>
           )}
-          {(leadingPastFree > 0 || showPast) && (
-            <button
-              type="button"
-              onClick={() => setShowPast((v) => !v)}
-              className="mb-2 w-full rounded-2xl border border-dashed border-border/70 py-2 text-[12px] font-bold text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
-            >
-              {showPast
-                ? t("cal.past.hide")
-                : t("cal.past.show").replace("{n}", String(leadingPastFree))}
-            </button>
-          )}
-          {(data?.ranges.length ?? 0) === 0 && agendaRows.length === 0 ? null : (
-            <ul
-              onTouchStart={onPinchStart}
-              onTouchMove={onPinchMove}
-              onTouchEnd={onPinchEnd}
-              onTouchCancel={onPinchEnd}
-              style={{
-                transform: `scale(${zoom})`,
-                transformOrigin: "top center",
-                width: `${100 / zoom}%`,
-                marginLeft: `${(100 / zoom - 100) / 2}%`,
-                transition: pinchRef.current ? "none" : "transform 160ms ease-out",
-                touchAction: "pan-y",
-              }}
-              className="space-y-2"
-            >
-              {visibleRows.map((row, i) => {
-                // A slot is only spent once its whole window is gone; a wide
-                // slot that is still running stays bookable from now onwards.
-                const pastFreeHour = row.kind === "free" && isPastMinute(row.end);
-                const bookFrom =
-                  row.kind === "free" && isToday && row.start < nowMinutes
-                    ? Math.min(row.end - 5, Math.ceil(nowMinutes / 5) * 5)
-                    : row.start;
 
-                const pastBlock = row.kind === "block" && new Date(row.block.ends_at).getTime() <= now;
-                const due = row.kind === "appt" && needsValidation(row.appt);
-                const isNext = row.kind === "appt" && isToday && nextUp?.id === row.appt.id;
-                return (
-                  <Fragment key={`row-${i}-${row.start}`}>
-                    {i === visibleMarkerIndex && (
-                      <li ref={nowRef} aria-hidden className="flex items-center gap-2 py-0.5">
-                        <span className="text-[11px] font-black uppercase tracking-[0.1em] text-foreground">
-                          {t("cal.now")}
-                        </span>
-                        <span className="h-px flex-1 bg-foreground/60" />
-                        <span className="size-1.5 rounded-full bg-foreground" />
-                      </li>
-                    )}
-                    {row.kind === "free" ? (
-                      <li className={cn("flex items-center gap-2", pastFreeHour && "opacity-45")}>
-                        <button
-                          disabled={pastFreeHour}
-                          onClick={() => {
-                            if (pastFreeHour) return;
-                            setNewTime(minutesToTime(bookFrom));
-                            setNewOpen(true);
-                          }}
+          <div
+            onTouchStart={onPinchStart}
+            onTouchMove={onPinchMove}
+            onTouchEnd={onPinchEnd}
+            onTouchCancel={onPinchEnd}
+            className="surface overflow-hidden p-0"
+            style={{
+              transform: `scaleX(${zoom})`,
+              transformOrigin: "center top",
+              transition: pinchRef.current ? "none" : "transform 160ms ease-out",
+              touchAction: "pan-y",
+            }}
+          >
+            <div className="flex">
+              <div
+                className="relative w-14 shrink-0 border-r border-border/60"
+                style={{ height: gridHeight }}
+              >
+                {hourMarks.map((m) => (
+                  <span
+                    key={`h-${m}`}
+                    className="absolute right-2 -translate-y-1/2 text-[11px] font-bold tabular-nums text-muted-foreground/70"
+                    style={{ top: (m - dayStart) * PX_PER_MIN }}
+                  >
+                    {minutesToTime(m)}
+                  </span>
+                ))}
+              </div>
 
-                          className="group flex min-w-0 flex-1 items-center gap-3.5 rounded-2xl border border-dashed border-border/70 bg-transparent px-4 py-2.5 text-left transition-colors hover:border-foreground/30 hover:bg-muted/40 disabled:cursor-not-allowed disabled:hover:border-border/70 disabled:hover:bg-transparent"
-                        >
-                          <span className="w-[3.25rem] shrink-0 text-sm font-bold tabular-nums text-muted-foreground/70">
-                            {minutesToTime(row.start)}
-                          </span>
-                          <span className="min-w-0 flex-1 truncate text-sm font-medium text-muted-foreground/50">
-                            {pastFreeHour
-                              ? t("cal.slot.past")
-                              : `${t("cal.slot.free")} · ${durationLabel(row.end - row.start)}`}
-                          </span>
+              <div className="relative min-w-0 flex-1" style={{ height: gridHeight }}>
+                {hourMarks.map((m) => (
+                  <span
+                    key={`l-${m}`}
+                    aria-hidden
+                    className="absolute inset-x-0 border-t border-border/50"
+                    style={{ top: (m - dayStart) * PX_PER_MIN }}
+                  />
+                ))}
+
+                {freeRows.map((row) => {
+                  const past = isPastMinute(row.end);
+                  const bookFrom =
+                    isToday && row.start < nowMinutes
+                      ? Math.min(row.end - 5, Math.ceil(nowMinutes / 5) * 5)
+                      : row.start;
+                  return (
+                    <div
+                      key={`free-${row.start}`}
+                      className="absolute inset-x-1"
+                      style={{
+                        top: (row.start - dayStart) * PX_PER_MIN,
+                        height: Math.max((row.end - row.start) * PX_PER_MIN - 2, 18),
+                      }}
+                    >
+                      <button
+                        type="button"
+                        disabled={past}
+                        title={past ? t("cal.slot.past") : t("cal.slot.free")}
+                        onClick={() => {
+                          setNewTime(minutesToTime(bookFrom));
+                          setNewOpen(true);
+                        }}
+                        className={cn(
+                          "group flex size-full items-center justify-center rounded-lg border border-transparent transition-colors",
+                          past
+                            ? "cursor-not-allowed bg-muted/25"
+                            : "hover:border-dashed hover:border-foreground/30 hover:bg-muted/50",
+                        )}
+                      >
+                        {!past && (
                           <Plus
-                            className="size-4 shrink-0 text-muted-foreground/40 transition-colors group-hover:text-foreground"
+                            className="size-4 text-muted-foreground/50 opacity-0 transition-opacity group-hover:opacity-100"
                             strokeWidth={2.6}
                           />
-                        </button>
+                        )}
+                      </button>
+                      {!past && (row.end - row.start) * PX_PER_MIN >= 32 && (
                         <button
-                          disabled={pastFreeHour}
+                          type="button"
                           onClick={() => blockSlot(row.start, row.end)}
                           aria-label={t("cal.block")}
                           title={t("cal.block")}
-                          className="flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed border-border text-muted-foreground/60 transition-colors hover:border-solid hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-dashed disabled:hover:text-muted-foreground/60"
+                          className="absolute right-1 top-1 flex size-6 items-center justify-center rounded-full border border-dashed border-border text-muted-foreground/60 opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 sm:opacity-60"
                         >
-                          <Lock className="size-4" strokeWidth={2.6} />
+                          <Lock className="size-3" strokeWidth={2.6} />
                         </button>
-                      </li>
-                    ) : row.kind === "block" ? (
-                      <li
-                        key={row.block.id}
-                        className={cn(
-                          "surface flex items-center gap-3 border-dashed p-4 opacity-80",
-                          pastBlock && "opacity-45",
-                        )}
+                      )}
+                    </div>
+                  );
+                })}
+
+                {blockRows.map((row) => (
+                  <div
+                    key={`block-${row.block.id}-${row.start}`}
+                    className="absolute inset-x-1 z-10 overflow-hidden rounded-xl border border-dashed border-border bg-muted/60 px-2 py-1"
+                    style={{
+                      top: (row.start - dayStart) * PX_PER_MIN,
+                      height: Math.max((row.end - row.start) * PX_PER_MIN - 2, 26),
+                    }}
+                  >
+                    <div className="flex items-start gap-1">
+                      <p className="min-w-0 flex-1 truncate text-[11px] font-bold text-muted-foreground">
+                        {t("cal.blocked")}
+                        {row.block.reason ? ` · ${row.block.reason}` : ""}
+                      </p>
+                      <button
+                        onClick={() => unblock(row.block.id)}
+                        aria-label={t("cal.unblock")}
+                        title={t("cal.unblock")}
+                        className="flex size-5 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
                       >
-                        <div className="w-[3.25rem] shrink-0 text-center">
-                          <p className="text-lg font-black leading-none tabular-nums text-muted-foreground">
-                            {minutesToTime(row.start)}
-                          </p>
-                          <p className="mt-1 text-[11px] font-bold tabular-nums text-muted-foreground/60">
-                            {durationLabel(row.end - row.start)}
-                          </p>
-                        </div>
+                        <Unlock className="size-3" strokeWidth={2.6} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
 
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-[15px] font-bold leading-snug text-muted-foreground">
-                            {t("cal.blocked")}
-                          </p>
-                          {row.block.reason && (
-                            <p className="truncate text-sm leading-snug text-muted-foreground/70">
-                              {row.block.reason}
-                            </p>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => unblock(row.block.id)}
-                          aria-label={t("cal.unblock")}
-                          title={t("cal.unblock")}
-                          className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
-                        >
-                          <Unlock className="size-4" strokeWidth={2.6} />
-                        </button>
-                      </li>
-                    ) : (
-                      <li
-                        key={row.appt.id}
-                        data-status={row.appt.status}
-                        className={cn(
-                          "appointment-state surface surface-hover overflow-hidden p-0",
-                          isNext && "ring-1 ring-foreground/30",
-                          due && "bg-muted/30",
-                        )}
-                      >
-                        <div className="flex items-stretch">
-                          <span
-                            data-status={due ? "pending" : row.appt.status}
-                            aria-hidden
-                            className={cn(
-                              "appointment-rail w-1 shrink-0 self-stretch",
-                              isNext && "w-1.5",
+                {apptRows.map((row, i) => {
+                  const due = needsValidation(row.appt);
+                  const isNext = isToday && nextUp?.id === row.appt.id;
+                  const height = Math.max((row.end - row.start) * PX_PER_MIN - 2, 34);
+                  const roomy = height >= 62;
+                  const name = displayCustomerName(row.appt.customer_name, null, i + 1);
+                  return (
+                    <div
+                      key={row.appt.id}
+                      data-status={due ? "pending" : row.appt.status}
+                      className={cn(
+                        "appointment-state surface surface-hover absolute inset-x-1 z-10 overflow-hidden p-0",
+                        isNext && "ring-1 ring-foreground/40",
+                      )}
+                      style={{ top: (row.start - dayStart) * PX_PER_MIN, height }}
+                    >
+                      <span
+                        data-status={due ? "pending" : row.appt.status}
+                        aria-hidden
+                        className="appointment-rail absolute inset-y-0 left-0 w-1"
+                      />
+                      <div className="flex h-full min-w-0 flex-col gap-0.5 py-1 pl-3 pr-1">
+                        <div className="flex items-start gap-1">
+                          <p className="min-w-0 flex-1 truncate text-[11px] font-black tabular-nums">
+                            {formatTime(row.appt.starts_at, tz)}
+                            {row.appt.ends_at && ` – ${formatTime(row.appt.ends_at, tz)}`}
+                            {due && (
+                              <span className="ml-1.5 text-[10px] font-black uppercase tracking-wide text-muted-foreground">
+                                {t("cal.validate.label")}
+                              </span>
                             )}
-                          />
-                          <div className="min-w-0 flex-1 px-4 py-3.5">
-                            <div className="flex items-start gap-2">
-                              <p className="min-w-0 flex-1 text-[15px] font-black leading-none tabular-nums">
-                                {formatTime(row.appt.starts_at, tz)}
-                                {row.appt.ends_at && ` - ${formatTime(row.appt.ends_at, tz)}`}
-                                <span className="ml-2 text-[11px] font-bold text-muted-foreground">
-                                  {durationLabel(Math.max(0, row.end - row.start))}
-                                </span>
-                              </p>
-                              <div className="flex shrink-0 items-center gap-1.5">
-                                {due ? (
-                                  <>
-                                    <Button
-                                      size="sm"
-                                      className="h-8 px-3 text-[12px]"
-                                      onClick={() => validateAppointment(row.appt.id, "completed")}
-                                    >
-                                      <Check className="size-3.5" />
-                                      {t("cal.validate.complete")}
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-8 px-3 text-[12px]"
-                                      onClick={() => validateAppointment(row.appt.id, "no_show")}
-                                    >
-                                      <UserX className="size-3.5" />
-                                      {t("cal.validate.noShow")}
-                                    </Button>
-                                  </>
-                                ) : (
-                                  <AppointmentActions
-                                    id={row.appt.id}
-                                    status={row.appt.status}
-                                    customerName={displayCustomerName(
-                                      row.appt.customer_name,
-                                      null,
-                                      i + 1,
-                                    )}
-                                    customerPhone={row.appt.customer_phone}
-                                    startsAt={row.appt.starts_at}
-                                    serviceName={row.appt.service_name}
-                                    timezone={tz}
-                                  />
-                                )}
-                              </div>
-                            </div>
-
-                            {(isNext || due) && (
-                              <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                                {isNext && (
-                                  <span className="inline-flex items-center gap-1 rounded-full border border-foreground/30 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-foreground">
-                                    <span className="size-1.5 rounded-full bg-foreground" />
-                                    {t("cal.next.inline")}
-                                  </span>
-                                )}
-                                {due && (
-                                  <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-foreground">
-                                    {t("cal.validate.label")}
-                                  </span>
-                                )}
-                              </div>
+                            {isNext && !due && (
+                              <span className="ml-1.5 text-[10px] font-black uppercase tracking-wide text-muted-foreground">
+                                {t("cal.next.inline")}
+                              </span>
                             )}
-
-                            <p className="mt-3 line-clamp-2 font-display text-[22px] font-black leading-tight">
-                              {displayCustomerName(row.appt.customer_name, null, i + 1)}
-                            </p>
-
-                            <div className="mt-1 flex items-end gap-3">
-                              <p className="min-w-0 flex-1 truncate text-[13px] font-bold uppercase tracking-wide text-muted-foreground">
-                                {row.appt.service_name}
-                              </p>
-                              {row.appt.price_cents != null && (
-                                <p className="shrink-0 text-[15px] font-black tabular-nums">
-                                  {formatPrice(row.appt.price_cents)}
-                                </p>
-                              )}
-                            </div>
-
-                            {row.appt.notes?.trim() && (
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <button
-                                    type="button"
-                                    aria-label={t("cal.note.label")}
-                                    className="mt-2.5 flex max-w-full items-center gap-1.5 rounded-full border border-border bg-card px-2 py-1 text-[11px] font-semibold text-muted-foreground"
-                                  >
-                                    <StickyNote className="size-3 shrink-0" strokeWidth={2.6} />
-                                    <span className="truncate">{row.appt.notes}</span>
-                                  </button>
-                                </PopoverTrigger>
-                                <PopoverContent side="top" align="start" className="w-64 text-sm">
-                                  <p className="mb-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                                    {t("cal.note.label")}
-                                  </p>
-                                  <p className="whitespace-pre-wrap font-medium">{row.appt.notes}</p>
-                                </PopoverContent>
-                              </Popover>
+                          </p>
+                          <div className="flex shrink-0 items-center gap-0.5">
+                            {due ? (
+                              <>
+                                <button
+                                  type="button"
+                                  aria-label={t("cal.validate.complete")}
+                                  title={t("cal.validate.complete")}
+                                  onClick={() => validateAppointment(row.appt.id, "completed")}
+                                  className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground"
+                                >
+                                  <Check className="size-3.5" strokeWidth={3} />
+                                </button>
+                                <button
+                                  type="button"
+                                  aria-label={t("cal.validate.noShow")}
+                                  title={t("cal.validate.noShow")}
+                                  onClick={() => validateAppointment(row.appt.id, "no_show")}
+                                  className="flex size-6 items-center justify-center rounded-full border border-border text-muted-foreground"
+                                >
+                                  <UserX className="size-3.5" strokeWidth={2.6} />
+                                </button>
+                              </>
+                            ) : (
+                              <AppointmentActions
+                                id={row.appt.id}
+                                status={row.appt.status}
+                                customerName={name}
+                                customerPhone={row.appt.customer_phone}
+                                startsAt={row.appt.starts_at}
+                                serviceName={row.appt.service_name}
+                                timezone={tz}
+                              />
                             )}
                           </div>
                         </div>
-                      </li>
-                    )}
-                  </Fragment>
-                );
-              })}
-            </ul>
-          )}
+
+                        <p className="truncate font-display text-[14px] font-black leading-tight">
+                          {name}
+                        </p>
+
+                        {roomy && (
+                          <div className="flex min-w-0 items-center gap-2">
+                            <p className="min-w-0 flex-1 truncate text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                              {row.appt.service_name}
+                            </p>
+                            {row.appt.price_cents != null && (
+                              <p className="shrink-0 text-[11px] font-black tabular-nums">
+                                {formatPrice(row.appt.price_cents)}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {roomy && row.appt.notes?.trim() && (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button
+                                type="button"
+                                aria-label={t("cal.note.label")}
+                                className="flex max-w-full items-center gap-1 self-start rounded-full border border-border bg-card px-2 py-0.5 text-[10px] font-semibold text-muted-foreground"
+                              >
+                                <StickyNote className="size-3 shrink-0" strokeWidth={2.6} />
+                                <span className="truncate">{row.appt.notes}</span>
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent side="top" align="start" className="w-64 text-sm">
+                              <p className="mb-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                                {t("cal.note.label")}
+                              </p>
+                              <p className="whitespace-pre-wrap font-medium">{row.appt.notes}</p>
+                            </PopoverContent>
+                          </Popover>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {isToday && nowMinutes >= dayStart && nowMinutes <= dayEnd && (
+                  <div
+                    ref={nowRef}
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-0 z-20 flex items-center"
+                    style={{ top: (nowMinutes - dayStart) * PX_PER_MIN }}
+                  >
+                    <span className="-ml-1 size-2 rounded-full bg-foreground" />
+                    <span className="h-px flex-1 bg-foreground/70" />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </>
       )}
+
 
 
       {business && (
