@@ -269,9 +269,10 @@ function CalendarPage() {
     { length: Math.max(1, Math.floor((dayEnd - dayStart) / 60) + 1) },
     (_, i) => dayStart + i * 60,
   );
-  const freeRows = agendaRows.filter((r) => r.kind === "free");
-  const blockRows = agendaRows.filter((r) => r.kind === "block");
-  const apptRows = agendaRows.filter((r) => r.kind === "appt");
+  const freeRows = agendaRows.filter((r): r is Extract<AgendaRow, { kind: "free" }> => r.kind === "free");
+  const blockRows = agendaRows.filter((r): r is Extract<AgendaRow, { kind: "block" }> => r.kind === "block");
+  const apptRows = agendaRows.filter((r): r is Extract<AgendaRow, { kind: "appt" }> => r.kind === "appt");
+
 
   // On today's agenda, land on the current moment instead of the top of the day.
   useEffect(() => {
