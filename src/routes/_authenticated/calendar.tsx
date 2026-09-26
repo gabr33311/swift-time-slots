@@ -349,12 +349,16 @@ function CalendarPage() {
     const base = pinchRef.current;
     if (!base || e.touches.length !== 2) return;
     const ratio = touchDistance(e) / (base.dist || 1);
-    setZoom(Math.min(1.6, Math.max(0.75, base.zoom * ratio)));
+    // Horizontal stretch only: rows keep their default height, columns breathe.
+    setZoom(Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, base.zoom * ratio)));
   }
 
   function onPinchEnd() {
     pinchRef.current = null;
+    // Soft snap back to the default resolution when close to it.
+    setZoom((z) => (Math.abs(z - 1) < 0.06 ? 1 : z));
   }
+
 
 
   function needsValidation(appt: Appt) {
