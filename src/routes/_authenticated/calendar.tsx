@@ -171,11 +171,12 @@ function CalendarPage() {
   const [newOpen, setNewOpen] = useState(false);
   const [newTime, setNewTime] = useState("09:00");
   const [staffFilter, setStaffFilter] = useState<string>("all");
-  const [showPast, setShowPast] = useState(false);
-  // Pinch-to-zoom scales the timeline density (two fingers apart = more detail).
+  const [staffFilter, setStaffFilter] = useState<string>("all");
+  // Pinch stretches the grid horizontally only; rows keep their height.
   const [zoom, setZoom] = useState(1);
   const pinchRef = useRef<{ dist: number; zoom: number } | null>(null);
-  const nowRef = useRef<HTMLLIElement | null>(null);
+  const nowRef = useRef<HTMLDivElement | null>(null);
+
   const scrolledFor = useRef<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
