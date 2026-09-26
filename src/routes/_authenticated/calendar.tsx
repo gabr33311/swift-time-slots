@@ -96,10 +96,16 @@ function minuteOfDay(iso: string, tz: string): number {
  * step, long stretches widen to hourly slices so a full empty day is a
  * handful of tappable rows instead of dozens of identical placeholders.
  */
+/** Vertical density of the time grid: one minute = this many pixels. */
+const PX_PER_MIN = 0.95;
+const ZOOM_MIN = 0.85;
+const ZOOM_MAX = 1.3;
+
+/** Empty stretches become tappable slots of the business booking step. */
 function freeChunks(start: number, end: number, step: number): AgendaRow[] {
   const span = end - start;
   if (span <= 0) return [];
-  const size = span > 240 ? Math.max(60, step) : step;
+  const size = step;
   const out: AgendaRow[] = [];
   let cursor = start;
   while (end - cursor > size * 1.5) {
@@ -109,6 +115,7 @@ function freeChunks(start: number, end: number, step: number): AgendaRow[] {
   if (end - cursor > 0) out.push({ kind: "free", start: cursor, end });
   return out;
 }
+
 
 
 /**
