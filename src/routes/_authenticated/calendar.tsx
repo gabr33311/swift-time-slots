@@ -406,17 +406,14 @@ function CalendarPage() {
   const isEn = t("cal.today") === "Today";
   const locale = isEn ? "en-GB" : "pt-PT";
   const labelDate = new Date(`${date}T12:00:00Z`);
-  const dayMonth = new Intl.DateTimeFormat(locale, {
+  const rawLabel = new Intl.DateTimeFormat(locale, {
+    weekday: "short",
     day: "numeric",
-    month: "long",
+    month: "short",
     timeZone: tz,
   }).format(labelDate);
-  const weekdayLong = new Intl.DateTimeFormat(locale, {
-    weekday: "long",
-    timeZone: tz,
-  }).format(labelDate);
-  const rawLabel = `${weekdayLong}, ${dayMonth}`;
   const label = rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
+
 
   return (
     <AppShell>
