@@ -171,7 +171,7 @@ function CalendarPage() {
   const [newOpen, setNewOpen] = useState(false);
   const [newTime, setNewTime] = useState("09:00");
   const [staffFilter, setStaffFilter] = useState<string>("all");
-  const [staffFilter, setStaffFilter] = useState<string>("all");
+
   // Pinch stretches the grid horizontally only; rows keep their height.
   const [zoom, setZoom] = useState(1);
   const pinchRef = useRef<{ dist: number; zoom: number } | null>(null);
