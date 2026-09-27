@@ -413,13 +413,20 @@ function CalendarPage() {
   const isEn = t("cal.today") === "Today";
   const locale = isEn ? "en-GB" : "pt-PT";
   const labelDate = new Date(`${date}T12:00:00Z`);
-  const rawLabel = new Intl.DateTimeFormat(locale, {
-    weekday: "short",
+  const wd = new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: tz })
+    .format(labelDate)
+    .replace(".", "")
+    .slice(0, 3);
+  const dm = new Intl.DateTimeFormat(locale, {
     day: "numeric",
     month: "short",
     timeZone: tz,
-  }).format(labelDate);
+  })
+    .format(labelDate)
+    .replace(".", "");
+  const rawLabel = `${wd}, ${dm}`;
   const label = rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
+
 
 
   return (
