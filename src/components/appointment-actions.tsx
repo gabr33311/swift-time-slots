@@ -41,6 +41,8 @@ export function AppointmentActions({
   timezone,
   autoOpen,
   onAutoOpenDone,
+  hideStatusChip,
+  triggerClassName,
 }: {
   id: string;
   status: Status;
@@ -51,6 +53,8 @@ export function AppointmentActions({
   timezone?: string;
   autoOpen?: boolean;
   onAutoOpenDone?: () => void;
+  hideStatusChip?: boolean;
+  triggerClassName?: string;
 }) {
   const { t } = usePrefs();
   const qc = useQueryClient();
