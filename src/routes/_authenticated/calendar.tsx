@@ -417,13 +417,12 @@ function CalendarPage() {
     .format(labelDate)
     .replace(".", "")
     .slice(0, 3);
-  const dm = new Intl.DateTimeFormat(locale, {
-    day: "numeric",
-    month: "short",
-    timeZone: tz,
-  })
+  const dayNum = new Intl.DateTimeFormat(locale, { day: "numeric", timeZone: tz }).format(labelDate);
+  const monthShort = new Intl.DateTimeFormat(locale, { month: "short", timeZone: tz })
     .format(labelDate)
     .replace(".", "");
+  const dm = `${dayNum} ${monthShort}`;
+
   const rawLabel = `${wd}, ${dm}`;
   const label = rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
 
