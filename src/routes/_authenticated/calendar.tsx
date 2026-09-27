@@ -91,11 +91,10 @@ function minuteOfDay(iso: string, tz: string): number {
   return timeToMinutes(formatTime(iso, tz));
 }
 
-/** Vertical density of the time grid: one minute = this many pixels. */
-
-const PX_PER_MIN = 0.95;
-const ZOOM_MIN = 0.85;
-const ZOOM_MAX = 1.3;
+/** Base vertical density. Pinching changes this value without scaling content. */
+const PX_PER_MIN = 1.25;
+const ZOOM_MIN = 0.75;
+const ZOOM_MAX = 1.8;
 
 /** Empty stretches become tappable slots of the business booking step. */
 function freeChunks(start: number, end: number, step: number): AgendaRow[] {
@@ -172,7 +171,7 @@ function CalendarPage() {
   const [newTime, setNewTime] = useState("09:00");
   const [staffFilter, setStaffFilter] = useState<string>("all");
 
-  // Pinch stretches the grid horizontally only; rows keep their height.
+  // Pinch changes only the vertical time density; text and controls stay crisp.
   const [zoom, setZoom] = useState(1);
   const pinchRef = useRef<{ dist: number; zoom: number } | null>(null);
   const nowRef = useRef<HTMLDivElement | null>(null);
@@ -268,7 +267,8 @@ function CalendarPage() {
   const spanEnds = [...(data?.ranges ?? []).map((r) => r.end), ...agendaRows.map((r) => r.end)];
   const dayStart = Math.max(0, Math.floor(Math.min(8 * 60, ...spanStarts) / 60) * 60);
   const dayEnd = Math.min(24 * 60, Math.ceil(Math.max(20 * 60, ...spanEnds) / 60) * 60);
-  const gridHeight = (dayEnd - dayStart) * PX_PER_MIN;
+  const pxPerMinute = PX_PER_MIN * zoom;
+  const gridHeight = (dayEnd - dayStart) * pxPerMinute;
   const hourMarks = Array.from(
     { length: Math.max(1, Math.floor((dayEnd - dayStart) / 60) + 1) },
     (_, i) => dayStart + i * 60,
@@ -338,21 +338,21 @@ function CalendarPage() {
     return zonedToUtc(date, minute, tz).getTime() <= now;
   }
 
-  function touchDistance(e: React.TouchEvent) {
+  function verticalTouchDistance(e: React.TouchEvent) {
     const [a, b] = [e.touches[0]!, e.touches[1]!];
-    return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+    return Math.max(20, Math.abs(a.clientY - b.clientY));
   }
 
   function onPinchStart(e: React.TouchEvent) {
     if (e.touches.length !== 2) return;
-    pinchRef.current = { dist: touchDistance(e), zoom };
+    pinchRef.current = { dist: verticalTouchDistance(e), zoom };
   }
 
   function onPinchMove(e: React.TouchEvent) {
     const base = pinchRef.current;
     if (!base || e.touches.length !== 2) return;
-    const ratio = touchDistance(e) / (base.dist || 1);
-    // Horizontal stretch only: rows keep their default height, columns breathe.
+    const ratio = verticalTouchDistance(e) / (base.dist || 1);
+    // Recalculate geometry instead of applying scaleY, so text never stretches.
     setZoom(Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, base.zoom * ratio)));
   }
 
@@ -557,9 +557,6 @@ function CalendarPage() {
             onTouchCancel={onPinchEnd}
             className="surface overflow-hidden p-0"
             style={{
-              transform: `scaleX(${zoom})`,
-              transformOrigin: "center top",
-              transition: pinchRef.current ? "none" : "transform 160ms ease-out",
               touchAction: "pan-y",
             }}
           >
@@ -572,7 +569,7 @@ function CalendarPage() {
                   <span
                     key={`h-${m}`}
                     className="absolute right-2 -translate-y-1/2 text-[11px] font-bold tabular-nums text-muted-foreground/70"
-                    style={{ top: (m - dayStart) * PX_PER_MIN }}
+                    style={{ top: (m - dayStart) * pxPerMinute }}
                   >
                     {minutesToTime(m)}
                   </span>
@@ -585,7 +582,7 @@ function CalendarPage() {
                     key={`l-${m}`}
                     aria-hidden
                     className="absolute inset-x-0 border-t border-border/50"
-                    style={{ top: (m - dayStart) * PX_PER_MIN }}
+                    style={{ top: (m - dayStart) * pxPerMinute }}
                   />
                 ))}
 
@@ -600,8 +597,8 @@ function CalendarPage() {
                       key={`free-${row.start}`}
                       className="absolute inset-x-1"
                       style={{
-                        top: (row.start - dayStart) * PX_PER_MIN,
-                        height: Math.max((row.end - row.start) * PX_PER_MIN - 2, 18),
+                        top: (row.start - dayStart) * pxPerMinute,
+                        height: Math.max((row.end - row.start) * pxPerMinute - 2, 18),
                       }}
                     >
                       <button
@@ -626,7 +623,7 @@ function CalendarPage() {
                           />
                         )}
                       </button>
-                      {!past && (row.end - row.start) * PX_PER_MIN >= 32 && (
+                      {!past && (row.end - row.start) * pxPerMinute >= 32 && (
                         <button
                           type="button"
                           onClick={() => blockSlot(row.start, row.end)}
@@ -646,8 +643,8 @@ function CalendarPage() {
                     key={`block-${row.block.id}-${row.start}`}
                     className="absolute inset-x-1 z-10 overflow-hidden rounded-xl border border-dashed border-border bg-muted/60 px-2 py-1"
                     style={{
-                      top: (row.start - dayStart) * PX_PER_MIN,
-                      height: Math.max((row.end - row.start) * PX_PER_MIN - 2, 26),
+                      top: (row.start - dayStart) * pxPerMinute,
+                      height: Math.max((row.end - row.start) * pxPerMinute - 2, 26),
                     }}
                   >
                     <div className="flex items-start gap-1">
@@ -670,8 +667,8 @@ function CalendarPage() {
                 {apptRows.map((row, i) => {
                   const due = needsValidation(row.appt);
                   const isNext = isToday && nextUp?.id === row.appt.id;
-                  const height = Math.max((row.end - row.start) * PX_PER_MIN - 2, 34);
-                  const roomy = height >= 62;
+                  const height = Math.max((row.end - row.start) * pxPerMinute - 2, 38);
+                  const roomy = height >= 64;
                   const name = displayCustomerName(row.appt.customer_name, null, i + 1);
                   return (
                     <div
@@ -681,29 +678,41 @@ function CalendarPage() {
                         "appointment-state surface surface-hover absolute inset-x-1 z-10 overflow-hidden p-0",
                         isNext && "ring-1 ring-foreground/40",
                       )}
-                      style={{ top: (row.start - dayStart) * PX_PER_MIN, height }}
+                      style={{ top: (row.start - dayStart) * pxPerMinute, height }}
                     >
                       <span
                         data-status={due ? "pending" : row.appt.status}
                         aria-hidden
                         className="appointment-rail absolute inset-y-0 left-0 w-1"
                       />
-                      <div className="flex h-full min-w-0 flex-col gap-0.5 py-1 pl-3 pr-1">
+                      <div className="flex h-full min-w-0 flex-col justify-center gap-0.5 py-1 pl-3 pr-1">
                         <div className="flex items-start gap-1">
-                          <p className="min-w-0 flex-1 truncate text-[11px] font-black tabular-nums">
-                            {formatTime(row.appt.starts_at, tz)}
-                            {row.appt.ends_at && ` – ${formatTime(row.appt.ends_at, tz)}`}
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-display text-[14px] font-black leading-tight">
+                              {name}
+                            </p>
+                            <p className="truncate text-[11px] font-bold leading-tight text-muted-foreground">
+                              <span className="tabular-nums">
+                                {formatTime(row.appt.starts_at, tz)}
+                                {row.appt.ends_at && ` – ${formatTime(row.appt.ends_at, tz)}`}
+                              </span>
+                              <span aria-hidden> · </span>
+                              {row.appt.service_name}
+                              {row.appt.price_cents != null && (
+                                <span className="font-black text-foreground"> · {formatPrice(row.appt.price_cents)}</span>
+                              )}
+                            </p>
                             {due && (
-                              <span className="ml-1.5 text-[10px] font-black uppercase tracking-wide text-muted-foreground">
+                              <span className="text-[10px] font-black uppercase tracking-wide text-muted-foreground">
                                 {t("cal.validate.label")}
                               </span>
                             )}
                             {isNext && !due && (
-                              <span className="ml-1.5 text-[10px] font-black uppercase tracking-wide text-muted-foreground">
+                              <span className="text-[10px] font-black uppercase tracking-wide text-muted-foreground">
                                 {t("cal.next.inline")}
                               </span>
                             )}
-                          </p>
+                          </div>
                           <div className="flex shrink-0 items-center gap-0.5">
                             {due ? (
                               <>
@@ -740,23 +749,6 @@ function CalendarPage() {
                           </div>
                         </div>
 
-                        <p className="truncate font-display text-[14px] font-black leading-tight">
-                          {name}
-                        </p>
-
-                        {roomy && (
-                          <div className="flex min-w-0 items-center gap-2">
-                            <p className="min-w-0 flex-1 truncate text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                              {row.appt.service_name}
-                            </p>
-                            {row.appt.price_cents != null && (
-                              <p className="shrink-0 text-[11px] font-black tabular-nums">
-                                {formatPrice(row.appt.price_cents)}
-                              </p>
-                            )}
-                          </div>
-                        )}
-
                         {roomy && row.appt.notes?.trim() && (
                           <Popover>
                             <PopoverTrigger asChild>
@@ -787,7 +779,7 @@ function CalendarPage() {
                     ref={nowRef}
                     aria-hidden
                     className="pointer-events-none absolute inset-x-0 z-20 flex items-center"
-                    style={{ top: (nowMinutes - dayStart) * PX_PER_MIN }}
+                    style={{ top: (nowMinutes - dayStart) * pxPerMinute }}
                   >
                     <span className="-ml-1 size-2 rounded-full bg-foreground" />
                     <span className="h-px flex-1 bg-foreground/70" />
