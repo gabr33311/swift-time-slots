@@ -41,6 +41,8 @@ export function AppointmentActions({
   timezone,
   autoOpen,
   onAutoOpenDone,
+  hideStatusChip,
+  triggerClassName,
 }: {
   id: string;
   status: Status;
@@ -51,6 +53,8 @@ export function AppointmentActions({
   timezone?: string;
   autoOpen?: boolean;
   onAutoOpenDone?: () => void;
+  hideStatusChip?: boolean;
+  triggerClassName?: string;
 }) {
   const { t } = usePrefs();
   const qc = useQueryClient();
@@ -129,18 +133,20 @@ export function AppointmentActions({
 
   return (
     <>
-      <AppointmentStatusIndicator
-        status={status}
-        customerName={customerName}
-        onConfirm={() => setStatus("confirmed")}
-        onCancel={() => setConfirmOpen(true)}
-      />
+      {!hideStatusChip && (
+        <AppointmentStatusIndicator
+          status={status}
+          customerName={customerName}
+          onConfirm={() => setStatus("confirmed")}
+          onCancel={() => setConfirmOpen(true)}
+        />
+      )}
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="size-9 shrink-0 rounded-full hover:bg-transparent"
+            className={cn("size-9 shrink-0 rounded-full hover:bg-transparent", triggerClassName)}
             aria-label={`${t("acts.opts.forLabel")}${customerName}`}
             disabled={busy}
           >
