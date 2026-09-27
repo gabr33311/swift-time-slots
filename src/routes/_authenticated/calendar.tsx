@@ -171,7 +171,7 @@ function CalendarPage() {
   const [newOpen, setNewOpen] = useState(false);
   const [newTime, setNewTime] = useState("09:00");
   const [staffFilter, setStaffFilter] = useState<string>("all");
-  const [staffFilter, setStaffFilter] = useState<string>("all");
+
   // Pinch stretches the grid horizontally only; rows keep their height.
   const [zoom, setZoom] = useState(1);
   const pinchRef = useRef<{ dist: number; zoom: number } | null>(null);
@@ -413,13 +413,19 @@ function CalendarPage() {
   const isEn = t("cal.today") === "Today";
   const locale = isEn ? "en-GB" : "pt-PT";
   const labelDate = new Date(`${date}T12:00:00Z`);
-  const rawLabel = new Intl.DateTimeFormat(locale, {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    timeZone: tz,
-  }).format(labelDate);
+  const wd = new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: tz })
+    .format(labelDate)
+    .replace(".", "")
+    .slice(0, 3);
+  const dayNum = new Intl.DateTimeFormat(locale, { day: "numeric", timeZone: tz }).format(labelDate);
+  const monthShort = new Intl.DateTimeFormat(locale, { month: "short", timeZone: tz })
+    .format(labelDate)
+    .replace(".", "");
+  const dm = `${dayNum} ${monthShort}`;
+
+  const rawLabel = `${wd}, ${dm}`;
   const label = rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
+
 
 
   return (
