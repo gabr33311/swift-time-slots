@@ -686,7 +686,7 @@ function CalendarPage() {
                       style={{
                         top: (row.start - dayStart) * pxPerMinute,
                         height,
-                        // Quase reto: ultra-slight rounding so the corners don't bite.
+                        // Near-square corners: ultra-slight rounding only.
                         borderRadius: "3px",
                       }}
                     >
