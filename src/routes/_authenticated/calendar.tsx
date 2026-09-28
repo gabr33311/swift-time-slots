@@ -667,9 +667,14 @@ function CalendarPage() {
                 {apptRows.map((row, i) => {
                   const due = needsValidation(row.appt);
                   const isNext = isToday && nextUp?.id === row.appt.id;
-                  const height = Math.max((row.end - row.start) * pxPerMinute - 2, 38);
-                  const roomy = height >= 64;
+                  const height = Math.max((row.end - row.start) * pxPerMinute - 2, 34);
+                  const tier = height >= 76 ? "roomy" : height >= 52 ? "regular" : "tiny";
                   const name = displayCustomerName(row.appt.customer_name, null, i + 1);
+                  const timeText = `${formatTime(row.appt.starts_at, tz)}${
+                    row.appt.ends_at ? ` – ${formatTime(row.appt.ends_at, tz)}` : ""
+                  }`;
+                  const priceText =
+                    row.appt.price_cents != null ? formatPrice(row.appt.price_cents) : null;
                   return (
                     <div
                       key={row.appt.id}
@@ -685,90 +690,112 @@ function CalendarPage() {
                         aria-hidden
                         className="appointment-rail absolute inset-y-0 left-0 w-1"
                       />
-                      <div className="flex h-full min-w-0 flex-col justify-center gap-0.5 py-1 pl-3 pr-1">
-                        <div className="flex items-start gap-1">
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate font-display text-[14px] font-black leading-tight">
-                              {name}
-                            </p>
-                            <p className="truncate text-[11px] font-bold leading-tight text-muted-foreground">
-                              <span className="tabular-nums">
-                                {formatTime(row.appt.starts_at, tz)}
-                                {row.appt.ends_at && ` – ${formatTime(row.appt.ends_at, tz)}`}
-                              </span>
-                              <span aria-hidden> · </span>
-                              {row.appt.service_name}
-                              {row.appt.price_cents != null && (
-                                <span className="font-black text-foreground"> · {formatPrice(row.appt.price_cents)}</span>
+                      <div
+                        className={cn(
+                          "flex h-full min-w-0 items-start gap-1 pl-2.5 pr-0.5",
+                          tier === "tiny" ? "py-0.5" : "py-1",
+                        )}
+                      >
+                        <div className="flex h-full min-w-0 flex-1 flex-col justify-center gap-px">
+                          {tier === "tiny" ? (
+                            <>
+                              <p className="truncate font-display text-[12.5px] font-black leading-tight">
+                                <span>{name}</span>
+                                <span className="ml-1 font-bold tabular-nums text-muted-foreground">
+                                  {formatTime(row.appt.starts_at, tz)}
+                                </span>
+                              </p>
+                              <p className="truncate text-[10.5px] font-bold leading-tight text-muted-foreground">
+                                {row.appt.service_name}
+                                {priceText && (
+                                  <span className="font-black text-foreground"> · {priceText}</span>
+                                )}
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="truncate font-display text-[14px] font-black leading-tight">
+                                {name}
+                              </p>
+                              <p className="truncate text-[11px] font-bold tabular-nums leading-tight text-muted-foreground">
+                                {timeText}
+                              </p>
+                              <p className="truncate text-[11px] font-bold leading-tight text-muted-foreground">
+                                {row.appt.service_name}
+                                {priceText && (
+                                  <span className="font-black text-foreground"> · {priceText}</span>
+                                )}
+                              </p>
+                              {tier === "roomy" && (due || isNext) && (
+                                <span className="truncate text-[10px] font-black uppercase tracking-wide text-muted-foreground">
+                                  {due ? t("cal.validate.label") : t("cal.next.inline")}
+                                </span>
                               )}
-                            </p>
-                            {due && (
-                              <span className="text-[10px] font-black uppercase tracking-wide text-muted-foreground">
-                                {t("cal.validate.label")}
-                              </span>
-                            )}
-                            {isNext && !due && (
-                              <span className="text-[10px] font-black uppercase tracking-wide text-muted-foreground">
-                                {t("cal.next.inline")}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex shrink-0 items-center gap-0.5">
-                            {due ? (
-                              <>
-                                <button
-                                  type="button"
-                                  aria-label={t("cal.validate.complete")}
-                                  title={t("cal.validate.complete")}
-                                  onClick={() => validateAppointment(row.appt.id, "completed")}
-                                  className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground"
-                                >
-                                  <Check className="size-3.5" strokeWidth={3} />
-                                </button>
-                                <button
-                                  type="button"
-                                  aria-label={t("cal.validate.noShow")}
-                                  title={t("cal.validate.noShow")}
-                                  onClick={() => validateAppointment(row.appt.id, "no_show")}
-                                  className="flex size-6 items-center justify-center rounded-full border border-border text-muted-foreground"
-                                >
-                                  <UserX className="size-3.5" strokeWidth={2.6} />
-                                </button>
-                              </>
-                            ) : (
-                              <AppointmentActions
-                                id={row.appt.id}
-                                status={row.appt.status}
-                                customerName={name}
-                                customerPhone={row.appt.customer_phone}
-                                startsAt={row.appt.starts_at}
-                                serviceName={row.appt.service_name}
-                                timezone={tz}
-                              />
-                            )}
-                          </div>
+                              {tier === "roomy" && row.appt.notes?.trim() && (
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <button
+                                      type="button"
+                                      aria-label={t("cal.note.label")}
+                                      className="mt-0.5 flex max-w-full items-center gap-1 self-start rounded-full border border-border bg-card px-2 py-0.5 text-[10px] font-semibold text-muted-foreground"
+                                    >
+                                      <StickyNote className="size-3 shrink-0" strokeWidth={2.6} />
+                                      <span className="truncate">{row.appt.notes}</span>
+                                    </button>
+                                  </PopoverTrigger>
+                                  <PopoverContent side="top" align="start" className="w-64 text-sm">
+                                    <p className="mb-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                                      {t("cal.note.label")}
+                                    </p>
+                                    <p className="whitespace-pre-wrap font-medium">{row.appt.notes}</p>
+                                  </PopoverContent>
+                                </Popover>
+                              )}
+                            </>
+                          )}
                         </div>
-
-                        {roomy && row.appt.notes?.trim() && (
-                          <Popover>
-                            <PopoverTrigger asChild>
+                        <div className="flex shrink-0 items-center gap-0.5">
+                          {due ? (
+                            <>
                               <button
                                 type="button"
-                                aria-label={t("cal.note.label")}
-                                className="flex max-w-full items-center gap-1 self-start rounded-full border border-border bg-card px-2 py-0.5 text-[10px] font-semibold text-muted-foreground"
+                                aria-label={t("cal.validate.complete")}
+                                title={t("cal.validate.complete")}
+                                onClick={() => validateAppointment(row.appt.id, "completed")}
+                                className={cn(
+                                  "flex items-center justify-center rounded-full bg-primary text-primary-foreground",
+                                  tier === "tiny" ? "size-5" : "size-6",
+                                )}
                               >
-                                <StickyNote className="size-3 shrink-0" strokeWidth={2.6} />
-                                <span className="truncate">{row.appt.notes}</span>
+                                <Check className="size-3.5" strokeWidth={3} />
                               </button>
-                            </PopoverTrigger>
-                            <PopoverContent side="top" align="start" className="w-64 text-sm">
-                              <p className="mb-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                                {t("cal.note.label")}
-                              </p>
-                              <p className="whitespace-pre-wrap font-medium">{row.appt.notes}</p>
-                            </PopoverContent>
-                          </Popover>
-                        )}
+                              <button
+                                type="button"
+                                aria-label={t("cal.validate.noShow")}
+                                title={t("cal.validate.noShow")}
+                                onClick={() => validateAppointment(row.appt.id, "no_show")}
+                                className={cn(
+                                  "flex items-center justify-center rounded-full border border-border text-muted-foreground",
+                                  tier === "tiny" ? "size-5" : "size-6",
+                                )}
+                              >
+                                <UserX className="size-3.5" strokeWidth={2.6} />
+                              </button>
+                            </>
+                          ) : (
+                            <AppointmentActions
+                              id={row.appt.id}
+                              status={row.appt.status}
+                              customerName={name}
+                              customerPhone={row.appt.customer_phone}
+                              startsAt={row.appt.starts_at}
+                              serviceName={row.appt.service_name}
+                              timezone={tz}
+                              hideStatusChip
+                              triggerClassName={tier === "tiny" ? "size-7" : "size-8"}
+                            />
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
