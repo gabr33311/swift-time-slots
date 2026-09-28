@@ -726,7 +726,7 @@ function CalendarPage() {
                                   <span className="font-black text-foreground"> · {priceText}</span>
                                 )}
                               </p>
-                              {(due || isNext) && (
+                              {tier === "roomy" && (due || isNext) && (
                                 <span className="truncate text-[10px] font-black uppercase tracking-wide text-muted-foreground">
                                   {due ? t("cal.validate.label") : t("cal.next.inline")}
                                 </span>
