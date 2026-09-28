@@ -692,7 +692,7 @@ function CalendarPage() {
                       />
                       <div
                         className={cn(
-                          "flex h-full min-w-0 items-start gap-1 pl-2.5 pr-0.5",
+                          "flex h-full min-w-0 items-center gap-1 pl-2.5 pr-0.5",
                           tier === "tiny" ? "py-0.5" : "py-1",
                         )}
                       >
@@ -719,18 +719,16 @@ function CalendarPage() {
                               </p>
                               <p className="truncate text-[11px] font-bold tabular-nums leading-tight text-muted-foreground">
                                 {timeText}
-                              </p>
-                              <p className="truncate text-[11px] font-bold leading-tight text-muted-foreground">
-                                {row.appt.service_name}
+                                <span className="font-bold"> · {row.appt.service_name}</span>
                                 {priceText && (
                                   <span className="font-black text-foreground"> · {priceText}</span>
                                 )}
+                                {(due || isNext) && (
+                                  <span className="font-black uppercase tracking-wide text-foreground/70">
+                                    {" "}· {due ? t("cal.validate.label") : t("cal.next.inline")}
+                                  </span>
+                                )}
                               </p>
-                              {tier === "roomy" && (due || isNext) && (
-                                <span className="truncate text-[10px] font-black uppercase tracking-wide text-muted-foreground">
-                                  {due ? t("cal.validate.label") : t("cal.next.inline")}
-                                </span>
-                              )}
                               {tier === "roomy" && row.appt.notes?.trim() && (
                                 <Popover>
                                   <PopoverTrigger asChild>
