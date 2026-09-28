@@ -683,7 +683,12 @@ function CalendarPage() {
                         "appointment-state surface surface-hover absolute inset-x-1 z-10 overflow-hidden p-0",
                         isNext && "ring-1 ring-foreground/40",
                       )}
-                      style={{ top: (row.start - dayStart) * pxPerMinute, height }}
+                      style={{
+                        top: (row.start - dayStart) * pxPerMinute,
+                        height,
+                        // Quase reto: ultra-slight rounding so the corners don't bite.
+                        borderRadius: "3px",
+                      }}
                     >
                       <span
                         data-status={due ? "pending" : row.appt.status}
