@@ -160,10 +160,12 @@ export function AppShell({
               alt={`${t("ui.photoOf")} ${business?.name ?? t("ui.photoOfProfile")}`}
               className="size-9 rounded-xl object-cover ring-1 ring-border"
             />
-          ) : (
+          ) : business ? (
             <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
-              {business ? initials(business.name) : "S"}
+              {initials(business.name)}
             </div>
+          ) : (
+            <SycrasLogo className="size-9" />
           )}
           <div className="min-w-0">
             <p className="truncate text-sm font-bold">{business?.name ?? "SYCRAS"}</p>
