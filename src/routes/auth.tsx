@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { CalendarCheck, Loader2, MailCheck, Check, X } from "lucide-react";
 import { usePrefs } from "@/lib/prefs";
+import { SycrasLogo } from "@/components/sycras-logo";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>) => ({
