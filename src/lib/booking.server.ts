@@ -53,12 +53,44 @@ async function admin() {
   return supabaseAdmin;
 }
 
+/** Public read client (anon key + RLS). Works on any host with only the public env vars. */
+async function publicDb() {
+  const { createClient } = await import("@supabase/supabase-js");
+  const url =
+    process.env["SUPABASE_URL"] || process.env["VITE_SUPABASE_URL"] || import.meta.env["VITE_SUPABASE_URL"];
+  const key =
+    process.env["SUPABASE_PUBLISHABLE_KEY"] ||
+    process.env["SUPABASE_ANON_KEY"] ||
+    process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
+    process.env["VITE_SUPABASE_ANON_KEY"] ||
+    import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
+    import.meta.env["VITE_SUPABASE_ANON_KEY"];
+  if (!url || !key) throw new Error("Missing Supabase URL/key for public reads");
+  const opaque = String(key).startsWith("sb_");
+  return createClient<import("@/integrations/supabase/types").Database>(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false, storage: undefined },
+    global: {
+      fetch: (input, init) => {
+        const h = new Headers(init?.headers);
+        if (opaque && h.get("Authorization") === `Bearer ${key}`) h.delete("Authorization");
+        h.set("apikey", key);
+        return fetch(input, { ...init, headers: h });
+      },
+    },
+  });
+}
+
 export async function loadPublicBusiness(slug: string): Promise<{
   business: PublicBusiness;
   services: PublicService[];
   staff: PublicStaff[];
 } | null> {
-  const db = await admin();
+  let db: Awaited<ReturnType<typeof publicDb>>;
+  try {
+    db = (await admin()) as unknown as typeof db;
+  } catch {
+    db = await publicDb();
+  }
   const { data: business } = await db
     .from("businesses")
     .select(BUSINESS_FIELDS)
