@@ -18,6 +18,7 @@ import { usePrefs } from "@/lib/prefs";
 import { ShareSheet } from "@/components/share-sheet";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 import { SubscriptionAlertsPreview } from "@/components/subscription-alerts";
+import { SycrasLogo } from "@/components/sycras-logo";
 
 const NAV = [
   { to: "/calendar", label: "nav.calendar", icon: CalendarDays },
