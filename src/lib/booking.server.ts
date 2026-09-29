@@ -86,11 +86,10 @@ export async function loadPublicBusiness(slug: string): Promise<{
   staff: PublicStaff[];
 } | null> {
   let db: Awaited<ReturnType<typeof publicDb>>;
-  try {
-    db = (await admin()) as unknown as typeof db;
-  } catch {
-    db = await publicDb();
-  }
+  // Service key may be absent on external hosts (e.g. Vercel) — fall back to anon + RLS.
+  db = process.env["SUPABASE_SERVICE_ROLE_KEY"]
+    ? ((await admin()) as unknown as typeof db)
+    : await publicDb();
   const { data: business } = await db
     .from("businesses")
     .select(BUSINESS_FIELDS)
