@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { CalendarCheck, Clock, Share2, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { PrefsToggles } from "@/components/prefs-toggles";
+import { SycrasLogo } from "@/components/sycras-logo";
 import { usePrefs } from "@/lib/prefs";
 import agendaShot from "@/assets/app-agenda.jpg";
 import bookingShot from "@/assets/app-booking.jpg";
@@ -43,7 +44,10 @@ function Landing() {
   return (
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-6">
-        <span className="text-lg font-bold tracking-tight">SYCRAS</span>
+        <span className="flex items-center gap-2">
+          <SycrasLogo className="size-8" />
+          <span className="text-lg font-bold tracking-tight">SYCRAS</span>
+        </span>
         <PrefsToggles />
       </header>
 
