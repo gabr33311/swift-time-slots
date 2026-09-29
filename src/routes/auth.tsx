@@ -236,9 +236,7 @@ function AuthPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
       <Link to="/" className="mb-8 flex items-center gap-2 text-sm font-semibold">
-        <span className="flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-          <CalendarCheck className="size-4" />
-        </span>
+        <SycrasLogo className="size-9" />
         SYCRAS
       </Link>
 
