@@ -143,6 +143,13 @@ function AuthPage() {
           },
         });
         if (error) throw error;
+        // Email already registered (Supabase returns a user with no identities).
+        if (data.user && data.user.identities?.length === 0) {
+          toast.error(t("onb.auth.err.checkData"));
+          setMode("login");
+          return;
+        }
+        // Confirmation not required → session exists, skip the email step.
         if (!data.session) {
           setConfirmSent(parsed.data.email);
           toast.success(t("onb.auth.success.accountCreated"));
@@ -194,8 +201,15 @@ function AuthPage() {
       });
       if (error) throw error;
       toast.success(t("onb.auth.success.resent"));
-    } catch {
-      toast.error(t("onb.auth.err.resend"));
+    } catch (err) {
+      console.error("[auth] reenvio falhou:", err);
+      const msg = err instanceof Error ? err.message : "";
+      const status = (err as { status?: number })?.status;
+      toast.error(
+        status === 429 || /rate|seconds/i.test(msg)
+          ? "Aguarda cerca de 1 minuto antes de pedir outro email."
+          : `${t("onb.auth.err.resend")}${msg ? ` (${msg})` : ""}`,
+      );
     } finally {
       setBusy(false);
     }
