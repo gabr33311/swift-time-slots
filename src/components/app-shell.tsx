@@ -125,7 +125,7 @@ export function AppShell({
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (isSuccess && !business) navigate({ to: "/onboarding", replace: true });
+    if (isSuccess && (!business || business.onboarding_completed === false)) navigate({ to: "/onboarding", replace: true });
   }, [isSuccess, business, navigate]);
 
   async function signOut() {
@@ -148,6 +148,11 @@ export function AppShell({
     if (startY.current - y > 36) setShareOpen(true);
     else if (onPrimaryAction) onPrimaryAction();
     else setNewOpen(true);
+  }
+
+  // Hold the panel until we know the setup is finished (avoids ghost-account flashes).
+  if (!isSuccess || !business || business.onboarding_completed === false) {
+    return <div className="min-h-screen bg-background" />;
   }
 
   return (
