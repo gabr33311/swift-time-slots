@@ -147,6 +147,7 @@ export async function loadPublicBusiness(slug: string): Promise<{
 async function signedImage(path: string | null): Promise<string | null> {
   if (!path) return null;
   if (path.startsWith("http")) return path;
+  if (!process.env["SUPABASE_SERVICE_ROLE_KEY"]) return null;
   const db = await admin();
   const { data } = await db.storage.from("business-logos").createSignedUrl(path, 60 * 60 * 12);
   return data?.signedUrl ?? null;
