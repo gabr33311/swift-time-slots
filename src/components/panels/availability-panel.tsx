@@ -84,7 +84,6 @@ export function AvailabilityPanel() {
           .from("working_hours")
           .select("id, weekday, start_time, end_time")
           .eq("business_id", business!.id)
-          .is("staff_id", null)
           .order("weekday"),
         supabase
           .from("blocked_times")
@@ -93,9 +92,18 @@ export function AvailabilityPanel() {
           .gte("ends_at", new Date().toISOString())
           .order("starts_at"),
       ]);
-      return { hours: hours ?? [], blocks: blocks ?? [] };
+      // Onboarding writes per-staff rows; the panel manages one shared week.
+      const seen = new Set<string>();
+      const unique = (hours ?? []).filter((h) => {
+        const k = `${h.weekday}|${h.start_time}|${h.end_time}`;
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+      return { hours: unique, blocks: blocks ?? [] };
     },
   });
+
 
   useEffect(() => {
     if (!data) return;
