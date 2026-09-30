@@ -84,7 +84,6 @@ export function AvailabilityPanel() {
           .from("working_hours")
           .select("id, weekday, start_time, end_time")
           .eq("business_id", business!.id)
-          .is("staff_id", null)
           .order("weekday"),
         supabase
           .from("blocked_times")
@@ -93,9 +92,18 @@ export function AvailabilityPanel() {
           .gte("ends_at", new Date().toISOString())
           .order("starts_at"),
       ]);
-      return { hours: hours ?? [], blocks: blocks ?? [] };
+      // Onboarding writes per-staff rows; the panel manages one shared week.
+      const seen = new Set<string>();
+      const unique = (hours ?? []).filter((h) => {
+        const k = `${h.weekday}|${h.start_time}|${h.end_time}`;
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+      return { hours: unique, blocks: blocks ?? [] };
     },
   });
+
 
   useEffect(() => {
     if (!data) return;
@@ -108,11 +116,13 @@ export function AvailabilityPanel() {
     if (!business) return;
     setBusy(true);
     try {
-      await supabase
+      // Replace every row (including per-staff rows created at onboarding) so the
+      // saved week is exactly what the owner sees here.
+      const { error: delError } = await supabase
         .from("working_hours")
         .delete()
-        .eq("business_id", business.id)
-        .is("staff_id", null);
+        .eq("business_id", business.id);
+      if (delError) throw delError;
       const rows = days
         .map((d, weekday) => ({ ...d, weekday }))
         .filter((d) => d.enabled && d.start < d.end)
@@ -123,6 +133,7 @@ export function AvailabilityPanel() {
             return [
               {
                 business_id: business.id,
+                staff_id: null,
                 weekday: d.weekday,
                 start_time: d.start,
                 end_time: d.end,
@@ -132,29 +143,34 @@ export function AvailabilityPanel() {
           return [
             {
               business_id: business.id,
+              staff_id: null,
               weekday: d.weekday,
               start_time: d.start,
               end_time: d.lunchStart,
             },
             {
               business_id: business.id,
+              staff_id: null,
               weekday: d.weekday,
               start_time: d.lunchEnd,
               end_time: d.end,
             },
           ];
         });
-      if (rows.length) await supabase.from("working_hours").insert(rows);
+      if (rows.length) {
+        const { error: insError } = await supabase.from("working_hours").insert(rows);
+        if (insError) throw insError;
+      }
       toast.success(t("pf.av.saved"));
-      qc.invalidateQueries({ queryKey: ["availability"] });
-    } catch {
+      await qc.invalidateQueries({ queryKey: ["availability"] });
+    } catch (err) {
+      console.error("[availability] save failed", err);
       toast.error(t("pf.av.err.save"));
     } finally {
       setBusy(false);
     }
   }
 
-  useAutoSaveOnExit(dirty, saveHours);
 
   async function addBlock() {
     if (!business) return;
