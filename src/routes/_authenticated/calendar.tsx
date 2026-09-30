@@ -792,7 +792,7 @@ function CalendarPage() {
                               <span
                                 className={cn(
                                   "hidden items-center gap-1 text-[11px] font-black uppercase tracking-wide min-[380px]:flex",
-                                  row.appt.status === "completed" ? "text-success" : "text-destructive",
+                                  row.appt.status === "completed" ? "status-done-text" : "text-destructive",
                                 )}
                               >
                                 {row.appt.status === "completed" ? <Check className="size-3.5" strokeWidth={3} /> : <UserX className="size-3.5" strokeWidth={2.8} />}
