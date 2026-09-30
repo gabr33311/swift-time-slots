@@ -19,10 +19,10 @@ export function ContactCustomer({
   compact?: boolean;
   className?: string;
 }) {
-  const { lang } = usePrefs() as { lang?: string };
+  const { lang } = usePrefs();
   const en = lang === "en";
   if (!phone) return null;
-  const normalized = normalizePhonePt(phone) ?? phone;
+  const normalized = normalizePhonePt(phone) || phone;
   const digits = normalized.replace(/\D/g, "");
   const label = en ? "Contact" : "Contactar";
 

@@ -14,6 +14,7 @@ import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 import { Check, ChevronLeft, ChevronRight, Copy, Lock, Moon, Plus, RotateCcw, StickyNote, Unlock, UserX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
+import { ContactCustomer } from "@/components/contact-customer";
 import { usePrefs } from "@/lib/prefs";
 import { formatTime } from "@/lib/format";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -757,46 +758,63 @@ function CalendarPage() {
                             </>
                           )}
                         </div>
-                        <div className="flex shrink-0 items-center gap-0.5">
+                        <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
                           {due ? (
                             <>
                               <button
                                 type="button"
                                 aria-label={t("cal.validate.complete")}
-                                title={t("cal.validate.complete")}
                                 onClick={() => validateAppointment(row.appt.id, "completed")}
                                 className={cn(
-                                  "flex items-center justify-center rounded-full bg-primary text-primary-foreground",
-                                  tier === "tiny" ? "size-5" : "size-6",
+                                  "flex items-center justify-center gap-1 rounded-md bg-primary px-2.5 font-black text-primary-foreground shadow-sm active:scale-95 sm:px-4",
+                                  tier === "tiny" ? "h-7 text-xs" : "h-10 text-sm",
                                 )}
                               >
-                                <Check className="size-3.5" strokeWidth={3} />
+                                <Check className="size-4" strokeWidth={3} />
+                                <span className="hidden min-[360px]:inline">{t("cal.validate.complete")}</span>
                               </button>
                               <button
                                 type="button"
                                 aria-label={t("cal.validate.noShow")}
-                                title={t("cal.validate.noShow")}
                                 onClick={() => validateAppointment(row.appt.id, "no_show")}
                                 className={cn(
-                                  "flex items-center justify-center rounded-full border border-border text-muted-foreground",
-                                  tier === "tiny" ? "size-5" : "size-6",
+                                  "flex items-center justify-center gap-1 rounded-md border-2 border-destructive/60 bg-card px-2.5 font-black text-destructive active:scale-95 sm:px-4",
+                                  tier === "tiny" ? "h-7 text-xs" : "h-10 text-sm",
                                 )}
                               >
-                                <UserX className="size-3.5" strokeWidth={2.6} />
+                                <UserX className="size-4" strokeWidth={2.8} />
+                                <span className="hidden min-[360px]:inline">{t("cal.validate.noShow")}</span>
                               </button>
+                              <ContactCustomer phone={row.appt.customer_phone} compact />
+                            </>
+                          ) : row.appt.status === "completed" || row.appt.status === "no_show" ? (
+                            <>
+                              <span
+                                className={cn(
+                                  "hidden items-center gap-1 text-[11px] font-black uppercase tracking-wide min-[380px]:flex",
+                                  row.appt.status === "completed" ? "status-done-text" : "text-destructive",
+                                )}
+                              >
+                                {row.appt.status === "completed" ? <Check className="size-3.5" strokeWidth={3} /> : <UserX className="size-3.5" strokeWidth={2.8} />}
+                                {row.appt.status === "completed" ? t("cal.validate.complete") : t("cal.validate.noShow")}
+                              </span>
+                              <ContactCustomer phone={row.appt.customer_phone} compact={tier === "tiny"} />
                             </>
                           ) : (
-                            <AppointmentActions
-                              id={row.appt.id}
-                              status={row.appt.status}
-                              customerName={name}
-                              customerPhone={row.appt.customer_phone}
-                              startsAt={row.appt.starts_at}
-                              serviceName={row.appt.service_name}
-                              timezone={tz}
-                              hideStatusChip
-                              triggerClassName={tier === "tiny" ? "size-7" : "size-8"}
-                            />
+                            <>
+                              <ContactCustomer phone={row.appt.customer_phone} compact />
+                              <AppointmentActions
+                                id={row.appt.id}
+                                status={row.appt.status}
+                                customerName={name}
+                                customerPhone={row.appt.customer_phone}
+                                startsAt={row.appt.starts_at}
+                                serviceName={row.appt.service_name}
+                                timezone={tz}
+                                hideStatusChip
+                                triggerClassName={tier === "tiny" ? "size-7" : "size-8"}
+                              />
+                            </>
                           )}
                         </div>
                       </div>
