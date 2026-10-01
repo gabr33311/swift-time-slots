@@ -617,7 +617,6 @@ function BookingRules() {
     qc.invalidateQueries({ queryKey: ["my-business"] });
   }
 
-  useAutoSaveOnExit(rulesDirty, save);
 
   return (
     <section className="surface space-y-4 p-5">
