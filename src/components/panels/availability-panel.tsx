@@ -360,34 +360,37 @@ export function AvailabilityPanel() {
           <section className="surface p-4">
             <h2 className="text-base font-semibold">{t("pf.av.blocks")}</h2>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              <div className="space-y-1.5">
+              <div className="min-w-0 space-y-1.5">
                 <Label htmlFor="bf" className="font-semibold">
                   {t("pf.av.start")}
                 </Label>
                 <Input
                   id="bf"
                   type="datetime-local"
+                  className="w-full min-w-0"
                   value={blockFrom}
                   onChange={(e) => setBlockFrom(e.target.value)}
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="min-w-0 space-y-1.5">
                 <Label htmlFor="bt" className="font-semibold">
                   {t("pf.av.end")}
                 </Label>
                 <Input
                   id="bt"
                   type="datetime-local"
+                  className="w-full min-w-0"
                   value={blockTo}
                   onChange={(e) => setBlockTo(e.target.value)}
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="min-w-0 space-y-1.5">
                 <Label htmlFor="br" className="font-semibold">
                   {t("pf.av.reason")}
                 </Label>
                 <Input
                   id="br"
+                  className="w-full min-w-0"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   maxLength={120}
@@ -395,6 +398,7 @@ export function AvailabilityPanel() {
                 />
               </div>
             </div>
+
             <Button variant="outline" className="mt-3" onClick={addBlock}>
               {t("pf.av.addBlock")}
             </Button>
@@ -406,7 +410,7 @@ export function AvailabilityPanel() {
                     key={b.id}
                     className="flex items-center gap-3 rounded-lg border border-border p-3 text-sm"
                   >
-                    <span className="flex-1">
+                    <span className="min-w-0 flex-1 break-words">
                       {formatDateShort(b.starts_at, business!.timezone)} —{" "}
                       {formatDateShort(b.ends_at, business!.timezone)}
                       {b.reason ? ` · ${b.reason}` : ""}
