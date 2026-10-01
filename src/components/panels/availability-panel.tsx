@@ -12,7 +12,7 @@ import { PublicPagePanel } from "@/components/panels/public-page-panel";
 import { weekdays, formatDateShort } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
 import { Trash2, MessageCircle, Mail, Coffee } from "lucide-react";
-import { useAutoSaveOnExit } from "@/hooks/use-autosave";
+import { SaveBar } from "@/components/save-bar";
 import { setAppointmentStatus } from "@/lib/appointment-status";
 import { normalizePhonePt } from "@/lib/phone";
 
@@ -248,7 +248,7 @@ export function AvailabilityPanel() {
 
           <div className="mt-3 divide-y divide-border">
             {days.map((d, i) => (
-              <div key={i} className="py-2.5">
+              <div key={i} className="py-3">
                 <div className="flex items-center gap-2.5">
                   <Switch
                     checked={d.enabled}
@@ -258,121 +258,139 @@ export function AvailabilityPanel() {
                     }
                     aria-label={dayNames[i]}
                   />
-                  <span className="w-16 shrink-0 truncate text-sm font-bold">
-                    {dayNames[i]?.slice(0, 3)}
-                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm font-bold">{dayNames[i]}</span>
                   {d.enabled ? (
-                    <>
-                      <Input
-                        type="time"
-                        value={d.start}
-                        onChange={(e) =>
-                          setDays((prev) =>
-                            prev.map((x, j) => (j === i ? { ...x, start: e.target.value } : x)),
-                          )
-                        }
-                        className="h-9 w-[86px] px-2 text-sm"
-                      />
-                      <span className="text-xs text-muted-foreground">{t("pf.av.to")}</span>
-                      <Input
-                        type="time"
-                        value={d.end}
-                        onChange={(e) =>
-                          setDays((prev) =>
-                            prev.map((x, j) => (j === i ? { ...x, end: e.target.value } : x)),
-                          )
-                        }
-                        className="h-9 w-[86px] px-2 text-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setDays((prev) =>
-                            prev.map((x, j) => (j === i ? { ...x, lunch: !x.lunch } : x)),
-                          )
-                        }
-                        aria-label={t("pf.av.lunch")}
-                        className={
-                          d.lunch
-                            ? "ml-auto flex size-9 items-center justify-center rounded-xl border border-border bg-accent text-accent-foreground"
-                            : "ml-auto flex size-9 items-center justify-center rounded-xl border border-border text-muted-foreground transition-colors hover:text-foreground"
-                        }
-                      >
-                        <Coffee className="size-4" strokeWidth={2.5} />
-                      </button>
-                    </>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDays((prev) =>
+                          prev.map((x, j) => (j === i ? { ...x, lunch: !x.lunch } : x)),
+                        )
+                      }
+                      aria-label={t("pf.av.lunch")}
+                      className={
+                        d.lunch
+                          ? "flex size-9 shrink-0 items-center justify-center rounded-xl border border-border bg-accent text-accent-foreground"
+                          : "flex size-9 shrink-0 items-center justify-center rounded-xl border border-border text-muted-foreground transition-colors hover:text-foreground"
+                      }
+                    >
+                      <Coffee className="size-4" strokeWidth={2.5} />
+                    </button>
                   ) : (
-                    <span className="text-sm text-muted-foreground">{t("pf.av.closed")}</span>
+                    <span className="shrink-0 text-sm text-muted-foreground">
+                      {t("pf.av.closed")}
+                    </span>
                   )}
                 </div>
 
+                {d.enabled && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <Input
+                      type="time"
+                      value={d.start}
+                      onChange={(e) =>
+                        setDays((prev) =>
+                          prev.map((x, j) => (j === i ? { ...x, start: e.target.value } : x)),
+                        )
+                      }
+                      className="h-9 w-full min-w-0 flex-1 px-2 text-sm"
+                    />
+                    <span className="shrink-0 text-xs text-muted-foreground">{t("pf.av.to")}</span>
+                    <Input
+                      type="time"
+                      value={d.end}
+                      onChange={(e) =>
+                        setDays((prev) =>
+                          prev.map((x, j) => (j === i ? { ...x, end: e.target.value } : x)),
+                        )
+                      }
+                      className="h-9 w-full min-w-0 flex-1 px-2 text-sm"
+                    />
+                  </div>
+                )}
+
                 {d.enabled && d.lunch && (
-                  <div className="mt-2 flex items-center gap-2.5 pl-[74px]">
-                    <span className="text-xs font-semibold text-muted-foreground">
+                  <div className="mt-2 rounded-xl bg-muted/40 p-2">
+                    <span className="mb-1.5 block text-xs font-semibold text-muted-foreground">
                       {t("pf.av.lunch")}
                     </span>
-                    <Input
-                      type="time"
-                      value={d.lunchStart}
-                      onChange={(e) =>
-                        setDays((prev) =>
-                          prev.map((x, j) => (j === i ? { ...x, lunchStart: e.target.value } : x)),
-                        )
-                      }
-                      className="h-9 w-[86px] px-2 text-sm"
-                    />
-                    <span className="text-xs text-muted-foreground">{t("pf.av.to")}</span>
-                    <Input
-                      type="time"
-                      value={d.lunchEnd}
-                      onChange={(e) =>
-                        setDays((prev) =>
-                          prev.map((x, j) => (j === i ? { ...x, lunchEnd: e.target.value } : x)),
-                        )
-                      }
-                      className="h-9 w-[86px] px-2 text-sm"
-                    />
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="time"
+                        value={d.lunchStart}
+                        onChange={(e) =>
+                          setDays((prev) =>
+                            prev.map((x, j) => (j === i ? { ...x, lunchStart: e.target.value } : x)),
+                          )
+                        }
+                        className="h-9 w-full min-w-0 flex-1 bg-background px-2 text-sm"
+                      />
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {t("pf.av.to")}
+                      </span>
+                      <Input
+                        type="time"
+                        value={d.lunchEnd}
+                        onChange={(e) =>
+                          setDays((prev) =>
+                            prev.map((x, j) => (j === i ? { ...x, lunchEnd: e.target.value } : x)),
+                          )
+                        }
+                        className="h-9 w-full min-w-0 flex-1 bg-background px-2 text-sm"
+                      />
+                    </div>
                   </div>
                 )}
               </div>
             ))}
           </div>
+
+          <SaveBar
+            dirty={dirty}
+            busy={busy}
+            onSave={() => void saveHours()}
+            onCancel={() => data && setDays(fromRows(data.hours))}
+          />
         </section>
       )}
+
 
       {tab === "off" && (
         <>
           <section className="surface p-4">
             <h2 className="text-base font-semibold">{t("pf.av.blocks")}</h2>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              <div className="space-y-1.5">
+              <div className="min-w-0 space-y-1.5">
                 <Label htmlFor="bf" className="font-semibold">
                   {t("pf.av.start")}
                 </Label>
                 <Input
                   id="bf"
                   type="datetime-local"
+                  className="w-full min-w-0"
                   value={blockFrom}
                   onChange={(e) => setBlockFrom(e.target.value)}
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="min-w-0 space-y-1.5">
                 <Label htmlFor="bt" className="font-semibold">
                   {t("pf.av.end")}
                 </Label>
                 <Input
                   id="bt"
                   type="datetime-local"
+                  className="w-full min-w-0"
                   value={blockTo}
                   onChange={(e) => setBlockTo(e.target.value)}
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="min-w-0 space-y-1.5">
                 <Label htmlFor="br" className="font-semibold">
                   {t("pf.av.reason")}
                 </Label>
                 <Input
                   id="br"
+                  className="w-full min-w-0"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   maxLength={120}
@@ -380,6 +398,7 @@ export function AvailabilityPanel() {
                 />
               </div>
             </div>
+
             <Button variant="outline" className="mt-3" onClick={addBlock}>
               {t("pf.av.addBlock")}
             </Button>
@@ -391,7 +410,7 @@ export function AvailabilityPanel() {
                     key={b.id}
                     className="flex items-center gap-3 rounded-lg border border-border p-3 text-sm"
                   >
-                    <span className="flex-1">
+                    <span className="min-w-0 flex-1 break-words">
                       {formatDateShort(b.starts_at, business!.timezone)} —{" "}
                       {formatDateShort(b.ends_at, business!.timezone)}
                       {b.reason ? ` · ${b.reason}` : ""}
@@ -542,7 +561,15 @@ function BookingRules() {
   const [cancellation, setCancellation] = useState("24");
   const [interval, setIntervalMin] = useState("15");
   const [horizon, setHorizon] = useState("2");
-  const [, setBusy] = useState(false);
+  const [rulesBusy, setBusy] = useState(false);
+
+  function resetRules() {
+    if (!business) return;
+    setCancellation(String(business.cancellation_hours));
+    setIntervalMin(String(business.slot_interval_minutes));
+    setHorizon(String(business.booking_horizon_months ?? 2));
+  }
+
 
   useEffect(() => {
     if (!business) return;
@@ -594,7 +621,6 @@ function BookingRules() {
     qc.invalidateQueries({ queryKey: ["my-business"] });
   }
 
-  useAutoSaveOnExit(rulesDirty, save);
 
   return (
     <section className="surface space-y-4 p-5">
@@ -635,6 +661,14 @@ function BookingRules() {
           <p className="text-xs text-muted-foreground">{t("pf.av.horizon.hint")}</p>
         </div>
       </div>
+
+      <SaveBar
+        dirty={rulesDirty}
+        busy={rulesBusy}
+        onSave={() => void save()}
+        onCancel={resetRules}
+      />
     </section>
+
   );
 }

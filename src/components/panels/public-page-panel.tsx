@@ -9,14 +9,14 @@ import { Switch } from "@/components/ui/switch";
 import { useMyBusiness } from "@/hooks/use-business";
 import { usePrefs } from "@/lib/prefs";
 import { ArrowUp, ArrowDown } from "lucide-react";
-import { useAutoSaveOnExit } from "@/hooks/use-autosave";
+import { SaveBar } from "@/components/save-bar";
 
 export function PublicPagePanel() {
   const { business } = useMyBusiness();
   const { t } = usePrefs();
   const qc = useQueryClient();
   const edit = true;
-  const [, setBusy] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [description, setDescription] = useState("");
   const [showTeam, setShowTeam] = useState(true);
   const [showContacts, setShowContacts] = useState(true);
@@ -82,7 +82,6 @@ export function PublicPagePanel() {
       showTeam !== business.show_team ||
       showContacts !== business.show_contacts);
 
-  useAutoSaveOnExit(dirty, save);
 
   return (
     <div className="space-y-4">
@@ -141,7 +140,19 @@ export function PublicPagePanel() {
         </div>
       </section>
 
+      <SaveBar
+        dirty={dirty}
+        busy={busy}
+        onSave={() => void save()}
+        onCancel={() => {
+          if (!business) return;
+          setDescription(business.description ?? "");
+          setShowTeam(business.show_team);
+          setShowContacts(business.show_contacts);
+        }}
+      />
     </div>
+
   );
 }
 

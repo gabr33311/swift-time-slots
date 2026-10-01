@@ -12,7 +12,7 @@ import { usePrefs } from "@/lib/prefs";
 import { useLogoUrl } from "@/hooks/use-logo";
 import { initials } from "@/lib/format";
 import { ImagePlus } from "lucide-react";
-import { useAutoSaveOnExit } from "@/hooks/use-autosave";
+import { SaveBar } from "@/components/save-bar";
 
 const schema = z.object({
   name: z.string().trim().min(2, "pf.biz.err.name").max(80),
@@ -138,7 +138,6 @@ export function BusinessPanel() {
 
   const dirty = !!business && JSON.stringify(form) !== JSON.stringify(baseline(business));
 
-  useAutoSaveOnExit(dirty, save);
 
   return (
     <section className="surface space-y-5 p-5">
@@ -245,6 +244,13 @@ export function BusinessPanel() {
         </div>
       </div>
 
+      <SaveBar
+        dirty={dirty}
+        busy={busy}
+        onSave={() => void save()}
+        onCancel={() => business && setForm(baseline(business))}
+      />
     </section>
+
   );
 }
