@@ -657,6 +657,14 @@ function BookingRules() {
           <p className="text-xs text-muted-foreground">{t("pf.av.horizon.hint")}</p>
         </div>
       </div>
+
+      <SaveBar
+        dirty={rulesDirty}
+        busy={rulesBusy}
+        onSave={() => void save()}
+        onCancel={resetRules}
+      />
     </section>
+
   );
 }
