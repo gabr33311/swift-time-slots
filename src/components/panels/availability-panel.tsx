@@ -557,7 +557,15 @@ function BookingRules() {
   const [cancellation, setCancellation] = useState("24");
   const [interval, setIntervalMin] = useState("15");
   const [horizon, setHorizon] = useState("2");
-  const [, setBusy] = useState(false);
+  const [rulesBusy, setBusy] = useState(false);
+
+  function resetRules() {
+    if (!business) return;
+    setCancellation(String(business.cancellation_hours));
+    setIntervalMin(String(business.slot_interval_minutes));
+    setHorizon(String(business.booking_horizon_months ?? 2));
+  }
+
 
   useEffect(() => {
     if (!business) return;
