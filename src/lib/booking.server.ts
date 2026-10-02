@@ -242,14 +242,36 @@ export async function computeSlots(params: {
   const dayEnd = zonedToUtc(params.date, 24 * 60, tz);
 
   // Privacy-safe RPC: only occupied intervals, no names/reasons.
-  const { data: busyRows, error: busyErr } = await db.rpc("public_busy_intervals", {
+  let busyRows: { staff_id: string | null; starts_at: string; ends_at: string }[] = [];
+  const { data: rpcRows, error: busyErr } = await db.rpc("public_busy_intervals", {
     _business_id: business.id,
     _from: dayStart.toISOString(),
     _to: dayEnd.toISOString(),
   });
-  if (busyErr) throw new Error(`busy intervals: ${busyErr.message}`);
+  if (!busyErr) {
+    busyRows = (rpcRows ?? []) as typeof busyRows;
+  } else {
+    // Fallback when the function isn't deployed on this database: read only times, never identities.
+    console.warn("public_busy_intervals unavailable, using fallback:", busyErr.message);
+    const [{ data: appts }, { data: blocks }] = await Promise.all([
+      db
+        .from("appointments")
+        .select("staff_id, starts_at, ends_at")
+        .eq("business_id", business.id)
+        .in("status", ["pending", "confirmed"])
+        .lt("starts_at", dayEnd.toISOString())
+        .gt("ends_at", dayStart.toISOString()),
+      db
+        .from("blocked_times")
+        .select("staff_id, starts_at, ends_at")
+        .eq("business_id", business.id)
+        .lt("starts_at", dayEnd.toISOString())
+        .gt("ends_at", dayStart.toISOString()),
+    ]);
+    busyRows = [...(appts ?? []), ...(blocks ?? [])] as typeof busyRows;
+  }
 
-  const busy = (busyRows ?? []).map((b) => ({
+  const busy = busyRows.map((b) => ({
     staffId: b.staff_id as string | null,
     from: new Date(b.starts_at).getTime(),
     to: new Date(b.ends_at).getTime(),
