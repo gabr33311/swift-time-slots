@@ -20,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { formatDuration, formatPrice, formatDateLong, initials } from "@/lib/format";
-import { addDays, todayIn, zonedToUtc, timeToMinutes } from "@/lib/time";
+import { addDays, todayIn, zonedToUtc, timeToMinutes, weekdayOf } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
