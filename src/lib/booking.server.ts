@@ -84,6 +84,8 @@ export async function loadPublicBusiness(slug: string): Promise<{
   business: PublicBusiness;
   services: PublicService[];
   staff: PublicStaff[];
+  openWeekdays: number[];
+  blocks: { from: string; to: string }[];
 } | null> {
   let db: Awaited<ReturnType<typeof publicDb>>;
   // Service key may be absent on external hosts (e.g. Vercel) — fall back to anon + RLS.
@@ -124,6 +126,21 @@ export async function loadPublicBusiness(slug: string): Promise<{
     signedImage(business.cover_url),
   ]);
 
+  // Calendar availability: open weekdays + business-wide blocks (vacations).
+  const horizonEnd = new Date(Date.now() + ((business.booking_horizon_months ?? 2) + 1) * 31 * 86400000);
+  const [{ data: hours }, { data: busyRows }] = await Promise.all([
+    db.from("working_hours").select("weekday").eq("business_id", business.id),
+    db.rpc("public_busy_intervals", {
+      _business_id: business.id,
+      _from: new Date().toISOString(),
+      _to: horizonEnd.toISOString(),
+    }),
+  ]);
+  const openWeekdays = [...new Set((hours ?? []).map((h) => h.weekday as number))];
+  const blocks = (busyRows ?? [])
+    .filter((b) => b.kind === "block" && b.staff_id === null)
+    .map((b) => ({ from: b.starts_at as string, to: b.ends_at as string }));
+
   // Contacts only leave the server when the owner enables "show contacts".
   const showContacts = business.show_contacts === true;
 
@@ -140,6 +157,8 @@ export async function loadPublicBusiness(slug: string): Promise<{
       ...s,
       service_ids: (links ?? []).filter((l) => l.staff_id === s.id).map((l) => l.service_id),
     })),
+    openWeekdays,
+    blocks,
   };
 }
 
@@ -222,25 +241,15 @@ export async function computeSlots(params: {
   const dayStart = zonedToUtc(params.date, 0, tz);
   const dayEnd = zonedToUtc(params.date, 24 * 60, tz);
 
-  const [{ data: appointments, error: apptErr }, { data: blocks, error: blockErr }] = await Promise.all([
-    db
-      .from("appointments")
-      .select("staff_id, starts_at, ends_at")
-      .eq("business_id", business.id)
-      .in("status", ["pending", "confirmed"])
-      .lt("starts_at", dayEnd.toISOString())
-      .gt("ends_at", dayStart.toISOString()),
-    db
-      .from("blocked_times")
-      .select("staff_id, starts_at, ends_at")
-      .eq("business_id", business.id)
-      .lt("starts_at", dayEnd.toISOString())
-      .gt("ends_at", dayStart.toISOString()),
-  ]);
-  if (apptErr) console.error("[computeSlots] appointments read failed", apptErr.message);
-  if (blockErr) console.error("[computeSlots] blocked_times read failed", blockErr.message);
+  // Privacy-safe RPC: only occupied intervals, no names/reasons.
+  const { data: busyRows, error: busyErr } = await db.rpc("public_busy_intervals", {
+    _business_id: business.id,
+    _from: dayStart.toISOString(),
+    _to: dayEnd.toISOString(),
+  });
+  if (busyErr) throw new Error(`busy intervals: ${busyErr.message}`);
 
-  const busy = [...(appointments ?? []), ...(blocks ?? [])].map((b) => ({
+  const busy = (busyRows ?? []).map((b) => ({
     staffId: b.staff_id as string | null,
     from: new Date(b.starts_at).getTime(),
     to: new Date(b.ends_at).getTime(),
