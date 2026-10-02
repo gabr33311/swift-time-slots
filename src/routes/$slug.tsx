@@ -116,7 +116,14 @@ function BookPage() {
   formNameError = t("bk.validation.name");
   formPhoneError = t("bk.validation.phone");
   formEmailError = t("bk.validation.email");
-  const { business, services, staff } = Route.useLoaderData();
+  const { business, services, staff, openWeekdays, blocks } = Route.useLoaderData();
+  // A day is closed if it is a weekly day off or fully covered by a business-wide block (vacation).
+  const isClosedDay = (d: string) => {
+    if (!openWeekdays.includes(weekdayOf(d))) return true;
+    const start = zonedToUtc(d, 0, business.timezone).getTime();
+    const end = zonedToUtc(d, 24 * 60, business.timezone).getTime();
+    return blocks.some((b) => new Date(b.from).getTime() <= start && new Date(b.to).getTime() >= end);
+  };
   const { slug } = Route.useParams();
   const { user, loading: authLoading } = useAuth();
   const [serviceId, setServiceId] = useState<string | null>(null);
@@ -521,7 +528,7 @@ function BookPage() {
             <div className="mt-1 grid grid-cols-7 gap-1">
               {monthDays.map((d, i) => {
                 if (!d) return <span key={`e${i}`} />;
-                const past = d < today || d > maxDate;
+                const past = d < today || d > maxDate || isClosedDay(d);
                 return (
                   <button
                     key={d}
