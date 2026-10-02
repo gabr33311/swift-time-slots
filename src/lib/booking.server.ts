@@ -222,7 +222,7 @@ export async function computeSlots(params: {
   const dayStart = zonedToUtc(params.date, 0, tz);
   const dayEnd = zonedToUtc(params.date, 24 * 60, tz);
 
-  const [{ data: appointments }, { data: blocks }] = await Promise.all([
+  const [{ data: appointments, error: apptErr }, { data: blocks, error: blockErr }] = await Promise.all([
     db
       .from("appointments")
       .select("staff_id, starts_at, ends_at")
@@ -237,6 +237,8 @@ export async function computeSlots(params: {
       .lt("starts_at", dayEnd.toISOString())
       .gt("ends_at", dayStart.toISOString()),
   ]);
+  if (apptErr) console.error("[computeSlots] appointments read failed", apptErr.message);
+  if (blockErr) console.error("[computeSlots] blocked_times read failed", blockErr.message);
 
   const busy = [...(appointments ?? []), ...(blocks ?? [])].map((b) => ({
     staffId: b.staff_id as string | null,

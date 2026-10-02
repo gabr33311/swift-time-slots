@@ -383,23 +383,19 @@ function BookPage() {
         )}
       </header>
 
-      <div className="mb-5 flex items-center justify-between gap-3">
-        {safeIdx > 0 ? (
+      {safeIdx > 0 && (
+        <div className="mt-6 mb-2">
           <button
             type="button"
             onClick={goBack}
-            className="inline-flex items-center gap-1.5 text-sm font-bold text-muted-foreground hover:text-foreground"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm font-bold text-muted-foreground hover:bg-accent hover:text-foreground"
           >
             <ArrowLeft className="size-4" /> {t("bk.back")}
           </button>
-        ) : (
-          <span />
-        )}
-      </div>
+        </div>
+      )}
 
-
-
-      <div key={currentStep} className="animate-enter flex flex-1 flex-col justify-center py-6">
+      <div key={currentStep} className="animate-enter flex flex-col py-4">
       {currentStep === "staff" && (
         <Section step={stepNumber} total={stepKeys.length} title={t("bk.step.staff")}>
           <div className="grid gap-2">
@@ -564,6 +560,17 @@ function BookPage() {
               {Array.from({ length: 8 }).map((_, i) => (
                 <Skeleton key={i} className="h-10 rounded-lg" />
               ))}
+            </div>
+          ) : slotsError ? (
+            <div className="surface flex flex-col items-center gap-3 p-8 text-center">
+              <p className="text-sm font-bold">Não foi possível carregar os horários.</p>
+              <button
+                type="button"
+                onClick={() => void refetchSlots()}
+                className="rounded-full border border-border px-4 py-2 text-sm font-bold hover:bg-accent"
+              >
+                Tentar novamente
+              </button>
             </div>
           ) : (slots?.length ?? 0) === 0 ? (
             <div className="surface flex flex-col items-center gap-2 p-8 text-center">
