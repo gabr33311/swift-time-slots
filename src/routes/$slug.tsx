@@ -211,13 +211,20 @@ function BookPage() {
     setMonth(`${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, "0")}`);
   }
 
-  const { data: slots, isFetching } = useQuery({
+  const { data: slots, isFetching, isError: slotsError, refetch: refetchSlots } = useQuery({
     queryKey: ["slots", business.id, serviceId, staffId, date],
     enabled: !!serviceId,
-    queryFn: async () =>
-      await getAvailableSlots({
-        data: { businessId: business.id, serviceId: serviceId!, staffId, date },
-      }),
+    retry: 1,
+    queryFn: async () => {
+      try {
+        return await getAvailableSlots({
+          data: { businessId: business.id, serviceId: serviceId!, staffId, date },
+        });
+      } catch (e) {
+        console.error("[slots] failed to load availability", e);
+        throw e;
+      }
+    },
   });
 
 

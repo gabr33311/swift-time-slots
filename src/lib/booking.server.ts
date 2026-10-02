@@ -164,7 +164,11 @@ export async function computeSlots(params: {
   staffId: string | null;
   date: string;
 }): Promise<SlotOption[]> {
-  const db = await admin();
+  // Service key may be absent on external hosts (e.g. Vercel) — fall back to anon + RLS.
+  type Db = Awaited<ReturnType<typeof publicDb>>;
+  const db: Db = process.env["SUPABASE_SERVICE_ROLE_KEY"]
+    ? ((await admin()) as unknown as Db)
+    : await publicDb();
   const { data: business } = await db
     .from("businesses")
     .select(
