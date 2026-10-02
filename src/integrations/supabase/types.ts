@@ -949,6 +949,15 @@ export type Database = {
         }
         Returns: string
       }
+      public_busy_intervals: {
+        Args: { _business_id: string; _from: string; _to: string }
+        Returns: {
+          ends_at: string
+          kind: string
+          staff_id: string
+          starts_at: string
+        }[]
+      }
       slug_available: { Args: { _slug: string }; Returns: boolean }
     }
     Enums: {
