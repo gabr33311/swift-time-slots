@@ -79,11 +79,10 @@ export const getAvailableSlots = createServerFn({ method: "GET" })
 export const createPublicBooking = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => bookingSchema.parse(d))
   .handler(async ({ data }) => {
-    const { computeSlots, makeToken, hashIp, rateLimitExceeded, logSecurityEvent, userIdFromAuthHeader } =
+    const { computeSlots, makeToken, hashIp, rateLimitExceeded, logSecurityEvent } =
       await import("./booking.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const userId = await userIdFromAuthHeader(getRequestHeader("authorization"));
     const ipHash = await hashIp(clientIp());
 
     if (await rateLimitExceeded(ipHash, data.phone)) {
@@ -136,7 +135,12 @@ export const createPublicBooking = createServerFn({ method: "POST" })
       };
     }
     if (existing) {
+      // Same phone = same person: keep one record and refresh name/email.
       customerId = existing.id;
+      await supabaseAdmin
+        .from("customers")
+        .update({ name: data.name, email: data.email || null })
+        .eq("id", existing.id);
     } else {
       const { data: created } = await supabaseAdmin
         .from("customers")
@@ -160,7 +164,6 @@ export const createPublicBooking = createServerFn({ method: "POST" })
         service_id: service.id,
         staff_id: slot.staffId,
         customer_id: customerId,
-        user_id: userId,
         service_name: service.name,
         customer_name: data.name,
 
