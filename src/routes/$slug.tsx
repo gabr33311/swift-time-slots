@@ -286,8 +286,14 @@ function BookPage() {
         return;
       }
       setDone({ token: res.token, status: res.status });
-    } catch {
-      toast.error(t("bk.toast.bookingFailed"));
+    } catch (e) {
+      console.error("[booking] failed", e);
+      const msg = e instanceof Error ? e.message : "";
+      toast.error(
+        msg.includes("SUPABASE_SERVICE_ROLE_KEY") || msg.includes("Missing Supabase")
+          ? "O servidor não está configurado para gravar marcações. Contacta o negócio."
+          : t("bk.toast.bookingFailed"),
+      );
     } finally {
       setBusy(false);
     }
@@ -541,9 +547,9 @@ function BookPage() {
                     }}
                     className={cn(
                       "mx-auto flex size-10 items-center justify-center rounded-full text-sm font-bold tabular-nums transition-colors",
-                      past && "text-muted-foreground/40",
+                      past && "cursor-not-allowed font-medium text-muted-foreground/35 line-through",
                       !past && date !== d && "hover:bg-accent",
-                      date === d && "bg-primary text-white shadow-lift",
+                      date === d && "bg-primary text-primary-foreground shadow-lift",
                     )}
                   >
                     {Number(d.slice(-2))}
