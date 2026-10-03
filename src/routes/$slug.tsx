@@ -122,7 +122,7 @@ function BookPage() {
     if (!openWeekdays.includes(weekdayOf(d))) return true;
     const start = zonedToUtc(d, 0, business.timezone).getTime();
     const end = zonedToUtc(d, 24 * 60, business.timezone).getTime();
-    return blocks.some((b) => new Date(b.from).getTime() <= start && new Date(b.to).getTime() >= end);
+    return blocks.some((b) => new Date(b.from).getTime() <= start + 60000 && new Date(b.to).getTime() >= end - 60000);
   };
   const { slug } = Route.useParams();
   const { user, loading: authLoading } = useAuth();
