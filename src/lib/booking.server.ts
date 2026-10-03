@@ -137,8 +137,10 @@ export async function loadPublicBusiness(slug: string): Promise<{
     }),
   ]);
   const openWeekdays = [...new Set((hours ?? []).map((h) => h.weekday as number))];
+  // Single-professional businesses: that person's time off closes the whole day too.
+  const singleStaff = (staff ?? []).length <= 1;
   const blocks = (busyRows ?? [])
-    .filter((b) => b.kind === "block" && b.staff_id === null)
+    .filter((b) => b.kind === "block" && (b.staff_id === null || singleStaff))
     .map((b) => ({ from: b.starts_at as string, to: b.ends_at as string }));
 
   // Contacts only leave the server when the owner enables "show contacts".
