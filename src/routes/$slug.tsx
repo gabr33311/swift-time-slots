@@ -391,7 +391,7 @@ function BookPage() {
             className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-bold hover:bg-accent"
           >
             <LogIn className="size-3.5" />
-            {t("bk.myBookings")}
+            Login
           </Link>
         )}
       </header>
@@ -642,6 +642,12 @@ function BookPage() {
                 />
               </div>
               <div className="space-y-1">
+                <Label htmlFor="em" className="text-xs font-bold">
+                  Email
+                </Label>
+                <Input id="em" className="h-9" value={email} readOnly disabled />
+              </div>
+              <div className="space-y-1">
                 <Label htmlFor="p" className="text-xs font-bold">
                   {t("bk.field.phone")}
                 </Label>
@@ -650,10 +656,19 @@ function BookPage() {
                   className="h-9"
                   inputMode="tel"
                   value={phone}
+                  readOnly={!!profile?.phone}
+                  disabled={!!profile?.phone}
                   onChange={(e) => setPhone(maskPhonePt(e.target.value))}
                   placeholder="912 345 678"
                 />
               </div>
+              <p className="text-xs text-muted-foreground">
+                Para alterar estes dados, aceda ao seu{" "}
+                <Link to="/minhas-marcacoes" className="font-bold underline">
+                  perfil
+                </Link>
+                .
+              </p>
               <div className="space-y-1">
                 <Label htmlFor="obs" className="text-xs font-bold">
                   {t("bk.field.notesOptional")}

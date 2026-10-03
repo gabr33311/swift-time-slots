@@ -9,12 +9,20 @@ export const getMyClientAppointments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: appts } = await supabaseAdmin
+    const email = (context.claims as { email?: string } | undefined)?.email?.toLowerCase();
+    let query = supabaseAdmin
       .from("appointments")
-      .select("id, service_name, starts_at, ends_at, price_cents, status, business_id, notes")
-      .eq("user_id", context.userId)
+      .select("id, service_name, starts_at, ends_at, price_cents, status, business_id, notes");
+    query = email
+      ? query.or(`user_id.eq.${context.userId},customer_email.ilike.${email}`)
+      : query.eq("user_id", context.userId);
+    const { data: appts, error } = await query
       .order("starts_at", { ascending: false })
       .limit(100);
+    if (error) {
+      console.error("[client-area] failed to load appointments", error);
+      throw new Error("Não foi possível carregar as tuas marcações.");
+    }
 
     const ids = [...new Set((appts ?? []).map((a) => a.business_id))];
     const { data: businesses } = ids.length

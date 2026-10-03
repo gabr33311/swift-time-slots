@@ -159,7 +159,13 @@ export function AppointmentActions({
             />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-64 space-y-1 p-1.5">
+        <DropdownMenuContent
+          align="end"
+          side="bottom"
+          avoidCollisions
+          collisionPadding={{ top: 12, bottom: 96, left: 8, right: 8 }}
+          className="z-[60] min-w-64 space-y-1 p-1.5"
+        >
           {status === "pending" && (
             <DropdownMenuItem
               className="py-2.5 font-bold text-foreground"

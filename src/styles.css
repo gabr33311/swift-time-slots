@@ -564,17 +564,19 @@
 
 @keyframes pending-halo {
   0%, 100% {
-    box-shadow: 0 0 0 0 color-mix(in oklch, var(--appointment-pending-start) 55%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in oklch, var(--appointment-pending-start) 10%, transparent),
+      0 0 6px 0 color-mix(in oklch, var(--appointment-pending-start) 8%, transparent);
   }
-  55% {
-    box-shadow: 0 0 0 7px color-mix(in oklch, var(--appointment-pending-start) 0%, transparent);
+  50% {
+    box-shadow: 0 0 0 1px color-mix(in oklch, var(--appointment-pending-start) 30%, transparent),
+      0 0 14px 2px color-mix(in oklch, var(--appointment-pending-start) 22%, transparent);
   }
 }
 
-/* Soft pulsing halo for the header pending badge. */
+/* Slow, subtle glow around the outline of the pending badge. */
 @utility pending-halo {
   border-color: color-mix(in oklch, var(--appointment-pending-start) 45%, var(--border));
-  animation: pending-halo 2s ease-out infinite;
+  animation: pending-halo 4s ease-in-out infinite;
 }
 
 
