@@ -177,7 +177,7 @@ function MyBookings() {
           <AlertDialogFooter>
             <AlertDialogCancel>{t("mine.dialog.keep")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => pendingCancel && cancel(pendingCancel)}>
-              {t("mine.cancel")}
+              {t("mine.dialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
