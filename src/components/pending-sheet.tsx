@@ -58,7 +58,9 @@ export function PendingCapsule({ variant = "bar" }: { variant?: "bar" | "badge" 
       toast.error(t("pf.common.saveError"));
       return;
     }
-    toast.success(status === "confirmed" ? t("cal.pending.confirmed") : t("cal.pending.cancelled"));
+    if (!("emailed" in res && res.emailed)) {
+      toast.success(status === "confirmed" ? t("cal.pending.confirmed") : t("cal.pending.cancelled"));
+    }
     qc.invalidateQueries({ queryKey: ["pending-capsule"] });
     qc.invalidateQueries({ queryKey: ["calendar"] });
     if (list.length <= 1) setOpen(false);

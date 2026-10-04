@@ -19,7 +19,7 @@ const bookingSchema = z.object({
   time: z.string().regex(/^\d{2}:\d{2}$/),
   name: z.string().trim().min(2).max(80),
   phone: z.string().trim().min(6).max(24).regex(/^[0-9+\s()-]+$/),
-  email: z.string().trim().email().max(160).or(z.literal("")),
+  email: z.string().trim().email().max(160),
   notes: z.string().trim().max(500).optional().default(""),
 });
 
