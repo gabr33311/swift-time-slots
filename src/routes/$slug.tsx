@@ -7,7 +7,6 @@ import { usePrefs } from "@/lib/prefs";
 import { getPublicBusiness, getAvailableSlots, createPublicBooking } from "@/lib/booking.functions";
 import { trackPageView } from "@/lib/analytics.functions";
 import { AddToCalendar } from "@/components/add-to-calendar";
-import { ClientAuthStep } from "@/components/client-auth-step";
 import { maskPhonePt } from "@/lib/phone";
 import { isReservedSlug } from "@/lib/reserved-slugs";
 
@@ -17,8 +16,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
 import { formatDuration, formatPrice, formatDateLong, initials } from "@/lib/format";
 import { addDays, todayIn, zonedToUtc, timeToMinutes, weekdayOf } from "@/lib/time";
 import { cn } from "@/lib/utils";
@@ -31,7 +28,6 @@ import {
   ChevronDown,
   Clock,
   Instagram,
-  LogIn,
   MapPin,
   Phone,
 } from "lucide-react";
@@ -107,7 +103,7 @@ const formSchema = z.object({
     .min(6, formPhoneError)
     .max(24)
     .regex(/^[0-9+\s()-]+$/, formPhoneError),
-  email: z.string().trim().email(formEmailError).max(160).or(z.literal("")),
+  email: z.string().trim().min(1, formEmailError).email(formEmailError).max(160),
   notes: z.string().trim().max(500),
 });
 
@@ -125,7 +121,6 @@ function BookPage() {
     return blocks.some((b) => new Date(b.from).getTime() <= start + 60000 && new Date(b.to).getTime() >= end - 60000);
   };
   const { slug } = Route.useParams();
-  const { user, loading: authLoading } = useAuth();
   const [serviceId, setServiceId] = useState<string | null>(null);
   const [staffId, setStaffId] = useState<string | null>(
     staff.length === 1 ? staff[0]!.id : null,
@@ -161,27 +156,6 @@ function BookPage() {
     return person ? services.filter((s) => person.service_ids.includes(s.id)) : services;
   }, [services, staff, staffId]);
 
-
-  // Prefill from the signed-in client account (profile + auth email).
-  const { data: profile } = useQuery({
-    queryKey: ["client-profile", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("full_name, phone")
-        .eq("id", user!.id)
-        .maybeSingle();
-      return data;
-    },
-  });
-
-  useEffect(() => {
-    if (!user) return;
-    setName((v) => v || profile?.full_name || (user.user_metadata?.["full_name"] as string) || "");
-    setPhone((v) => v || profile?.phone || "");
-    setEmail((v) => v || user.email || "");
-  }, [user, profile]);
 
   const monthDays = useMemo(() => {
     const [y, m] = month.split("-").map(Number);
@@ -249,10 +223,6 @@ function BookPage() {
   }, [business.id]);
 
   async function submit() {
-    if (!user) {
-      toast.error(t("bk.toast.loginRequired"));
-      return;
-    }
     const parsed = formSchema.safeParse({ name, phone, email, notes });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? t("bk.toast.checkData"));
@@ -260,12 +230,6 @@ function BookPage() {
     }
     if (!serviceId || !time) return;
     setBusy(true);
-    // Keep the client account profile up to date with the details used to book.
-    void supabase
-      .from("profiles")
-      .update({ full_name: parsed.data.name, phone: parsed.data.phone })
-      .eq("id", user.id);
-
     try {
       const res = await createPublicBooking({
         data: {
@@ -320,15 +284,9 @@ function BookPage() {
             {t("bk.confirmed.manage")}
           </p>
           <Link
-            to="/minhas-marcacoes"
-            className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground"
-          >
-            {t("bk.myBookings")}
-          </Link>
-          <Link
             to="/booking/$token"
             params={{ token: done.token }}
-            className="mt-2 inline-flex w-full items-center justify-center rounded-full border border-border px-4 py-2.5 text-sm font-bold"
+            className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground"
           >
             {t("bk.viewDetails")}
           </Link>
@@ -375,24 +333,6 @@ function BookPage() {
           >
             <Phone className="size-4" />
           </a>
-        )}
-        {user ? (
-          <Link
-            to="/minhas-marcacoes"
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-bold hover:bg-accent"
-          >
-            <LogIn className="size-3.5" />
-            {t("bk.myBookings")}
-          </Link>
-        ) : (
-          <Link
-            to="/auth"
-            search={{ mode: undefined, next: "/minhas-marcacoes" }}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-bold hover:bg-accent"
-          >
-            <LogIn className="size-3.5" />
-            Login
-          </Link>
         )}
       </header>
 
@@ -621,13 +561,9 @@ function BookPage() {
         <Section
           step={stepNumber}
           total={stepKeys.length}
-          title={user ? t("bk.step.yourData") : t("bk.step.yourAccount")}
+          title={t("bk.step.yourData")}
         >
-          {authLoading ? (
-            <Skeleton className="h-24 w-full rounded-2xl" />
-          ) : !user ? (
-            <ClientAuthStep onDone={() => {}} />
-          ) : (
+          {(
             <div className="space-y-2.5">
               <div className="space-y-1">
                 <Label htmlFor="n" className="text-xs font-bold">
@@ -645,7 +581,17 @@ function BookPage() {
                 <Label htmlFor="em" className="text-xs font-bold">
                   Email
                 </Label>
-                <Input id="em" className="h-9" value={email} readOnly disabled />
+                <Input
+                  id="em"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  className="h-9"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  maxLength={160}
+                  placeholder="nome@email.com"
+                />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="p" className="text-xs font-bold">
@@ -656,19 +602,10 @@ function BookPage() {
                   className="h-9"
                   inputMode="tel"
                   value={phone}
-                  readOnly={!!profile?.phone}
-                  disabled={!!profile?.phone}
                   onChange={(e) => setPhone(maskPhonePt(e.target.value))}
                   placeholder="912 345 678"
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
-                Para alterar estes dados, aceda ao seu{" "}
-                <Link to="/minhas-marcacoes" className="font-bold underline">
-                  perfil
-                </Link>
-                .
-              </p>
               <div className="space-y-1">
                 <Label htmlFor="obs" className="text-xs font-bold">
                   {t("bk.field.notesOptional")}
@@ -687,7 +624,7 @@ function BookPage() {
       )}
       </div>
 
-      {currentStep === "account" && service && time && user && (
+      {currentStep === "account" && service && time && (
         <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 px-5 py-3 backdrop-blur">
           <div className="mx-auto flex max-w-2xl items-center gap-4">
             <div className="min-w-0 flex-1 text-sm">
