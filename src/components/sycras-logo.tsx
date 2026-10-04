@@ -1,5 +1,5 @@
-import darkMark from "@/assets/sycras-logo-dark.png.asset.json";
-import lightMark from "@/assets/sycras-logo-light.png.asset.json";
+
+
 import { cn } from "@/lib/utils";
 
 /**
@@ -11,13 +11,13 @@ export function SycrasLogo({ className }: { className?: string }) {
   return (
     <span className={cn("relative inline-block shrink-0", className)}>
       <img
-        src={darkMark.url}
+        src="/sycras-logo-dark.png"
         alt="SYCRAS"
         className="size-full object-contain dark:hidden"
         draggable={false}
       />
       <img
-        src={lightMark.url}
+        src="/sycras-logo-light.png"
         alt="SYCRAS"
         aria-hidden="true"
         className="hidden size-full object-contain dark:block"
