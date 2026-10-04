@@ -602,28 +602,29 @@ function CalendarPage() {
                         height: Math.max((row.end - row.start) * pxPerMinute - 2, 18),
                       }}
                     >
-                      <button
-                        type="button"
-                        disabled={past}
+                      <div
                         title={past ? t("cal.slot.past") : t("cal.slot.free")}
-                        onClick={() => {
-                          setNewTime(minutesToTime(bookFrom));
-                          setNewOpen(true);
-                        }}
                         className={cn(
-                          "group flex size-full items-center justify-center rounded-lg border border-transparent transition-colors",
+                          "group flex size-full items-center justify-center gap-1.5 rounded-lg border border-transparent transition-colors",
                           past
                             ? "cursor-not-allowed bg-muted/25"
                             : "hover:border-dashed hover:border-foreground/30 hover:bg-muted/50",
                         )}
                       >
                         {!past && (
-                          <Plus
-                            className="size-4 text-muted-foreground/50 opacity-0 transition-opacity group-hover:opacity-100"
-                            strokeWidth={2.6}
-                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setNewTime(minutesToTime(bookFrom));
+                              setNewOpen(true);
+                            }}
+                            className="flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] font-black text-foreground opacity-0 shadow-sm transition-opacity hover:bg-muted focus-visible:opacity-100 group-hover:opacity-100"
+                          >
+                            <Plus className="size-3" strokeWidth={3} />
+                            {t("cal.slot.book")}
+                          </button>
                         )}
-                      </button>
+                      </div>
                       {!past && (row.end - row.start) * pxPerMinute >= 32 && (
                         <button
                           type="button"
