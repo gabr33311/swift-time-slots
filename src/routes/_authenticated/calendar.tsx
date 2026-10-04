@@ -729,9 +729,14 @@ function CalendarPage() {
                                 {priceText && (
                                   <span className="font-black text-foreground"> · {priceText}</span>
                                 )}
-                                {(due || isNext) && (
+                                {(due || isNext || row.appt.status === "pending") && (
                                   <span className="font-black uppercase tracking-wide text-foreground/70">
-                                    {" "}· {due ? t("cal.validate.label") : t("cal.next.inline")}
+                                    {" "}·{" "}
+                                    {due
+                                      ? t("cal.validate.label")
+                                      : row.appt.status === "pending"
+                                        ? t("cal.status.pending")
+                                        : t("cal.next.inline")}
                                   </span>
                                 )}
                               </p>
