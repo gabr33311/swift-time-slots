@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
-import { EmptyState, LoadingRows, PageHeader } from "@/components/ui-bits";
+import { EmptyState, LoadingRows, PageHeader, StickyTop } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMyBusiness } from "@/hooks/use-business";
@@ -105,9 +105,10 @@ function CustomersPage() {
 
   return (
     <AppShell onPrimaryAction={() => setCreating(true)}>
-      <PageHeader title={t("cust.title")} subtitle={t("cust.subtitle")} />
+      <StickyTop>
+      <PageHeader inline title={t("cust.title")} subtitle={t("cust.subtitle")} />
 
-      <div className="relative mb-3">
+      <div className="relative">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={term}
@@ -117,6 +118,7 @@ function CustomersPage() {
           className="pl-10"
         />
       </div>
+      </StickyTop>
 
       <div className="mb-4 flex items-center gap-1.5 rounded-full bg-muted p-1">
         {(
