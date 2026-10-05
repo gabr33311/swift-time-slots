@@ -431,7 +431,9 @@ function CalendarPage() {
 
   return (
     <AppShell>
+      <StickyTop>
       <PageHeader
+        inline
         title={t("cal.title")}
         subtitle={t("cal.subtitle")}
         action={
@@ -449,8 +451,7 @@ function CalendarPage() {
         }
       />
 
-
-      <div className="surface sticky top-0 z-20 mb-2 p-1 backdrop-blur-xl supports-[backdrop-filter]:bg-card/85">
+      <div className="surface p-1">
         <div className="flex h-10 items-center gap-1">
           <Button
             type="button"
