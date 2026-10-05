@@ -507,6 +507,7 @@ function CalendarPage() {
           })}
         </div>
       </div>
+      </StickyTop>
 
 
       {staffList.length > 1 && (
