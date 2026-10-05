@@ -11,7 +11,7 @@ import { displayCustomerName, formatPrice } from "@/lib/format";
 import { PendingCapsule } from "@/components/pending-sheet";
 import { addDays, minutesToTime, timeToMinutes, todayIn, weekdayOf, zonedToUtc } from "@/lib/time";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
-import { Check, ChevronLeft, ChevronRight, Copy, Lock, Moon, Plus, RotateCcw, StickyNote, Unlock, UserX } from "lucide-react";
+import { BellRing, Check, ChevronLeft, ChevronRight, Copy, Lock, Moon, Plus, RotateCcw, StickyNote, Unlock, UserX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
 import { ContactCustomer } from "@/components/contact-customer";
@@ -169,6 +169,7 @@ function CalendarPage() {
   const tz = business?.timezone ?? "Europe/Lisbon";
   const [date, setDate] = useState(todayIn(tz));
   const [newOpen, setNewOpen] = useState(false);
+  const [pendingFocus, setPendingFocus] = useState<string | null>(null);
   const [newTime, setNewTime] = useState("09:00");
   const [staffFilter, setStaffFilter] = useState<string>("all");
 
@@ -431,7 +432,9 @@ function CalendarPage() {
 
   return (
     <AppShell>
+      <StickyTop>
       <PageHeader
+        inline
         title={t("cal.title")}
         subtitle={t("cal.subtitle")}
         action={
@@ -449,8 +452,7 @@ function CalendarPage() {
         }
       />
 
-
-      <div className="surface sticky top-0 z-20 mb-2 p-1 backdrop-blur-xl supports-[backdrop-filter]:bg-card/85">
+      <div className="surface p-1">
         <div className="flex h-10 items-center gap-1">
           <Button
             type="button"
@@ -506,6 +508,7 @@ function CalendarPage() {
           })}
         </div>
       </div>
+      </StickyTop>
 
 
       {staffList.length > 1 && (
@@ -681,8 +684,12 @@ function CalendarPage() {
                     <div
                       key={row.appt.id}
                       data-status={due ? "pending" : row.appt.status}
+                      role={!due && row.appt.status === "pending" ? "button" : undefined}
+                      tabIndex={!due && row.appt.status === "pending" ? 0 : undefined}
+                      onClick={!due && row.appt.status === "pending" ? () => setPendingFocus(row.appt.id) : undefined}
                       className={cn(
                         "appointment-state surface surface-hover absolute inset-x-1 z-10 overflow-hidden p-0",
+                        !due && row.appt.status === "pending" && "cursor-pointer",
                         isNext && "ring-1 ring-foreground/40",
                       )}
                       style={{
@@ -806,6 +813,13 @@ function CalendarPage() {
                               </span>
                               <ContactCustomer phone={row.appt.customer_phone} compact={tier === "tiny"} />
                             </>
+                          ) : row.appt.status === "pending" ? (
+                            <span
+                              aria-label={t("cal.status.pending")}
+                              className="pending-halo mr-1 flex size-8 items-center justify-center rounded-full border border-border bg-card"
+                            >
+                              <BellRing className="size-4 text-muted-foreground" strokeWidth={2.6} />
+                            </span>
                           ) : (
                             <>
                               <ContactCustomer phone={row.appt.customer_phone} compact />
@@ -846,6 +860,12 @@ function CalendarPage() {
       )}
 
 
+
+      <PendingDecisionDrawer
+        onlyId={pendingFocus}
+        open={!!pendingFocus}
+        onOpenChange={(o) => !o && setPendingFocus(null)}
+      />
 
       {business && (
         <NewAppointmentDialog

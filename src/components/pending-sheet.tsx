@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, X, BellRing } from "lucide-react";
+import { Check, X, BellRing, Info, Mail, Phone, StickyNote } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -10,6 +10,7 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from "@/components/ui/drawer";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useMyBusiness } from "@/hooks/use-business";
 import { usePrefs } from "@/lib/prefs";
 import { setAppointmentStatus } from "@/lib/appointment-status";
@@ -20,24 +21,20 @@ type PendingAppt = {
   starts_at: string;
   customer_name: string;
   service_name: string;
+  customer_phone: string | null;
+  customer_email: string | null;
+  notes: string | null;
 };
 
-/** Floating decision capsule: approve or decline pending bookings from anywhere. */
-export function PendingCapsule({ variant = "bar" }: { variant?: "bar" | "badge" }) {
+function usePendingList() {
   const { business } = useMyBusiness();
-  const { t } = usePrefs();
-  const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
-
-  const tz = business?.timezone ?? "Europe/Lisbon";
-
-  const { data } = useQuery({
+  return useQuery({
     queryKey: ["pending-capsule", business?.id],
     enabled: !!business,
     queryFn: async () => {
       const { data: rows, error } = await supabase
         .from("appointments")
-        .select("id, starts_at, customer_name, service_name")
+        .select("id, starts_at, customer_name, service_name, customer_phone, customer_email, notes")
         .eq("business_id", business!.id)
         .eq("status", "pending")
         .gte("starts_at", new Date().toISOString())
@@ -47,9 +44,25 @@ export function PendingCapsule({ variant = "bar" }: { variant?: "bar" | "badge" 
       return (rows ?? []) as PendingAppt[];
     },
   });
+}
 
-  const list = data ?? [];
-  if (list.length === 0) return null;
+/** Approve/decline drawer. With `onlyId`, it focuses on that single booking. */
+export function PendingDecisionDrawer({
+  open,
+  onOpenChange,
+  onlyId,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onlyId?: string | null;
+}) {
+  const { business } = useMyBusiness();
+  const { t } = usePrefs();
+  const qc = useQueryClient();
+  const { data } = usePendingList();
+  const tz = business?.timezone ?? "Europe/Lisbon";
+  const all = data ?? [];
+  const list = onlyId ? all.filter((a) => a.id === onlyId) : all;
 
   async function decide(id: string, status: "confirmed" | "cancelled") {
     if (!business) return;
@@ -63,8 +76,92 @@ export function PendingCapsule({ variant = "bar" }: { variant?: "bar" | "badge" 
     }
     qc.invalidateQueries({ queryKey: ["pending-capsule"] });
     qc.invalidateQueries({ queryKey: ["calendar"] });
-    if (list.length <= 1) setOpen(false);
+    if (onlyId || list.length <= 1) onOpenChange(false);
   }
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+        <DrawerHeader className="pb-1 text-center">
+          <DrawerTitle>{t("cal.pending.title")}</DrawerTitle>
+          <DrawerDescription>
+            {t("cal.pending.pill").replace("{n}", String(list.length))}
+          </DrawerDescription>
+        </DrawerHeader>
+        <ul className="mx-auto max-h-[60vh] w-full max-w-md space-y-2 overflow-y-auto px-5 pb-2">
+          {list.map((a, i) => (
+            <li key={a.id} className="surface flex items-center gap-3 p-3.5">
+              <div className="min-w-0 flex-1">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex max-w-full items-center gap-1.5 text-left"
+                      aria-label="Ver detalhes do cliente"
+                    >
+                      <span className="truncate text-[15px] font-bold leading-snug underline-offset-2 hover:underline">
+                        {displayCustomerName(a.customer_name, null, i + 1)}
+                      </span>
+                      <Info className="size-4 shrink-0 text-muted-foreground" strokeWidth={2.4} />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent side="top" align="start" className="w-72 space-y-2.5 text-sm">
+                    <p className="flex items-start gap-2">
+                      <Phone className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                      {a.customer_phone ? (
+                        <a href={`tel:${a.customer_phone}`} className="break-all font-medium">{a.customer_phone}</a>
+                      ) : <span className="text-muted-foreground">—</span>}
+                    </p>
+                    <p className="flex items-start gap-2">
+                      <Mail className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                      {a.customer_email ? (
+                        <a href={`mailto:${a.customer_email}`} className="break-all font-medium">{a.customer_email}</a>
+                      ) : <span className="text-muted-foreground">—</span>}
+                    </p>
+                    <p className="flex items-start gap-2">
+                      <StickyNote className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                      <span className="whitespace-pre-wrap font-medium">
+                        {a.notes?.trim() || <span className="text-muted-foreground">{t("cal.note.label")}: —</span>}
+                      </span>
+                    </p>
+                  </PopoverContent>
+                </Popover>
+                <p className="truncate text-sm leading-snug text-muted-foreground">{a.service_name}</p>
+                <p className="truncate text-xs font-semibold tabular-nums text-muted-foreground">
+                  {formatDateLong(a.starts_at, tz)} · {formatTime(a.starts_at, tz)}
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label={t("cal.pending.confirm")}
+                onClick={() => decide(a.id, "confirmed")}
+                className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-85"
+              >
+                <Check className="size-[18px]" strokeWidth={3} />
+              </button>
+              <button
+                type="button"
+                aria-label={t("cal.pending.cancel")}
+                onClick={() => decide(a.id, "cancelled")}
+                className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-muted"
+              >
+                <X className="size-[18px]" strokeWidth={3} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      </DrawerContent>
+    </Drawer>
+  );
+}
+
+/** Floating decision capsule: approve or decline pending bookings from anywhere. */
+export function PendingCapsule({ variant = "bar" }: { variant?: "bar" | "badge" }) {
+  const { t } = usePrefs();
+  const [open, setOpen] = useState(false);
+  const { data } = usePendingList();
+  const list = data ?? [];
+  if (list.length === 0) return null;
 
   return (
     <>
@@ -96,51 +193,7 @@ export function PendingCapsule({ variant = "bar" }: { variant?: "bar" | "badge" 
           </span>
         </button>
       )}
-
-
-      <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerContent className="pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
-          <DrawerHeader className="pb-1 text-center">
-            <DrawerTitle>{t("cal.pending.title")}</DrawerTitle>
-            <DrawerDescription>
-              {t("cal.pending.pill").replace("{n}", String(list.length))}
-            </DrawerDescription>
-          </DrawerHeader>
-          <ul className="mx-auto max-h-[60vh] w-full max-w-md space-y-2 overflow-y-auto px-5 pb-2">
-            {list.map((a, i) => (
-              <li key={a.id} className="surface flex items-center gap-3 p-3.5">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] font-bold leading-snug">
-                    {displayCustomerName(a.customer_name, null, i + 1)}
-                  </p>
-                  <p className="truncate text-sm leading-snug text-muted-foreground">
-                    {a.service_name}
-                  </p>
-                  <p className="truncate text-xs font-semibold tabular-nums text-muted-foreground">
-                    {formatDateLong(a.starts_at, tz)} · {formatTime(a.starts_at, tz)}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  aria-label={t("cal.pending.confirm")}
-                  onClick={() => decide(a.id, "confirmed")}
-                  className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-85"
-                >
-                  <Check className="size-[18px]" strokeWidth={3} />
-                </button>
-                <button
-                  type="button"
-                  aria-label={t("cal.pending.cancel")}
-                  onClick={() => decide(a.id, "cancelled")}
-                  className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-muted"
-                >
-                  <X className="size-[18px]" strokeWidth={3} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </DrawerContent>
-      </Drawer>
+      <PendingDecisionDrawer open={open} onOpenChange={setOpen} />
     </>
   );
 }

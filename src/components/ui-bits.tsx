@@ -5,22 +5,36 @@ import { statusLabel } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePrefs } from "@/lib/prefs";
 
+/** Pinned top area: stays fixed while the rest of the page scrolls underneath. */
+export function StickyTop({ children }: { children: ReactNode }) {
+  return (
+    <div className="sticky top-0 z-30 -mx-4 -mt-6 mb-3 bg-background/95 px-4 pb-2 pt-5 backdrop-blur-xl supports-[backdrop-filter]:bg-background/85 sm:-mx-5 sm:px-5">
+      {children}
+    </div>
+  );
+}
+
 export function PageHeader({
   title,
   action,
+  inline = false,
 }: {
   title: string;
   subtitle?: string;
   action?: ReactNode;
+  /** When true, renders without its own pinned wrapper (use inside StickyTop). */
+  inline?: boolean;
 }) {
-  return (
-    <div className="mb-6 flex items-start justify-between gap-3">
+  const row = (
+    <div className={inline ? "mb-3 flex items-start justify-between gap-3" : "flex items-start justify-between gap-3"}>
       <div className="min-w-0 flex-1">
-        <h1 className="font-display text-[28px] font-bold leading-tight tracking-tight">{title}</h1>
+        <h1 className="truncate font-display text-[28px] font-bold leading-tight tracking-tight">{title}</h1>
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </div>
   );
+  if (inline) return row;
+  return <StickyTop>{row}</StickyTop>;
 }
 
 export function EmptyState({
