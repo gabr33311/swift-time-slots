@@ -508,6 +508,19 @@ function CalendarPage() {
           })}
         </div>
       </div>
+      {!isLoading && !isDayOff && appts.length === 0 && (
+        <div className="mt-2 flex justify-center">
+          <div className="flex w-full max-w-sm items-center gap-2 rounded-2xl border border-border bg-card py-1.5 pl-3 pr-1.5 shadow-lg">
+            <p className="min-w-0 flex-1 text-[11px] font-semibold leading-tight text-muted-foreground">
+              {t("cal.empty.welcome")}
+            </p>
+            <Button variant="outline" size="sm" className="h-7 shrink-0 rounded-full px-2.5 text-xs" onClick={copyPublicLink} disabled={!business}>
+              <Copy className="size-3.5" />
+              {t("cal.empty.copy")}
+            </Button>
+          </div>
+        </div>
+      )}
       </StickyTop>
 
 
@@ -542,19 +555,6 @@ function CalendarPage() {
         </section>
       ) : (
         <>
-          {appts.length === 0 && (
-            <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-20 flex justify-center px-6 lg:bottom-6 lg:pl-64">
-              <div className="pointer-events-auto flex max-w-[20rem] items-center gap-2 rounded-full border border-border bg-card/95 py-1 pl-3.5 pr-1 shadow-lg backdrop-blur">
-                <p className="min-w-0 truncate text-xs font-semibold text-muted-foreground">
-                  {t("cal.empty.welcome")}
-                </p>
-                <Button variant="outline" size="sm" className="h-7 shrink-0 rounded-full px-2.5 text-xs" onClick={copyPublicLink} disabled={!business}>
-                  <Copy className="size-3.5" />
-                  {t("cal.empty.copy")}
-                </Button>
-              </div>
-            </div>
-          )}
 
           <div
             onTouchStart={onPinchStart}
