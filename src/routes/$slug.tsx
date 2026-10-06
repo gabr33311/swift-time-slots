@@ -251,7 +251,7 @@ function BookPage() {
         return;
       }
       setDone({ token: res.token, status: res.status });
-      void navigate({ to: "/booking/$token", params: { token: res.token }, search: { new: 1 } as never, replace: true });
+      void navigate({ to: "/booking/$token", params: { token: res.token }, replace: true });
     } catch (e) {
       console.error("[booking] failed", e);
       const msg = e instanceof Error ? e.message : "";

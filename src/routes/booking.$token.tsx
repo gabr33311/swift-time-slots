@@ -185,7 +185,7 @@ function BookingPage() {
             description: appt.service_name,
             location: [data.business?.address, data.business?.city].filter(Boolean).join(", "),
             startIso: appt.starts_at,
-            endIso: (appt as { ends_at?: string }).ends_at ?? appt.starts_at,
+            endIso: appt.ends_at ?? appt.starts_at,
           }}
         />
       )}
