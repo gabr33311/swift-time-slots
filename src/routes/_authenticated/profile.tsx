@@ -92,7 +92,7 @@ function ProfilePage() {
               key={row.id}
               type="button"
               onClick={() => setSection(row.id)}
-              className="flex w-full items-center gap-3.5 px-4 py-4 text-left transition-colors hover:bg-muted/50"
+              className="flex w-full items-center gap-3.5 px-4 py-3 text-left transition-colors hover:bg-muted/50"
             >
               <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
                 <row.icon className="size-[18px]" />
@@ -108,17 +108,17 @@ function ProfilePage() {
           ))}
           <Link
             to="/plans"
-            className="group relative flex min-h-36 w-full items-center gap-4 overflow-hidden bg-gradient-to-br from-subscription-accent-soft via-card to-card px-5 py-6 text-left transition-colors hover:bg-muted/40"
+            className="group relative flex w-full items-center gap-3.5 overflow-hidden bg-gradient-to-br from-subscription-accent-soft via-card to-card px-4 py-4 text-left transition-colors hover:bg-muted/40"
           >
-            <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-subscription-accent/15 text-subscription-accent ring-1 ring-subscription-accent/20">
-              <Crown className="size-7" />
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-subscription-accent/15 text-subscription-accent ring-1 ring-subscription-accent/20">
+              <Crown className="size-5" />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-base font-bold leading-tight">{t("sub.menu.title")}</span>
-              <span className="mt-1.5 block max-w-md text-xs leading-relaxed text-muted-foreground">
+              <span className="mt-1 line-clamp-2 block max-w-md text-xs leading-snug text-muted-foreground">
                 {t("sub.menu.desc")}
               </span>
-              <span className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="mt-2 flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-subscription-accent/15 px-2.5 py-1 text-[10px] font-black uppercase text-subscription-accent">
                   {t("sub.menu.current")}
                 </span>
