@@ -11,7 +11,7 @@ import { displayCustomerName, formatPrice } from "@/lib/format";
 import { PendingCapsule, PendingDecisionDrawer } from "@/components/pending-sheet";
 import { addDays, minutesToTime, timeToMinutes, todayIn, weekdayOf, zonedToUtc } from "@/lib/time";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
-import { BellRing, Check, ChevronLeft, ChevronRight, Copy, Lock, Moon, Plus, RotateCcw, StickyNote, Unlock, UserX } from "lucide-react";
+import { BellRing, Check, ChevronLeft, ChevronRight, Lock, Moon, Plus, RotateCcw, StickyNote, Unlock, UserX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
 import { ContactCustomer } from "@/components/contact-customer";
@@ -391,16 +391,6 @@ function CalendarPage() {
     qc.invalidateQueries({ queryKey: ["customers"] });
   }
 
-  async function copyPublicLink() {
-    if (!business) return;
-    try {
-      await navigator.clipboard.writeText(`https://sycras.com/${business.slug}`);
-      toast.success(t("cal.empty.copyDone"));
-    } catch (error) {
-      console.error("Could not copy booking link", error);
-      toast.error(t("cal.empty.copyError"));
-    }
-  }
 
   async function unblock(id: string) {
     const { error } = await supabase.from("blocked_times").delete().eq("id", id);
@@ -508,19 +498,6 @@ function CalendarPage() {
           })}
         </div>
       </div>
-      {!isLoading && !isDayOff && appts.length === 0 && (
-        <div className="mt-2 flex justify-center">
-          <div className="flex w-full max-w-sm items-center gap-2 rounded-2xl border border-border bg-card py-1.5 pl-3 pr-1.5 shadow-lg">
-            <p className="min-w-0 flex-1 text-[11px] font-semibold leading-tight text-muted-foreground">
-              {t("cal.empty.welcome")}
-            </p>
-            <Button variant="outline" size="sm" className="h-7 shrink-0 rounded-full px-2.5 text-xs" onClick={copyPublicLink} disabled={!business}>
-              <Copy className="size-3.5" />
-              {t("cal.empty.copy")}
-            </Button>
-          </div>
-        </div>
-      )}
       </StickyTop>
 
 
