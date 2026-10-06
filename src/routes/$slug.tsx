@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
@@ -121,6 +121,7 @@ function BookPage() {
     return blocks.some((b) => new Date(b.from).getTime() <= start + 60000 && new Date(b.to).getTime() >= end - 60000);
   };
   const { slug } = Route.useParams();
+  const navigate = useNavigate();
   const [serviceId, setServiceId] = useState<string | null>(null);
   const [staffId, setStaffId] = useState<string | null>(
     staff.length === 1 ? staff[0]!.id : null,
@@ -250,6 +251,7 @@ function BookPage() {
         return;
       }
       setDone({ token: res.token, status: res.status });
+      void navigate({ to: "/booking/$token", params: { token: res.token }, replace: true });
     } catch (e) {
       console.error("[booking] failed", e);
       const msg = e instanceof Error ? e.message : "";
@@ -626,8 +628,8 @@ function BookPage() {
 
       {currentStep === "account" && service && time && (
         <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 px-5 py-3 backdrop-blur">
-          <div className="mx-auto flex max-w-2xl items-center gap-4">
-            <div className="min-w-0 flex-1 text-sm">
+          <div className="mx-auto flex max-w-2xl flex-col gap-2.5">
+            <div className="min-w-0 text-sm">
               <p className="truncate font-bold">
                 {service.name} · {time}
               </p>
@@ -635,7 +637,7 @@ function BookPage() {
                 {formatDateLong(`${date}T12:00:00Z`, business.timezone)}
               </p>
             </div>
-            <Button onClick={submit} disabled={busy} size="lg">
+            <Button onClick={submit} disabled={busy} size="lg" className="w-full">
               {busy ? t("bk.booking") : t("bk.confirmBooking")}
             </Button>
           </div>
