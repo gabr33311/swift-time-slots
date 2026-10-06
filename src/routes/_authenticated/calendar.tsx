@@ -543,15 +543,17 @@ function CalendarPage() {
       ) : (
         <>
           {appts.length === 0 && (
-            <section className="surface mb-3 flex flex-col items-center gap-5 px-5 py-7 text-center">
-              <p className="max-w-sm font-display text-[18px] font-bold leading-snug">
-                {t("cal.empty.welcome")}
-              </p>
-              <Button variant="outline" size="sm" onClick={copyPublicLink} disabled={!business}>
-                <Copy className="size-4" />
-                {t("cal.empty.copy")}
-              </Button>
-            </section>
+            <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-20 flex justify-center px-6 lg:bottom-6 lg:pl-64">
+              <div className="pointer-events-auto flex max-w-[20rem] items-center gap-2 rounded-full border border-border bg-card/95 py-1 pl-3.5 pr-1 shadow-lg backdrop-blur">
+                <p className="min-w-0 truncate text-xs font-semibold text-muted-foreground">
+                  {t("cal.empty.welcome")}
+                </p>
+                <Button variant="outline" size="sm" className="h-7 shrink-0 rounded-full px-2.5 text-xs" onClick={copyPublicLink} disabled={!business}>
+                  <Copy className="size-3.5" />
+                  {t("cal.empty.copy")}
+                </Button>
+              </div>
+            </div>
           )}
 
           <div

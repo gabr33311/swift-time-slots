@@ -81,6 +81,7 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
           value={url}
           size={compact ? 180 : 240}
           level="M"
+          style={{ width: compact ? 180 : "min(240px, 34dvh)", height: "auto", aspectRatio: "1" }}
         />
       )}
 
