@@ -15,7 +15,18 @@ import { AppointmentStatusIndicator } from "@/components/appointment-status-indi
 import { formatDateLong, formatPrice, formatTime } from "@/lib/format";
 import { addDays, todayIn } from "@/lib/time";
 import { cn } from "@/lib/utils";
-import { CalendarClock, MapPin, Phone } from "lucide-react";
+import { CalendarClock, Check, MapPin, Phone } from "lucide-react";
+import { AddToCalendar } from "@/components/add-to-calendar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/booking/$token")({
   loader: async ({ params }) => {
@@ -63,6 +74,7 @@ function BookingPage() {
   const [rescheduling, setRescheduling] = useState(false);
   const [date, setDate] = useState(todayIn(initial.business?.timezone ?? "Europe/Lisbon"));
   const [busy, setBusy] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   const appt = data.appointment;
   const tz = data.business?.timezone ?? "Europe/Lisbon";
@@ -118,6 +130,17 @@ function BookingPage() {
 
   return (
     <main className="mx-auto max-w-lg px-5 py-10">
+      {!cancelled && (
+        <div className="mb-6 flex items-center gap-3 rounded-2xl border border-border bg-card p-4">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <Check className="size-5" strokeWidth={3} />
+          </span>
+          <div className="min-w-0">
+            <p className="font-bold">{t("bk.confirmed.title")}</p>
+            <p className="text-xs text-muted-foreground">{t("bk.confirmed.manage")}</p>
+          </div>
+        </div>
+      )}
       <p className="text-sm text-muted-foreground">{data.business?.name}</p>
       <h1 className="mt-1 text-2xl font-semibold tracking-tight">{t("bk.tk.title")}</h1>
 
@@ -156,12 +179,24 @@ function BookingPage() {
       )}
 
       {!cancelled && (
-        <div className="mt-8 flex flex-wrap gap-2">
+        <AddToCalendar
+          event={{
+            title: `${appt.service_name} · ${data.business?.name ?? ""}`,
+            description: appt.service_name,
+            location: [data.business?.address, data.business?.city].filter(Boolean).join(", "),
+            startIso: appt.starts_at,
+            endIso: (appt as { ends_at?: string }).ends_at ?? appt.starts_at,
+          }}
+        />
+      )}
+
+      {!cancelled && (
+        <div className="mt-4 grid grid-cols-2 gap-2">
           <Button variant="outline" onClick={() => setRescheduling((v) => !v)}>
             <CalendarClock className="mr-2 size-4" />
             {rescheduling ? t("bk.tk.close") : t("bk.tk.reschedule")}
           </Button>
-          <Button variant="ghost" onClick={cancel} disabled={busy}>
+          <Button variant="outline" className="text-destructive" onClick={() => setConfirmCancel(true)} disabled={busy}>
             {t("bk.tk.cancel")}
           </Button>
         </div>
@@ -211,6 +246,21 @@ function BookingPage() {
           )}
         </section>
       )}
+
+      <AlertDialog open={confirmCancel} onOpenChange={setConfirmCancel}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tem a certeza que deseja cancelar esta marcação?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {appt.service_name} · {formatDateLong(appt.starts_at, tz)} · {formatTime(appt.starts_at, tz)}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void cancel()}>Sim, cancelar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <p className="mt-10 text-xs text-muted-foreground">
         {t("bk.tk.policy1")}{data.business?.cancellation_hours ?? 24}{t("bk.tk.policy2")}
