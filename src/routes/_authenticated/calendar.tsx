@@ -572,7 +572,14 @@ function CalendarPage() {
                 {hourMarks.map((m) => (
                   <span
                     key={`h-${m}`}
-                    className="absolute right-2 -translate-y-1/2 text-[11px] font-bold tabular-nums text-muted-foreground/70"
+                    className={cn(
+                      "absolute right-2 text-[11px] font-bold leading-none tabular-nums text-muted-foreground/70",
+                      m <= dayStart
+                        ? "translate-y-1"
+                        : m >= dayEnd
+                          ? "-translate-y-[calc(100%+4px)]"
+                          : "-translate-y-1/2",
+                    )}
                     style={{ top: (m - dayStart) * pxPerMinute }}
                   >
                     {minutesToTime(m)}
@@ -606,28 +613,9 @@ function CalendarPage() {
                       }}
                     >
                       <div
-                        title={past ? t("cal.slot.past") : t("cal.slot.free")}
-                        className={cn(
-                          "group flex size-full items-center justify-center gap-1.5 rounded-lg border border-transparent transition-colors",
-                          past
-                            ? "cursor-not-allowed bg-muted/25"
-                            : "hover:border-dashed hover:border-foreground/30 hover:bg-muted/50",
-                        )}
-                      >
-                        {!past && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setNewTime(minutesToTime(bookFrom));
-                              setNewOpen(true);
-                            }}
-                            className="flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] font-black text-foreground opacity-0 shadow-sm transition-opacity hover:bg-muted focus-visible:opacity-100 group-hover:opacity-100"
-                          >
-                            <Plus className="size-3" strokeWidth={3} />
-                            {t("cal.slot.book")}
-                          </button>
-                        )}
-                      </div>
+                        aria-hidden
+                        className={cn("size-full rounded-lg", past && "bg-muted/25")}
+                      />
                       {!past && (row.end - row.start) * pxPerMinute >= 32 && (
                         <button
                           type="button"
