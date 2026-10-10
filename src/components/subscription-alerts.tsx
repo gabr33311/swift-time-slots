@@ -48,7 +48,7 @@ export function SubscriptionAlert({ variant, onClose }: SubscriptionAlertProps) 
           type="button"
           onClick={onClose}
           aria-label={t("nav.close")}
-          className="absolute right-2.5 top-2.5 flex size-7 items-center justify-center rounded-full text-current opacity-60 transition-opacity hover:bg-black/5 hover:opacity-100 dark:hover:bg-white/10"
+          className="tap-target absolute right-2.5 top-2.5 flex size-7 items-center justify-center rounded-full text-current opacity-60 transition-opacity hover:bg-black/5 hover:opacity-100 dark:hover:bg-white/10"
         >
           <X className="size-4" />
         </button>

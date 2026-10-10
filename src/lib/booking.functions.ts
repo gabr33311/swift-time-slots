@@ -46,14 +46,14 @@ function clientIp(): string {
 }
 
 export const getPublicBusiness = createServerFn({ method: "GET" })
-  .inputValidator((d: unknown) => slugSchema.parse(d))
+  .validator((d: unknown) => slugSchema.parse(d))
   .handler(async ({ data }) => {
     const { loadPublicBusiness } = await import("./booking.server");
     return await loadPublicBusiness(data.slug);
   });
 
 export const checkSlugAvailable = createServerFn({ method: "GET" })
-  .inputValidator((d: unknown) => slugSchema.parse(d))
+  .validator((d: unknown) => slugSchema.parse(d))
   .handler(async ({ data }) => {
     const clean = data.slug.toLowerCase();
     if (!/^[a-z0-9-]{3,48}$/.test(clean)) return { available: false, invalid: true };
@@ -63,7 +63,7 @@ export const checkSlugAvailable = createServerFn({ method: "GET" })
 
 /** Server-side account existence check (the DB helper is no longer client-callable). */
 export const emailHasAccount = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({ email: z.string().trim().email().max(160) }).parse(d))
+  .validator((d: unknown) => z.object({ email: z.string().trim().email().max(160) }).parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: exists, error } = await supabaseAdmin.rpc("email_has_account", {
@@ -76,7 +76,7 @@ export const emailHasAccount = createServerFn({ method: "POST" })
 
 
 export const getAvailableSlots = createServerFn({ method: "GET" })
-  .inputValidator((d: unknown) => slotsSchema.parse(d))
+  .validator((d: unknown) => slotsSchema.parse(d))
   .handler(async ({ data }) => {
     const { computeSlots } = await import("./booking.server");
     const slots = await computeSlots(data);
@@ -84,7 +84,7 @@ export const getAvailableSlots = createServerFn({ method: "GET" })
   });
 
 export const createPublicBooking = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => bookingSchema.parse(d))
+  .validator((d: unknown) => bookingSchema.parse(d))
   .handler(async ({ data }) => {
     const { computeSlots, makeToken, hashIp, rateLimitExceeded, logSecurityEvent } =
       await import("./booking.server");
@@ -215,7 +215,7 @@ export const createPublicBooking = createServerFn({ method: "POST" })
   });
 
 export const getBookingByToken = createServerFn({ method: "GET" })
-  .inputValidator((d: unknown) => tokenSchema.parse(d))
+  .validator((d: unknown) => tokenSchema.parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row } = await supabaseAdmin
@@ -265,7 +265,7 @@ export const getBookingByToken = createServerFn({ method: "GET" })
   });
 
 export const cancelBookingByToken = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => tokenSchema.parse(d))
+  .validator((d: unknown) => tokenSchema.parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const found = await apptFromToken(data.token);
@@ -335,7 +335,7 @@ const rescheduleSlotsSchema = tokenSchema.extend({
 
 /** Free times for rescheduling: the appointment's own slot doesn't count as busy. */
 export const getRescheduleSlots = createServerFn({ method: "GET" })
-  .inputValidator((d: unknown) => rescheduleSlotsSchema.parse(d))
+  .validator((d: unknown) => rescheduleSlotsSchema.parse(d))
   .handler(async ({ data }) => {
     const appt = await apptFromToken(data.token);
     if (!appt || !appt.service_id) return [];
@@ -351,7 +351,7 @@ export const getRescheduleSlots = createServerFn({ method: "GET" })
   });
 
 export const rescheduleBookingByToken = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     tokenSchema
       .extend({
         date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

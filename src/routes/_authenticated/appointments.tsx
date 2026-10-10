@@ -132,7 +132,7 @@ function AppointmentsPage() {
         />
       )}
 
-      <div className="mb-4 space-y-2.5">
+      <div className="mb-4 space-y-2.5 lg:flex lg:flex-wrap lg:gap-x-8 lg:space-y-0">
         <div>
           <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
             {t("appt.group.status")}
@@ -188,8 +188,13 @@ function AppointmentsPage() {
       ) : (
         <ul className="space-y-2">
           {data!.map((a) => (
-            <li key={a.id} data-status={a.status} className="appointment-state surface flex flex-wrap items-center gap-3 p-4">
-              <div className="w-20">
+            <li
+              key={a.id}
+              data-status={a.status}
+              // On wide screens the row reads like a table: when · client · service · actions.
+              className="appointment-state surface flex flex-wrap items-center gap-3 p-4 lg:grid lg:grid-cols-[8rem_minmax(0,1fr)_minmax(0,1fr)_auto] lg:gap-6 lg:py-3"
+            >
+              <div className="w-20 lg:w-auto">
                 <p className="text-sm font-semibold tabular-nums">
                   {formatTime(a.starts_at, business!.timezone)}
                 </p>
@@ -197,10 +202,11 @@ function AppointmentsPage() {
                   {formatDateShort(a.starts_at, business!.timezone)}
                 </p>
               </div>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 lg:contents">
                 <p className="truncate text-sm font-medium">{a.customer_name}</p>
                 <p className="truncate text-sm text-muted-foreground">{a.service_name}</p>
               </div>
+              <div className="flex shrink-0 items-center justify-end gap-2">
               <AppointmentActions
                 id={a.id}
                 status={a.status as "pending" | "confirmed" | "completed" | "cancelled" | "no_show" | "expired"}
@@ -210,6 +216,7 @@ function AppointmentsPage() {
                 serviceName={a.service_name}
                 timezone={business!.timezone}
               />
+              </div>
             </li>
           ))}
         </ul>

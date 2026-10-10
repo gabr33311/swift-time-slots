@@ -120,7 +120,7 @@ function CustomersPage() {
       </div>
       </StickyTop>
 
-      <div className="mb-4 flex items-center gap-1.5 rounded-full bg-muted p-1">
+      <div className="mb-4 flex items-center gap-1.5 rounded-full bg-muted p-1 lg:max-w-md">
         {(
           [
             ["all", t("cust.tab.all")],
@@ -167,7 +167,7 @@ function CustomersPage() {
           }
         />
       ) : (
-        <ul className="space-y-2.5">
+        <ul className="grid gap-2.5 lg:grid-cols-2">
           {rows.map((c) => (
             <li key={c.id} className="surface surface-hover flex items-center gap-3.5 p-4">
               <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-bold text-primary">
@@ -243,7 +243,7 @@ function CustomersPage() {
               )}
             </li>
           ))}
-          <li className="py-6 text-center text-sm font-medium text-muted-foreground">
+          <li className="py-6 text-center text-sm font-medium text-muted-foreground lg:col-span-2">
             {t("cust.noMore")}
           </li>
         </ul>

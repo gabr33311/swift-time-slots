@@ -56,6 +56,8 @@ export function NewAppointmentDialog({
   const [date, setDate] = useState(defaultDate ?? todayIn(business.timezone));
   const [time, setTime] = useState(defaultTime ?? "09:00");
   const [notes, setNotes] = useState("");
+  // Errors stay visible inside the form (a toast can be missed behind the dialog).
+  const [error, setError] = useState<string | null>(null);
 
   const schema = z.object({
     customerName: z.string().trim().min(2, t("cal.err.name")).max(80),
@@ -129,20 +131,24 @@ export function NewAppointmentDialog({
   async function save() {
     const parsed = schema.safeParse({ customerName, phone, serviceId, staffId, date, time });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? t("cal.err.generic"));
+      setError(parsed.error.issues[0]?.message ?? t("cal.err.generic"));
       return;
     }
     const service = data?.services.find((s) => s.id === serviceId);
-    if (!service) return;
+    if (!service) {
+      setError(t("cal.err.service"));
+      return;
+    }
 
     const [h, m] = time.split(":").map(Number);
     const startsAt = zonedToUtc(date, (h ?? 0) * 60 + (m ?? 0), business.timezone);
     // Never allow a manual booking in the past, even from the admin agenda.
     if (startsAt.getTime() <= Date.now()) {
-      toast.error(t("cal.err.past"));
+      setError(t("cal.err.past"));
       return;
     }
 
+    setError(null);
     setBusy(true);
     try {
       // Same span as online bookings: the service plus its buffer.
@@ -192,7 +198,7 @@ export function NewAppointmentDialog({
 
       if (error) {
         if (error.code === "23P01") {
-          toast.error(t("cal.err.conflict"));
+          setError(t("cal.err.conflict"));
           return;
         }
         throw error;
@@ -206,14 +212,21 @@ export function NewAppointmentDialog({
       setCustomerId(null);
       setNotes("");
     } catch {
-      toast.error(t("cal.err.create"));
+      setError(t("cal.err.create"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (busy) return;
+        if (!o) setError(null);
+        onOpenChange(o);
+      }}
+    >
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t("cal.dialog.title")}</DialogTitle>
@@ -321,7 +334,7 @@ export function NewAppointmentDialog({
               <option value="">{t("cal.choose")}</option>
               {data?.services.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name}
+                  {s.name} · {s.duration_minutes} min
                 </option>
               ))}
             </select>
@@ -361,6 +374,16 @@ export function NewAppointmentDialog({
               maxLength={500}
             />
           </div>
+          {data && (data.services.length === 0 || data.staff.length === 0) && (
+            <p className="rounded-md bg-muted px-3 py-2 text-sm font-medium text-muted-foreground">
+              {t("cal.err.setupMissing")}
+            </p>
+          )}
+          {error && (
+            <p role="alert" className="text-sm font-semibold text-destructive">
+              {error}
+            </p>
+          )}
           <Button className="w-full" onClick={save} disabled={busy}>
             {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
             {t("cal.save")}

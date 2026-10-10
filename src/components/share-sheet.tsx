@@ -1,4 +1,5 @@
 import { MessageCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Drawer,
   DrawerContent,
@@ -43,14 +44,10 @@ export function ShareSheet({
         </DrawerHeader>
         <div className="mx-auto w-full max-w-sm px-5 pb-2">
           <SharePanel compact />
-          <button
-            type="button"
-            onClick={whatsapp}
-            className="action-gradient mt-6 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-bold"
-          >
-            <MessageCircle className="size-[18px]" strokeWidth={2.6} />
+          <Button type="button" size="lg" onClick={whatsapp} className="mt-6 w-full">
+            <MessageCircle strokeWidth={2.6} />
             {t("dock.whatsapp")}
-          </button>
+          </Button>
         </div>
       </DrawerContent>
     </Drawer>

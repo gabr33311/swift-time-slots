@@ -5,6 +5,7 @@ import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import { BusinessPanel } from "@/components/panels/business-panel";
 import { ServicesPanel } from "@/components/panels/services-panel";
 import { TeamPanel } from "@/components/panels/team-panel";
@@ -64,6 +65,9 @@ function ProfilePage() {
   const [section, setSection] = useState<SectionId | null>(null);
   const label = (id: SectionId) => t(`pf.section.${id}`);
   const desc = (id: SectionId) => t(`pf.section.${id}.desc`);
+  // Phones drill into one section at a time; from md up the menu stays on the
+  // left and the first section fills the right column by default.
+  const shown: SectionId = section ?? "info";
 
   return (
     <AppShell>
@@ -76,7 +80,7 @@ function ProfilePage() {
               variant="ghost"
               size="icon"
               aria-label={t("pf.back")}
-              className="size-9 text-muted-foreground"
+              className="size-9 text-muted-foreground md:hidden"
               onClick={() => setSection(null)}
             >
               <ArrowLeft className="size-5" strokeWidth={2.5} />
@@ -85,14 +89,23 @@ function ProfilePage() {
         }
       />
 
-      {!section ? (
-        <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="md:grid md:grid-cols-[240px_minmax(0,1fr)] md:items-start md:gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <div
+          className={cn(
+            "divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card md:sticky md:top-24",
+            section && "hidden md:block",
+          )}
+        >
           {ROWS.map((row) => (
             <button
               key={row.id}
               type="button"
               onClick={() => setSection(row.id)}
-              className="flex w-full items-center gap-3.5 px-4 py-3 text-left transition-colors hover:bg-muted/50"
+              aria-current={shown === row.id ? "page" : undefined}
+              className={cn(
+                "flex w-full items-center gap-3.5 px-4 py-3 text-left transition-colors hover:bg-muted/50",
+                shown === row.id && "md:bg-muted",
+              )}
             >
               <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
                 <row.icon className="size-[18px]" />
@@ -103,7 +116,7 @@ function ProfilePage() {
                   {desc(row.id)}
                 </span>
               </span>
-              <ChevronRight className="size-4 shrink-0 text-muted-foreground" strokeWidth={2.5} />
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground md:hidden" strokeWidth={2.5} />
             </button>
           ))}
           <Link
@@ -130,15 +143,15 @@ function ProfilePage() {
             <ChevronRight className="size-5 shrink-0 text-subscription-accent transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>
-      ) : (
-        <div key={section} className="animate-enter">
-          {section === "info" && <BusinessPanel />}
-          {section === "servicesTeam" && <ServicesTeamPanel />}
-          {section === "availability" && <AvailabilityPanel />}
-          {section === "analytics" && <AnalyticsPanel />}
-          {section === "settings" && <SettingsPanel />}
+
+        <div key={shown} className={cn("animate-enter min-w-0", !section && "hidden md:block")}>
+          {shown === "info" && <BusinessPanel />}
+          {shown === "servicesTeam" && <ServicesTeamPanel />}
+          {shown === "availability" && <AvailabilityPanel />}
+          {shown === "analytics" && <AnalyticsPanel />}
+          {shown === "settings" && <SettingsPanel />}
         </div>
-      )}
+      </div>
     </AppShell>
   );
 }

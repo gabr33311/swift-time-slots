@@ -34,7 +34,7 @@ export function ContactCustomer({
           aria-label={label}
           onClick={(e) => e.stopPropagation()}
           className={cn(
-            "flex shrink-0 items-center justify-center gap-1.5 rounded-md border border-border bg-card font-bold text-foreground transition-colors hover:bg-muted",
+            "tap-target relative flex shrink-0 items-center justify-center gap-1.5 rounded-md border border-border bg-card font-bold text-foreground transition-colors hover:bg-muted",
             compact ? "size-8" : "h-9 px-3 text-xs sm:text-sm",
             className,
           )}
