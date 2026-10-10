@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { usePrefs } from "@/lib/prefs";
 import { getPublicBusiness, getAvailableSlots, createPublicBooking } from "@/lib/booking.functions";
 import { trackPageView } from "@/lib/analytics.functions";
-import { AddToCalendar } from "@/components/add-to-calendar";
 import { maskPhonePt } from "@/lib/phone";
 import { isReservedSlug } from "@/lib/reserved-slugs";
 
@@ -17,12 +16,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDuration, formatPrice, formatDateLong, initials } from "@/lib/format";
-import { addMonthsClamped, todayIn, zonedToUtc, timeToMinutes, weekdayOf } from "@/lib/time";
+import { addMonthsClamped, todayIn, zonedToUtc, weekdayOf } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
   CalendarDays,
-  Check,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -133,7 +131,6 @@ function BookPage() {
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState<{ token: string; status: string } | null>(null);
   const [stepIdx, setStepIdx] = useState(0);
   // Field errors shown under each input, so the client sees exactly what to fix.
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<"name" | "phone" | "email", string | undefined>>>({});
@@ -272,8 +269,8 @@ function BookPage() {
         setSubmitError(res.message);
         return;
       }
-      setDone({ token: res.token, status: res.status });
-      void navigate({ to: "/booking/$token", params: { token: res.token }, replace: true });
+      // Straight to the final page: the form keeps its busy state until it loads, so there is no in-between screen.
+      await navigate({ to: "/booking/$token", params: { token: res.token }, replace: true });
     } catch (e) {
       console.error("[booking] failed", e);
       const msg = e instanceof Error ? e.message : "";
@@ -286,53 +283,6 @@ function BookPage() {
       setBusy(false);
     }
   }
-
-  if (done) {
-    const startsAt =
-      time && service ? zonedToUtc(date, timeToMinutes(time), business.timezone) : null;
-    const endsAt =
-      startsAt && service
-        ? new Date(startsAt.getTime() + service.duration_minutes * 60000)
-        : null;
-    return (
-      <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-5 py-12">
-        <div className="surface p-8 text-center">
-          <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-primary/12 text-primary">
-            <Check className="size-7" />
-          </div>
-          <h1 className="text-xl font-bold">
-            {t(done.status === "pending" ? "bk.pending.title" : "bk.confirmed.title")}
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {formatDateLong(`${date}T12:00:00Z`, business.timezone)}{t("bk.confirmed.at")}{time} · {service?.name}
-          </p>
-          <p className="mt-4 text-sm text-muted-foreground">
-            {t(done.status === "pending" ? "bk.pending.manage" : "bk.confirmed.manage")}
-          </p>
-          <Link
-            to="/booking/$token"
-            params={{ token: done.token }}
-            className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground"
-          >
-            {t("bk.viewDetails")}
-          </Link>
-
-          {startsAt && endsAt && service && (
-            <AddToCalendar
-              event={{
-                title: `${service.name} · ${business.name}`,
-                description: t("bk.calendar.title") + business.name + ".",
-                location: [business.address, business.city].filter(Boolean).join(", "),
-                startIso: startsAt.toISOString(),
-                endIso: endsAt.toISOString(),
-              }}
-            />
-          )}
-        </div>
-      </main>
-    );
-  }
-
 
   return (
     <main

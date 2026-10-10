@@ -154,26 +154,49 @@ function BookingPage() {
   const days = Array.from({ length: 14 }, (_, i) => addDays(todayIn(tz), i));
   const locale = lang === "en" ? "en-GB" : "pt-PT";
 
-  return (
-    <main className="mx-auto max-w-lg px-5 py-10 sm:py-16">
-      {manageable && (
-        <div className="mb-6 flex items-center gap-3 rounded-2xl border border-border bg-card p-4">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <Check className="size-5" strokeWidth={3} />
-          </span>
-          <div className="min-w-0">
-            <p className="font-bold">{t(appt.status === "pending" ? "bk.pending.title" : "bk.confirmed.title")}</p>
-            <p className="text-xs text-muted-foreground">{t(appt.status === "pending" ? "bk.pending.manage" : "bk.confirmed.manage")}</p>
-          </div>
-        </div>
-      )}
-      <p className="text-sm text-muted-foreground">{data.business?.name}</p>
-      <h1 className="mt-1 text-2xl font-semibold tracking-tight">{t("bk.tk.title")}</h1>
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success(t("bk.done.copied"));
+    } catch {
+      // Clipboard blocked (old browser / insecure context): the URL bar still has the link.
+    }
+  }
 
-      <div data-status={appt.status} className="appointment-state surface mt-6 p-5">
+  const slug = data.business?.slug;
+  const pending = appt.status === "pending";
+
+  return (
+    <main className="mx-auto flex min-h-dvh max-w-lg flex-col px-5 py-10 sm:py-16">
+      {manageable ? (
+        // Final state first: the client is done, everything below is optional.
+        <header className="animate-enter text-center">
+          <span className="animate-icon-pop mx-auto flex size-16 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <Check className="size-8" strokeWidth={3} />
+          </span>
+          <h1 className="mt-5 text-2xl font-bold tracking-tight">
+            {t(pending ? "bk.pending.title" : "bk.confirmed.title")}
+          </h1>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+            {t(pending ? "bk.done.pending.body" : "bk.done.confirmed.body")}
+          </p>
+        </header>
+      ) : (
+        <header>
+          <p className="text-sm text-muted-foreground">{data.business?.name}</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight">{t("bk.tk.title")}</h1>
+        </header>
+      )}
+
+      <div data-status={appt.status} className="appointment-state surface mt-8 p-5">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-base font-medium">{appt.service_name}</p>
+          <div className="min-w-0">
+            {manageable && data.business?.name && (
+              <p className="mb-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                {data.business.name}
+              </p>
+            )}
+            <p className="text-base font-bold">{appt.service_name}</p>
             <p className="mt-1 text-sm text-muted-foreground">
               {formatDateLong(appt.starts_at, tz)}{t("bk.tk.at")}{formatTime(appt.starts_at, tz)}
             </p>
@@ -186,44 +209,44 @@ function BookingPage() {
         <p className="mt-4 text-sm font-semibold tabular-nums">
           {formatPrice(appt.price_cents)}
         </p>
+        {data.business && (data.business.address || data.business.phone) && (
+          <div className="mt-4 space-y-1.5 border-t border-border pt-4 text-sm text-muted-foreground">
+            {data.business.address && (
+              <p className="flex items-center gap-2">
+                <MapPin className="size-4 shrink-0" /> {data.business.address}
+                {data.business.city ? `, ${data.business.city}` : ""}
+              </p>
+            )}
+            {data.business.phone && (
+              <a href={`tel:${data.business.phone}`} className="flex items-center gap-2">
+                <Phone className="size-4 shrink-0" /> {data.business.phone}
+              </a>
+            )}
+          </div>
+        )}
       </div>
 
-      {data.business && (
-        <div className="mt-4 space-y-1.5 text-sm text-muted-foreground">
-          {data.business.address && (
-            <p className="flex items-center gap-2">
-              <MapPin className="size-4" /> {data.business.address}
-              {data.business.city ? `, ${data.business.city}` : ""}
-            </p>
-          )}
-          {data.business.phone && (
-            <a href={`tel:${data.business.phone}`} className="flex items-center gap-2">
-              <Phone className="size-4" /> {data.business.phone}
-            </a>
-          )}
+      {manageable && (
+        <div className="mt-3 flex justify-center">
+          <AddToCalendar
+            subtle
+            event={{
+              title: `${appt.service_name} · ${data.business?.name ?? ""}`,
+              description: appt.service_name,
+              location: [data.business?.address, data.business?.city].filter(Boolean).join(", "),
+              startIso: appt.starts_at,
+              endIso: appt.ends_at ?? appt.starts_at,
+            }}
+          />
         </div>
       )}
 
-      {manageable && (
-        <AddToCalendar
-          event={{
-            title: `${appt.service_name} · ${data.business?.name ?? ""}`,
-            description: appt.service_name,
-            location: [data.business?.address, data.business?.city].filter(Boolean).join(", "),
-            startIso: appt.starts_at,
-            endIso: appt.ends_at ?? appt.starts_at,
-          }}
-        />
-      )}
-
-      {cancelled && data.business?.slug && (
-        <Link
-          to="/$slug"
-          params={{ slug: data.business.slug }}
-          className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-primary px-4 py-3 text-sm font-bold text-primary-foreground"
-        >
-          {t("bk.tk.bookAgain")}
-        </Link>
+      {slug && (
+        <Button asChild size="lg" className="mt-6 w-full">
+          <Link to="/$slug" params={{ slug }}>
+            {t(manageable ? "bk.done.finish" : cancelled ? "bk.tk.bookAgain" : "bk.done.back")}
+          </Link>
+        </Button>
       )}
 
       {error && (
@@ -233,15 +256,43 @@ function BookingPage() {
       )}
 
       {manageable && (
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <Button variant={rescheduling ? "secondary" : "outline"} onClick={toggleRescheduling} disabled={busy}>
-            <CalendarClock className="mr-2 size-4" />
-            {rescheduling ? t("bk.tk.close") : t("bk.tk.reschedule")}
-          </Button>
-          <Button variant="outline" onClick={() => setConfirmCancel(true)} disabled={busy}>
-            {t("bk.tk.cancel")}
-          </Button>
-        </div>
+        // Optional, later actions: quiet text links so they never read as a next step.
+        <section className="mt-auto pt-12 text-center">
+          <p className="text-sm font-bold">{t("bk.done.later.title")}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {t("bk.done.later.body")}{" "}
+            <button
+              type="button"
+              onClick={() => void copyLink()}
+              className="font-bold text-foreground underline underline-offset-2"
+            >
+              {t("bk.done.copy")}
+            </button>
+          </p>
+          <div className="mt-3 flex items-center justify-center gap-1 text-sm">
+            <button
+              type="button"
+              onClick={toggleRescheduling}
+              disabled={busy}
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 font-semibold text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline disabled:opacity-50"
+            >
+              <CalendarClock className="size-4" />
+              {rescheduling ? t("bk.tk.close") : t("bk.tk.reschedule")}
+            </button>
+            <span aria-hidden className="text-border">·</span>
+            <button
+              type="button"
+              onClick={() => setConfirmCancel(true)}
+              disabled={busy}
+              className="rounded-full px-3 py-2 font-semibold text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline disabled:opacity-50"
+            >
+              {t("bk.tk.cancel")}
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {t("bk.tk.policy1")}{data.business?.cancellation_hours ?? 24}{t("bk.tk.policy2")}
+          </p>
+        </section>
       )}
 
       {rescheduling && manageable && (
@@ -340,9 +391,6 @@ function BookingPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <p className="mt-10 text-xs text-muted-foreground">
-        {t("bk.tk.policy1")}{data.business?.cancellation_hours ?? 24}{t("bk.tk.policy2")}
-      </p>
     </main>
   );
 }
