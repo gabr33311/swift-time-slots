@@ -50,7 +50,7 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="surface flex flex-col items-center justify-center px-6 py-12 text-center">
+    <div className="surface animate-enter flex flex-col items-center justify-center px-6 py-12 text-center">
       {icon && (
         <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-accent text-primary">
           {icon}
@@ -156,7 +156,7 @@ export function StatCard({
 
 export function LoadingRows({ rows = 3 }: { rows?: number }) {
   return (
-    <div className="space-y-3">
+    <div className="animate-stagger space-y-3">
       {Array.from({ length: rows }).map((_, i) => (
         <Skeleton key={i} className="h-16 w-full rounded-xl" />
       ))}
@@ -167,7 +167,7 @@ export function LoadingRows({ rows = 3 }: { rows?: number }) {
 export function ErrorState({ message, onRetry }: { message?: string; onRetry?: () => void }) {
   const { t } = usePrefs();
   return (
-    <div className="surface p-6 text-center">
+    <div className="surface animate-enter p-6 text-center">
       <p className="text-sm font-bold">{t("ui.error.title")}</p>
       <p className="mt-1 text-sm text-muted-foreground">
         {message ?? t("ui.error.default")}

@@ -186,7 +186,7 @@ function AppointmentsPage() {
           description={t("appt.empty.desc")}
         />
       ) : (
-        <ul className="space-y-2">
+        <ul key={`${statusFilter}-${timeFilter}`} className="animate-stagger space-y-2">
           {data!.map((a) => (
             <li
               key={a.id}

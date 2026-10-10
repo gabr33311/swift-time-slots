@@ -712,6 +712,7 @@
 
   /* No movement on press or hover either: only colour changes remain. */
   button:active,
+  a:active,
   [role="button"]:active,
   .surface-hover:hover,
   .dock-action:active {

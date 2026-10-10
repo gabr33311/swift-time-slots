@@ -119,7 +119,7 @@ function PendingPage() {
           description={t("pend.empty.desc")}
         />
       ) : (
-        <ul className="grid gap-2.5 lg:grid-cols-2">
+        <ul key={tab} className="animate-stagger grid gap-2.5 lg:grid-cols-2">
           {items.map((a) => (
             <li key={a.id} data-status={a.status} className="appointment-state surface p-4">
               <div className="flex items-start gap-3">

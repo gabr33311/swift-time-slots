@@ -116,7 +116,7 @@ export function AnalyticsPanel() {
         <LoadingRows rows={3} />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <div className="animate-stagger grid grid-cols-2 gap-3 lg:grid-cols-3">
             <StatCard label={t("pf.an.views")} value={views} />
             <StatCard label={t("pf.an.bookings")} value={bookings} />
             <StatCard label={t("pf.an.conversion")} value={`${conversion.toFixed(1)}%`} />
