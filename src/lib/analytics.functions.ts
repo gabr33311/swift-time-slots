@@ -8,7 +8,7 @@ const viewSchema = z.object({
 
 /** Records one page view per browser session for a public booking page. */
 export const trackPageView = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => viewSchema.parse(d))
+  .validator((d: unknown) => viewSchema.parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin

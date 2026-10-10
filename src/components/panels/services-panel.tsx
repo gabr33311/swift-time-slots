@@ -19,7 +19,18 @@ import {
 import { useMyBusiness } from "@/hooks/use-business";
 import { usePrefs } from "@/lib/prefs";
 import { formatDuration, formatPrice } from "@/lib/format";
-import { Scissors, Pencil, Trash2, Plus, GripVertical } from "lucide-react";
+import { hasUpcomingAppointments } from "@/lib/appointment-status";
+import {
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  GripVertical,
+  Loader2,
+  Plus,
+  Scissors,
+  Trash2,
+} from "lucide-react";
+import { ConfirmAction } from "@/components/confirm-action";
 
 type ServiceRow = {
   id: string;
@@ -64,45 +75,67 @@ export function ServicesPanel() {
   });
 
   async function toggleActive(s: ServiceRow) {
-    await supabase.from("services").update({ is_active: !s.is_active }).eq("id", s.id);
+    // Flip immediately so the switch answers the tap; the refetch corrects a failure.
+    qc.setQueryData(["services", business?.id], (prev: ServiceRow[] | undefined) =>
+      prev?.map((r) => (r.id === s.id ? { ...r, is_active: !s.is_active } : r)),
+    );
+    const { error } = await supabase
+      .from("services")
+      .update({ is_active: !s.is_active })
+      .eq("id", s.id);
+    if (error) toast.error(t("pf.svc.err.save"));
     qc.invalidateQueries({ queryKey: ["services"] });
   }
 
-  async function reorder(targetId: string) {
+  async function move(id: string, to: number) {
     const list = data ?? [];
-    if (!dragId || dragId === targetId) return;
-    const from = list.findIndex((s) => s.id === dragId);
-    const to = list.findIndex((s) => s.id === targetId);
-    if (from < 0 || to < 0) return;
+    const from = list.findIndex((s) => s.id === id);
+    if (from < 0 || to < 0 || to >= list.length || from === to) return;
     const next = [...list];
     const [moved] = next.splice(from, 1);
     next.splice(to, 0, moved!);
     qc.setQueryData(["services", business?.id], next);
-    await Promise.all(
+    const results = await Promise.all(
       next.map((s, i) => supabase.from("services").update({ sort_order: i }).eq("id", s.id)),
     );
+    if (results.some((r) => r.error)) toast.error(t("pf.svc.err.save"));
     qc.invalidateQueries({ queryKey: ["services"] });
   }
 
-  async function remove(s: ServiceRow) {
+  function reorder(targetId: string) {
+    if (!dragId || dragId === targetId) return;
+    void move(dragId, (data ?? []).findIndex((s) => s.id === targetId));
+  }
+
+  async function remove(s: ServiceRow): Promise<boolean> {
+    // Deleting nulls service_id on its appointments (FK SET NULL), which stops
+    // clients from rescheduling them. Keep it: deactivate instead.
+    if (await hasUpcomingAppointments("service_id", s.id)) {
+      toast.error(t("pf.svc.err.hasAppointments"));
+      return true;
+    }
     const { error } = await supabase.from("services").delete().eq("id", s.id);
     if (error) {
-      toast.error(t("pf.svc.err.hasAppointments"));
-      return;
+      toast.error(t("pf.svc.err.save"));
+      return false;
     }
     toast.success(t("pf.svc.removed"));
     qc.invalidateQueries({ queryKey: ["services"] });
+    return true;
+  }
+
+  // A fresh key per opening, so "New" never shows the previous form's leftovers.
+  const [formKey, setFormKey] = useState(0);
+  function openEditor(s: ServiceRow | null) {
+    setEditing(s);
+    setFormKey((k) => k + 1);
+    setOpen(true);
   }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button
-          onClick={() => {
-            setEditing(null);
-            setOpen(true);
-          }}
-        >
+        <Button onClick={() => openEditor(null)}>
           <Plus className="mr-2 size-4" /> {t("pf.svc.new")}
         </Button>
       </div>
@@ -116,8 +149,8 @@ export function ServicesPanel() {
           description={t("pf.svc.empty.desc")}
         />
       ) : (
-        <ul className="space-y-2">
-          {data!.map((s) => (
+        <ul className="animate-stagger grid gap-2 xl:grid-cols-2">
+          {data!.map((s, index) => (
             <li
               key={s.id}
               draggable
@@ -128,43 +161,71 @@ export function ServicesPanel() {
                 setDragId(null);
               }}
               onDragEnd={() => setDragId(null)}
-              className="surface flex flex-wrap items-center gap-3 p-4"
+              className="surface flex items-center gap-2 p-3 sm:gap-3 sm:p-4"
             >
-              <GripVertical className="size-4 shrink-0 cursor-grab text-muted-foreground" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{s.name}</p>
-                <p className="truncate text-sm text-muted-foreground">
-                  {formatDuration(s.duration_minutes)} ·{" "}
-                  {formatPrice(s.price_cents, business!.currency)}
-                  {s.buffer_minutes ? ` · +${s.buffer_minutes}${t("pf.svc.bufferSuffix")}` : ""}
-                </p>
+              {/* Drag only works with a mouse; touch screens get up/down arrows. */}
+              <GripVertical className="hidden size-4 shrink-0 cursor-grab text-muted-foreground sm:block" />
+              <div className="flex shrink-0 flex-col sm:hidden">
+                <button
+                  type="button"
+                  aria-label={t("pf.common.up")}
+                  disabled={index === 0}
+                  onClick={() => void move(s.id, index - 1)}
+                  className="flex h-8 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted disabled:opacity-25"
+                >
+                  <ChevronUp className="size-4" />
+                </button>
+                <button
+                  type="button"
+                  aria-label={t("pf.common.down")}
+                  disabled={index === data!.length - 1}
+                  onClick={() => void move(s.id, index + 1)}
+                  className="flex h-8 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted disabled:opacity-25"
+                >
+                  <ChevronDown className="size-4" />
+                </button>
               </div>
-              <Switch
-                checked={s.is_active}
-                onCheckedChange={() => toggleActive(s)}
-                aria-label={t("pf.common.active")}
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={t("pf.common.edit")}
-                onClick={() => {
-                  setEditing(s);
-                  setOpen(true);
-                }}
+              {/* The whole row opens the editor: no separate pencil to find. */}
+              <button
+                type="button"
+                onClick={() => openEditor(s)}
+                aria-label={`${t("pf.common.edit")} ${s.name}`}
+                className={`flex min-w-0 flex-1 items-center gap-2 rounded-lg text-left transition-opacity hover:opacity-80 ${s.is_active ? "" : "opacity-55"}`}
               >
-                <Pencil className="size-4" />
-              </Button>
-              <Button variant="ghost" size="icon" aria-label={t("pf.common.remove")} onClick={() => remove(s)}>
-                <Trash2 className="size-4" />
-              </Button>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium">{s.name}</span>
+                  <span className="block truncate text-sm text-muted-foreground">
+                    {formatDuration(s.duration_minutes)} ·{" "}
+                    {formatPrice(s.price_cents, business!.currency)}
+                    {s.buffer_minutes ? ` · +${s.buffer_minutes}${t("pf.svc.bufferSuffix")}` : ""}
+                  </span>
+                </span>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+              </button>
+              <label className="flex shrink-0 cursor-pointer flex-col items-center gap-0.5">
+                <Switch checked={s.is_active} onCheckedChange={() => toggleActive(s)} />
+                <span className="text-[11px] font-semibold text-muted-foreground">
+                  {s.is_active ? t("pf.common.active") : t("pf.common.inactive")}
+                </span>
+              </label>
+              <ConfirmAction
+                title={t("pf.svc.removeTitle").replace("{name}", s.name)}
+                description={t("pf.svc.removeDesc")}
+                confirmLabel={t("pf.common.remove")}
+                onConfirm={() => remove(s)}
+                trigger={
+                  <Button variant="ghost" size="icon" aria-label={t("pf.common.remove")}>
+                    <Trash2 className="size-4" />
+                  </Button>
+                }
+              />
             </li>
           ))}
         </ul>
       )}
 
       <ServiceDialog
-        key={editing?.id ?? "new"}
+        key={formKey}
         businessId={business?.id}
         service={editing}
         open={open}
@@ -196,6 +257,7 @@ function ServiceDialog({
     service?.requires_confirmation ?? false,
   );
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function save() {
     const parsed = schema.safeParse({
@@ -206,10 +268,11 @@ function ServiceDialog({
       buffer: Number(buffer),
     });
     if (!parsed.success) {
-      toast.error(t(parsed.error.issues[0]?.message ?? "pf.common.checkData"));
+      setError(t(parsed.error.issues[0]?.message ?? "pf.common.checkData"));
       return;
     }
     if (!businessId) return;
+    setError(null);
     setBusy(true);
     const payload = {
       business_id: businessId,
@@ -225,16 +288,16 @@ function ServiceDialog({
       : await supabase.from("services").insert(payload);
     setBusy(false);
     if (error) {
-      toast.error(t("pf.svc.err.save"));
+      setError(t("pf.svc.err.save"));
       return;
     }
-    toast.success(t("ui.save.auto"));
+    toast.success(t("pf.svc.saved"));
     qc.invalidateQueries({ queryKey: ["services"] });
     onOpenChange(false);
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(o) => !busy && onOpenChange(o)}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{service ? t("pf.svc.editTitle") : t("pf.svc.new")}</DialogTitle>
@@ -258,7 +321,7 @@ function ServiceDialog({
               maxLength={300}
             />
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label htmlFor="sprice" className="font-semibold">
                 {t("pf.svc.price")}
@@ -293,6 +356,7 @@ function ServiceDialog({
               />
             </div>
           </div>
+          <p className="-mt-2 text-xs text-muted-foreground">{t("pf.svc.buffer.hint")}</p>
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <div>
               <p className="text-sm font-medium">{t("pf.svc.requiresConfirmation")}</p>
@@ -300,9 +364,19 @@ function ServiceDialog({
                 {t("pf.svc.requiresConfirmation.desc")}
               </p>
             </div>
-            <Switch checked={requiresConfirmation} onCheckedChange={setRequiresConfirmation} />
+            <Switch
+              checked={requiresConfirmation}
+              onCheckedChange={setRequiresConfirmation}
+              aria-label={t("pf.svc.requiresConfirmation")}
+            />
           </div>
+          {error && (
+            <p role="alert" className="text-sm font-semibold text-destructive">
+              {error}
+            </p>
+          )}
           <Button className="w-full" onClick={save} disabled={busy}>
+            {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
             {t("pf.common.save")}
           </Button>
         </div>

@@ -12,6 +12,18 @@ export function normalizePhonePt(masked: string): string {
   return masked.trim();
 }
 
+/**
+ * Storage/lookup form for customer phones, so the same person is found again
+ * whatever way the number was typed: PT mobiles as `912 345 678` (the format the
+ * public booking page has always stored), anything else just trimmed.
+ */
+export function canonicalPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length === 9) return maskPhonePt(digits);
+  if (digits.length === 12 && digits.startsWith("351")) return maskPhonePt(digits.slice(3));
+  return raw.trim();
+}
+
 export function isValidPhonePt(masked: string): boolean {
   return masked.replace(/\D/g, "").length === 9;
 }

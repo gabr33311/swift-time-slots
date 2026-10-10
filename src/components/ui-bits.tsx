@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { statusLabel } from "@/lib/format";
@@ -28,7 +29,7 @@ export function PageHeader({
   const row = (
     <div className={inline ? "mb-3 flex items-start justify-between gap-3" : "flex items-start justify-between gap-3"}>
       <div className="min-w-0 flex-1">
-        <h1 className="truncate font-display text-[28px] font-bold leading-tight tracking-tight">{title}</h1>
+        <h1 className="truncate font-display text-[24px] font-bold leading-tight tracking-tight sm:text-[28px]">{title}</h1>
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </div>
@@ -120,13 +121,13 @@ export function StatCard({
             {icon}
           </span>
         )}
-        <p className="min-w-0 flex-1 whitespace-normal break-words text-[10px] font-bold uppercase leading-tight tracking-[0.05em] text-muted-foreground">
+        <p className="min-w-0 flex-1 whitespace-normal break-words text-[11px] font-bold uppercase leading-tight tracking-[0.05em] text-muted-foreground">
           {label}
         </p>
       </div>
       <p
         className={cn(
-          "font-display mt-3 text-[30px] font-bold leading-none tabular-nums tracking-tight",
+          "font-display mt-3 break-words text-[clamp(20px,6.5vw,30px)] font-bold leading-none tabular-nums tracking-tight",
           dimmed && "text-muted-foreground/60",
         )}
       >
@@ -135,7 +136,7 @@ export function StatCard({
       {hint && <p className="mt-1.5 text-xs font-normal text-muted-foreground">{hint}</p>}
     </>
   );
-  const base = cn("surface p-5", dimmed && "bg-muted/40 shadow-none");
+  const base = cn("surface min-w-0 p-4 sm:p-5", dimmed && "bg-muted/40 shadow-none");
   if (to) {
     return (
       <Link
@@ -172,12 +173,9 @@ export function ErrorState({ message, onRetry }: { message?: string; onRetry?: (
         {message ?? t("ui.error.default")}
       </p>
       {onRetry && (
-        <button
-          onClick={onRetry}
-          className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-        >
+        <Button onClick={onRetry} className="mt-4">
           {t("ui.error.retry")}
-        </button>
+        </Button>
       )}
     </div>
   );

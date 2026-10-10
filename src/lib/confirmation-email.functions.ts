@@ -5,7 +5,7 @@ import { z } from "zod";
 /** Emails the client that their appointment was confirmed. Caller must manage the business (RLS). */
 export const sendAppointmentConfirmedEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ appointmentId: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ appointmentId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { data: appt } = await context.supabase
       .from("appointments")

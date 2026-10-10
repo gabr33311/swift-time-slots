@@ -229,6 +229,14 @@
     font-family: var(--font-sans);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    /* Long emails/links wrap instead of pushing the page sideways; "clip" (not
+       "hidden") stops sideways scrolling without breaking position: sticky. */
+    overflow-wrap: break-word;
+    overflow-x: clip;
+    /* With viewport-fit=cover, keep content clear of the notch in landscape. */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 
   h1,
@@ -266,12 +274,18 @@
       transform 160ms cubic-bezier(0.34, 1.4, 0.64, 1),
       background-color 160ms ease,
       color 160ms ease,
+      opacity 180ms ease,
       box-shadow 200ms ease;
   }
 
-  button:active,
+  button:active:not(:disabled),
   [role="button"]:active {
     transform: scale(0.97);
+  }
+
+  /* Inline error messages slide in softly instead of popping. */
+  p[role="alert"] {
+    animation: app-fade-down 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 }
 
@@ -351,6 +365,9 @@
   }
 }
 
+/* Entrance keyframes end on `transform: none`: a lingering transform (kept by
+   fill-mode "both") would turn the element into the containing block of any
+   position:fixed child, e.g. bottom bars inside an animated page. */
 @keyframes app-fade-up {
   from {
     opacity: 0;
@@ -358,7 +375,7 @@
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: none;
   }
 }
 
@@ -369,7 +386,16 @@
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
   }
 }
 
@@ -391,7 +417,7 @@
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: none;
   }
 }
 
@@ -418,6 +444,37 @@
 
 @utility animate-enter-down {
   animation: app-fade-down 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* List items arrive one after another (capped, so long lists never feel slow). */
+@utility animate-stagger {
+  /* "backwards" (not "both"): once finished, hover/press transforms work again. */
+  & > * {
+    animation: app-fade-up 340ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation-delay: 240ms;
+  }
+  & > *:nth-child(1) { animation-delay: 0ms; }
+  & > *:nth-child(2) { animation-delay: 30ms; }
+  & > *:nth-child(3) { animation-delay: 60ms; }
+  & > *:nth-child(4) { animation-delay: 90ms; }
+  & > *:nth-child(5) { animation-delay: 120ms; }
+  & > *:nth-child(6) { animation-delay: 150ms; }
+  & > *:nth-child(7) { animation-delay: 180ms; }
+  & > *:nth-child(8) { animation-delay: 210ms; }
+}
+
+/* Loading placeholder: a slow grey sheen instead of a blinking pulse. */
+@utility skeleton-shimmer {
+  background-color: var(--color-muted);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklch, var(--color-foreground) 6%, transparent) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
 }
 
 @utility animate-icon-pop {
@@ -457,6 +514,36 @@
   &:active {
     background-position: 100% 50%;
   }
+}
+
+/* Premium accent for one or two key words: gold text with a slow, soft sheen.
+   Use sparingly. Reduced motion settles it via the global rule below. */
+@keyframes gold-sheen {
+  0%,
+  55% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@utility text-gold-shine {
+  color: var(--subscription-accent);
+  background-image: linear-gradient(
+    100deg,
+    color-mix(in oklch, var(--subscription-accent) 82%, black) 0%,
+    var(--subscription-accent) 35%,
+    color-mix(in oklch, var(--subscription-accent) 45%, white) 50%,
+    var(--subscription-accent) 65%,
+    color-mix(in oklch, var(--subscription-accent) 82%, black) 100%
+  );
+  background-size: 250% 100%;
+  background-position: 100% 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gold-sheen 7s cubic-bezier(0.45, 0, 0.25, 1) 1.2s infinite;
 }
 
 @utility monochrome-media {
@@ -593,6 +680,20 @@
   animation: app-slide-in-right 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Small icon buttons keep their look but get a ~44px invisible touch area.
+   The element must be positioned (add `relative` unless it is absolute). */
+@utility tap-target {
+  &::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}
+
 @utility text-balance-tight {
   text-wrap: balance;
 }
@@ -602,8 +703,44 @@
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    /* Looping effects (shimmer, halos, spinners) settle instead of flickering. */
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
+
+  /* No movement on press or hover either: only colour changes remain. */
+  button:active,
+  [role="button"]:active,
+  .surface-hover:hover,
+  .dock-action:active {
+    transform: none !important;
+  }
+}
+
+/* iOS zooms the page when a field under 16px gets focus. Unlayered on purpose,
+   so it wins over `text-sm` utilities on phones only. */
+@media (max-width: 640px) {
+  input:not([type="checkbox"], [type="radio"], [type="range"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* iOS Safari gives date/time fields an intrinsic width that ignores the grid
+   and spills out of narrow screens; let them shrink like any other input. */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  min-width: 0;
+  max-width: 100%;
+}
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value,
+input[type="datetime-local"]::-webkit-date-and-time-value {
+  text-align: left;
 }
 
 /* Native-app feel: scrolling stays fluid, the grey scrollbar never shows. */

@@ -17,8 +17,9 @@ export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>) => ({
     mode: search["mode"] === "register" ? ("register" as const) : undefined,
     // Same-origin path to return to after signing in (e.g. a public booking page).
+    // "//host" and "/\host" are protocol-relative URLs to other sites, so they're rejected.
     next:
-      typeof search["next"] === "string" && (search["next"] as string).startsWith("/")
+      typeof search["next"] === "string" && /^\/(?![/\\])/.test(search["next"] as string)
         ? (search["next"] as string)
         : undefined,
   }),

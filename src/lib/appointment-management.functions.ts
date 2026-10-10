@@ -4,7 +4,7 @@ import { z } from "zod";
 
 export const updateBusinessAppointmentStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         appointmentId: z.string().uuid(),
@@ -31,7 +31,7 @@ export const updateBusinessAppointmentStatus = createServerFn({ method: "POST" }
       .eq("business_id", appointment.business_id);
 
     if (updateError) {
-      return { ok: false as const, message: "Não foi possível actualizar a marcação." };
+      return { ok: false as const, message: "Não foi possível atualizar a marcação." };
     }
 
     const { error: historyError } = await context.supabase
@@ -53,7 +53,7 @@ export const updateBusinessAppointmentStatus = createServerFn({ method: "POST" }
 
 export const markBusinessNotificationsRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z.object({ businessId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {

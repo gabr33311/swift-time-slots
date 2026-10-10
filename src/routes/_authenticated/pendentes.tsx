@@ -8,10 +8,10 @@ import { AppShell } from "@/components/app-shell";
 import { EmptyState, LoadingRows, PageHeader } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
-import { formatTime } from "@/lib/format";
+import { formatDateShort, formatTime } from "@/lib/format";
 import { Check, Clock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { setAppointmentStatus } from "@/lib/appointment-status";
+import { invalidateAppointmentData, setAppointmentStatus } from "@/lib/appointment-status";
 import { z } from "zod";
 import { usePrefs } from "@/lib/prefs";
 import { AppointmentStatusIndicator } from "@/components/appointment-status-indicator";
@@ -84,20 +84,14 @@ function PendingPage() {
       return;
     }
     toast.success(accept ? t("pend.toast.accepted") : t("pend.toast.refused"));
-    await Promise.all([
-      qc.invalidateQueries({ queryKey: ["requests"] }),
-      qc.invalidateQueries({ queryKey: ["dashboard-day"] }),
-      qc.invalidateQueries({ queryKey: ["dashboard-requests"] }),
-      qc.invalidateQueries({ queryKey: ["appointments"] }),
-      qc.invalidateQueries({ queryKey: ["calendar"] }),
-    ]);
+    await invalidateAppointmentData(qc);
   }
 
   return (
     <AppShell>
       <PageHeader title={t("pend.page.title")} subtitle={t("pend.page.subtitle")} />
 
-      <div className="mb-5 flex gap-1 rounded-full bg-muted p-1">
+      <div className="mb-5 flex gap-1 rounded-full bg-muted p-1 lg:max-w-md">
         {TABS.map((tab_) => (
           <Button
             key={tab_.id}
@@ -125,7 +119,7 @@ function PendingPage() {
           description={t("pend.empty.desc")}
         />
       ) : (
-        <ul className="space-y-2.5">
+        <ul className="grid gap-2.5 lg:grid-cols-2">
           {items.map((a) => (
             <li key={a.id} data-status={a.status} className="appointment-state surface p-4">
               <div className="flex items-start gap-3">
@@ -138,6 +132,10 @@ function PendingPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[15px] font-bold leading-snug">{a.customer_name}</p>
                   <p className="truncate text-sm text-muted-foreground">{a.service_name}</p>
+                  {/* The time alone was ambiguous: requests can be for any day. */}
+                  <p className="truncate text-xs font-semibold text-muted-foreground">
+                    {formatDateShort(a.starts_at, business!.timezone)}
+                  </p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1.5">
                   <AppointmentStatusIndicator status={a.status} />

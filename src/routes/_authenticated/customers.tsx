@@ -68,16 +68,22 @@ function CustomersPage() {
     },
   });
 
+  const cancelledIds = Object.keys(cancelledMap ?? {});
   const { data, isLoading } = useQuery({
-    queryKey: ["customers", business?.id, term],
-    enabled: !!business,
+    queryKey: ["customers", business?.id, term, tab, tab === "cancelled" ? cancelledIds : null],
+    // The "cancelled" tab needs the ids first; filtering happens in the query so it
+    // isn't limited to the 100 most recent customers.
+    enabled: !!business && (tab !== "cancelled" || !!cancelledMap),
     queryFn: async () => {
+      if (tab === "cancelled" && cancelledIds.length === 0) return [];
       let q = supabase
         .from("customers")
         .select("id, name, phone, email, notes, is_blocked, created_at")
         .eq("business_id", business!.id)
         .order("created_at", { ascending: false })
         .limit(100);
+      if (tab === "blocked") q = q.eq("is_blocked", true);
+      if (tab === "cancelled") q = q.in("id", cancelledIds);
       const clean = term.trim().replace(/[%,()]/g, "");
       if (clean) q = q.or(`name.ilike.%${clean}%,phone.ilike.%${clean}%`);
       const { data } = await q;
@@ -85,13 +91,7 @@ function CustomersPage() {
     },
   });
 
-  const rows = (data ?? []).filter((c) =>
-    tab === "cancelled"
-      ? (cancelledMap?.[c.id] ?? 0) > 0
-      : tab === "blocked"
-        ? c.is_blocked
-        : true,
-  );
+  const rows = data ?? [];
 
   async function toggleBlock(id: string, blocked: boolean) {
     const { error } = await supabase.from("customers").update({ is_blocked: !blocked }).eq("id", id);
@@ -120,12 +120,12 @@ function CustomersPage() {
       </div>
       </StickyTop>
 
-      <div className="mb-4 flex items-center gap-1.5 rounded-full bg-muted p-1">
+      <div className="mb-4 flex items-center gap-1.5 rounded-full bg-muted p-1 lg:max-w-md">
         {(
           [
-            ["all", "Todos"],
-            ["cancelled", "Cancelaram"],
-            ["blocked", "Bloqueados"],
+            ["all", t("cust.tab.all")],
+            ["cancelled", t("cust.tab.cancelled")],
+            ["blocked", t("cust.tab.blocked")],
           ] as const
         ).map(([value, label]) => (
           <button
@@ -167,7 +167,7 @@ function CustomersPage() {
           }
         />
       ) : (
-        <ul className="space-y-2.5">
+        <ul className="grid gap-2.5 lg:grid-cols-2">
           {rows.map((c) => (
             <li key={c.id} className="surface surface-hover flex items-center gap-3.5 p-4">
               <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-bold text-primary">
@@ -243,7 +243,7 @@ function CustomersPage() {
               )}
             </li>
           ))}
-          <li className="py-6 text-center text-sm font-medium text-muted-foreground">
+          <li className="py-6 text-center text-sm font-medium text-muted-foreground lg:col-span-2">
             {t("cust.noMore")}
           </li>
         </ul>

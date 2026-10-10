@@ -11,10 +11,12 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { PublicPagePanel } from "@/components/panels/public-page-panel";
 import { weekdays, formatDateShort } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
-import { Trash2, MessageCircle, Mail, Coffee } from "lucide-react";
+import { Trash2, MessageCircle, Mail, Coffee, Loader2 } from "lucide-react";
+import { ConfirmAction } from "@/components/confirm-action";
 import { SaveBar } from "@/components/save-bar";
-import { setAppointmentStatus } from "@/lib/appointment-status";
+import { invalidateAppointmentData, setAppointmentStatus } from "@/lib/appointment-status";
 import { normalizePhonePt } from "@/lib/phone";
+import { timeToMinutes, zonedToUtc } from "@/lib/time";
 
 type DayState = {
   enabled: boolean;
@@ -74,6 +76,8 @@ export function AvailabilityPanel() {
   const [blockFrom, setBlockFrom] = useState("");
   const [blockTo, setBlockTo] = useState("");
   const [reason, setReason] = useState("");
+  const [blockBusy, setBlockBusy] = useState(false);
+  const [blockError, setBlockError] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["availability", business?.id],
@@ -114,8 +118,27 @@ export function AvailabilityPanel() {
 
   async function saveHours() {
     if (!business) return;
+    // Refuse invalid days instead of silently dropping them (which would close the day).
+    for (const [i, d] of days.entries()) {
+      if (!d.enabled) continue;
+      if (d.start >= d.end) {
+        toast.error(t("pf.av.err.dayRange").replace("{day}", dayNames[i] ?? ""));
+        return;
+      }
+      if (d.lunch && !(d.start < d.lunchStart && d.lunchStart < d.lunchEnd && d.lunchEnd < d.end)) {
+        toast.error(t("pf.av.err.lunchRange").replace("{day}", dayNames[i] ?? ""));
+        return;
+      }
+    }
     setBusy(true);
     try {
+      // Snapshot the current rows so a failed insert can put them back instead of
+      // leaving the business with no hours (i.e. closed every day).
+      const { data: previous, error: readError } = await supabase
+        .from("working_hours")
+        .select("business_id, staff_id, weekday, start_time, end_time")
+        .eq("business_id", business.id);
+      if (readError) throw readError;
       // Replace every row (including per-staff rows created at onboarding) so the
       // saved week is exactly what the owner sees here.
       const { error: delError } = await supabase
@@ -125,11 +148,9 @@ export function AvailabilityPanel() {
       if (delError) throw delError;
       const rows = days
         .map((d, weekday) => ({ ...d, weekday }))
-        .filter((d) => d.enabled && d.start < d.end)
+        .filter((d) => d.enabled)
         .flatMap((d) => {
-          const hasLunch =
-            d.lunch && d.start < d.lunchStart && d.lunchStart < d.lunchEnd && d.lunchEnd < d.end;
-          if (!hasLunch) {
+          if (!d.lunch) {
             return [
               {
                 business_id: business.id,
@@ -159,7 +180,10 @@ export function AvailabilityPanel() {
         });
       if (rows.length) {
         const { error: insError } = await supabase.from("working_hours").insert(rows);
-        if (insError) throw insError;
+        if (insError) {
+          if (previous?.length) await supabase.from("working_hours").insert(previous);
+          throw insError;
+        }
       }
       toast.success(t("pf.av.saved"));
       await qc.invalidateQueries({ queryKey: ["availability"] });
@@ -173,19 +197,25 @@ export function AvailabilityPanel() {
 
 
   async function addBlock() {
-    if (!business) return;
-    if (!blockFrom || !blockTo || new Date(blockFrom) >= new Date(blockTo)) {
-      toast.error(t("pf.av.err.range"));
+    if (!business || blockBusy) return;
+    // datetime-local values are wall-clock times in the business timezone, not the browser's.
+    const toUtc = (v: string) =>
+      zonedToUtc(v.slice(0, 10), timeToMinutes(v.slice(11, 16)), business.timezone);
+    if (!blockFrom || !blockTo || toUtc(blockFrom) >= toUtc(blockTo)) {
+      setBlockError(t("pf.av.err.range"));
       return;
     }
+    setBlockError(null);
+    setBlockBusy(true);
     const { error } = await supabase.from("blocked_times").insert({
       business_id: business.id,
-      starts_at: new Date(blockFrom).toISOString(),
-      ends_at: new Date(blockTo).toISOString(),
+      starts_at: toUtc(blockFrom).toISOString(),
+      ends_at: toUtc(blockTo).toISOString(),
       reason: reason.trim().slice(0, 120) || null,
     });
+    setBlockBusy(false);
     if (error) {
-      toast.error(t("pf.av.err.block"));
+      setBlockError(t("pf.av.err.block"));
       return;
     }
     setBlockFrom("");
@@ -193,11 +223,19 @@ export function AvailabilityPanel() {
     setReason("");
     toast.success(t("pf.av.blockAdded"));
     qc.invalidateQueries({ queryKey: ["availability"] });
+    qc.invalidateQueries({ queryKey: ["calendar"] });
   }
 
-  async function removeBlock(id: string) {
-    await supabase.from("blocked_times").delete().eq("id", id);
+  async function removeBlock(id: string): Promise<boolean> {
+    const { error } = await supabase.from("blocked_times").delete().eq("id", id);
+    if (error) {
+      toast.error(t("pf.common.saveError"));
+      return false;
+    }
+    toast.success(t("pf.av.blockRemoved"));
     qc.invalidateQueries({ queryKey: ["availability"] });
+    qc.invalidateQueries({ queryKey: ["calendar"] });
+    return true;
   }
 
   if (isLoading) return <LoadingRows rows={4} />;
@@ -248,7 +286,7 @@ export function AvailabilityPanel() {
 
           <div className="mt-3 divide-y divide-border">
             {days.map((d, i) => (
-              <div key={i} className="py-3">
+              <div key={i} className="py-3 sm:grid sm:grid-cols-[minmax(0,17rem)_minmax(0,24rem)] sm:items-center sm:gap-x-6">
                 <div className="flex items-center gap-2.5">
                   <Switch
                     checked={d.enabled}
@@ -267,14 +305,16 @@ export function AvailabilityPanel() {
                           prev.map((x, j) => (j === i ? { ...x, lunch: !x.lunch } : x)),
                         )
                       }
-                      aria-label={t("pf.av.lunch")}
+                      aria-pressed={d.lunch}
+                      title={t("pf.av.lunch")}
                       className={
                         d.lunch
-                          ? "flex size-9 shrink-0 items-center justify-center rounded-xl border border-border bg-accent text-accent-foreground"
-                          : "flex size-9 shrink-0 items-center justify-center rounded-xl border border-border text-muted-foreground transition-colors hover:text-foreground"
+                          ? "flex h-9 shrink-0 items-center gap-1.5 rounded-xl border border-border bg-accent px-3 text-xs font-bold text-accent-foreground"
+                          : "flex h-9 shrink-0 items-center gap-1.5 rounded-xl border border-dashed border-border px-3 text-xs font-bold text-muted-foreground transition-colors hover:text-foreground"
                       }
                     >
                       <Coffee className="size-4" strokeWidth={2.5} />
+                      {d.lunch ? t("pf.av.lunch") : `+ ${t("pf.av.addLunch")}`}
                     </button>
                   ) : (
                     <span className="shrink-0 text-sm text-muted-foreground">
@@ -284,7 +324,7 @@ export function AvailabilityPanel() {
                 </div>
 
                 {d.enabled && (
-                  <div className="mt-2 flex items-center gap-2">
+                  <div className="mt-2 flex items-center gap-2 sm:mt-0">
                     <Input
                       type="time"
                       value={d.start}
@@ -310,7 +350,7 @@ export function AvailabilityPanel() {
                 )}
 
                 {d.enabled && d.lunch && (
-                  <div className="mt-2 rounded-xl bg-muted/40 p-2">
+                  <div className="mt-2 rounded-xl bg-muted/40 p-2 sm:col-start-2">
                     <span className="mb-1.5 block text-xs font-semibold text-muted-foreground">
                       {t("pf.av.lunch")}
                     </span>
@@ -359,6 +399,7 @@ export function AvailabilityPanel() {
         <>
           <section className="surface p-4">
             <h2 className="text-base font-semibold">{t("pf.av.blocks")}</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">{t("pf.av.blocks.desc")}</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
               <div className="min-w-0 space-y-1.5">
                 <Label htmlFor="bf" className="font-semibold">
@@ -369,7 +410,12 @@ export function AvailabilityPanel() {
                   type="datetime-local"
                   className="w-full min-w-0"
                   value={blockFrom}
-                  onChange={(e) => setBlockFrom(e.target.value)}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setBlockFrom(v);
+                    // Most time off is whole days: propose the end of that same day.
+                    if (v && (!blockTo || blockTo <= v)) setBlockTo(`${v.slice(0, 10)}T23:59`);
+                  }}
                 />
               </div>
               <div className="min-w-0 space-y-1.5">
@@ -381,6 +427,7 @@ export function AvailabilityPanel() {
                   type="datetime-local"
                   className="w-full min-w-0"
                   value={blockTo}
+                  min={blockFrom || undefined}
                   onChange={(e) => setBlockTo(e.target.value)}
                 />
               </div>
@@ -399,12 +446,18 @@ export function AvailabilityPanel() {
               </div>
             </div>
 
-            <Button variant="outline" className="mt-3" onClick={addBlock}>
+            {blockError && (
+              <p role="alert" className="mt-3 text-sm font-semibold text-destructive">
+                {blockError}
+              </p>
+            )}
+            <Button className="mt-3 w-full sm:w-auto" onClick={addBlock} disabled={blockBusy}>
+              {blockBusy && <Loader2 className="mr-2 size-4 animate-spin" />}
               {t("pf.av.addBlock")}
             </Button>
 
             {(data?.blocks.length ?? 0) > 0 && (
-              <ul className="mt-4 space-y-2">
+              <ul className="animate-stagger mt-4 space-y-2">
                 {data!.blocks.map((b) => (
                   <li
                     key={b.id}
@@ -415,14 +468,17 @@ export function AvailabilityPanel() {
                       {formatDateShort(b.ends_at, business!.timezone)}
                       {b.reason ? ` · ${b.reason}` : ""}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={t("pf.av.removeBlock")}
-                      onClick={() => removeBlock(b.id)}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
+                    <ConfirmAction
+                      title={t("pf.av.removeBlock")}
+                      description={t("pf.av.removeBlock.desc")}
+                      confirmLabel={t("pf.common.remove")}
+                      onConfirm={() => removeBlock(b.id)}
+                      trigger={
+                        <Button variant="ghost" size="icon" aria-label={t("pf.av.removeBlock")}>
+                          <Trash2 className="size-4" />
+                        </Button>
+                      }
+                    />
                   </li>
                 ))}
               </ul>
@@ -482,26 +538,27 @@ function VacationConflicts({ blocks }: { blocks: Block[] }) {
       .replace("{date}", formatDateShort(a.starts_at, business.timezone))
       .replace("{business}", business.name);
 
-  async function cancel(id: string) {
+  async function cancel(id: string): Promise<boolean> {
     const res = await setAppointmentStatus({
       id,
       businessId: business!.id,
       status: "cancelled",
-      note: "vacation",
+      note: t("acts.note.cancelled"),
     });
     if (!res.ok) {
-      toast.error(t("pf.common.saveError"));
-      return;
+      toast.error(res.message || t("pf.common.saveError"));
+      return false;
     }
     toast.success(t("pf.av.conflict.cancelled"));
-    qc.invalidateQueries({ queryKey: ["vacation-conflicts"] });
+    void invalidateAppointmentData(qc);
+    return true;
   }
 
   return (
     <section className="surface p-5">
       <h2 className="text-base font-semibold">{t("pf.av.conflict.title")}</h2>
       <p className="mt-1 text-sm text-muted-foreground">{t("pf.av.conflict.desc")}</p>
-      <ul className="mt-4 space-y-3">
+      <ul className="animate-stagger mt-4 space-y-3">
         {conflicts.map((a) => {
           const phone = normalizePhonePt(a.customer_phone ?? "");
           return (
@@ -542,9 +599,17 @@ function VacationConflicts({ blocks }: { blocks: Block[] }) {
                   <Mail className="mr-1 size-4" />
                   Email
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => cancel(a.id)}>
-                  {t("pf.av.conflict.cancel")}
-                </Button>
+                <ConfirmAction
+                  title={`${t("acts.dialog.cancelTitle")}${a.customer_name}?`}
+                  description={t("pf.av.conflict.cancelDesc")}
+                  confirmLabel={t("pf.av.conflict.cancel")}
+                  onConfirm={() => cancel(a.id)}
+                  trigger={
+                    <Button variant="ghost" size="sm">
+                      {t("pf.av.conflict.cancel")}
+                    </Button>
+                  }
+                />
               </div>
             </li>
           );

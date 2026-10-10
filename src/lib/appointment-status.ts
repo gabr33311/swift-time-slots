@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import type { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sendAppointmentConfirmedEmail } from "@/lib/confirmation-email.functions";
 
@@ -9,6 +10,42 @@ export type ApptStatus =
   | "no_show"
   | "pending"
   | "expired";
+
+/** Every cached view built from appointments; refreshed together so no screen goes stale. */
+const APPOINTMENT_QUERY_KEYS = [
+  "appointments",
+  "calendar",
+  "requests",
+  "pending-capsule",
+  "dashboard-day",
+  "dashboard-requests",
+  "customers",
+  "customers-cancelled",
+  "customer-history",
+  "vacation-conflicts",
+  "analytics",
+] as const;
+
+export function invalidateAppointmentData(qc: QueryClient) {
+  return Promise.all(
+    APPOINTMENT_QUERY_KEYS.map((key) => qc.invalidateQueries({ queryKey: [key] })),
+  );
+}
+
+/** True when a professional/service still has pending or confirmed appointments ahead. */
+export async function hasUpcomingAppointments(
+  column: "staff_id" | "service_id",
+  id: string,
+): Promise<boolean> {
+  const { count, error } = await supabase
+    .from("appointments")
+    .select("id", { count: "exact", head: true })
+    .eq(column, id)
+    .in("status", ["pending", "confirmed"])
+    .gte("ends_at", new Date().toISOString());
+  // When unsure, err on the side of keeping the data.
+  return !!error || (count ?? 0) > 0;
+}
 
 /**
  * Updates an appointment status directly through the Data API (RLS restricts
@@ -37,7 +74,12 @@ export async function setAppointmentStatus(input: {
     .eq("id", input.id)
     .eq("business_id", input.businessId);
 
-  if (error) return { ok: false, message: error.message };
+  if (error) {
+    // 23P01 = appointments_no_overlap: that professional is already booked at this time.
+    if (error.code === "23P01")
+      return { ok: false, message: "Este horário já está ocupado por outra marcação." };
+    return { ok: false, message: error.message };
+  }
 
   await supabase.from("appointment_status_history").insert({
     appointment_id: input.id,
@@ -50,6 +92,7 @@ export async function setAppointmentStatus(input: {
     try {
       const res = await sendAppointmentConfirmedEmail({ data: { appointmentId: input.id } });
       if (res.status === "sent") toast.success("Marcação confirmada e email enviado!");
+      else if (res.status === "no_email") toast.success("Marcação confirmada.");
       else toast.error("A marcação foi confirmada, mas houve um erro ao enviar o email ao cliente.");
     } catch {
       toast.error("A marcação foi confirmada, mas houve um erro ao enviar o email ao cliente.");

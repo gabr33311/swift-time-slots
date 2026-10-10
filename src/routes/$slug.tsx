@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDuration, formatPrice, formatDateLong, initials } from "@/lib/format";
-import { addDays, todayIn, zonedToUtc, timeToMinutes, weekdayOf } from "@/lib/time";
+import { addMonthsClamped, todayIn, zonedToUtc, timeToMinutes, weekdayOf } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
@@ -25,8 +25,8 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
   Clock,
+  Loader2,
   Instagram,
   MapPin,
   Phone,
@@ -91,27 +91,25 @@ function NotFoundMessage() {
   return <CenteredMessage title={t("bk.notFound.title")} body={t("bk.notFound.body")} />;
 }
 
-let formNameError = "Indica o teu nome.";
-let formPhoneError = "Indica um telemóvel válido.";
-let formEmailError = "Email inválido.";
-
-const formSchema = z.object({
-  name: z.string().trim().min(2, formNameError).max(80),
-  phone: z
-    .string()
-    .trim()
-    .min(6, formPhoneError)
-    .max(24)
-    .regex(/^[0-9+\s()-]+$/, formPhoneError),
-  email: z.string().trim().min(1, formEmailError).email(formEmailError).max(160),
-  notes: z.string().trim().max(500),
-});
+function makeFormSchema(t: (key: string) => string) {
+  const nameError = t("bk.validation.name");
+  const phoneError = t("bk.validation.phone");
+  const emailError = t("bk.validation.email");
+  return z.object({
+    name: z.string().trim().min(2, nameError).max(80),
+    phone: z
+      .string()
+      .trim()
+      .min(6, phoneError)
+      .max(24)
+      .regex(/^[0-9+\s()-]+$/, phoneError),
+    email: z.string().trim().min(1, emailError).email(emailError).max(160),
+    notes: z.string().trim().max(500),
+  });
+}
 
 function BookPage() {
   const { t } = usePrefs();
-  formNameError = t("bk.validation.name");
-  formPhoneError = t("bk.validation.phone");
-  formEmailError = t("bk.validation.email");
   const { business, services, staff, openWeekdays, blocks } = Route.useLoaderData();
   // A day is closed if it is a weekly day off or fully covered by a business-wide block (vacation).
   const isClosedDay = (d: string) => {
@@ -137,6 +135,9 @@ function BookPage() {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ token: string; status: string } | null>(null);
   const [stepIdx, setStepIdx] = useState(0);
+  // Field errors shown under each input, so the client sees exactly what to fix.
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<"name" | "phone" | "email", string | undefined>>>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const stepKeys = useMemo<readonly string[]>(
     () =>
@@ -150,11 +151,18 @@ function BookPage() {
   const stepNumber = safeIdx + 1;
   const goNext = () => setStepIdx((i) => Math.min(i + 1, stepKeys.length - 1));
   const goBack = () => setStepIdx((i) => Math.max(i - 1, 0));
+  const goTo = (key: string) => {
+    const i = stepKeys.indexOf(key);
+    if (i >= 0) setStepIdx(i);
+  };
 
   const service = services.find((s) => s.id === serviceId) ?? null;
   const visibleServices = useMemo(() => {
     const person = staffId ? staff.find((p) => p.id === staffId) : null;
-    return person ? services.filter((s) => person.service_ids.includes(s.id)) : services;
+    if (!person) return services;
+    // Same rule as the server: a service nobody is linked to can be done by anyone.
+    const linked = new Set(staff.flatMap((p) => p.service_ids));
+    return services.filter((s) => person.service_ids.includes(s.id) || !linked.has(s.id));
   }, [services, staff, staffId]);
 
 
@@ -181,11 +189,10 @@ function BookPage() {
   }, [month]);
 
   // Farthest date a client may book (admin-configurable, in months).
-  const maxDate = useMemo(() => {
-    const [y, m, d] = today.split("-").map(Number);
-    const months = business.booking_horizon_months ?? 2;
-    return new Date(Date.UTC(y!, m! - 1 + months, d!)).toISOString().slice(0, 10);
-  }, [today, business.booking_horizon_months]);
+  const maxDate = useMemo(
+    () => addMonthsClamped(today, business.booking_horizon_months ?? 2),
+    [today, business.booking_horizon_months],
+  );
 
   function shiftMonth(delta: number) {
     const [y, m] = month.split("-").map(Number);
@@ -224,12 +231,20 @@ function BookPage() {
   }, [business.id]);
 
   async function submit() {
-    const parsed = formSchema.safeParse({ name, phone, email, notes });
+    const parsed = makeFormSchema(t).safeParse({ name, phone, email, notes });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? t("bk.toast.checkData"));
+      const errs: typeof fieldErrors = {};
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0] as keyof typeof fieldErrors;
+        if (key && !errs[key]) errs[key] = issue.message;
+      }
+      setFieldErrors(errs);
+      setSubmitError(null);
       return;
     }
     if (!serviceId || !time) return;
+    setFieldErrors({});
+    setSubmitError(null);
     setBusy(true);
     try {
       const res = await createPublicBooking({
@@ -246,8 +261,15 @@ function BookPage() {
         },
       });
       if (!res.ok) {
-        toast.error(res.message);
-        if (res.code === "slot_taken") setTime(null);
+        if (res.code === "slot_taken") {
+          // Someone took that time meanwhile: send the client straight back to pick another.
+          toast.error(t("bk.err.slotTaken"));
+          setTime(null);
+          goTo("time");
+          void refetchSlots();
+          return;
+        }
+        setSubmitError(res.message);
         return;
       }
       setDone({ token: res.token, status: res.status });
@@ -255,9 +277,9 @@ function BookPage() {
     } catch (e) {
       console.error("[booking] failed", e);
       const msg = e instanceof Error ? e.message : "";
-      toast.error(
+      setSubmitError(
         msg.includes("SUPABASE_SERVICE_ROLE_KEY") || msg.includes("Missing Supabase")
-          ? "O servidor não está configurado para gravar marcações. Contacta o negócio."
+          ? t("bk.err.server")
           : t("bk.toast.bookingFailed"),
       );
     } finally {
@@ -278,12 +300,14 @@ function BookPage() {
           <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-primary/12 text-primary">
             <Check className="size-7" />
           </div>
-          <h1 className="text-xl font-bold">{t("bk.confirmed.title")}</h1>
+          <h1 className="text-xl font-bold">
+            {t(done.status === "pending" ? "bk.pending.title" : "bk.confirmed.title")}
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {formatDateLong(`${date}T12:00:00Z`, business.timezone)}{t("bk.confirmed.at")}{time} · {service?.name}
           </p>
           <p className="mt-4 text-sm text-muted-foreground">
-            {t("bk.confirmed.manage")}
+            {t(done.status === "pending" ? "bk.pending.manage" : "bk.confirmed.manage")}
           </p>
           <Link
             to="/booking/$token"
@@ -311,7 +335,13 @@ function BookPage() {
 
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-2xl flex-col px-5 pb-6 pt-6">
+    <main
+      className={cn(
+        "mx-auto flex min-h-dvh max-w-2xl flex-col px-5 pt-6",
+        // Leave room so the fixed confirm bar never hides the last fields.
+        currentStep === "account" ? "pb-48" : "pb-6",
+      )}
+    >
       <header className="flex items-center gap-3">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
           {business.logo_url ? (
@@ -339,7 +369,7 @@ function BookPage() {
       </header>
 
       {safeIdx > 0 && (
-        <div className="mt-6 mb-2">
+        <div className="mt-6 mb-2 flex flex-wrap items-center gap-1.5">
           <button
             type="button"
             onClick={goBack}
@@ -347,13 +377,30 @@ function BookPage() {
           >
             <ArrowLeft className="size-4" /> {t("bk.back")}
           </button>
+          {/* What's chosen so far; tapping a choice jumps straight back to change it. */}
+          {staffId && staff.length > 1 && safeIdx > stepKeys.indexOf("staff") && (
+            <SummaryChip onClick={() => goTo("staff")}>
+              {staff.find((p) => p.id === staffId)?.name}
+            </SummaryChip>
+          )}
+          {service && safeIdx > stepKeys.indexOf("service") && (
+            <SummaryChip onClick={() => goTo("service")}>{service.name}</SummaryChip>
+          )}
+          {safeIdx > stepKeys.indexOf("day") && (
+            <SummaryChip onClick={() => goTo("day")}>
+              {formatDateLong(`${date}T12:00:00Z`, business.timezone)}
+            </SummaryChip>
+          )}
+          {time && safeIdx > stepKeys.indexOf("time") && (
+            <SummaryChip onClick={() => goTo("time")}>{time}</SummaryChip>
+          )}
         </div>
       )}
 
       <div key={currentStep} className="animate-enter flex flex-col py-4">
       {currentStep === "staff" && (
         <Section step={stepNumber} total={stepKeys.length} title={t("bk.step.staff")}>
-          <div className="grid gap-2">
+          <div className="animate-stagger grid gap-2 sm:grid-cols-2">
             {staff.map((p) => (
               <button
                 key={p.id}
@@ -398,7 +445,7 @@ function BookPage() {
 
       {currentStep === "service" && (
         <Section step={stepNumber} total={stepKeys.length} title={t("bk.step.service")}>
-          <div className="grid gap-2">
+          <div className="animate-stagger grid gap-2 sm:grid-cols-2">
             {visibleServices.map((s) => (
               <button
                 key={s.id}
@@ -511,20 +558,20 @@ function BookPage() {
           subtitle={formatDateLong(`${date}T12:00:00Z`, business.timezone)}
         >
           {isFetching ? (
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-6">
               {Array.from({ length: 8 }).map((_, i) => (
                 <Skeleton key={i} className="h-10 rounded-lg" />
               ))}
             </div>
           ) : slotsError ? (
             <div className="surface flex flex-col items-center gap-3 p-8 text-center">
-              <p className="text-sm font-bold">Não foi possível carregar os horários.</p>
+              <p className="text-sm font-bold">{t("bk.err.slots")}</p>
               <button
                 type="button"
                 onClick={() => void refetchSlots()}
                 className="rounded-full border border-border px-4 py-2 text-sm font-bold hover:bg-accent"
               >
-                Tentar novamente
+                {t("bk.retry")}
               </button>
             </div>
           ) : (slots?.length ?? 0) === 0 ? (
@@ -532,9 +579,16 @@ function BookPage() {
               <CalendarDays className="size-5 text-muted-foreground" />
               <p className="text-sm font-bold">{t("bk.noSlots.title")}</p>
               <p className="text-sm text-muted-foreground">{t("bk.noSlots.body")}</p>
+              <button
+                type="button"
+                onClick={() => goTo("day")}
+                className="mt-1 rounded-full border border-border px-4 py-2 text-sm font-bold hover:bg-accent"
+              >
+                {t("bk.pickOtherDay")}
+              </button>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-5">
               {(
                 [
                   [t("bk.period.morning"), slots!.filter((s) => Number(s.time.slice(0, 2)) < 13)],
@@ -573,11 +627,17 @@ function BookPage() {
                 </Label>
                 <Input
                   id="n"
-                  className="h-9"
+                  className="h-11"
+                  autoComplete="name"
+                  aria-invalid={!!fieldErrors.name}
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    setFieldErrors((f) => ({ ...f, name: undefined }));
+                  }}
                   maxLength={80}
                 />
+                <FieldError message={fieldErrors.name} />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="em" className="text-xs font-bold">
@@ -588,12 +648,21 @@ function BookPage() {
                   type="email"
                   inputMode="email"
                   autoComplete="email"
-                  className="h-9"
+                  className="h-11"
+                  aria-invalid={!!fieldErrors.email}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setFieldErrors((f) => ({ ...f, email: undefined }));
+                  }}
                   maxLength={160}
                   placeholder="nome@email.com"
                 />
+                {fieldErrors.email ? (
+                  <FieldError message={fieldErrors.email} />
+                ) : (
+                  <p className="text-xs text-muted-foreground">{t("bk.field.emailHint")}</p>
+                )}
               </div>
               <div className="space-y-1">
                 <Label htmlFor="p" className="text-xs font-bold">
@@ -601,12 +670,19 @@ function BookPage() {
                 </Label>
                 <Input
                   id="p"
-                  className="h-9"
+                  className="h-11"
+                  type="tel"
                   inputMode="tel"
+                  autoComplete="tel"
+                  aria-invalid={!!fieldErrors.phone}
                   value={phone}
-                  onChange={(e) => setPhone(maskPhonePt(e.target.value))}
+                  onChange={(e) => {
+                    setPhone(maskPhonePt(e.target.value));
+                    setFieldErrors((f) => ({ ...f, phone: undefined }));
+                  }}
                   placeholder="912 345 678"
                 />
+                <FieldError message={fieldErrors.phone} />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="obs" className="text-xs font-bold">
@@ -627,7 +703,7 @@ function BookPage() {
       </div>
 
       {currentStep === "account" && service && time && (
-        <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 px-5 py-3 backdrop-blur">
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 px-5 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur">
           <div className="mx-auto flex max-w-2xl flex-col gap-2.5">
             <div className="min-w-0 text-sm">
               <p className="truncate font-bold">
@@ -637,7 +713,13 @@ function BookPage() {
                 {formatDateLong(`${date}T12:00:00Z`, business.timezone)}
               </p>
             </div>
+            {submitError && (
+              <p role="alert" className="text-sm font-semibold text-destructive">
+                {submitError}
+              </p>
+            )}
             <Button onClick={submit} disabled={busy} size="lg" className="w-full">
+              {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
               {busy ? t("bk.booking") : t("bk.confirmBooking")}
             </Button>
           </div>
@@ -654,7 +736,7 @@ function BookPage() {
           to="/"
           className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="size-3.5" /> {t("bk.createMyPage")}
+          {t("bk.createMyPage")}
         </Link>
       </div>
     </main>
@@ -677,9 +759,6 @@ function Section({
   return (
     <section key={step} className="animate-enter mb-8">
       <h2 className="mb-1 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">
-        <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
-          {step}
-        </span>
         {title}
         {total ? (
           <span className="ml-auto text-[11px] font-bold tabular-nums">
@@ -694,6 +773,27 @@ function Section({
   );
 }
 
+
+function SummaryChip({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="max-w-full truncate rounded-full bg-muted px-3 py-1.5 text-xs font-bold text-foreground transition-colors hover:bg-accent"
+    >
+      {children}
+    </button>
+  );
+}
+
+function FieldError({ message }: { message?: string | undefined }) {
+  if (!message) return null;
+  return (
+    <p role="alert" className="text-xs font-semibold text-destructive">
+      {message}
+    </p>
+  );
+}
 
 function ChoiceChip({
   active,
@@ -728,40 +828,27 @@ function SlotGroup({
   selected: string | null;
   onSelect: (t: string) => void;
 }) {
-  const [open, setOpen] = useState(true);
+  // Always open: collapsing the periods only added a tap before reaching a time.
   return (
-    <div className="rounded-2xl border border-border p-3">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between text-sm font-bold"
-      >
-        <span className="flex items-center gap-2">
-          {label}
-          <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold text-primary">
-            {times.length}
-          </span>
-        </span>
-        <ChevronDown className={cn("size-4 transition-transform", !open && "-rotate-90")} />
-      </button>
-      {open && (
-        <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
-          {times.map((t) => (
-            <button
-              key={t}
-              onClick={() => onSelect(t)}
-              className={cn(
-                "rounded-xl border py-2.5 text-sm font-bold tabular-nums transition-colors",
-                selected === t
-                  ? "border-primary bg-primary text-white"
-                  : "border-border hover:bg-accent",
-              )}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-      )}
+    <div>
+      <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <div className="animate-stagger mt-2 grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-6">
+        {times.map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => onSelect(t)}
+            className={cn(
+              "rounded-xl border py-3 text-sm font-bold tabular-nums transition-colors",
+              selected === t
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border hover:bg-accent",
+            )}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

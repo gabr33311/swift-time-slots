@@ -11,14 +11,16 @@ import { displayCustomerName, formatPrice } from "@/lib/format";
 import { PendingCapsule, PendingDecisionDrawer } from "@/components/pending-sheet";
 import { addDays, minutesToTime, timeToMinutes, todayIn, weekdayOf, zonedToUtc } from "@/lib/time";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
-import { BellRing, Check, ChevronLeft, ChevronRight, Lock, Moon, Plus, RotateCcw, StickyNote, Unlock, UserX } from "lucide-react";
+import { BellRing, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Lock, Moon, Plus, StickyNote, Unlock, UserX } from "lucide-react";
+import { enGB, pt } from "date-fns/locale";
+import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
 import { ContactCustomer } from "@/components/contact-customer";
 import { usePrefs } from "@/lib/prefs";
 import { formatTime } from "@/lib/format";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { setAppointmentStatus } from "@/lib/appointment-status";
+import { invalidateAppointmentData, setAppointmentStatus } from "@/lib/appointment-status";
 
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
@@ -87,6 +89,10 @@ type AgendaRow =
   | { kind: "appt"; appt: Appt; start: number; end: number }
   | { kind: "block"; block: Block; start: number; end: number };
 
+function isReleased(status: Appt["status"]): boolean {
+  return status === "cancelled" || status === "expired";
+}
+
 /** Minutes from midnight of an ISO instant, as seen in the business timezone. */
 function minuteOfDay(iso: string, tz: string): number {
   return timeToMinutes(formatTime(iso, tz));
@@ -148,9 +154,11 @@ function buildAgenda(
 
 
   const rows: AgendaRow[] = [...busy];
+  // Cancelled/expired appointments stay visible but no longer occupy the time.
+  const occupying = busy.filter((r) => r.kind !== "appt" || !isReleased(r.appt.status));
   for (const range of ranges) {
     let cursor = range.start;
-    for (const item of busy) {
+    for (const item of occupying) {
       if (item.end <= range.start || item.start >= range.end) continue;
       if (item.start > cursor) rows.push(...freeChunks(cursor, Math.min(item.start, range.end), step));
       cursor = Math.max(cursor, item.end);
@@ -168,10 +176,19 @@ function CalendarPage() {
   const qc = useQueryClient();
   const tz = business?.timezone ?? "Europe/Lisbon";
   const [date, setDate] = useState(todayIn(tz));
+  // The first render uses the fallback timezone; once the business loads, "today"
+  // must be today in the business timezone (they differ around midnight).
+  const tzSynced = useRef(false);
+  useEffect(() => {
+    if (!business || tzSynced.current) return;
+    tzSynced.current = true;
+    setDate(todayIn(business.timezone));
+  }, [business]);
   const [newOpen, setNewOpen] = useState(false);
   const [pendingFocus, setPendingFocus] = useState<string | null>(null);
   const [newTime, setNewTime] = useState("09:00");
   const [staffFilter, setStaffFilter] = useState<string>("all");
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   // Pinch changes only the vertical time density; text and controls stay crisp.
   const [zoom, setZoom] = useState(1);
@@ -260,15 +277,19 @@ function CalendarPage() {
     }).format(new Date()),
   );
 
-  // Grid geometry: the day spans the working hours, widened to fit anything
-  // scheduled outside them, snapped to whole hours.
+  // Grid geometry: the day spans exactly the working hours, widened only to fit
+  // anything scheduled outside them, snapped to whole hours. 08–20 is just the
+  // fallback for a day with nothing at all.
   const spanStarts = [
     ...(data?.ranges ?? []).map((r) => r.start),
     ...agendaRows.map((r) => r.start),
   ];
   const spanEnds = [...(data?.ranges ?? []).map((r) => r.end), ...agendaRows.map((r) => r.end)];
-  const dayStart = Math.max(0, Math.floor(Math.min(8 * 60, ...spanStarts) / 60) * 60);
-  const dayEnd = Math.min(24 * 60, Math.ceil(Math.max(20 * 60, ...spanEnds) / 60) * 60);
+  const hasSpan = spanStarts.length > 0;
+  const dayStart = hasSpan ? Math.max(0, Math.floor(Math.min(...spanStarts) / 60) * 60) : 8 * 60;
+  const dayEnd = hasSpan
+    ? Math.min(24 * 60, Math.max(dayStart + 60, Math.ceil(Math.max(...spanEnds) / 60) * 60))
+    : 20 * 60;
   const pxPerMinute = PX_PER_MIN * zoom;
   const gridHeight = (dayEnd - dayStart) * pxPerMinute;
   const hourMarks = Array.from(
@@ -286,7 +307,8 @@ function CalendarPage() {
     const node = nowRef.current;
     if (!node) return;
     scrolledFor.current = date;
-    node.scrollIntoView({ block: "center", behavior: "smooth" });
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    node.scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" });
   }, [date, isToday, isLoading, gridHeight]);
 
 
@@ -321,18 +343,24 @@ function CalendarPage() {
     const start = zonedToUtc(date, from, tz);
     const end = zonedToUtc(date, endMin, tz);
 
-    const { error } = await supabase.from("blocked_times").insert({
-      business_id: business.id,
-      staff_id: staffFilter === "all" ? null : staffFilter,
-      starts_at: start.toISOString(),
-      ends_at: end.toISOString(),
-      reason: t("cal.block.reason"),
-    });
+    const { data: created, error } = await supabase
+      .from("blocked_times")
+      .insert({
+        business_id: business.id,
+        staff_id: staffFilter === "all" ? null : staffFilter,
+        starts_at: start.toISOString(),
+        ends_at: end.toISOString(),
+        reason: t("cal.block.reason"),
+      })
+      .select("id")
+      .single();
     if (error) {
       toast.error(t("cal.toast.blockError"));
       return;
     }
-    toast.success(t("cal.toast.blocked"));
+    toast.success(t("cal.toast.blocked"), {
+      action: { label: t("cal.undo"), onClick: () => void unblock(created.id, true) },
+    });
     qc.invalidateQueries({ queryKey: ["calendar"] });
   }
 
@@ -373,7 +401,11 @@ function CalendarPage() {
     return end <= now;
   }
 
-  async function validateAppointment(id: string, status: "completed" | "no_show") {
+  async function validateAppointment(
+    id: string,
+    status: Appt["status"],
+    previous?: Appt["status"],
+  ) {
     if (!business) return;
     const result = await setAppointmentStatus({
       id,
@@ -385,21 +417,44 @@ function CalendarPage() {
       toast.error(result.message);
       return;
     }
-    toast.success(t("acts.toast.updated"));
-    qc.invalidateQueries({ queryKey: ["calendar"] });
-    qc.invalidateQueries({ queryKey: ["appointments"] });
-    qc.invalidateQueries({ queryKey: ["customers"] });
+    // Completed / no-show sit side by side on small screens: offer a quick undo.
+    toast.success(
+      t("acts.toast.updated"),
+      previous
+        ? { action: { label: t("cal.undo"), onClick: () => void validateAppointment(id, previous) } }
+        : undefined,
+    );
+    void invalidateAppointmentData(qc);
   }
 
 
-  async function unblock(id: string) {
+  async function unblock(id: string, silent = false) {
+    const removed = data?.blocks.find((b) => b.id === id);
     const { error } = await supabase.from("blocked_times").delete().eq("id", id);
     if (error) {
       toast.error(t("cal.toast.blockError"));
       return;
     }
-    toast.success(t("cal.toast.unblocked"));
     qc.invalidateQueries({ queryKey: ["calendar"] });
+    if (silent) return;
+    toast.success(t("cal.toast.unblocked"), {
+      action: removed && business
+        ? {
+            label: t("cal.undo"),
+            onClick: async () => {
+              const { error: restoreError } = await supabase.from("blocked_times").insert({
+                business_id: business.id,
+                staff_id: removed.staff_id,
+                starts_at: removed.starts_at,
+                ends_at: removed.ends_at,
+                reason: removed.reason,
+              });
+              if (restoreError) toast.error(t("cal.toast.blockError"));
+              qc.invalidateQueries({ queryKey: ["calendar"] });
+            },
+          }
+        : undefined,
+    });
   }
 
   const isEn = t("cal.today") === "Today";
@@ -430,7 +485,7 @@ function CalendarPage() {
         action={
           <div className="flex items-center gap-2">
             {isToday && liveToday.length > 0 && (
-              <span className="inline-flex shrink-0 rounded-full border border-border bg-card px-2.5 py-2 text-[10px] font-black tabular-nums text-muted-foreground sm:px-3 sm:text-[11px]">
+              <span className="inline-flex shrink-0 rounded-full border border-border bg-card px-2.5 py-2 text-[11px] font-black tabular-nums text-muted-foreground sm:px-3 sm:text-[11px]">
                 {progressPill}
               </span>
             )}
@@ -443,30 +498,57 @@ function CalendarPage() {
       />
 
       <div className="surface p-1">
-        <div className="flex h-10 items-center gap-1">
+        <div className="flex h-11 items-center gap-1">
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => setDate(todayIn(tz))}
             disabled={isToday}
-            className="h-8 shrink-0 rounded-full px-3 text-[11px] font-black disabled:opacity-45"
+            className="h-9 shrink-0 rounded-full px-3 text-xs font-black disabled:opacity-45"
           >
-            <RotateCcw className="size-3.5" />
+            <CalendarDays className="size-3.5" />
             {t("cal.today")}
           </Button>
           <button
             onClick={() => setDate(addDays(date, -1))}
             aria-label={t("cal.prevDay")}
-            className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="flex size-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <ChevronLeft className="size-4" />
           </button>
-          <p className="min-w-0 flex-1 truncate text-center text-sm font-bold">{label}</p>
+          {/* Jumping weeks/months day by day was tedious: the label opens a month picker. */}
+          <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                aria-label={t("cal.pickDate")}
+                className="mx-auto flex h-10 min-w-0 items-center justify-center gap-1 rounded-full px-3 text-sm font-bold transition-colors hover:bg-muted"
+              >
+                <span className="truncate">{label}</span>
+                <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" strokeWidth={2.6} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="center" className="w-auto p-0">
+              <Calendar
+                mode="single"
+                locale={isEn ? enGB : pt}
+                weekStartsOn={1}
+                selected={new Date(`${date}T12:00:00`)}
+                defaultMonth={new Date(`${date}T12:00:00`)}
+                onSelect={(d) => {
+                  if (!d) return;
+                  const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                  setDate(iso);
+                  setPickerOpen(false);
+                }}
+              />
+            </PopoverContent>
+          </Popover>
           <button
             onClick={() => setDate(addDays(date, 1))}
             aria-label={t("cal.nextDay")}
-            className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="flex size-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <ChevronRight className="size-4" />
           </button>
@@ -489,7 +571,7 @@ function CalendarPage() {
                       : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
-                <span className="text-[10px] font-bold uppercase tracking-wide">
+                <span className="text-[11px] font-bold uppercase tracking-wide">
                   {dayShort(d).replace(".", "").slice(0, 3)}
                 </span>
                 <span className="text-sm font-black tabular-nums">{Number(d.slice(8, 10))}</span>
@@ -534,11 +616,13 @@ function CalendarPage() {
         <>
 
           <div
+            // Remount per day so switching days gets the same soft entrance.
+            key={date}
             onTouchStart={onPinchStart}
             onTouchMove={onPinchMove}
             onTouchEnd={onPinchEnd}
             onTouchCancel={onPinchEnd}
-            className="surface overflow-hidden p-0"
+            className="surface animate-enter overflow-hidden p-0"
             style={{
               touchAction: "pan-y",
             }}
@@ -591,17 +675,33 @@ function CalendarPage() {
                         height: Math.max((row.end - row.start) * pxPerMinute - 2, 18),
                       }}
                     >
-                      <div
-                        aria-hidden
-                        className={cn("size-full rounded-lg", past && "bg-muted/25")}
-                      />
+                      {past ? (
+                        <div aria-hidden className="size-full rounded-lg bg-muted/25" />
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewTime(minutesToTime(bookFrom));
+                            setNewOpen(true);
+                          }}
+                          aria-label={t("cal.newAt").replace("{time}", minutesToTime(bookFrom))}
+                          title={t("cal.newAt").replace("{time}", minutesToTime(bookFrom))}
+                          className="group flex size-full items-start rounded-lg px-2 py-1 text-left transition-colors hover:bg-muted/40 focus-visible:bg-muted/40 active:bg-muted/60"
+                        >
+                          {/* Empty time stays clean; the hint only appears on hover, focus or touch. */}
+                          <span className="flex items-center gap-1 text-[11px] font-bold tabular-nums text-muted-foreground opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 group-active:opacity-100">
+                            <Plus className="size-3.5" strokeWidth={2.6} />
+                            {minutesToTime(bookFrom)}
+                          </span>
+                        </button>
+                      )}
                       {!past && (row.end - row.start) * pxPerMinute >= 32 && (
                         <button
                           type="button"
                           onClick={() => blockSlot(row.start, row.end)}
                           aria-label={t("cal.block")}
                           title={t("cal.block")}
-                          className="absolute right-1 top-1 flex size-6 items-center justify-center rounded-full border border-dashed border-border text-muted-foreground/60 opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 sm:opacity-60"
+                          className="tap-target absolute right-0.5 top-0.5 flex size-7 items-center justify-center rounded-full border border-dashed border-border text-muted-foreground opacity-60 transition-opacity hover:text-foreground hover:opacity-100 focus-visible:opacity-100"
                         >
                           <Lock className="size-3" strokeWidth={2.6} />
                         </button>
@@ -628,7 +728,7 @@ function CalendarPage() {
                         onClick={() => unblock(row.block.id)}
                         aria-label={t("cal.unblock")}
                         title={t("cal.unblock")}
-                        className="flex size-5 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+                        className="tap-target relative flex size-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
                       >
                         <Unlock className="size-3" strokeWidth={2.6} />
                       </button>
@@ -655,7 +755,9 @@ function CalendarPage() {
                       tabIndex={!due && row.appt.status === "pending" ? 0 : undefined}
                       onClick={!due && row.appt.status === "pending" ? () => setPendingFocus(row.appt.id) : undefined}
                       className={cn(
-                        "appointment-state surface surface-hover absolute inset-x-1 z-10 overflow-hidden p-0",
+                        "appointment-state surface surface-hover absolute inset-x-1 overflow-hidden p-0",
+                        // A rebooked slot draws the live appointment over the cancelled one.
+                        isReleased(row.appt.status) ? "z-[5] opacity-70" : "z-10",
                         !due && row.appt.status === "pending" && "cursor-pointer",
                         isNext && "ring-1 ring-foreground/40",
                       )}
@@ -721,7 +823,7 @@ function CalendarPage() {
                                     <button
                                       type="button"
                                       aria-label={t("cal.note.label")}
-                                      className="mt-0.5 flex max-w-full items-center gap-1 self-start rounded-full border border-border bg-card px-2 py-0.5 text-[10px] font-semibold text-muted-foreground"
+                                      className="mt-0.5 flex max-w-full items-center gap-1 self-start rounded-full border border-border bg-card px-2 py-0.5 text-[11px] font-semibold text-muted-foreground"
                                     >
                                       <StickyNote className="size-3 shrink-0" strokeWidth={2.6} />
                                       <span className="truncate">{row.appt.notes}</span>
@@ -744,9 +846,9 @@ function CalendarPage() {
                               <button
                                 type="button"
                                 aria-label={t("cal.validate.complete")}
-                                onClick={() => validateAppointment(row.appt.id, "completed")}
+                                onClick={() => validateAppointment(row.appt.id, "completed", row.appt.status)}
                                 className={cn(
-                                  "flex items-center justify-center gap-1 rounded-md bg-primary px-2.5 font-black text-primary-foreground shadow-sm active:scale-95 sm:px-4",
+                                  "tap-target relative flex items-center justify-center gap-1 rounded-md bg-primary px-2.5 font-black text-primary-foreground shadow-sm active:scale-95 sm:px-4",
                                   tier === "tiny" ? "h-7 text-xs" : "h-10 text-sm",
                                 )}
                               >
@@ -756,9 +858,9 @@ function CalendarPage() {
                               <button
                                 type="button"
                                 aria-label={t("cal.validate.noShow")}
-                                onClick={() => validateAppointment(row.appt.id, "no_show")}
+                                onClick={() => validateAppointment(row.appt.id, "no_show", row.appt.status)}
                                 className={cn(
-                                  "flex items-center justify-center gap-1 rounded-md border-2 border-destructive/60 bg-card px-2.5 font-black text-destructive active:scale-95 sm:px-4",
+                                  "tap-target relative flex items-center justify-center gap-1 rounded-md border-2 border-border bg-card px-2.5 font-black text-foreground/80 transition-transform active:scale-95 sm:px-4",
                                   tier === "tiny" ? "h-7 text-xs" : "h-10 text-sm",
                                 )}
                               >

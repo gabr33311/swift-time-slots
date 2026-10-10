@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { usePrefs } from "@/lib/prefs";
 import { formatPrice } from "@/lib/format";
+import { canonicalPhone } from "@/lib/phone";
 
 export type EditableCustomer = {
   id: string;
@@ -85,7 +86,7 @@ export function EditCustomerDialog({
     setBusy(true);
     const payload = {
       name: name.trim().slice(0, 80),
-      phone: phone.trim() ? phone.trim().slice(0, 30) : null,
+      phone: phone.trim() ? canonicalPhone(phone).slice(0, 30) : null,
       email: email.trim() ? email.trim().slice(0, 120) : null,
       notes: notes.trim() ? notes.trim().slice(0, 500) : null,
     };

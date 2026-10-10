@@ -10,6 +10,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { PrefsProvider, usePrefs } from "@/lib/prefs";
 
@@ -24,12 +25,9 @@ function NotFoundComponent() {
           {t("ui.notFound.body")}
         </p>
         <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            {t("ui.notFound.goHome")}
-          </Link>
+          <Button asChild>
+            <Link to="/">{t("ui.notFound.goHome")}</Link>
+          </Button>
         </div>
       </div>
     </div>
@@ -54,21 +52,17 @@ function ErrorComponent({ error, reset }: { error: Error; reset?: () => void }) 
           {t("ui.error.page.body")}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button
+          <Button
             onClick={() => {
               router.invalidate();
               reset?.();
             }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             {t("ui.error.page.tryAgain")}
-          </button>
-          <a
-            href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-          >
-            {t("ui.error.page.goHome")}
-          </a>
+          </Button>
+          <Button asChild variant="outline">
+            <a href="/">{t("ui.error.page.goHome")}</a>
+          </Button>
         </div>
       </div>
     </div>
@@ -79,7 +73,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "SYCRAS — Marcações online" },
       { name: "description", content: "Marcações online simples para negócios em Portugal." },
       { name: "author", content: "SYCRAS" },

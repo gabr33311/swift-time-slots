@@ -1,4 +1,11 @@
-import { zonedToUtc, weekdayOf, minutesToTime, timeToMinutes, todayIn } from "./time";
+import {
+  addMonthsClamped,
+  zonedToUtc,
+  weekdayOf,
+  minutesToTime,
+  timeToMinutes,
+  todayIn,
+} from "./time";
 
 export type PublicBusiness = {
   id: string;
@@ -87,9 +94,8 @@ export async function loadPublicBusiness(slug: string): Promise<{
   openWeekdays: number[];
   blocks: { from: string; to: string }[];
 } | null> {
-  let db: Awaited<ReturnType<typeof publicDb>>;
   // Service key may be absent on external hosts (e.g. Vercel) — fall back to anon + RLS.
-  db = process.env["SUPABASE_SERVICE_ROLE_KEY"]
+  const db: Awaited<ReturnType<typeof publicDb>> = process.env["SUPABASE_SERVICE_ROLE_KEY"]
     ? ((await admin()) as unknown as typeof db)
     : await publicDb();
   const { data: business } = await db
@@ -184,6 +190,8 @@ export async function computeSlots(params: {
   serviceId: string;
   staffId: string | null;
   date: string;
+  /** Interval of the appointment being rescheduled, so it doesn't clash with itself. */
+  ignore?: { staffId: string | null; startsAt: string; endsAt: string };
 }): Promise<SlotOption[]> {
   // Service key may be absent on external hosts (e.g. Vercel) — fall back to anon + RLS.
   type Db = Awaited<ReturnType<typeof publicDb>>;
@@ -210,11 +218,7 @@ export async function computeSlots(params: {
   const tz = business.timezone;
   const today = todayIn(tz);
   if (params.date < today) return [];
-  {
-    const [y, m, d] = today.split("-").map(Number);
-    const limit = new Date(Date.UTC(y!, m! - 1 + (business.booking_horizon_months ?? 2), d!));
-    if (params.date > limit.toISOString().slice(0, 10)) return [];
-  }
+  if (params.date > addMonthsClamped(today, business.booking_horizon_months ?? 2)) return [];
 
   const { data: allStaff } = await db
     .from("staff")
@@ -271,6 +275,19 @@ export async function computeSlots(params: {
         .gt("ends_at", dayStart.toISOString()),
     ]);
     busyRows = [...(appts ?? []), ...(blocks ?? [])] as typeof busyRows;
+  }
+
+  if (params.ignore) {
+    const ig = params.ignore;
+    const igFrom = new Date(ig.startsAt).getTime();
+    const igTo = new Date(ig.endsAt).getTime();
+    const idx = busyRows.findIndex(
+      (b) =>
+        b.staff_id === ig.staffId &&
+        new Date(b.starts_at).getTime() === igFrom &&
+        new Date(b.ends_at).getTime() === igTo,
+    );
+    if (idx >= 0) busyRows = busyRows.filter((_, i) => i !== idx);
   }
 
   const busy = busyRows.map((b) => ({

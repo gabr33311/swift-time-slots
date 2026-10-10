@@ -19,7 +19,9 @@ import {
 import { useMyBusiness } from "@/hooks/use-business";
 import { usePrefs } from "@/lib/prefs";
 import { initials } from "@/lib/format";
-import { UserRound, Pencil, Trash2, Plus } from "lucide-react";
+import { hasUpcomingAppointments } from "@/lib/appointment-status";
+import { ChevronRight, Loader2, Plus, Trash2, UserRound } from "lucide-react";
+import { ConfirmAction } from "@/components/confirm-action";
 
 type StaffRow = {
   id: string;
@@ -52,7 +54,10 @@ export function TeamPanel() {
           .eq("business_id", business!.id)
           .eq("is_active", true)
           .order("sort_order"),
-        supabase.from("staff_services").select("staff_id, service_id"),
+        supabase
+          .from("staff_services")
+          .select("staff_id, service_id")
+          .eq("business_id", business!.id),
       ]);
       const rows: StaffRow[] = (staff ?? []).map((s) => ({
         ...s,
@@ -62,30 +67,48 @@ export function TeamPanel() {
     },
   });
 
-  async function remove(id: string) {
+  async function remove(id: string): Promise<boolean> {
+    // Deleting nulls staff_id on their appointments (FK SET NULL), and an appointment
+    // with no professional blocks everyone's slots. Keep them: deactivate instead.
+    if (await hasUpcomingAppointments("staff_id", id)) {
+      toast.error(t("pf.team.err.hasAppointments"));
+      return true;
+    }
     const { error } = await supabase.from("staff").delete().eq("id", id);
     if (error) {
-      toast.error(t("pf.team.err.hasAppointments"));
-      return;
+      toast.error(t("pf.common.saveError"));
+      return false;
     }
     toast.success(t("pf.team.removed"));
     qc.invalidateQueries({ queryKey: ["team"] });
+    return true;
   }
 
   async function toggleActive(s: StaffRow) {
-    await supabase.from("staff").update({ is_active: !s.is_active }).eq("id", s.id);
+    // Flip immediately so the switch answers the tap; the refetch corrects a failure.
+    qc.setQueryData(["team", business?.id], (prev: typeof data) =>
+      prev && {
+        ...prev,
+        rows: prev.rows.map((r) => (r.id === s.id ? { ...r, is_active: !s.is_active } : r)),
+      },
+    );
+    const { error } = await supabase.from("staff").update({ is_active: !s.is_active }).eq("id", s.id);
+    if (error) toast.error(t("pf.common.saveError"));
     qc.invalidateQueries({ queryKey: ["team"] });
+  }
+
+  // A fresh key per opening, so "Add" never shows the previous form's leftovers.
+  const [formKey, setFormKey] = useState(0);
+  function openEditor(s: StaffRow | null) {
+    setEditing(s);
+    setFormKey((k) => k + 1);
+    setOpen(true);
   }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button
-          onClick={() => {
-            setEditing(null);
-            setOpen(true);
-          }}
-        >
+        <Button onClick={() => openEditor(null)}>
           <Plus className="mr-2 size-4" /> {t("pf.team.add")}
         </Button>
       </div>
@@ -99,44 +122,53 @@ export function TeamPanel() {
           description={t("pf.team.empty.desc")}
         />
       ) : (
-        <ul className="space-y-2">
+        <ul className="animate-stagger grid gap-2 xl:grid-cols-2">
           {data!.rows.map((s) => (
-            <li key={s.id} className="surface flex items-center gap-3 p-4">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground">
-                {initials(s.name)}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{s.name}</p>
-                <p className="truncate text-sm text-muted-foreground">
-                  {s.specialty ?? `${s.service_ids.length}${t("pf.team.servicesCount")}`}
-                </p>
-              </div>
-              <Switch
-                checked={s.is_active}
-                onCheckedChange={() => toggleActive(s)}
-                aria-label={t("pf.common.active")}
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={t("pf.common.edit")}
-                onClick={() => {
-                  setEditing(s);
-                  setOpen(true);
-                }}
+            <li key={s.id} className="surface flex items-center gap-2 p-3 sm:gap-3 sm:p-4">
+              {/* The whole row opens the editor: no separate pencil to find. */}
+              <button
+                type="button"
+                onClick={() => openEditor(s)}
+                aria-label={`${t("pf.common.edit")} ${s.name}`}
+                className={`flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left transition-opacity hover:opacity-80 ${s.is_active ? "" : "opacity-55"}`}
               >
-                <Pencil className="size-4" />
-              </Button>
-              <Button variant="ghost" size="icon" aria-label={t("pf.common.remove")} onClick={() => remove(s.id)}>
-                <Trash2 className="size-4" />
-              </Button>
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground">
+                  {initials(s.name)}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium">{s.name}</span>
+                  <span className="block truncate text-sm text-muted-foreground">
+                    {s.specialty ? `${s.specialty} · ` : ""}
+                    {s.service_ids.length}
+                    {t("pf.team.servicesCount")}
+                  </span>
+                </span>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+              </button>
+              <label className="flex shrink-0 cursor-pointer flex-col items-center gap-0.5">
+                <Switch checked={s.is_active} onCheckedChange={() => toggleActive(s)} />
+                <span className="text-[11px] font-semibold text-muted-foreground">
+                  {s.is_active ? t("pf.common.active") : t("pf.common.inactive")}
+                </span>
+              </label>
+              <ConfirmAction
+                title={t("pf.team.removeTitle").replace("{name}", s.name)}
+                description={t("pf.team.removeDesc")}
+                confirmLabel={t("pf.common.remove")}
+                onConfirm={() => remove(s.id)}
+                trigger={
+                  <Button variant="ghost" size="icon" aria-label={t("pf.common.remove")}>
+                    <Trash2 className="size-4" />
+                  </Button>
+                }
+              />
             </li>
           ))}
         </ul>
       )}
 
       <StaffDialog
-        key={editing?.id ?? "new"}
+        key={formKey}
         businessId={business?.id}
         staff={editing}
         services={data?.services ?? []}
@@ -173,14 +205,16 @@ function StaffDialog({
     staff?.service_ids ?? services.map((s) => s.id),
   );
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function save() {
     const parsed = schema.safeParse({ name, specialty });
     if (!parsed.success) {
-      toast.error(t(parsed.error.issues[0]?.message ?? "pf.common.checkData"));
+      setError(t(parsed.error.issues[0]?.message ?? "pf.common.checkData"));
       return;
     }
     if (!businessId) return;
+    setError(null);
     setBusy(true);
     try {
       const payload = {
@@ -190,7 +224,8 @@ function StaffDialog({
       };
       let staffId = staff?.id;
       if (staffId) {
-        await supabase.from("staff").update(payload).eq("id", staffId);
+        const { error } = await supabase.from("staff").update(payload).eq("id", staffId);
+        if (error) throw error;
       } else {
         const { data: created, error } = await supabase
           .from("staff")
@@ -200,28 +235,33 @@ function StaffDialog({
         if (error) throw error;
         staffId = created.id;
       }
-      await supabase.from("staff_services").delete().eq("staff_id", staffId!);
+      const { error: unlinkError } = await supabase
+        .from("staff_services")
+        .delete()
+        .eq("staff_id", staffId!);
+      if (unlinkError) throw unlinkError;
       if (selected.length) {
-        await supabase.from("staff_services").insert(
+        const { error: linkError } = await supabase.from("staff_services").insert(
           selected.map((sid) => ({
             staff_id: staffId!,
             service_id: sid,
             business_id: businessId,
           })),
         );
+        if (linkError) throw linkError;
       }
-      toast.success(t("ui.save.auto"));
+      toast.success(t("pf.team.saved"));
       qc.invalidateQueries({ queryKey: ["team"] });
       onOpenChange(false);
     } catch {
-      toast.error(t("pf.common.saveError"));
+      setError(t("pf.common.saveError"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(o) => !busy && onOpenChange(o)}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{staff ? t("pf.team.editTitle") : t("pf.team.newTitle")}</DialogTitle>
@@ -248,6 +288,9 @@ function StaffDialog({
           </div>
           <div className="space-y-2">
             <Label className="font-semibold">{t("pf.team.services")}</Label>
+            {services.length === 0 && (
+              <p className="text-sm text-muted-foreground">{t("pf.team.noServices")}</p>
+            )}
             {services.map((s) => (
               <label key={s.id} className="flex items-center gap-2.5 text-sm">
                 <Checkbox
@@ -260,7 +303,13 @@ function StaffDialog({
               </label>
             ))}
           </div>
+          {error && (
+            <p role="alert" className="text-sm font-semibold text-destructive">
+              {error}
+            </p>
+          )}
           <Button className="w-full" onClick={save} disabled={busy}>
+            {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
             {t("pf.common.save")}
           </Button>
         </div>

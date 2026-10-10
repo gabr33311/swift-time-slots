@@ -14,6 +14,8 @@ import { CalendarX, Check, ChevronLeft, ChevronRight, UserX } from "lucide-react
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { AppointmentActions } from "@/components/appointment-actions";
+import { invalidateAppointmentData, setAppointmentStatus } from "@/lib/appointment-status";
+import { todayIn, zonedToUtc } from "@/lib/time";
 
 const filterSchema = z.enum(["upcoming", "today", "past", "cancelled", "confirmed", "pending", "completed"]);
 
@@ -82,10 +84,14 @@ function AppointmentsPage() {
       const now = new Date().toISOString();
       if (statusFilter !== "all") q = q.eq("status", statusFilter);
       if (timeFilter === "upcoming") q = q.gte("starts_at", now);
-      if (timeFilter === "today")
+      if (timeFilter === "today") {
+        // The calendar day in the business timezone, not "now ± 12h".
+        const tz = business!.timezone;
+        const day = todayIn(tz);
         q = q
-          .gte("starts_at", new Date(Date.now() - 12 * 3600000).toISOString())
-          .lte("starts_at", new Date(Date.now() + 12 * 3600000).toISOString());
+          .gte("starts_at", zonedToUtc(day, 0, tz).toISOString())
+          .lt("starts_at", zonedToUtc(day, 24 * 60, tz).toISOString());
+      }
       if (timeFilter === "past") q = q.lt("starts_at", now);
       if (statusFilter === "all" && timeFilter === "upcoming") q = q.neq("status", "cancelled");
       const descending =
@@ -96,22 +102,15 @@ function AppointmentsPage() {
     },
   });
 
-  async function setStatus(id: string, status: string) {
-    const { error } = await supabase
-      .from("appointments")
-      .update({ status: status as never })
-      .eq("id", id);
-    if (error) {
+  async function setStatus(id: string, status: "completed" | "no_show") {
+    if (!business) return;
+    const result = await setAppointmentStatus({ id, businessId: business.id, status });
+    if (!result.ok) {
       toast.error(t("appt.toast.updateError"));
       return;
     }
-    await supabase.from("appointment_status_history").insert({
-      appointment_id: id,
-      business_id: business!.id,
-      status: status as never,
-    });
     toast.success(t("appt.toast.updated"));
-    qc.invalidateQueries({ queryKey: ["appointments"] });
+    void invalidateAppointmentData(qc);
   }
 
   return (
@@ -133,7 +132,7 @@ function AppointmentsPage() {
         />
       )}
 
-      <div className="mb-4 space-y-2.5">
+      <div className="mb-4 space-y-2.5 lg:flex lg:flex-wrap lg:gap-x-8 lg:space-y-0">
         <div>
           <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
             {t("appt.group.status")}
@@ -189,8 +188,13 @@ function AppointmentsPage() {
       ) : (
         <ul className="space-y-2">
           {data!.map((a) => (
-            <li key={a.id} data-status={a.status} className="appointment-state surface flex flex-wrap items-center gap-3 p-4">
-              <div className="w-20">
+            <li
+              key={a.id}
+              data-status={a.status}
+              // On wide screens the row reads like a table: when · client · service · actions.
+              className="appointment-state surface flex flex-wrap items-center gap-3 p-4 lg:grid lg:grid-cols-[8rem_minmax(0,1fr)_minmax(0,1fr)_auto] lg:gap-6 lg:py-3"
+            >
+              <div className="w-20 lg:w-auto">
                 <p className="text-sm font-semibold tabular-nums">
                   {formatTime(a.starts_at, business!.timezone)}
                 </p>
@@ -198,10 +202,11 @@ function AppointmentsPage() {
                   {formatDateShort(a.starts_at, business!.timezone)}
                 </p>
               </div>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 lg:contents">
                 <p className="truncate text-sm font-medium">{a.customer_name}</p>
                 <p className="truncate text-sm text-muted-foreground">{a.service_name}</p>
               </div>
+              <div className="flex shrink-0 items-center justify-end gap-2">
               <AppointmentActions
                 id={a.id}
                 status={a.status as "pending" | "confirmed" | "completed" | "cancelled" | "no_show" | "expired"}
@@ -211,6 +216,7 @@ function AppointmentsPage() {
                 serviceName={a.service_name}
                 timezone={business!.timezone}
               />
+              </div>
             </li>
           ))}
         </ul>
@@ -247,7 +253,7 @@ function OverdueReview({
   setIdx: (i: number) => void;
   timezone: string;
   currency: string;
-  onSetStatus: (id: string, status: string) => void;
+  onSetStatus: (id: string, status: "completed" | "no_show") => void;
 }) {
   const { t } = usePrefs();
   const a = items[idx];
