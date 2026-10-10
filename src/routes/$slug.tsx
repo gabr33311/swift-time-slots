@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDuration, formatPrice, formatDateLong, initials } from "@/lib/format";
-import { addDays, todayIn, zonedToUtc, timeToMinutes, weekdayOf } from "@/lib/time";
+import { addMonthsClamped, todayIn, zonedToUtc, timeToMinutes, weekdayOf } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
@@ -91,27 +91,25 @@ function NotFoundMessage() {
   return <CenteredMessage title={t("bk.notFound.title")} body={t("bk.notFound.body")} />;
 }
 
-let formNameError = "Indica o teu nome.";
-let formPhoneError = "Indica um telemóvel válido.";
-let formEmailError = "Email inválido.";
-
-const formSchema = z.object({
-  name: z.string().trim().min(2, formNameError).max(80),
-  phone: z
-    .string()
-    .trim()
-    .min(6, formPhoneError)
-    .max(24)
-    .regex(/^[0-9+\s()-]+$/, formPhoneError),
-  email: z.string().trim().min(1, formEmailError).email(formEmailError).max(160),
-  notes: z.string().trim().max(500),
-});
+function makeFormSchema(t: (key: string) => string) {
+  const nameError = t("bk.validation.name");
+  const phoneError = t("bk.validation.phone");
+  const emailError = t("bk.validation.email");
+  return z.object({
+    name: z.string().trim().min(2, nameError).max(80),
+    phone: z
+      .string()
+      .trim()
+      .min(6, phoneError)
+      .max(24)
+      .regex(/^[0-9+\s()-]+$/, phoneError),
+    email: z.string().trim().min(1, emailError).email(emailError).max(160),
+    notes: z.string().trim().max(500),
+  });
+}
 
 function BookPage() {
   const { t } = usePrefs();
-  formNameError = t("bk.validation.name");
-  formPhoneError = t("bk.validation.phone");
-  formEmailError = t("bk.validation.email");
   const { business, services, staff, openWeekdays, blocks } = Route.useLoaderData();
   // A day is closed if it is a weekly day off or fully covered by a business-wide block (vacation).
   const isClosedDay = (d: string) => {
@@ -154,7 +152,10 @@ function BookPage() {
   const service = services.find((s) => s.id === serviceId) ?? null;
   const visibleServices = useMemo(() => {
     const person = staffId ? staff.find((p) => p.id === staffId) : null;
-    return person ? services.filter((s) => person.service_ids.includes(s.id)) : services;
+    if (!person) return services;
+    // Same rule as the server: a service nobody is linked to can be done by anyone.
+    const linked = new Set(staff.flatMap((p) => p.service_ids));
+    return services.filter((s) => person.service_ids.includes(s.id) || !linked.has(s.id));
   }, [services, staff, staffId]);
 
 
@@ -181,11 +182,10 @@ function BookPage() {
   }, [month]);
 
   // Farthest date a client may book (admin-configurable, in months).
-  const maxDate = useMemo(() => {
-    const [y, m, d] = today.split("-").map(Number);
-    const months = business.booking_horizon_months ?? 2;
-    return new Date(Date.UTC(y!, m! - 1 + months, d!)).toISOString().slice(0, 10);
-  }, [today, business.booking_horizon_months]);
+  const maxDate = useMemo(
+    () => addMonthsClamped(today, business.booking_horizon_months ?? 2),
+    [today, business.booking_horizon_months],
+  );
 
   function shiftMonth(delta: number) {
     const [y, m] = month.split("-").map(Number);
@@ -224,7 +224,7 @@ function BookPage() {
   }, [business.id]);
 
   async function submit() {
-    const parsed = formSchema.safeParse({ name, phone, email, notes });
+    const parsed = makeFormSchema(t).safeParse({ name, phone, email, notes });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? t("bk.toast.checkData"));
       return;
@@ -278,12 +278,14 @@ function BookPage() {
           <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-primary/12 text-primary">
             <Check className="size-7" />
           </div>
-          <h1 className="text-xl font-bold">{t("bk.confirmed.title")}</h1>
+          <h1 className="text-xl font-bold">
+            {t(done.status === "pending" ? "bk.pending.title" : "bk.confirmed.title")}
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {formatDateLong(`${date}T12:00:00Z`, business.timezone)}{t("bk.confirmed.at")}{time} · {service?.name}
           </p>
           <p className="mt-4 text-sm text-muted-foreground">
-            {t("bk.confirmed.manage")}
+            {t(done.status === "pending" ? "bk.pending.manage" : "bk.confirmed.manage")}
           </p>
           <Link
             to="/booking/$token"

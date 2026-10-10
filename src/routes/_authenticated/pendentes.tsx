@@ -11,7 +11,7 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { formatTime } from "@/lib/format";
 import { Check, Clock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { setAppointmentStatus } from "@/lib/appointment-status";
+import { invalidateAppointmentData, setAppointmentStatus } from "@/lib/appointment-status";
 import { z } from "zod";
 import { usePrefs } from "@/lib/prefs";
 import { AppointmentStatusIndicator } from "@/components/appointment-status-indicator";
@@ -84,13 +84,7 @@ function PendingPage() {
       return;
     }
     toast.success(accept ? t("pend.toast.accepted") : t("pend.toast.refused"));
-    await Promise.all([
-      qc.invalidateQueries({ queryKey: ["requests"] }),
-      qc.invalidateQueries({ queryKey: ["dashboard-day"] }),
-      qc.invalidateQueries({ queryKey: ["dashboard-requests"] }),
-      qc.invalidateQueries({ queryKey: ["appointments"] }),
-      qc.invalidateQueries({ queryKey: ["calendar"] }),
-    ]);
+    await invalidateAppointmentData(qc);
   }
 
   return (

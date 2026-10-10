@@ -14,6 +14,8 @@ import { CalendarX, Check, ChevronLeft, ChevronRight, UserX } from "lucide-react
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { AppointmentActions } from "@/components/appointment-actions";
+import { invalidateAppointmentData, setAppointmentStatus } from "@/lib/appointment-status";
+import { todayIn, zonedToUtc } from "@/lib/time";
 
 const filterSchema = z.enum(["upcoming", "today", "past", "cancelled", "confirmed", "pending", "completed"]);
 
@@ -82,10 +84,14 @@ function AppointmentsPage() {
       const now = new Date().toISOString();
       if (statusFilter !== "all") q = q.eq("status", statusFilter);
       if (timeFilter === "upcoming") q = q.gte("starts_at", now);
-      if (timeFilter === "today")
+      if (timeFilter === "today") {
+        // The calendar day in the business timezone, not "now ± 12h".
+        const tz = business!.timezone;
+        const day = todayIn(tz);
         q = q
-          .gte("starts_at", new Date(Date.now() - 12 * 3600000).toISOString())
-          .lte("starts_at", new Date(Date.now() + 12 * 3600000).toISOString());
+          .gte("starts_at", zonedToUtc(day, 0, tz).toISOString())
+          .lt("starts_at", zonedToUtc(day, 24 * 60, tz).toISOString());
+      }
       if (timeFilter === "past") q = q.lt("starts_at", now);
       if (statusFilter === "all" && timeFilter === "upcoming") q = q.neq("status", "cancelled");
       const descending =
@@ -96,22 +102,15 @@ function AppointmentsPage() {
     },
   });
 
-  async function setStatus(id: string, status: string) {
-    const { error } = await supabase
-      .from("appointments")
-      .update({ status: status as never })
-      .eq("id", id);
-    if (error) {
+  async function setStatus(id: string, status: "completed" | "no_show") {
+    if (!business) return;
+    const result = await setAppointmentStatus({ id, businessId: business.id, status });
+    if (!result.ok) {
       toast.error(t("appt.toast.updateError"));
       return;
     }
-    await supabase.from("appointment_status_history").insert({
-      appointment_id: id,
-      business_id: business!.id,
-      status: status as never,
-    });
     toast.success(t("appt.toast.updated"));
-    qc.invalidateQueries({ queryKey: ["appointments"] });
+    void invalidateAppointmentData(qc);
   }
 
   return (
@@ -247,7 +246,7 @@ function OverdueReview({
   setIdx: (i: number) => void;
   timezone: string;
   currency: string;
-  onSetStatus: (id: string, status: string) => void;
+  onSetStatus: (id: string, status: "completed" | "no_show") => void;
 }) {
   const { t } = usePrefs();
   const a = items[idx];

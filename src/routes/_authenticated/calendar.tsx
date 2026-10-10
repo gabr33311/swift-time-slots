@@ -18,7 +18,7 @@ import { ContactCustomer } from "@/components/contact-customer";
 import { usePrefs } from "@/lib/prefs";
 import { formatTime } from "@/lib/format";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { setAppointmentStatus } from "@/lib/appointment-status";
+import { invalidateAppointmentData, setAppointmentStatus } from "@/lib/appointment-status";
 
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
@@ -87,6 +87,10 @@ type AgendaRow =
   | { kind: "appt"; appt: Appt; start: number; end: number }
   | { kind: "block"; block: Block; start: number; end: number };
 
+function isReleased(status: Appt["status"]): boolean {
+  return status === "cancelled" || status === "expired";
+}
+
 /** Minutes from midnight of an ISO instant, as seen in the business timezone. */
 function minuteOfDay(iso: string, tz: string): number {
   return timeToMinutes(formatTime(iso, tz));
@@ -148,9 +152,11 @@ function buildAgenda(
 
 
   const rows: AgendaRow[] = [...busy];
+  // Cancelled/expired appointments stay visible but no longer occupy the time.
+  const occupying = busy.filter((r) => r.kind !== "appt" || !isReleased(r.appt.status));
   for (const range of ranges) {
     let cursor = range.start;
-    for (const item of busy) {
+    for (const item of occupying) {
       if (item.end <= range.start || item.start >= range.end) continue;
       if (item.start > cursor) rows.push(...freeChunks(cursor, Math.min(item.start, range.end), step));
       cursor = Math.max(cursor, item.end);
@@ -168,6 +174,14 @@ function CalendarPage() {
   const qc = useQueryClient();
   const tz = business?.timezone ?? "Europe/Lisbon";
   const [date, setDate] = useState(todayIn(tz));
+  // The first render uses the fallback timezone; once the business loads, "today"
+  // must be today in the business timezone (they differ around midnight).
+  const tzSynced = useRef(false);
+  useEffect(() => {
+    if (!business || tzSynced.current) return;
+    tzSynced.current = true;
+    setDate(todayIn(business.timezone));
+  }, [business]);
   const [newOpen, setNewOpen] = useState(false);
   const [pendingFocus, setPendingFocus] = useState<string | null>(null);
   const [newTime, setNewTime] = useState("09:00");
@@ -386,9 +400,7 @@ function CalendarPage() {
       return;
     }
     toast.success(t("acts.toast.updated"));
-    qc.invalidateQueries({ queryKey: ["calendar"] });
-    qc.invalidateQueries({ queryKey: ["appointments"] });
-    qc.invalidateQueries({ queryKey: ["customers"] });
+    void invalidateAppointmentData(qc);
   }
 
 
@@ -655,7 +667,9 @@ function CalendarPage() {
                       tabIndex={!due && row.appt.status === "pending" ? 0 : undefined}
                       onClick={!due && row.appt.status === "pending" ? () => setPendingFocus(row.appt.id) : undefined}
                       className={cn(
-                        "appointment-state surface surface-hover absolute inset-x-1 z-10 overflow-hidden p-0",
+                        "appointment-state surface surface-hover absolute inset-x-1 overflow-hidden p-0",
+                        // A rebooked slot draws the live appointment over the cancelled one.
+                        isReleased(row.appt.status) ? "z-[5] opacity-70" : "z-10",
                         !due && row.appt.status === "pending" && "cursor-pointer",
                         isNext && "ring-1 ring-foreground/40",
                       )}

@@ -19,6 +19,7 @@ import {
 import { useMyBusiness } from "@/hooks/use-business";
 import { usePrefs } from "@/lib/prefs";
 import { formatDuration, formatPrice } from "@/lib/format";
+import { hasUpcomingAppointments } from "@/lib/appointment-status";
 import { Scissors, Pencil, Trash2, Plus, GripVertical } from "lucide-react";
 
 type ServiceRow = {
@@ -64,7 +65,11 @@ export function ServicesPanel() {
   });
 
   async function toggleActive(s: ServiceRow) {
-    await supabase.from("services").update({ is_active: !s.is_active }).eq("id", s.id);
+    const { error } = await supabase
+      .from("services")
+      .update({ is_active: !s.is_active })
+      .eq("id", s.id);
+    if (error) toast.error(t("pf.svc.err.save"));
     qc.invalidateQueries({ queryKey: ["services"] });
   }
 
@@ -85,9 +90,15 @@ export function ServicesPanel() {
   }
 
   async function remove(s: ServiceRow) {
+    // Deleting nulls service_id on its appointments (FK SET NULL), which stops
+    // clients from rescheduling them. Keep it: deactivate instead.
+    if (await hasUpcomingAppointments("service_id", s.id)) {
+      toast.error(t("pf.svc.err.hasAppointments"));
+      return;
+    }
     const { error } = await supabase.from("services").delete().eq("id", s.id);
     if (error) {
-      toast.error(t("pf.svc.err.hasAppointments"));
+      toast.error(t("pf.svc.err.save"));
       return;
     }
     toast.success(t("pf.svc.removed"));

@@ -13,7 +13,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useMyBusiness } from "@/hooks/use-business";
 import { usePrefs } from "@/lib/prefs";
-import { setAppointmentStatus } from "@/lib/appointment-status";
+import { invalidateAppointmentData, setAppointmentStatus } from "@/lib/appointment-status";
 import { displayCustomerName, formatTime, formatDateLong } from "@/lib/format";
 
 type PendingAppt = {
@@ -74,8 +74,7 @@ export function PendingDecisionDrawer({
     if (!("emailed" in res && res.emailed)) {
       toast.success(status === "confirmed" ? t("cal.pending.confirmed") : t("cal.pending.cancelled"));
     }
-    qc.invalidateQueries({ queryKey: ["pending-capsule"] });
-    qc.invalidateQueries({ queryKey: ["calendar"] });
+    void invalidateAppointmentData(qc);
     if (onlyId || list.length <= 1) onOpenChange(false);
   }
 

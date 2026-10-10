@@ -19,6 +19,7 @@ import {
 import { useMyBusiness } from "@/hooks/use-business";
 import { usePrefs } from "@/lib/prefs";
 import { initials } from "@/lib/format";
+import { hasUpcomingAppointments } from "@/lib/appointment-status";
 import { UserRound, Pencil, Trash2, Plus } from "lucide-react";
 
 type StaffRow = {
@@ -63,9 +64,15 @@ export function TeamPanel() {
   });
 
   async function remove(id: string) {
+    // Deleting nulls staff_id on their appointments (FK SET NULL), and an appointment
+    // with no professional blocks everyone's slots. Keep them: deactivate instead.
+    if (await hasUpcomingAppointments("staff_id", id)) {
+      toast.error(t("pf.team.err.hasAppointments"));
+      return;
+    }
     const { error } = await supabase.from("staff").delete().eq("id", id);
     if (error) {
-      toast.error(t("pf.team.err.hasAppointments"));
+      toast.error(t("pf.common.saveError"));
       return;
     }
     toast.success(t("pf.team.removed"));
@@ -73,7 +80,8 @@ export function TeamPanel() {
   }
 
   async function toggleActive(s: StaffRow) {
-    await supabase.from("staff").update({ is_active: !s.is_active }).eq("id", s.id);
+    const { error } = await supabase.from("staff").update({ is_active: !s.is_active }).eq("id", s.id);
+    if (error) toast.error(t("pf.common.saveError"));
     qc.invalidateQueries({ queryKey: ["team"] });
   }
 
@@ -190,7 +198,8 @@ function StaffDialog({
       };
       let staffId = staff?.id;
       if (staffId) {
-        await supabase.from("staff").update(payload).eq("id", staffId);
+        const { error } = await supabase.from("staff").update(payload).eq("id", staffId);
+        if (error) throw error;
       } else {
         const { data: created, error } = await supabase
           .from("staff")
@@ -200,15 +209,20 @@ function StaffDialog({
         if (error) throw error;
         staffId = created.id;
       }
-      await supabase.from("staff_services").delete().eq("staff_id", staffId!);
+      const { error: unlinkError } = await supabase
+        .from("staff_services")
+        .delete()
+        .eq("staff_id", staffId!);
+      if (unlinkError) throw unlinkError;
       if (selected.length) {
-        await supabase.from("staff_services").insert(
+        const { error: linkError } = await supabase.from("staff_services").insert(
           selected.map((sid) => ({
             staff_id: staffId!,
             service_id: sid,
             business_id: businessId,
           })),
         );
+        if (linkError) throw linkError;
       }
       toast.success(t("ui.save.auto"));
       qc.invalidateQueries({ queryKey: ["team"] });

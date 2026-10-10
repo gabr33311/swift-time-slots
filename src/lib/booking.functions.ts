@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest, getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
+import { canonicalPhone } from "./phone";
 
 const slugSchema = z.object({ slug: z.string().trim().min(1).max(64) });
 
@@ -18,7 +19,13 @@ const bookingSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   time: z.string().regex(/^\d{2}:\d{2}$/),
   name: z.string().trim().min(2).max(80),
-  phone: z.string().trim().min(6).max(24).regex(/^[0-9+\s()-]+$/),
+  phone: z
+    .string()
+    .trim()
+    .min(6)
+    .max(24)
+    .regex(/^[0-9+\s()-]+$/)
+    .transform(canonicalPhone),
   email: z.string().trim().email().max(160),
   notes: z.string().trim().max(500).optional().default(""),
 });
@@ -261,20 +268,18 @@ export const cancelBookingByToken = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => tokenSchema.parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row } = await supabaseAdmin
-      .from("booking_tokens")
-      .select("appointment_id")
-      .eq("token", data.token)
-      .maybeSingle();
-    if (!row) return { ok: false as const, message: "Marcação não encontrada." };
+    const found = await apptFromToken(data.token);
+    if (!found) return { ok: false as const, message: "Marcação não encontrada." };
 
     const { data: appt } = await supabaseAdmin
       .from("appointments")
       .select("id, starts_at, business_id, status, customer_name, service_name")
-      .eq("id", row.appointment_id)
+      .eq("id", found.id)
       .maybeSingle();
     if (!appt) return { ok: false as const, message: "Marcação não encontrada." };
     if (appt.status === "cancelled") return { ok: true as const };
+    if (appt.status !== "pending" && appt.status !== "confirmed")
+      return { ok: false as const, message: "Esta marcação já não pode ser alterada." };
 
     const { data: business } = await supabaseAdmin
       .from("businesses")
@@ -306,6 +311,45 @@ export const cancelBookingByToken = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+/** Loads the appointment behind a still-valid manage token (null when missing/expired). */
+async function apptFromToken(token: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: row } = await supabaseAdmin
+    .from("booking_tokens")
+    .select("appointment_id, expires_at")
+    .eq("token", token)
+    .maybeSingle();
+  if (!row) return null;
+  if (row.expires_at && new Date(row.expires_at) < new Date()) return null;
+  const { data: appt } = await supabaseAdmin
+    .from("appointments")
+    .select("id, business_id, service_id, staff_id, status, starts_at, ends_at")
+    .eq("id", row.appointment_id)
+    .maybeSingle();
+  return appt;
+}
+
+const rescheduleSlotsSchema = tokenSchema.extend({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+/** Free times for rescheduling: the appointment's own slot doesn't count as busy. */
+export const getRescheduleSlots = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => rescheduleSlotsSchema.parse(d))
+  .handler(async ({ data }) => {
+    const appt = await apptFromToken(data.token);
+    if (!appt || !appt.service_id) return [];
+    const { computeSlots } = await import("./booking.server");
+    const slots = await computeSlots({
+      businessId: appt.business_id,
+      serviceId: appt.service_id,
+      staffId: appt.staff_id,
+      date: data.date,
+      ignore: { staffId: appt.staff_id, startsAt: appt.starts_at, endsAt: appt.ends_at },
+    });
+    return slots.map((s) => ({ time: s.time }));
+  });
+
 export const rescheduleBookingByToken = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     tokenSchema
@@ -319,27 +363,33 @@ export const rescheduleBookingByToken = createServerFn({ method: "POST" })
     const { computeSlots } = await import("./booking.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: row } = await supabaseAdmin
-      .from("booking_tokens")
-      .select("appointment_id")
-      .eq("token", data.token)
-      .maybeSingle();
-    if (!row) return { ok: false as const, message: "Marcação não encontrada." };
-
-    const { data: appt } = await supabaseAdmin
-      .from("appointments")
-      .select("id, business_id, service_id, staff_id, status")
-      .eq("id", row.appointment_id)
-      .maybeSingle();
+    const appt = await apptFromToken(data.token);
     if (!appt || !appt.service_id) return { ok: false as const, message: "Marcação não encontrada." };
     if (appt.status === "cancelled")
       return { ok: false as const, message: "Esta marcação está cancelada." };
+    if (appt.status !== "pending" && appt.status !== "confirmed")
+      return { ok: false as const, message: "Esta marcação já não pode ser alterada." };
+
+    // Same notice period as online cancellation.
+    const { data: business } = await supabaseAdmin
+      .from("businesses")
+      .select("cancellation_hours")
+      .eq("id", appt.business_id)
+      .maybeSingle();
+    const hours = business?.cancellation_hours ?? 24;
+    if (new Date(appt.starts_at).getTime() - Date.now() < hours * 3600000) {
+      return {
+        ok: false as const,
+        message: `O reagendamento online só é possível até ${hours}h antes. Contacta o negócio.`,
+      };
+    }
 
     const slots = await computeSlots({
       businessId: appt.business_id,
       serviceId: appt.service_id,
       staffId: appt.staff_id,
       date: data.date,
+      ignore: { staffId: appt.staff_id, startsAt: appt.starts_at, endsAt: appt.ends_at },
     });
     const slot = slots.find((s) => s.time === data.time);
     if (!slot)

@@ -264,9 +264,12 @@ function Onboarding() {
         throw error;
       }
 
-      await supabase.from("business_members").insert({ business_id: business.id, user_id: user!.id, role: "owner" });
+      const { error: memberError } = await supabase
+        .from("business_members")
+        .insert({ business_id: business.id, user_id: user!.id, role: "owner" });
+      if (memberError) throw memberError;
 
-      const { data: insertedServices } = await supabase
+      const { data: insertedServices, error: servicesError } = await supabase
         .from("services")
         .insert(
           validServices.map((s, i) => ({
@@ -279,7 +282,7 @@ function Onboarding() {
         )
         .select("id");
 
-      const { data: insertedStaff } = await supabase
+      const { data: insertedStaff, error: staffError } = await supabase
         .from("staff")
         .insert(
           validStaff.map((s, i) => ({
@@ -292,8 +295,11 @@ function Onboarding() {
         )
         .select("id");
 
+      if (servicesError) throw servicesError;
+      if (staffError) throw staffError;
+
       if (insertedServices && insertedStaff) {
-        await supabase.from("staff_services").insert(
+        const { error: linksError } = await supabase.from("staff_services").insert(
           insertedStaff.flatMap((st) =>
             insertedServices.map((sv) => ({
               staff_id: st.id,
@@ -303,7 +309,9 @@ function Onboarding() {
           ),
         );
 
-        await supabase.from("working_hours").insert(
+        if (linksError) throw linksError;
+
+        const { error: hoursError } = await supabase.from("working_hours").insert(
           insertedStaff.flatMap((st) =>
             hours
               .map((h, weekday) => ({ h, weekday }))
@@ -324,6 +332,7 @@ function Onboarding() {
               ),
           ),
         );
+        if (hoursError) throw hoursError;
       }
 
       await supabase.from("subscriptions").insert({ business_id: business.id, plan: "free" });

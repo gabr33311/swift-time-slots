@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { Check, ChevronsUpDown, Loader2, Users, X } from "lucide-react";
 import { zonedToUtc, todayIn } from "@/lib/time";
+import { invalidateAppointmentData } from "@/lib/appointment-status";
+import { canonicalPhone } from "@/lib/phone";
 import type { Business } from "@/hooks/use-business";
 import { usePrefs } from "@/lib/prefs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -70,7 +72,7 @@ export function NewAppointmentDialog({
       const [{ data: services }, { data: staff }] = await Promise.all([
         supabase
           .from("services")
-          .select("id, name, duration_minutes, price_cents")
+          .select("id, name, duration_minutes, buffer_minutes, price_cents")
           .eq("business_id", business.id)
           .eq("is_active", true)
           .order("sort_order"),
@@ -143,15 +145,19 @@ export function NewAppointmentDialog({
 
     setBusy(true);
     try {
-      const endsAt = new Date(startsAt.getTime() + service.duration_minutes * 60000);
+      // Same span as online bookings: the service plus its buffer.
+      const endsAt = new Date(
+        startsAt.getTime() + (service.duration_minutes + service.buffer_minutes) * 60000,
+      );
+      const cleanPhone = phone.trim() ? canonicalPhone(phone) : null;
 
       let savedCustomerId: string | null = customerId;
-      if (!savedCustomerId && phone.trim()) {
+      if (!savedCustomerId && cleanPhone) {
         const { data: existing } = await supabase
           .from("customers")
           .select("id")
           .eq("business_id", business.id)
-          .eq("phone", phone.trim())
+          .eq("phone", cleanPhone)
           .maybeSingle();
         if (existing) savedCustomerId = existing.id;
       }
@@ -161,7 +167,7 @@ export function NewAppointmentDialog({
           .insert({
             business_id: business.id,
             name: customerName.trim(),
-            phone: phone.trim() || null,
+            phone: cleanPhone,
           })
           .select("id")
           .single();
@@ -175,7 +181,7 @@ export function NewAppointmentDialog({
         customer_id: savedCustomerId,
         service_name: service.name,
         customer_name: customerName.trim(),
-        customer_phone: phone.trim() || null,
+        customer_phone: cleanPhone,
         starts_at: startsAt.toISOString(),
         ends_at: endsAt.toISOString(),
         price_cents: service.price_cents,
@@ -193,7 +199,7 @@ export function NewAppointmentDialog({
       }
 
       toast.success(t("cal.success.created"));
-      qc.invalidateQueries();
+      void invalidateAppointmentData(qc);
       onOpenChange(false);
       setCustomerName("");
       setPhone("");

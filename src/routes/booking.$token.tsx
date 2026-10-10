@@ -7,7 +7,7 @@ import {
   getBookingByToken,
   cancelBookingByToken,
   rescheduleBookingByToken,
-  getAvailableSlots,
+  getRescheduleSlots,
 } from "@/lib/booking.functions";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -80,17 +80,9 @@ function BookingPage() {
   const tz = data.business?.timezone ?? "Europe/Lisbon";
 
   const { data: slots, isFetching } = useQuery({
-    queryKey: ["reschedule-slots", appt.id, date],
+    queryKey: ["reschedule-slots", appt.id, appt.starts_at, date],
     enabled: rescheduling && !!appt.service_id,
-    queryFn: async () =>
-      await getAvailableSlots({
-        data: {
-          businessId: appt.business_id,
-          serviceId: appt.service_id!,
-          staffId: appt.staff_id,
-          date,
-        },
-      }),
+    queryFn: async () => await getRescheduleSlots({ data: { token, date } }),
   });
 
   async function cancel() {
@@ -126,18 +118,20 @@ function BookingPage() {
   }
 
   const cancelled = appt.status === "cancelled";
+  // Only upcoming (pending/confirmed) bookings can still be changed by the client.
+  const manageable = appt.status === "pending" || appt.status === "confirmed";
   const days = Array.from({ length: 14 }, (_, i) => addDays(todayIn(tz), i));
 
   return (
     <main className="mx-auto max-w-lg px-5 py-10">
-      {!cancelled && (
+      {manageable && (
         <div className="mb-6 flex items-center gap-3 rounded-2xl border border-border bg-card p-4">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
             <Check className="size-5" strokeWidth={3} />
           </span>
           <div className="min-w-0">
-            <p className="font-bold">{t("bk.confirmed.title")}</p>
-            <p className="text-xs text-muted-foreground">{t("bk.confirmed.manage")}</p>
+            <p className="font-bold">{t(appt.status === "pending" ? "bk.pending.title" : "bk.confirmed.title")}</p>
+            <p className="text-xs text-muted-foreground">{t(appt.status === "pending" ? "bk.pending.manage" : "bk.confirmed.manage")}</p>
           </div>
         </div>
       )}
@@ -178,7 +172,7 @@ function BookingPage() {
         </div>
       )}
 
-      {!cancelled && (
+      {manageable && (
         <AddToCalendar
           event={{
             title: `${appt.service_name} · ${data.business?.name ?? ""}`,
@@ -190,7 +184,7 @@ function BookingPage() {
         />
       )}
 
-      {!cancelled && (
+      {manageable && (
         <div className="mt-4 grid grid-cols-2 gap-2">
           <Button variant="outline" onClick={() => setRescheduling((v) => !v)}>
             <CalendarClock className="mr-2 size-4" />
@@ -202,7 +196,7 @@ function BookingPage() {
         </div>
       )}
 
-      {rescheduling && !cancelled && (
+      {rescheduling && manageable && (
         <section className="mt-6">
           <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2">
             {days.map((d) => (

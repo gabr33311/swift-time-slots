@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { setAppointmentStatus } from "@/lib/appointment-status";
+import { invalidateAppointmentData, setAppointmentStatus } from "@/lib/appointment-status";
 import { useMyBusiness } from "@/hooks/use-business";
 import {
   DropdownMenu,
@@ -88,11 +88,7 @@ export function AppointmentActions({
       return;
     }
     toast.success(next === "cancelled" ? t("acts.toast.cancelled") : t("acts.toast.updated"));
-    qc.invalidateQueries({ queryKey: ["calendar"] });
-    qc.invalidateQueries({ queryKey: ["dashboard-day"] });
-    qc.invalidateQueries({ queryKey: ["appointments"] });
-    qc.invalidateQueries({ queryKey: ["requests"] });
-    qc.invalidateQueries({ queryKey: ["dashboard-requests"] });
+    void invalidateAppointmentData(qc);
   }
 
   async function deleteAppointment() {
@@ -109,8 +105,7 @@ export function AppointmentActions({
       return;
     }
     toast.success(t("acts.toast.deleted"));
-    qc.invalidateQueries({ queryKey: ["calendar"] });
-    qc.invalidateQueries({ queryKey: ["appointments"] });
+    void invalidateAppointmentData(qc);
   }
 
   const canCancel = status !== "cancelled" && status !== "completed";

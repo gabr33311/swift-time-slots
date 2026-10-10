@@ -68,16 +68,22 @@ function CustomersPage() {
     },
   });
 
+  const cancelledIds = Object.keys(cancelledMap ?? {});
   const { data, isLoading } = useQuery({
-    queryKey: ["customers", business?.id, term],
-    enabled: !!business,
+    queryKey: ["customers", business?.id, term, tab, tab === "cancelled" ? cancelledIds : null],
+    // The "cancelled" tab needs the ids first; filtering happens in the query so it
+    // isn't limited to the 100 most recent customers.
+    enabled: !!business && (tab !== "cancelled" || !!cancelledMap),
     queryFn: async () => {
+      if (tab === "cancelled" && cancelledIds.length === 0) return [];
       let q = supabase
         .from("customers")
         .select("id, name, phone, email, notes, is_blocked, created_at")
         .eq("business_id", business!.id)
         .order("created_at", { ascending: false })
         .limit(100);
+      if (tab === "blocked") q = q.eq("is_blocked", true);
+      if (tab === "cancelled") q = q.in("id", cancelledIds);
       const clean = term.trim().replace(/[%,()]/g, "");
       if (clean) q = q.or(`name.ilike.%${clean}%,phone.ilike.%${clean}%`);
       const { data } = await q;
@@ -85,13 +91,7 @@ function CustomersPage() {
     },
   });
 
-  const rows = (data ?? []).filter((c) =>
-    tab === "cancelled"
-      ? (cancelledMap?.[c.id] ?? 0) > 0
-      : tab === "blocked"
-        ? c.is_blocked
-        : true,
-  );
+  const rows = data ?? [];
 
   async function toggleBlock(id: string, blocked: boolean) {
     const { error } = await supabase.from("customers").update({ is_blocked: !blocked }).eq("id", id);
@@ -123,9 +123,9 @@ function CustomersPage() {
       <div className="mb-4 flex items-center gap-1.5 rounded-full bg-muted p-1">
         {(
           [
-            ["all", "Todos"],
-            ["cancelled", "Cancelaram"],
-            ["blocked", "Bloqueados"],
+            ["all", t("cust.tab.all")],
+            ["cancelled", t("cust.tab.cancelled")],
+            ["blocked", t("cust.tab.blocked")],
           ] as const
         ).map(([value, label]) => (
           <button

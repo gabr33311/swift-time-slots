@@ -13,8 +13,9 @@ import { weekdays, formatDateShort } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
 import { Trash2, MessageCircle, Mail, Coffee } from "lucide-react";
 import { SaveBar } from "@/components/save-bar";
-import { setAppointmentStatus } from "@/lib/appointment-status";
+import { invalidateAppointmentData, setAppointmentStatus } from "@/lib/appointment-status";
 import { normalizePhonePt } from "@/lib/phone";
+import { timeToMinutes, zonedToUtc } from "@/lib/time";
 
 type DayState = {
   enabled: boolean;
@@ -114,8 +115,27 @@ export function AvailabilityPanel() {
 
   async function saveHours() {
     if (!business) return;
+    // Refuse invalid days instead of silently dropping them (which would close the day).
+    for (const [i, d] of days.entries()) {
+      if (!d.enabled) continue;
+      if (d.start >= d.end) {
+        toast.error(t("pf.av.err.dayRange").replace("{day}", dayNames[i] ?? ""));
+        return;
+      }
+      if (d.lunch && !(d.start < d.lunchStart && d.lunchStart < d.lunchEnd && d.lunchEnd < d.end)) {
+        toast.error(t("pf.av.err.lunchRange").replace("{day}", dayNames[i] ?? ""));
+        return;
+      }
+    }
     setBusy(true);
     try {
+      // Snapshot the current rows so a failed insert can put them back instead of
+      // leaving the business with no hours (i.e. closed every day).
+      const { data: previous, error: readError } = await supabase
+        .from("working_hours")
+        .select("business_id, staff_id, weekday, start_time, end_time")
+        .eq("business_id", business.id);
+      if (readError) throw readError;
       // Replace every row (including per-staff rows created at onboarding) so the
       // saved week is exactly what the owner sees here.
       const { error: delError } = await supabase
@@ -125,11 +145,9 @@ export function AvailabilityPanel() {
       if (delError) throw delError;
       const rows = days
         .map((d, weekday) => ({ ...d, weekday }))
-        .filter((d) => d.enabled && d.start < d.end)
+        .filter((d) => d.enabled)
         .flatMap((d) => {
-          const hasLunch =
-            d.lunch && d.start < d.lunchStart && d.lunchStart < d.lunchEnd && d.lunchEnd < d.end;
-          if (!hasLunch) {
+          if (!d.lunch) {
             return [
               {
                 business_id: business.id,
@@ -159,7 +177,10 @@ export function AvailabilityPanel() {
         });
       if (rows.length) {
         const { error: insError } = await supabase.from("working_hours").insert(rows);
-        if (insError) throw insError;
+        if (insError) {
+          if (previous?.length) await supabase.from("working_hours").insert(previous);
+          throw insError;
+        }
       }
       toast.success(t("pf.av.saved"));
       await qc.invalidateQueries({ queryKey: ["availability"] });
@@ -174,14 +195,17 @@ export function AvailabilityPanel() {
 
   async function addBlock() {
     if (!business) return;
-    if (!blockFrom || !blockTo || new Date(blockFrom) >= new Date(blockTo)) {
+    // datetime-local values are wall-clock times in the business timezone, not the browser's.
+    const toUtc = (v: string) =>
+      zonedToUtc(v.slice(0, 10), timeToMinutes(v.slice(11, 16)), business.timezone);
+    if (!blockFrom || !blockTo || toUtc(blockFrom) >= toUtc(blockTo)) {
       toast.error(t("pf.av.err.range"));
       return;
     }
     const { error } = await supabase.from("blocked_times").insert({
       business_id: business.id,
-      starts_at: new Date(blockFrom).toISOString(),
-      ends_at: new Date(blockTo).toISOString(),
+      starts_at: toUtc(blockFrom).toISOString(),
+      ends_at: toUtc(blockTo).toISOString(),
       reason: reason.trim().slice(0, 120) || null,
     });
     if (error) {
@@ -196,8 +220,13 @@ export function AvailabilityPanel() {
   }
 
   async function removeBlock(id: string) {
-    await supabase.from("blocked_times").delete().eq("id", id);
+    const { error } = await supabase.from("blocked_times").delete().eq("id", id);
+    if (error) {
+      toast.error(t("pf.common.saveError"));
+      return;
+    }
     qc.invalidateQueries({ queryKey: ["availability"] });
+    qc.invalidateQueries({ queryKey: ["calendar"] });
   }
 
   if (isLoading) return <LoadingRows rows={4} />;
@@ -494,7 +523,7 @@ function VacationConflicts({ blocks }: { blocks: Block[] }) {
       return;
     }
     toast.success(t("pf.av.conflict.cancelled"));
-    qc.invalidateQueries({ queryKey: ["vacation-conflicts"] });
+    void invalidateAppointmentData(qc);
   }
 
   return (

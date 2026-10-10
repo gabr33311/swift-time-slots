@@ -73,6 +73,15 @@ export function addDays(dateStr: string, days: number): string {
   return dt.toISOString().slice(0, 10);
 }
 
+/** Adds months to YYYY-MM-DD, clamping to the month's last day (31 Jan + 1 → 28/29 Feb). */
+export function addMonthsClamped(dateStr: string, months: number): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const lastDay = new Date(Date.UTC(y!, (m ?? 1) - 1 + months + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(y!, (m ?? 1) - 1 + months, Math.min(d ?? 1, lastDay)))
+    .toISOString()
+    .slice(0, 10);
+}
+
 export function todayIn(timeZone: string): string {
   return zonedDateString(new Date(), timeZone);
 }
