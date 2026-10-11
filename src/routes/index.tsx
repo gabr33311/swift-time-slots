@@ -21,6 +21,7 @@ import { PrefsToggles } from "@/components/prefs-toggles";
 import { SycrasLogo } from "@/components/sycras-logo";
 import { usePrefs } from "@/lib/prefs";
 import { cn } from "@/lib/utils";
+import { LegalLinks } from "@/components/legal-page";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -298,7 +299,10 @@ function Landing() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-8 text-sm font-medium text-muted-foreground sm:flex-row sm:px-6">
           <span className="font-bold tracking-[0.14em] text-foreground">SYCRAS</span>
           <span>{t("home.footer")}</span>
-          <span>© {new Date().getFullYear()} SYCRAS</span>
+          <span className="flex items-center gap-3">
+            <LegalLinks />
+            <span>© {new Date().getFullYear()} SYCRAS</span>
+          </span>
         </div>
       </footer>
     </div>

@@ -1,0 +1,193 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ContactEmail, Entity, LegalPage } from "@/components/legal-page";
+import { LEGAL } from "@/lib/legal";
+import { TRIAL_DAYS } from "@/lib/subscription";
+
+export const Route = createFileRoute("/termos")({
+  head: () => ({
+    meta: [
+      { title: "Termos de Utilização — SYCRAS" },
+      {
+        name: "description",
+        content: "As regras de utilização da SYCRAS, do período experimental e da subscrição.",
+      },
+      // Not indexed until the responsible entity is filled in.
+      ...(LEGAL.ready ? [] : [{ name: "robots", content: "noindex" }]),
+    ],
+  }),
+  component: TermsPage,
+});
+
+function TermsPage() {
+  return (
+    <LegalPage title="Termos de Utilização">
+      <section>
+        <p>
+          Estes termos regulam a utilização da SYCRAS, um serviço online de marcações para negócios.
+          Ao criar uma conta, aceitas estes termos e a{" "}
+          <Link to="/privacidade" className="font-semibold text-brand-ink underline">
+            Política de Privacidade
+          </Link>
+          .
+        </p>
+      </section>
+
+      <section>
+        <h2>1. Quem presta o serviço</h2>
+        <p>
+          A SYCRAS é disponibilizada por <Entity />. Contacto: <ContactEmail />.
+        </p>
+      </section>
+
+      <section>
+        <h2>2. O serviço</h2>
+        <p>
+          A SYCRAS permite a um negócio ter uma página pública de marcações, gerir a agenda, os
+          serviços, a equipa e os clientes, e enviar emails de confirmação e lembretes. Os clientes
+          do negócio podem marcar, ver e cancelar as suas marcações sem criar conta.
+        </p>
+      </section>
+
+      <section>
+        <h2>3. Conta</h2>
+        <ul>
+          <li>Tens de indicar dados verdadeiros e manter o email atualizado.</li>
+          <li>
+            És responsável por manter a palavra-passe segura e por tudo o que é feito na conta.
+          </li>
+          <li>
+            Só podes criar uma conta para um negócio que representes ou para o qual tenhas
+            autorização.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>4. Período experimental e subscrição</h2>
+        <ul>
+          <li>
+            Cada negócio tem {TRIAL_DAYS} dias grátis a contar da criação, com todas as
+            funcionalidades e sem pedir cartão.
+          </li>
+          <li>
+            Depois desse período, para continuar a usar a SYCRAS é necessário o plano Pro: 19 € por
+            mês, ou 180 € por ano. Os preços incluem IVA à taxa legal em vigor, quando aplicável.
+          </li>
+          <li>
+            A subscrição renova-se automaticamente no fim de cada período e é cobrada pelo Stripe no
+            método de pagamento indicado.
+          </li>
+          <li>
+            Podes cancelar a qualquer momento em Gestão → Plano → Gerir subscrição e faturas. O
+            cancelamento produz efeitos no fim do período já pago; não há reembolso de períodos
+            parciais, salvo quando a lei o exija.
+          </li>
+          <li>
+            Sem subscrição ativa no fim do período experimental, ou se um pagamento falhar e não for
+            regularizado, a conta fica bloqueada: a página pública deixa de aceitar marcações, mas
+            os dados mantêm-se e voltam a ficar acessíveis ao subscrever.
+          </li>
+          <li>
+            Se os preços mudarem, avisamos com pelo menos 30 dias de antecedência; a alteração só se
+            aplica no período seguinte.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>5. Responsabilidades do negócio</h2>
+        <ul>
+          <li>
+            O negócio é responsável pelos serviços que presta, pelos preços que mostra e pela
+            relação com os seus clientes, incluindo cancelamentos, faltas e reembolsos.
+          </li>
+          <li>
+            O negócio é o responsável pelos dados pessoais dos seus clientes e deve tratá-los de
+            acordo com o RGPD. A SYCRAS trata esses dados por conta do negócio, apenas para prestar
+            o serviço.
+          </li>
+          <li>
+            O negócio garante que tem direito a usar os textos, logótipos e imagens que publica.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>6. Utilização aceitável</h2>
+        <p>Não é permitido usar a SYCRAS para:</p>
+        <ul>
+          <li>atividades ilegais, fraudulentas ou enganosas;</li>
+          <li>enviar spam ou mensagens não solicitadas;</li>
+          <li>publicar conteúdo ofensivo, ilegal ou que viole direitos de terceiros;</li>
+          <li>
+            tentar aceder a dados de outros negócios, sobrecarregar o serviço ou contornar as suas
+            proteções.
+          </li>
+        </ul>
+        <p>Podemos suspender contas que violem estas regras.</p>
+      </section>
+
+      <section>
+        <h2>7. Disponibilidade</h2>
+        <p>
+          Esforçamo-nos por manter a SYCRAS sempre disponível, mas podem existir interrupções para
+          manutenção ou por falhas de terceiros. O serviço pode evoluir: podemos acrescentar,
+          alterar ou retirar funcionalidades, avisando quando a mudança for relevante.
+        </p>
+      </section>
+
+      <section>
+        <h2>8. Responsabilidade</h2>
+        <p>
+          Na medida permitida por lei, a SYCRAS não responde por danos indiretos, como lucros
+          cessantes ou perda de clientes, resultantes da utilização ou da impossibilidade de
+          utilização do serviço. Nada nestes termos limita direitos que a lei garanta e que não
+          possam ser afastados por contrato.
+        </p>
+      </section>
+
+      <section>
+        <h2>9. Fim da conta</h2>
+        <p>
+          Podes deixar de usar a SYCRAS e pedir o fecho da conta a qualquer momento através de{" "}
+          <ContactEmail />. Os dados são tratados como descrito na Política de Privacidade.
+        </p>
+      </section>
+
+      <section>
+        <h2>10. Alterações a estes termos</h2>
+        <p>
+          Podemos atualizar estes termos. Se a alteração for relevante, avisamos na app ou por email
+          antes de entrar em vigor.
+        </p>
+      </section>
+
+      <section>
+        <h2>11. Lei aplicável e litígios</h2>
+        <p>
+          Estes termos regem-se pela lei portuguesa. Em caso de litígio de consumo, podes recorrer a
+          uma entidade de resolução alternativa de litígios; a lista está disponível no Portal do
+          Consumidor (
+          <a
+            href="https://www.consumidor.gov.pt"
+            target="_blank"
+            rel="noreferrer"
+            className="font-semibold text-brand-ink underline"
+          >
+            consumidor.gov.pt
+          </a>
+          ). Podes também usar o Livro de Reclamações Eletrónico (
+          <a
+            href="https://www.livroreclamacoes.pt"
+            target="_blank"
+            rel="noreferrer"
+            className="font-semibold text-brand-ink underline"
+          >
+            livroreclamacoes.pt
+          </a>
+          ).
+        </p>
+      </section>
+    </LegalPage>
+  );
+}

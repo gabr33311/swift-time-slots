@@ -9,6 +9,7 @@ import { getPublicBusiness, getAvailableSlots, createPublicBooking } from "@/lib
 import { trackPageView } from "@/lib/analytics.functions";
 import { maskPhonePt } from "@/lib/phone";
 import { isReservedSlug } from "@/lib/reserved-slugs";
+import { LegalLinks } from "@/components/legal-page";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -334,6 +335,7 @@ function BookPage() {
           {business.cancellation_hours}
           {t("bk.freeCancellationAfter")}
         </p>
+        <LegalLinks className="mt-2 block px-1 text-xs text-muted-foreground" />
       </aside>
 
       <div className="flex min-w-0 flex-col">

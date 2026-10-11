@@ -13,6 +13,7 @@ import { FormError } from "@/components/ui-bits";
 import { SycrasLogo } from "@/components/sycras-logo";
 import { cn } from "@/lib/utils";
 import { usePrefs } from "@/lib/prefs";
+import { LegalLinks } from "@/components/legal-page";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -131,7 +132,9 @@ function AuthPage() {
       {mode === "forgot" && (
         <ForgotForm email={email} setEmail={setEmail} onBack={() => setMode("login")} />
       )}
-      <p className="mt-6 text-center text-xs text-muted-foreground">{t("auth.terms")}</p>
+      <p className="mt-6 text-center text-xs text-muted-foreground">
+        {t("auth.terms")} <LegalLinks className="font-semibold" />
+      </p>
     </AuthShell>
   );
 }
