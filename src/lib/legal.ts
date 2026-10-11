@@ -12,7 +12,7 @@ export const LEGAL = {
   /** Registered (fiscal) address. */
   address: null as string | null,
   /** Contact for legal and privacy requests. */
-  email: null as string | null,
+  email: "privacidade@sycras.com" as string | null,
   /** Last time the texts changed (shown on the pages). */
   updated: "11 de outubro de 2026",
 };
