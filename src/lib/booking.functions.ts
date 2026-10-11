@@ -73,8 +73,6 @@ export const emailHasAccount = createServerFn({ method: "POST" })
     return { known: true as const, registered: !!exists };
   });
 
-
-
 export const getAvailableSlots = createServerFn({ method: "GET" })
   .validator((d: unknown) => slotsSchema.parse(d))
   .handler(async ({ data }) => {
@@ -98,6 +96,21 @@ export const createPublicBooking = createServerFn({ method: "POST" })
         ok: false as const,
         code: "rate_limited",
         message: "Demasiadas marcações num curto espaço de tempo. Tenta novamente mais tarde.",
+      };
+    }
+
+    // A business whose plan is locked takes no online bookings.
+    const { data: owner } = await supabaseAdmin
+      .from("businesses")
+      .select("created_at")
+      .eq("id", data.businessId)
+      .maybeSingle();
+    const { businessAllowed } = await import("@/lib/billing.server");
+    if (!owner || !(await businessAllowed(data.businessId, owner.created_at))) {
+      return {
+        ok: false as const,
+        code: "unavailable",
+        message: "Este negócio não está a aceitar marcações online de momento.",
       };
     }
 
@@ -238,7 +251,9 @@ export const getBookingByToken = createServerFn({ method: "GET" })
     const [{ data: business }, { data: staff }, { data: hours }] = await Promise.all([
       supabaseAdmin
         .from("businesses")
-        .select("name, slug, address, city, phone, timezone, cancellation_hours, brand_color, logo_url, booking_horizon_months")
+        .select(
+          "name, slug, address, city, phone, timezone, cancellation_hours, brand_color, logo_url, booking_horizon_months",
+        )
         .eq("id", appt.business_id)
         .maybeSingle(),
       appt.staff_id
@@ -367,7 +382,8 @@ export const rescheduleBookingByToken = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const appt = await apptFromToken(data.token);
-    if (!appt || !appt.service_id) return { ok: false as const, message: "Marcação não encontrada." };
+    if (!appt || !appt.service_id)
+      return { ok: false as const, message: "Marcação não encontrada." };
     if (appt.status === "cancelled")
       return { ok: false as const, message: "Esta marcação está cancelada." };
     if (appt.status !== "pending" && appt.status !== "confirmed")

@@ -21,9 +21,7 @@ function NotFoundComponent() {
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">{t("ui.notFound.title")}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {t("ui.notFound.body")}
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">{t("ui.notFound.body")}</p>
         <div className="mt-6">
           <Button asChild>
             <Link to="/">{t("ui.notFound.goHome")}</Link>
@@ -48,9 +46,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset?: () => void }) 
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           {t("ui.error.page.title")}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {t("ui.error.page.body")}
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">{t("ui.error.page.body")}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <Button
             onClick={() => {
@@ -78,7 +74,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Marcações online simples para negócios em Portugal." },
       { name: "author", content: "SYCRAS" },
       { property: "og:title", content: "SYCRAS — Marcações online" },
-      { property: "og:description", content: "Marcações online simples para negócios em Portugal." },
+      {
+        property: "og:description",
+        content: "Marcações online simples para negócios em Portugal.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "theme-color", content: "#111111" },

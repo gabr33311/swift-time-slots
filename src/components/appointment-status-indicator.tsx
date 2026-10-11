@@ -8,11 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 /**
  * Monochrome status differentiation (no color, pure contrast):
@@ -82,12 +78,7 @@ export function AppointmentStatusIndicator({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
-          type="button"
-          data-status={status}
-          className={chipClass}
-          aria-label={label}
-        >
+        <button type="button" data-status={status} className={chipClass} aria-label={label}>
           {label}
         </button>
       </PopoverTrigger>

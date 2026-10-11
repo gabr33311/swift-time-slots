@@ -39,19 +39,22 @@ export function NewAppointmentDialog({
   onOpenChange,
   defaultDate,
   defaultTime,
+  defaultCustomer,
 }: {
   business: Business;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   defaultDate?: string;
   defaultTime?: string;
+  /** Opens with this client already chosen (from the client card). */
+  defaultCustomer?: { id: string; name: string; phone: string | null } | undefined;
 }) {
   const { t } = usePrefs();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
-  const [customerName, setCustomerName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [customerName, setCustomerName] = useState(defaultCustomer?.name ?? "");
+  const [phone, setPhone] = useState(defaultCustomer?.phone ?? "");
+  const [customerId, setCustomerId] = useState<string | null>(defaultCustomer?.id ?? null);
   const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [serviceId, setServiceId] = useState("");
@@ -87,7 +90,10 @@ export function NewAppointmentDialog({
           .eq("business_id", business.id)
           .eq("is_active", true)
           .order("sort_order"),
-        supabase.from("staff_services").select("staff_id, service_id").eq("business_id", business.id),
+        supabase
+          .from("staff_services")
+          .select("staff_id, service_id")
+          .eq("business_id", business.id),
       ]);
       return { services: services ?? [], staff: staff ?? [], links: links ?? [] };
     },
@@ -142,7 +148,7 @@ export function NewAppointmentDialog({
   }
 
   // With a single possible professional there is nothing to pick: select it.
-  const onlyStaffId = staffForService.length === 1 ? staffForService[0]?.id ?? null : null;
+  const onlyStaffId = staffForService.length === 1 ? (staffForService[0]?.id ?? null) : null;
   useEffect(() => {
     if (onlyStaffId && staffId !== onlyStaffId) setStaffId(onlyStaffId);
     else if (staffId && !staffForService.some((p) => p.id === staffId)) setStaffId("");
@@ -283,7 +289,10 @@ export function NewAppointmentDialog({
                     <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-0">
+                <PopoverContent
+                  align="start"
+                  className="w-[var(--radix-popover-trigger-width)] p-0"
+                >
                   <Command>
                     <CommandInput
                       placeholder={t("cal.customer.search")}
@@ -303,7 +312,9 @@ export function NewAppointmentDialog({
                           </CommandItem>
                         </CommandGroup>
                       )}
-                      {search.trim().length < 2 && <CommandEmpty>{t("cal.customer.empty")}</CommandEmpty>}
+                      {search.trim().length < 2 && (
+                        <CommandEmpty>{t("cal.customer.empty")}</CommandEmpty>
+                      )}
                       <CommandGroup>
                         {customers.map((customer) => (
                           <CommandItem
@@ -373,7 +384,8 @@ export function NewAppointmentDialog({
               <option value="">{t("cal.choose")}</option>
               {data?.services.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name} · {s.duration_minutes} min · {formatPrice(s.price_cents, business.currency)}
+                  {s.name} · {s.duration_minutes} min ·{" "}
+                  {formatPrice(s.price_cents, business.currency)}
                 </option>
               ))}
             </select>
@@ -400,11 +412,21 @@ export function NewAppointmentDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="adate">{t("cal.field.date")}</Label>
-              <Input id="adate" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              <Input
+                id="adate"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="atime">{t("cal.field.time")}</Label>
-              <Input id="atime" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+              <Input
+                id="atime"
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+              />
             </div>
           </div>
           <div className="space-y-1.5">

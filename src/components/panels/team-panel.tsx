@@ -67,11 +67,18 @@ export function TeamPanel() {
     },
   });
 
-  async function remove(id: string): Promise<boolean> {
+  async function remove(s: StaffRow): Promise<boolean> {
+    const id = s.id;
     // Deleting nulls staff_id on their appointments (FK SET NULL), and an appointment
     // with no professional blocks everyone's slots. Keep them: deactivate instead.
     if (await hasUpcomingAppointments("staff_id", id)) {
-      toast.error(t("pf.team.err.hasAppointments"));
+      // Offer the safe alternative right where the problem shows up.
+      toast.error(
+        t("pf.team.err.hasAppointments"),
+        s.is_active
+          ? { action: { label: t("pf.common.deactivate"), onClick: () => void toggleActive(s) } }
+          : undefined,
+      );
       return true;
     }
     const { error } = await supabase.from("staff").delete().eq("id", id);
@@ -86,13 +93,18 @@ export function TeamPanel() {
 
   async function toggleActive(s: StaffRow) {
     // Flip immediately so the switch answers the tap; the refetch corrects a failure.
-    qc.setQueryData(["team", business?.id], (prev: typeof data) =>
-      prev && {
-        ...prev,
-        rows: prev.rows.map((r) => (r.id === s.id ? { ...r, is_active: !s.is_active } : r)),
-      },
+    qc.setQueryData(
+      ["team", business?.id],
+      (prev: typeof data) =>
+        prev && {
+          ...prev,
+          rows: prev.rows.map((r) => (r.id === s.id ? { ...r, is_active: !s.is_active } : r)),
+        },
     );
-    const { error } = await supabase.from("staff").update({ is_active: !s.is_active }).eq("id", s.id);
+    const { error } = await supabase
+      .from("staff")
+      .update({ is_active: !s.is_active })
+      .eq("id", s.id);
     if (error) toast.error(t("pf.common.saveError"));
     qc.invalidateQueries({ queryKey: ["team"] });
   }
@@ -122,9 +134,12 @@ export function TeamPanel() {
           description={t("pf.team.empty.desc")}
         />
       ) : (
-        <ul className="animate-stagger grid gap-2 xl:grid-cols-2">
+        <ul className="surface animate-stagger divide-y divide-border overflow-hidden p-0">
           {data!.rows.map((s) => (
-            <li key={s.id} className="surface flex items-center gap-2 p-3 sm:gap-3 sm:p-4">
+            <li
+              key={s.id}
+              className="flex min-h-[4.5rem] items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-4"
+            >
               {/* The whole row opens the editor: no separate pencil to find. */}
               <button
                 type="button"
@@ -136,8 +151,8 @@ export function TeamPanel() {
                   {initials(s.name)}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium">{s.name}</span>
-                  <span className="block truncate text-sm text-muted-foreground">
+                  <span className="block truncate text-[15px] font-bold">{s.name}</span>
+                  <span className="block truncate text-sm font-normal text-muted-foreground">
                     {s.specialty ? `${s.specialty} · ` : ""}
                     {s.service_ids.length}
                     {t("pf.team.servicesCount")}
@@ -145,22 +160,11 @@ export function TeamPanel() {
                 </span>
                 <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
               </button>
-              <label className="flex shrink-0 cursor-pointer flex-col items-center gap-0.5">
-                <Switch checked={s.is_active} onCheckedChange={() => toggleActive(s)} />
-                <span className="text-[11px] font-semibold text-muted-foreground">
-                  {s.is_active ? t("pf.common.active") : t("pf.common.inactive")}
-                </span>
-              </label>
-              <ConfirmAction
-                title={t("pf.team.removeTitle").replace("{name}", s.name)}
-                description={t("pf.team.removeDesc")}
-                confirmLabel={t("pf.common.remove")}
-                onConfirm={() => remove(s.id)}
-                trigger={
-                  <Button variant="ghost" size="icon" aria-label={t("pf.common.remove")}>
-                    <Trash2 className="size-4" />
-                  </Button>
-                }
+              <Switch
+                checked={s.is_active}
+                onCheckedChange={() => toggleActive(s)}
+                aria-label={s.is_active ? t("pf.common.active") : t("pf.common.inactive")}
+                className="shrink-0"
               />
             </li>
           ))}
@@ -174,6 +178,7 @@ export function TeamPanel() {
         services={data?.services ?? []}
         open={open}
         onOpenChange={setOpen}
+        onRemove={editing ? () => remove(editing) : undefined}
       />
     </div>
   );
@@ -190,12 +195,15 @@ function StaffDialog({
   services,
   open,
   onOpenChange,
+  onRemove,
 }: {
   businessId: string | undefined;
   staff: StaffRow | null;
   services: { id: string; name: string }[];
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  /** Removing lives inside the editor, so the list rows stay calm. */
+  onRemove?: (() => Promise<boolean>) | undefined;
 }) {
   const qc = useQueryClient();
   const { t } = usePrefs();
@@ -272,7 +280,12 @@ function StaffDialog({
             <Label htmlFor="pname" className="font-semibold">
               {t("pf.team.name")}
             </Label>
-            <Input id="pname" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
+            <Input
+              id="pname"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={80}
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="pspec" className="font-semibold">
@@ -292,7 +305,10 @@ function StaffDialog({
               <p className="text-sm text-muted-foreground">{t("pf.team.noServices")}</p>
             )}
             {services.map((s) => (
-              <label key={s.id} className="flex items-center gap-2.5 text-sm">
+              <label
+                key={s.id}
+                className="-mx-2 flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-2 text-sm transition-colors hover:bg-muted/50"
+              >
                 <Checkbox
                   checked={selected.includes(s.id)}
                   onCheckedChange={(v) =>
@@ -308,6 +324,24 @@ function StaffDialog({
             {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
             {t("pf.common.save")}
           </Button>
+          {onRemove && (
+            <ConfirmAction
+              title={t("pf.team.removeTitle").replace("{name}", staff?.name ?? "")}
+              description={t("pf.team.removeDesc")}
+              confirmLabel={t("pf.common.remove")}
+              onConfirm={async () => {
+                const ok = await onRemove();
+                if (ok) onOpenChange(false);
+                return ok;
+              }}
+              trigger={
+                <Button variant="ghost" className="w-full" disabled={busy}>
+                  <Trash2 className="size-4" />
+                  {t("pf.common.remove")}
+                </Button>
+              }
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>

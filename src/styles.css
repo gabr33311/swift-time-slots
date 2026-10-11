@@ -12,11 +12,11 @@
 
 @theme inline {
   --font-sans:
-    "Google Sans Text", "Google Sans", Inter, ui-sans-serif, system-ui, -apple-system,
-    "Segoe UI", sans-serif;
+    "Google Sans Text", "Google Sans", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    sans-serif;
   --font-display:
-    "Google Sans", "Product Sans", Outfit, "Google Sans Text", Inter, ui-sans-serif,
-    system-ui, sans-serif;
+    "Google Sans", "Product Sans", Outfit, "Google Sans Text", Inter, ui-sans-serif, system-ui,
+    sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -49,6 +49,20 @@
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
   --color-subscription-accent: var(--subscription-accent);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  /* Brand colour for icons and text on light or dark surfaces (stays readable). */
+  --color-brand-ink: var(--brand-ink);
+  --color-st-confirmed: var(--st-confirmed);
+  --color-st-confirmed-fg: var(--st-confirmed-fg);
+  --color-st-pending: var(--st-pending);
+  --color-st-pending-fg: var(--st-pending-fg);
+  --color-st-completed: var(--st-completed);
+  --color-st-completed-fg: var(--st-completed-fg);
+  --color-st-noshow: var(--st-noshow);
+  --color-st-noshow-fg: var(--st-noshow-fg);
+  --color-st-cancelled: var(--st-cancelled);
+  --color-st-cancelled-fg: var(--st-cancelled-fg);
   --color-subscription-accent-foreground: var(--subscription-accent-foreground);
   --color-subscription-accent-soft: var(--subscription-accent-soft);
   --color-subscription-trial: var(--subscription-trial);
@@ -75,14 +89,12 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --shadow-soft:
-    0 1px 1px oklch(0.28 0.04 295 / 0.03), 0 6px 16px -8px oklch(0.28 0.04 295 / 0.1);
-  --shadow-lift:
-    0 2px 4px oklch(0.28 0.04 295 / 0.04), 0 14px 30px -12px oklch(0.28 0.04 295 / 0.16);
+  --shadow-soft: 0 1px 2px oklch(0.2 0 0 / 0.04), 0 6px 16px -10px oklch(0.2 0 0 / 0.12);
+  --shadow-lift: 0 2px 4px oklch(0.2 0 0 / 0.05), 0 16px 32px -14px oklch(0.2 0 0 / 0.2);
 }
 
 :root {
-  --radius: 1.25rem;
+  --radius: 0.875rem;
 
   --background: oklch(0.985 0 0);
   --foreground: oklch(0.12 0 0);
@@ -123,22 +135,40 @@
   --subscription-danger-foreground: oklch(0.34 0.15 25);
   --subscription-danger-soft: oklch(0.97 0.025 25);
 
-  --border: oklch(0.92 0.006 300);
-  --input: oklch(0.92 0.006 300);
+  --border: oklch(0.915 0 0);
+  --input: oklch(0.915 0 0);
   --ring: oklch(0.16 0 0);
 
   --action-gradient-start: oklch(0.12 0 0);
   --action-gradient-end: oklch(0.28 0 0);
   --action-outline-start: oklch(1 0 0);
   --action-outline-end: oklch(0.91 0 0);
-  --appointment-confirmed-start: oklch(0.18 0 0);
-  --appointment-confirmed-end: oklch(0.42 0 0);
-  --appointment-pending-start: oklch(0.34 0 0);
-  --appointment-pending-end: oklch(0.6 0 0);
-  --appointment-cancelled-start: oklch(0.66 0 0);
-  --appointment-cancelled-end: oklch(0.82 0 0);
-  --appointment-completed-start: oklch(0.52 0 0);
-  --appointment-completed-end: oklch(0.72 0 0);
+  /* Brand: each business's own colour (set at runtime from brand_color). */
+  --brand: #2563eb;
+  --brand-foreground: #ffffff;
+  /* Darker than the brand on light surfaces so icons and text keep their contrast. */
+  --brand-ink: color-mix(in oklch, var(--brand) 72%, black);
+
+  /* Status colours: they carry meaning (booked, waiting, done, missed). */
+  --st-confirmed: oklch(0.62 0.13 162);
+  --st-confirmed-fg: oklch(0.42 0.1 162);
+  --st-pending: oklch(0.76 0.15 75);
+  --st-pending-fg: oklch(0.48 0.11 65);
+  --st-completed: oklch(0.58 0.13 255);
+  --st-completed-fg: oklch(0.45 0.13 258);
+  --st-noshow: oklch(0.62 0.19 25);
+  --st-noshow-fg: oklch(0.5 0.17 25);
+  --st-cancelled: oklch(0.72 0 0);
+  --st-cancelled-fg: oklch(0.48 0 0);
+
+  --appointment-confirmed-start: var(--st-confirmed);
+  --appointment-confirmed-end: var(--st-confirmed);
+  --appointment-pending-start: var(--st-pending);
+  --appointment-pending-end: var(--st-pending);
+  --appointment-cancelled-start: var(--st-cancelled);
+  --appointment-cancelled-end: var(--st-cancelled);
+  --appointment-completed-start: var(--st-completed);
+  --appointment-completed-end: var(--st-completed);
 
   --chart-1: oklch(0.2 0 0);
   --chart-2: oklch(0.36 0 0);
@@ -147,12 +177,12 @@
   --chart-5: oklch(0.82 0 0);
 
   --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.2 0.03 295);
+  --sidebar-foreground: oklch(0.2 0 0);
   --sidebar-primary: oklch(0.16 0 0);
-  --sidebar-primary-foreground: oklch(0.99 0.005 300);
-  --sidebar-accent: oklch(0.965 0.008 300);
-  --sidebar-accent-foreground: oklch(0.3 0.05 295);
-  --sidebar-border: oklch(0.93 0.006 300);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.965 0 0);
+  --sidebar-accent-foreground: oklch(0.3 0 0);
+  --sidebar-border: oklch(0.93 0 0);
   --sidebar-ring: oklch(0.16 0 0);
 }
 
@@ -172,13 +202,13 @@
   --accent: oklch(0.29 0 0);
   --accent-foreground: oklch(0.97 0 0);
   --destructive: oklch(0.76 0 0);
-  --destructive-foreground: oklch(0.98 0.005 300);
+  --destructive-foreground: oklch(0.98 0 0);
   --success: oklch(0.78 0 0);
-  --success-foreground: oklch(0.17 0.02 295);
+  --success-foreground: oklch(0.17 0 0);
   --warning: oklch(0.72 0 0);
-  --warning-foreground: oklch(0.2 0.03 60);
+  --warning-foreground: oklch(0.2 0 0);
   --info: oklch(0.68 0 0);
-  --info-foreground: oklch(0.17 0.02 295);
+  --info-foreground: oklch(0.17 0 0);
   --subscription-accent: oklch(0.78 0.13 76);
   --subscription-accent-foreground: oklch(0.18 0.04 76);
   --subscription-accent-soft: oklch(0.22 0.03 76);
@@ -203,15 +233,17 @@
   --action-gradient-end: oklch(0.78 0 0);
   --action-outline-start: oklch(0.24 0 0);
   --action-outline-end: oklch(0.14 0 0);
-  --appointment-confirmed-start: oklch(0.99 0 0);
-  --appointment-confirmed-end: oklch(0.76 0 0);
-  --appointment-pending-start: oklch(0.86 0 0);
-  --appointment-pending-end: oklch(0.6 0 0);
-  --appointment-cancelled-start: oklch(0.48 0 0);
-  --appointment-cancelled-end: oklch(0.34 0 0);
-  --appointment-completed-start: oklch(0.7 0 0);
-  --appointment-completed-end: oklch(0.5 0 0);
-
+  --st-confirmed: oklch(0.72 0.13 162);
+  --st-confirmed-fg: oklch(0.8 0.12 162);
+  --st-pending: oklch(0.8 0.14 78);
+  --st-pending-fg: oklch(0.85 0.12 80);
+  --st-completed: oklch(0.7 0.12 255);
+  --st-completed-fg: oklch(0.8 0.1 255);
+  --st-noshow: oklch(0.7 0.17 25);
+  --st-noshow-fg: oklch(0.78 0.14 25);
+  --st-cancelled: oklch(0.5 0 0);
+  --st-cancelled-fg: oklch(0.7 0 0);
+  --brand-ink: color-mix(in oklch, var(--brand) 40%, white);
 }
 
 @layer base {
@@ -255,9 +287,9 @@
     font-weight: 700;
   }
 
-
   :focus-visible {
-    outline: 2px solid var(--color-ring);
+    /* Clear for keyboard users without a heavy black frame on every tap. */
+    outline: 2px solid color-mix(in oklch, var(--color-ring) 55%, transparent);
     outline-offset: 2px;
   }
 
@@ -453,14 +485,30 @@
     animation: app-fade-up 340ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
     animation-delay: 240ms;
   }
-  & > *:nth-child(1) { animation-delay: 0ms; }
-  & > *:nth-child(2) { animation-delay: 30ms; }
-  & > *:nth-child(3) { animation-delay: 60ms; }
-  & > *:nth-child(4) { animation-delay: 90ms; }
-  & > *:nth-child(5) { animation-delay: 120ms; }
-  & > *:nth-child(6) { animation-delay: 150ms; }
-  & > *:nth-child(7) { animation-delay: 180ms; }
-  & > *:nth-child(8) { animation-delay: 210ms; }
+  & > *:nth-child(1) {
+    animation-delay: 0ms;
+  }
+  & > *:nth-child(2) {
+    animation-delay: 30ms;
+  }
+  & > *:nth-child(3) {
+    animation-delay: 60ms;
+  }
+  & > *:nth-child(4) {
+    animation-delay: 90ms;
+  }
+  & > *:nth-child(5) {
+    animation-delay: 120ms;
+  }
+  & > *:nth-child(6) {
+    animation-delay: 150ms;
+  }
+  & > *:nth-child(7) {
+    animation-delay: 180ms;
+  }
+  & > *:nth-child(8) {
+    animation-delay: 210ms;
+  }
 }
 
 /* Loading placeholder: a slow grey sheen instead of a blinking pulse. */
@@ -491,11 +539,17 @@
 
 /* Titanium surfaces: static high-contrast gradient, light only reacts to touch. */
 @utility action-gradient {
-  background-image: linear-gradient(140deg, var(--action-gradient-start), var(--action-gradient-end));
+  background-image: linear-gradient(
+    140deg,
+    var(--action-gradient-start),
+    var(--action-gradient-end)
+  );
   background-size: 200% 200%;
   background-position: 0% 50%;
   color: var(--primary-foreground);
-  transition: background-position 450ms ease, box-shadow 250ms ease;
+  transition:
+    background-position 450ms ease,
+    box-shadow 250ms ease;
 
   &:hover,
   &:active {
@@ -508,7 +562,9 @@
   background-size: 200% 200%;
   background-position: 0% 50%;
   color: var(--foreground);
-  transition: background-position 450ms ease, box-shadow 250ms ease;
+  transition:
+    background-position 450ms ease,
+    box-shadow 250ms ease;
 
   &:hover,
   &:active {
@@ -587,7 +643,6 @@
   }
 }
 
-
 /* Floating navigation capsule */
 @utility dock {
   background-color: color-mix(in oklch, var(--color-card) 82%, transparent);
@@ -598,10 +653,13 @@
 }
 
 @utility dock-action {
-  background-image: linear-gradient(140deg, var(--action-gradient-start), var(--action-gradient-end));
-  color: var(--primary-foreground);
+  background-color: var(--brand);
+  background-image: linear-gradient(140deg, oklch(1 0 0 / 0.14), oklch(0 0 0 / 0.12));
+  color: var(--brand-foreground);
   box-shadow: var(--shadow-lift);
-  transition: transform 180ms cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 200ms ease;
+  transition:
+    transform 180ms cubic-bezier(0.34, 1.4, 0.64, 1),
+    box-shadow 200ms ease;
 
   &:active {
     transform: scale(0.92);
@@ -625,23 +683,65 @@
   background-size: 220% 220%;
   background-position: 0% 50%;
 
-  &[data-status="confirmed"] { background-image: linear-gradient(110deg, var(--appointment-confirmed-start), var(--appointment-confirmed-end), var(--appointment-confirmed-start)); }
+  &[data-status="confirmed"] {
+    background-image: linear-gradient(
+      110deg,
+      var(--appointment-confirmed-start),
+      var(--appointment-confirmed-end),
+      var(--appointment-confirmed-start)
+    );
+  }
   /* Only pending keeps living light — it needs a human decision. */
   &[data-status="pending"] {
-    background-image: linear-gradient(110deg, var(--appointment-pending-start), var(--appointment-pending-end), var(--appointment-pending-start));
+    background-image: linear-gradient(
+      110deg,
+      var(--appointment-pending-start),
+      var(--appointment-pending-end),
+      var(--appointment-pending-start)
+    );
     animation: appointment-gradient 3.8s ease-in-out infinite;
   }
-  &[data-status="cancelled"], &[data-status="no_show"], &[data-status="expired"] { background-image: linear-gradient(110deg, var(--appointment-cancelled-start), var(--appointment-cancelled-end), var(--appointment-cancelled-start)); }
-  &[data-status="completed"] { background-image: linear-gradient(110deg, var(--appointment-completed-start), var(--appointment-completed-end), var(--appointment-completed-start)); }
+  &[data-status="cancelled"],
+  &[data-status="no_show"],
+  &[data-status="expired"] {
+    background-image: linear-gradient(
+      110deg,
+      var(--appointment-cancelled-start),
+      var(--appointment-cancelled-end),
+      var(--appointment-cancelled-start)
+    );
+  }
+  &[data-status="completed"] {
+    background-image: linear-gradient(
+      110deg,
+      var(--appointment-completed-start),
+      var(--appointment-completed-end),
+      var(--appointment-completed-start)
+    );
+  }
 }
 
 @keyframes status-shake {
-  0%, 62%, 100% { transform: rotate(0deg); }
-  68% { transform: rotate(-11deg); }
-  74% { transform: rotate(9deg); }
-  80% { transform: rotate(-7deg); }
-  86% { transform: rotate(5deg); }
-  92% { transform: rotate(-3deg); }
+  0%,
+  62%,
+  100% {
+    transform: rotate(0deg);
+  }
+  68% {
+    transform: rotate(-11deg);
+  }
+  74% {
+    transform: rotate(9deg);
+  }
+  80% {
+    transform: rotate(-7deg);
+  }
+  86% {
+    transform: rotate(5deg);
+  }
+  92% {
+    transform: rotate(-3deg);
+  }
 }
 
 @utility animate-status-shake {
@@ -650,12 +750,15 @@
 }
 
 @keyframes pending-halo {
-  0%, 100% {
-    box-shadow: 0 0 0 1px color-mix(in oklch, var(--appointment-pending-start) 10%, transparent),
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--appointment-pending-start) 10%, transparent),
       0 0 6px 0 color-mix(in oklch, var(--appointment-pending-start) 8%, transparent);
   }
   50% {
-    box-shadow: 0 0 0 1px color-mix(in oklch, var(--appointment-pending-start) 30%, transparent),
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--appointment-pending-start) 30%, transparent),
       0 0 14px 2px color-mix(in oklch, var(--appointment-pending-start) 22%, transparent);
   }
 }
@@ -666,11 +769,22 @@
   animation: pending-halo 4s ease-in-out infinite;
 }
 
-
-@utility appointment-status-confirmed { color: var(--appointment-confirmed-start); border-color: var(--appointment-confirmed-start); }
-@utility appointment-status-pending { color: var(--appointment-pending-start); border-color: var(--appointment-pending-start); }
-@utility appointment-status-cancelled { color: var(--appointment-cancelled-start); border-color: var(--appointment-cancelled-start); }
-@utility appointment-status-completed { color: var(--appointment-completed-start); border-color: var(--appointment-completed-start); }
+@utility appointment-status-confirmed {
+  color: var(--appointment-confirmed-start);
+  border-color: var(--appointment-confirmed-start);
+}
+@utility appointment-status-pending {
+  color: var(--appointment-pending-start);
+  border-color: var(--appointment-pending-start);
+}
+@utility appointment-status-cancelled {
+  color: var(--appointment-cancelled-start);
+  border-color: var(--appointment-cancelled-start);
+}
+@utility appointment-status-completed {
+  color: var(--appointment-completed-start);
+  border-color: var(--appointment-completed-start);
+}
 
 @utility animate-exit {
   animation: app-fade-out 220ms ease-in both;
@@ -757,29 +871,31 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
 }
 
 /* Status tints for calendar cards */
-/* Calendar blocks: a touch darker than the grid, with a firmer edge and lift,
-   so appointments stand out at a glance. Status tints below still win. */
+/* Calendar blocks: clean white cards lifted off a quiet grey grid, so they
+   stand out by elevation; the left rail carries the status. Tints below win. */
 .appointment-pop {
-  background-image: linear-gradient(
-    140deg,
-    color-mix(in oklch, var(--foreground) 5%, var(--card)),
-    color-mix(in oklch, var(--foreground) 11%, var(--card))
-  );
-  border-color: color-mix(in oklch, var(--foreground) 20%, transparent);
+  background-image: none;
+  background-color: var(--card);
+  border-color: color-mix(in oklch, var(--foreground) 14%, transparent);
   box-shadow:
     0 1px 2px oklch(0 0 0 / 0.06),
-    0 8px 18px -10px oklch(0 0 0 / 0.28);
+    0 6px 14px -8px oklch(0 0 0 / 0.22);
 }
 
-.appointment-state[data-status="completed"] {
-  background-image: none;
-  background-color: color-mix(in oklch, oklch(0.72 0.17 150) 14%, var(--color-card));
+/* A light wash of the status colour on calendar cards; the rail carries the full colour. */
+.appointment-pop[data-status="pending"] {
+  background-color: color-mix(in oklch, var(--st-pending) 10%, var(--color-card));
 }
-.appointment-state[data-status="no_show"] {
-  background-image: none;
-  background-color: color-mix(in oklch, oklch(0.63 0.22 25) 14%, var(--color-card));
+.appointment-pop[data-status="completed"] {
+  background-color: color-mix(in oklch, var(--st-completed) 9%, var(--color-card));
 }
-.appointment-rail[data-status="completed"] { --rail-a: oklch(0.68 0.17 150); --rail-b: oklch(0.58 0.15 150); }
-.appointment-rail[data-status="no_show"] { --rail-a: oklch(0.63 0.22 25); --rail-b: oklch(0.55 0.2 25); }
-.status-done-text { color: oklch(0.55 0.15 150); }
-.dark .status-done-text { color: oklch(0.75 0.16 150); }
+.appointment-pop[data-status="no_show"] {
+  background-color: color-mix(in oklch, var(--st-noshow) 9%, var(--color-card));
+}
+.appointment-rail[data-status="no_show"] {
+  --rail-a: var(--st-noshow);
+  --rail-b: var(--st-noshow);
+}
+.status-done-text {
+  color: var(--st-completed-fg);
+}

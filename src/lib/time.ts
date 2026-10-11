@@ -25,11 +25,7 @@ function tzOffsetMs(date: Date, timeZone: string): number {
 }
 
 /** Converts a wall-clock date/time in `timeZone` into a real UTC Date. */
-export function zonedToUtc(
-  dateStr: string,
-  minutesFromMidnight: number,
-  timeZone: string,
-): Date {
+export function zonedToUtc(dateStr: string, minutesFromMidnight: number, timeZone: string): Date {
   const [y, m, d] = dateStr.split("-").map(Number);
   const naive = Date.UTC(y!, (m ?? 1) - 1, d ?? 1, 0, minutesFromMidnight);
   let ts = naive - tzOffsetMs(new Date(naive), timeZone);

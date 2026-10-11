@@ -42,7 +42,6 @@ function PendingPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>(search.tab ?? "pending");
   const [busy, setBusy] = useState<string | null>(null);
-  
 
   const { data, isLoading } = useQuery({
     queryKey: ["requests", business?.id],

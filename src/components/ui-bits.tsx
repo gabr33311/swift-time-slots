@@ -31,10 +31,18 @@ export function PageHeader({
   inline?: boolean;
 }) {
   const row = (
-    <div className={inline ? "mb-3 flex items-center justify-between gap-3" : "flex items-center justify-between gap-3"}>
+    <div
+      className={
+        inline
+          ? "mb-3 flex items-center justify-between gap-3"
+          : "flex items-center justify-between gap-3"
+      }
+    >
       {leading && <div className="-ml-2 shrink-0">{leading}</div>}
       <div className="min-w-0 flex-1">
-        <h1 className="truncate font-display text-[24px] font-bold leading-tight tracking-tight sm:text-[28px]">{title}</h1>
+        <h1 className="truncate font-display text-[24px] font-bold leading-tight tracking-tight sm:text-[28px]">
+          {title}
+        </h1>
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </div>
@@ -73,11 +81,11 @@ export function EmptyState({
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  pending: "bg-warning/15 text-warning-foreground ring-warning/25",
-  confirmed: "bg-success/12 text-success ring-success/25",
-  completed: "bg-primary/10 text-primary ring-primary/20",
-  cancelled: "bg-destructive/10 text-destructive ring-destructive/20",
-  no_show: "bg-destructive/10 text-destructive ring-destructive/20",
+  pending: "bg-st-pending/15 text-st-pending-fg ring-st-pending/35",
+  confirmed: "bg-st-confirmed/12 text-st-confirmed-fg ring-st-confirmed/30",
+  completed: "bg-st-completed/12 text-st-completed-fg ring-st-completed/30",
+  cancelled: "bg-muted text-st-cancelled-fg ring-border",
+  no_show: "bg-st-noshow/12 text-st-noshow-fg ring-st-noshow/30",
   expired: "bg-muted text-muted-foreground ring-border",
 };
 
@@ -86,10 +94,11 @@ export function StatusBadge({ status }: { status: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold ring-1 ring-inset",
+        "inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold ring-1 ring-inset",
         STATUS_STYLES[status] ?? "bg-muted text-muted-foreground ring-border",
       )}
     >
+      <span aria-hidden className="size-1.5 rounded-full bg-current" />
       {statusLabel(status, lang)}
     </span>
   );
@@ -173,7 +182,13 @@ export function LoadingRows({ rows = 3 }: { rows?: number }) {
  * Inline form/action error. The palette is greyscale, so colour alone can't
  * flag an error: an icon and a framed box make it unmistakable.
  */
-export function FormError({ message, className }: { message?: string | null | undefined; className?: string | undefined }) {
+export function FormError({
+  message,
+  className,
+}: {
+  message?: string | null | undefined;
+  className?: string | undefined;
+}) {
   if (!message) return null;
   return (
     <p
@@ -190,7 +205,13 @@ export function FormError({ message, className }: { message?: string | null | un
 }
 
 /** Small error under a single field. */
-export function FieldError({ message, id }: { message?: string | null | undefined; id?: string | undefined }) {
+export function FieldError({
+  message,
+  id,
+}: {
+  message?: string | null | undefined;
+  id?: string | undefined;
+}) {
   if (!message) return null;
   return (
     <p id={id} role="alert" className="flex items-center gap-1.5 text-xs font-bold text-foreground">
@@ -205,9 +226,7 @@ export function ErrorState({ message, onRetry }: { message?: string; onRetry?: (
   return (
     <div className="surface animate-enter p-6 text-center">
       <p className="text-sm font-bold">{t("ui.error.title")}</p>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {message ?? t("ui.error.default")}
-      </p>
+      <p className="mt-1 text-sm text-muted-foreground">{message ?? t("ui.error.default")}</p>
       {onRetry && (
         <Button onClick={onRetry} className="mt-4">
           {t("ui.error.retry")}

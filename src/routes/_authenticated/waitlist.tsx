@@ -31,7 +31,9 @@ function WaitlistPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("waitlist_entries")
-        .select("id, customer_name, customer_phone, preference, date_from, date_to, status, created_at")
+        .select(
+          "id, customer_name, customer_phone, preference, date_from, date_to, status, created_at",
+        )
         .eq("business_id", business!.id)
         .order("created_at", { ascending: false })
         .limit(100);

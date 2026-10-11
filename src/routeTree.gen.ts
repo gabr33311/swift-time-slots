@@ -25,9 +25,11 @@ import { Route as AuthenticatedPendentesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedPlansRouteImport } from './routes/_authenticated/plans'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedShareRouteImport } from './routes/_authenticated/share'
+import { Route as AuthenticatedTodayRouteImport } from './routes/_authenticated/today'
 import { Route as AuthenticatedWaitlistRouteImport } from './routes/_authenticated/waitlist'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as BookingTokenRouteImport } from './routes/booking.$token'
+import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhook'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
 const IndexRoute = IndexRouteImport.update({
@@ -111,6 +113,11 @@ const AuthenticatedShareRoute = AuthenticatedShareRouteImport.update({
   path: '/share',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTodayRoute = AuthenticatedTodayRouteImport.update({
+  id: '/today',
+  path: '/today',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedWaitlistRoute = AuthenticatedWaitlistRouteImport.update({
   id: '/waitlist',
   path: '/waitlist',
@@ -124,6 +131,11 @@ const BookSlugRoute = BookSlugRouteImport.update({
 const BookingTokenRoute = BookingTokenRouteImport.update({
   id: '/booking/$token',
   path: '/booking/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
+  id: '/api/stripe/webhook',
+  path: '/api/stripe/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LovableEmailTransactionalPreviewRoute =
@@ -149,9 +161,11 @@ export interface FileRoutesByFullPath {
   '/plans': typeof AuthenticatedPlansRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/share': typeof AuthenticatedShareRoute
+  '/today': typeof AuthenticatedTodayRoute
   '/waitlist': typeof AuthenticatedWaitlistRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
@@ -170,9 +184,11 @@ export interface FileRoutesByTo {
   '/plans': typeof AuthenticatedPlansRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/share': typeof AuthenticatedShareRoute
+  '/today': typeof AuthenticatedTodayRoute
   '/waitlist': typeof AuthenticatedWaitlistRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
@@ -193,9 +209,11 @@ export interface FileRoutesById {
   '/_authenticated/plans': typeof AuthenticatedPlansRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/share': typeof AuthenticatedShareRoute
+  '/_authenticated/today': typeof AuthenticatedTodayRoute
   '/_authenticated/waitlist': typeof AuthenticatedWaitlistRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
@@ -216,9 +234,11 @@ export interface FileRouteTypes {
     | '/plans'
     | '/profile'
     | '/share'
+    | '/today'
     | '/waitlist'
     | '/book/$slug'
     | '/booking/$token'
+    | '/api/stripe/webhook'
     | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -237,9 +257,11 @@ export interface FileRouteTypes {
     | '/plans'
     | '/profile'
     | '/share'
+    | '/today'
     | '/waitlist'
     | '/book/$slug'
     | '/booking/$token'
+    | '/api/stripe/webhook'
     | '/lovable/email/transactional/preview'
   id:
     | '__root__'
@@ -259,9 +281,11 @@ export interface FileRouteTypes {
     | '/_authenticated/plans'
     | '/_authenticated/profile'
     | '/_authenticated/share'
+    | '/_authenticated/today'
     | '/_authenticated/waitlist'
     | '/book/$slug'
     | '/booking/$token'
+    | '/api/stripe/webhook'
     | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
@@ -273,6 +297,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   BookSlugRoute: typeof BookSlugRoute
   BookingTokenRoute: typeof BookingTokenRoute
+  ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
@@ -390,6 +415,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedShareRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/today': {
+      id: '/_authenticated/today'
+      path: '/today'
+      fullPath: '/today'
+      preLoaderRoute: typeof AuthenticatedTodayRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/waitlist': {
       id: '/_authenticated/waitlist'
       path: '/waitlist'
@@ -409,6 +441,13 @@ declare module '@tanstack/react-router' {
       path: '/booking/$token'
       fullPath: '/booking/$token'
       preLoaderRoute: typeof BookingTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/stripe/webhook': {
+      id: '/api/stripe/webhook'
+      path: '/api/stripe/webhook'
+      fullPath: '/api/stripe/webhook'
+      preLoaderRoute: typeof ApiStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/transactional/preview': {
@@ -433,6 +472,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlansRoute: typeof AuthenticatedPlansRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedShareRoute: typeof AuthenticatedShareRoute
+  AuthenticatedTodayRoute: typeof AuthenticatedTodayRoute
   AuthenticatedWaitlistRoute: typeof AuthenticatedWaitlistRoute
 }
 
@@ -448,6 +488,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlansRoute: AuthenticatedPlansRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedShareRoute: AuthenticatedShareRoute,
+  AuthenticatedTodayRoute: AuthenticatedTodayRoute,
   AuthenticatedWaitlistRoute: AuthenticatedWaitlistRoute,
 }
 
@@ -462,6 +503,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   BookSlugRoute: BookSlugRoute,
   BookingTokenRoute: BookingTokenRoute,
+  ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport

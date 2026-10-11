@@ -79,7 +79,9 @@ export function PendingDecisionDrawer({
       return;
     }
     if (!("emailed" in res && res.emailed)) {
-      toast.success(status === "confirmed" ? t("cal.pending.confirmed") : t("cal.pending.cancelled"));
+      toast.success(
+        status === "confirmed" ? t("cal.pending.confirmed") : t("cal.pending.cancelled"),
+      );
     }
     void invalidateAppointmentData(qc);
     if (onlyId || list.length <= 1) onOpenChange(false);
@@ -115,24 +117,36 @@ export function PendingDecisionDrawer({
                     <p className="flex items-start gap-2">
                       <Phone className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                       {a.customer_phone ? (
-                        <a href={`tel:${a.customer_phone}`} className="break-all font-medium">{a.customer_phone}</a>
-                      ) : <span className="text-muted-foreground">—</span>}
+                        <a href={`tel:${a.customer_phone}`} className="break-all font-medium">
+                          {a.customer_phone}
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </p>
                     <p className="flex items-start gap-2">
                       <Mail className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                       {a.customer_email ? (
-                        <a href={`mailto:${a.customer_email}`} className="break-all font-medium">{a.customer_email}</a>
-                      ) : <span className="text-muted-foreground">—</span>}
+                        <a href={`mailto:${a.customer_email}`} className="break-all font-medium">
+                          {a.customer_email}
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </p>
                     <p className="flex items-start gap-2">
                       <StickyNote className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                       <span className="whitespace-pre-wrap font-medium">
-                        {a.notes?.trim() || <span className="text-muted-foreground">{t("cal.note.label")}: —</span>}
+                        {a.notes?.trim() || (
+                          <span className="text-muted-foreground">{t("cal.note.label")}: —</span>
+                        )}
                       </span>
                     </p>
                   </PopoverContent>
                 </Popover>
-                <p className="truncate text-sm leading-snug text-muted-foreground">{a.service_name}</p>
+                <p className="truncate text-sm leading-snug text-muted-foreground">
+                  {a.service_name}
+                </p>
                 <p className="truncate text-xs font-semibold tabular-nums text-muted-foreground">
                   {formatDateLong(a.starts_at, tz)} · {formatTime(a.starts_at, tz)}
                 </p>

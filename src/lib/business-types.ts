@@ -149,5 +149,7 @@ export const BUSINESS_TYPES: BusinessTypeDef[] = [
 ];
 
 export function businessType(value: string | null | undefined): BusinessTypeDef {
-  return BUSINESS_TYPES.find((t) => t.value === value) ?? BUSINESS_TYPES[BUSINESS_TYPES.length - 1]!;
+  return (
+    BUSINESS_TYPES.find((t) => t.value === value) ?? BUSINESS_TYPES[BUSINESS_TYPES.length - 1]!
+  );
 }

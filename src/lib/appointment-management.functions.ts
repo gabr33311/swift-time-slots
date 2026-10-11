@@ -53,9 +53,7 @@ export const updateBusinessAppointmentStatus = createServerFn({ method: "POST" }
 
 export const markBusinessNotificationsRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((input: unknown) =>
-    z.object({ businessId: z.string().uuid() }).parse(input),
-  )
+  .validator((input: unknown) => z.object({ businessId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("notifications")

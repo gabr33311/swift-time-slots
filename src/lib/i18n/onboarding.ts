@@ -109,7 +109,8 @@ export const onboardingDict: Record<BaseLang, Record<string, string>> = {
 
     // Auth page
     "onb.auth.meta.title": "Entrar — SYCRAS",
-    "onb.auth.meta.desc": "Entra na tua conta SYCRAS para gerir marcações, clientes e a tua página pública.",
+    "onb.auth.meta.desc":
+      "Entra na tua conta SYCRAS para gerir marcações, clientes e a tua página pública.",
     "onb.auth.err.password.min": "A palavra-passe precisa de pelo menos 8 caracteres.",
     "onb.auth.err.password.upper": "A palavra-passe precisa de uma letra maiúscula.",
     "onb.auth.err.password.lower": "A palavra-passe precisa de uma letra minúscula.",
@@ -128,8 +129,10 @@ export const onboardingDict: Record<BaseLang, Record<string, string>> = {
     "onb.auth.success.accountCreatedGo": "Conta criada. Vamos configurar o teu negócio.",
     "onb.auth.err.invalidLogin": "Email ou palavra-passe incorrectos.",
     "onb.auth.err.noAccount": "Este email não está registado. Cria conta primeiro.",
-    "onb.auth.err.alreadyRegistered": "Já existe uma conta com este email. Entra em vez de criar conta.",
-    "onb.auth.err.emailNotConfirmed": "Ainda não confirmaste o email. Verifica a tua caixa de entrada.",
+    "onb.auth.err.alreadyRegistered":
+      "Já existe uma conta com este email. Entra em vez de criar conta.",
+    "onb.auth.err.emailNotConfirmed":
+      "Ainda não confirmaste o email. Verifica a tua caixa de entrada.",
     "onb.auth.err.weakPassword": "Palavra-passe demasiado fraca. Escolhe outra.",
     "onb.auth.err.rateLimit": "Demasiadas tentativas. Espera alguns segundos.",
     "onb.auth.err.generic": "Não foi possível concluir. Tenta novamente.",
@@ -137,10 +140,15 @@ export const onboardingDict: Record<BaseLang, Record<string, string>> = {
     "onb.auth.err.resend": "Não foi possível reenviar agora. Tenta daqui a pouco.",
     "onb.auth.confirmTitle": "Confirma o teu email",
     "onb.auth.confirmBody1": "Enviámos um link de confirmação para",
-    "onb.auth.confirmBody2": "Abre o email e clica no link — depois disso segues logo para a criação do teu negócio.",
+    "onb.auth.confirmBody2":
+      "Abre o email e clica no link — depois disso segues logo para a criação do teu negócio.",
     "onb.auth.resend": "Reenviar email",
     "onb.auth.backToLogin": "Voltar a entrar",
     "onb.auth.title.login": "Entrar",
+    "auth.side.title": "A tua agenda organizada, sem telefonemas.",
+    "auth.side.b1": "Os clientes marcam sozinhos, a qualquer hora.",
+    "auth.side.b2": "Vês o dia num relance e decides com um toque.",
+    "auth.side.b3": "Lembretes, fichas de cliente e estatísticas.",
     "onb.auth.title.register": "Criar conta",
     "onb.auth.title.forgot": "Recuperar palavra-passe",
     "onb.auth.subtitle.register": "Cria a tua página de marcações em poucos minutos.",
@@ -299,7 +307,8 @@ export const onboardingDict: Record<BaseLang, Record<string, string>> = {
     "onb.create": "Create my page",
 
     "onb.auth.meta.title": "Sign in — SYCRAS",
-    "onb.auth.meta.desc": "Sign in to your SYCRAS account to manage bookings, customers and your public page.",
+    "onb.auth.meta.desc":
+      "Sign in to your SYCRAS account to manage bookings, customers and your public page.",
     "onb.auth.err.password.min": "The password needs at least 8 characters.",
     "onb.auth.err.password.upper": "The password needs an uppercase letter.",
     "onb.auth.err.password.lower": "The password needs a lowercase letter.",
@@ -327,10 +336,15 @@ export const onboardingDict: Record<BaseLang, Record<string, string>> = {
     "onb.auth.err.resend": "Couldn't resend right now. Try again shortly.",
     "onb.auth.confirmTitle": "Confirm your email",
     "onb.auth.confirmBody1": "We've sent a confirmation link to",
-    "onb.auth.confirmBody2": "Open the email and click the link — you'll then continue straight to setting up your business.",
+    "onb.auth.confirmBody2":
+      "Open the email and click the link — you'll then continue straight to setting up your business.",
     "onb.auth.resend": "Resend email",
     "onb.auth.backToLogin": "Back to sign in",
     "onb.auth.title.login": "Sign in",
+    "auth.side.title": "Your schedule in order, without phone calls.",
+    "auth.side.b1": "Clients book on their own, any time.",
+    "auth.side.b2": "See your day at a glance and act with one tap.",
+    "auth.side.b3": "Reminders, client cards and statistics.",
     "onb.auth.title.register": "Create account",
     "onb.auth.title.forgot": "Reset password",
     "onb.auth.subtitle.register": "Create your booking page in a few minutes.",

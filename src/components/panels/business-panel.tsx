@@ -138,7 +138,6 @@ export function BusinessPanel() {
 
   const dirty = !!business && JSON.stringify(form) !== JSON.stringify(baseline(business));
 
-
   return (
     <section className="surface space-y-5 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -180,7 +179,6 @@ export function BusinessPanel() {
             />
           </div>
         </div>
-
       </div>
 
       <div className="space-y-4">
@@ -234,12 +232,7 @@ export function BusinessPanel() {
             <Label htmlFor="ba" className="font-semibold">
               {t("pf.biz.address")}
             </Label>
-            <Input
-              id="ba"
-              value={form.address}
-              onChange={set("address")}
-              maxLength={160}
-            />
+            <Input id="ba" value={form.address} onChange={set("address")} maxLength={160} />
           </div>
         </div>
       </div>
@@ -251,6 +244,5 @@ export function BusinessPanel() {
         onCancel={() => business && setForm(baseline(business))}
       />
     </section>
-
   );
 }

@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { LoadingRows, StatCard } from "@/components/ui-bits";
+import { ErrorState, LoadingRows, StatCard } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
-import { formatPrice } from "@/lib/format";
+import { currentLocale, formatPrice } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
 
 const PERIODS = [
@@ -22,7 +22,7 @@ export function AnalyticsPanel() {
   const [period, setPeriod] = useState<PeriodId>("30");
   const days = PERIODS.find((p) => p.id === period)!.days;
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["analytics", business?.id, period],
     enabled: !!business,
     queryFn: async () => {
@@ -35,7 +35,7 @@ export function AnalyticsPanel() {
 
       let apptQuery = supabase
         .from("appointments")
-        .select("service_name, price_cents, status, created_at, staff_id")
+        .select("service_name, price_cents, status, created_at, staff_id, source")
         .eq("business_id", business!.id)
         .limit(2000);
       if (from) apptQuery = apptQuery.gte("created_at", from);
@@ -46,16 +46,12 @@ export function AnalyticsPanel() {
         .eq("business_id", business!.id);
       if (from) viewQuery = viewQuery.gte("created_at", from);
 
-      const staffQuery = supabase
-        .from("staff")
-        .select("id, name")
-        .eq("business_id", business!.id);
+      const staffQuery = supabase.from("staff").select("id, name").eq("business_id", business!.id);
 
-      const [{ data: appts }, { count: views }, { data: staff }] = await Promise.all([
-        apptQuery,
-        viewQuery,
-        staffQuery,
-      ]);
+      const results = await Promise.all([apptQuery, viewQuery, staffQuery]);
+      const failed = results.find((r) => r.error);
+      if (failed) throw failed.error;
+      const [{ data: appts }, { count: views }, { data: staff }] = results;
       return { appts: appts ?? [], views: views ?? 0, staff: staff ?? [] };
     },
   });
@@ -63,9 +59,17 @@ export function AnalyticsPanel() {
   const rows = data?.appts ?? [];
   const views = data?.views ?? 0;
   const bookings = rows.length;
-  const conversion = views > 0 ? Math.min(100, (bookings / views) * 100) : 0;
+  // Conversion only makes sense for bookings that came through the public page.
+  const onlineBookings = rows.filter((r) => r.source !== "manual").length;
+  const conversion = views > 0 ? Math.min(100, (onlineBookings / views) * 100) : null;
+  const percent = (v: number) =>
+    new Intl.NumberFormat(currentLocale(), { style: "percent", maximumFractionDigits: 1 }).format(
+      v / 100,
+    );
 
+  // Revenue counts what is done or still booked; the "completed" card only what is done.
   const done = rows.filter((r) => r.status === "completed" || r.status === "confirmed");
+  const completed = rows.filter((r) => r.status === "completed").length;
   const revenue = done.reduce((s, r) => s + r.price_cents, 0);
   const avgTicket = done.length > 0 ? Math.round(revenue / done.length) : 0;
   const cancelled = rows.filter((r) => r.status === "cancelled").length;
@@ -114,35 +118,48 @@ export function AnalyticsPanel() {
 
       {isLoading ? (
         <LoadingRows rows={3} />
+      ) : isError ? (
+        <ErrorState onRetry={() => void refetch()} />
       ) : (
         <>
-          <div className="animate-stagger grid grid-cols-2 gap-3 lg:grid-cols-3">
-            <StatCard label={t("pf.an.views")} value={views} />
-            <StatCard label={t("pf.an.bookings")} value={bookings} />
-            <StatCard label={t("pf.an.conversion")} value={`${conversion.toFixed(1)}%`} />
+          <div className="animate-stagger grid grid-cols-2 gap-3">
+            <StatCard label={t("pf.an.views")} value={views} dimmed={views === 0} />
+            <StatCard label={t("pf.an.bookings")} value={bookings} dimmed={bookings === 0} />
           </div>
 
-          <section className="surface mt-4 p-5">
-            <div className="flex items-center justify-between text-sm font-bold">
-              <span>{t("pf.an.visitsBooked")}</span>
-              <span className="tabular-nums text-muted-foreground">
-                {bookings} {t("pf.an.of")} {views}
+          {/* Conversion in one place: the rate, what it is made of, and the bar. */}
+          <section className="surface mt-3 p-5">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-sm font-bold">{t("pf.an.conversion")}</span>
+              <span className="font-display text-2xl font-bold tabular-nums">
+                {conversion === null ? "—" : percent(conversion)}
               </span>
             </div>
-            <div className="mt-3 h-2.5 rounded-full bg-muted">
-              <div
-                className="h-2.5 rounded-full bg-primary transition-all"
-                style={{ width: `${Math.max(2, conversion)}%` }}
-              />
-            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {conversion === null
+                ? t("pf.an.noViews")
+                : t("pf.an.conversionHint")
+                    .replace("{booked}", String(onlineBookings))
+                    .replace("{views}", String(views))}
+            </p>
+            {conversion !== null && (
+              <div className="mt-3 h-2.5 rounded-full bg-muted">
+                <div
+                  className="h-2.5 rounded-full bg-brand transition-all"
+                  style={{ width: `${Math.max(2, conversion)}%` }}
+                />
+              </div>
+            )}
           </section>
 
-          <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
-            <StatCard label={t("pf.an.completed")} value={done.length} />
-            <StatCard label={t("pf.an.revenue")} value={formatPrice(revenue, currency)} />
+          <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <div className="col-span-2 lg:col-span-4">
+              <StatCard label={t("pf.an.revenue")} value={formatPrice(revenue, currency)} />
+            </div>
+            <StatCard label={t("pf.an.completed")} value={completed} dimmed={completed === 0} />
             <StatCard label={t("pf.an.avgTicket")} value={formatPrice(avgTicket, currency)} />
-            <StatCard label={t("pf.an.cancellations")} value={cancelled} />
-            <StatCard label={t("pf.an.noShows")} value={noShow} />
+            <StatCard label={t("pf.an.cancellations")} value={cancelled} dimmed={cancelled === 0} />
+            <StatCard label={t("pf.an.noShows")} value={noShow} dimmed={noShow === 0} />
           </div>
 
           <section className="surface mt-6 p-5">
@@ -163,7 +180,7 @@ export function AnalyticsPanel() {
                     </div>
                     <div className="mt-1.5 h-2 rounded-full bg-muted">
                       <div
-                        className="h-2 rounded-full bg-primary"
+                        className="h-2 rounded-full bg-brand"
                         style={{ width: `${Math.max(4, (v.cents / staffMax) * 100)}%` }}
                       />
                     </div>
@@ -189,7 +206,7 @@ export function AnalyticsPanel() {
                     </div>
                     <div className="mt-1.5 h-2 rounded-full bg-muted">
                       <div
-                        className="h-2 rounded-full bg-primary"
+                        className="h-2 rounded-full bg-brand"
                         style={{ width: `${Math.max(4, (v.cents / max) * 100)}%` }}
                       />
                     </div>

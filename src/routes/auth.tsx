@@ -104,7 +104,6 @@ function AuthPage() {
     }
   }
 
-
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -249,115 +248,161 @@ function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
-      <Link to="/" className="mb-8 flex items-center gap-2 text-sm font-semibold">
-        <SycrasLogo className="size-9" />
-        SYCRAS
-      </Link>
+    <div className="min-h-screen bg-background lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      {/* Desktop: a coloured side that says what the product is for. */}
+      <aside className="relative hidden overflow-hidden bg-brand bg-[linear-gradient(150deg,var(--brand),color-mix(in_oklch,var(--brand)_82%,white))] p-12 text-brand-foreground lg:flex lg:flex-col lg:justify-between">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-24 -top-24 size-96 rounded-full bg-white/10 blur-2xl"
+        />
+        <Link
+          to="/"
+          className="relative flex items-center gap-2.5 text-sm font-bold tracking-[0.14em]"
+        >
+          <span className="flex size-10 items-center justify-center rounded-xl bg-brand-foreground">
+            <SycrasLogo className="size-6" onColor />
+          </span>
+          SYCRAS
+        </Link>
+        <div className="relative max-w-md">
+          <p className="font-display text-4xl font-bold leading-[1.1] tracking-tight">
+            {t("auth.side.title")}
+          </p>
+          <ul className="mt-8 space-y-3.5">
+            {["auth.side.b1", "auth.side.b2", "auth.side.b3"].map((k) => (
+              <li key={k} className="flex items-start gap-3 text-[15px] font-medium">
+                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-white/20">
+                  <Check className="size-3" strokeWidth={3.5} />
+                </span>
+                {t(k)}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <p className="relative text-xs opacity-70">{t("home.reassure")}</p>
+      </aside>
 
-      <div className="surface animate-enter w-full max-w-sm p-6">
-        <h1 className="text-xl font-semibold">
-          {mode === "login" && t("onb.auth.title.login")}
-          {mode === "register" && t("onb.auth.title.register")}
-          {mode === "forgot" && t("onb.auth.title.forgot")}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {mode === "register" ? t("onb.auth.subtitle.register") : t("onb.auth.subtitle.other")}
-        </p>
+      <div className="flex min-h-screen flex-col items-center justify-center px-4 py-10">
+        <Link
+          to="/"
+          className="mb-8 flex items-center gap-2.5 text-sm font-bold tracking-[0.14em] lg:hidden"
+        >
+          <span className="flex size-10 items-center justify-center rounded-xl bg-brand-foreground">
+            <SycrasLogo className="size-6" onColor />
+          </span>
+          SYCRAS
+        </Link>
 
-        <form onSubmit={submit} className="mt-6 space-y-4">
-          {mode === "register" && (
+        <div className="surface animate-enter w-full max-w-sm p-6 sm:p-7">
+          <h1 className="font-display text-2xl font-bold tracking-tight">
+            {mode === "login" && t("onb.auth.title.login")}
+            {mode === "register" && t("onb.auth.title.register")}
+            {mode === "forgot" && t("onb.auth.title.forgot")}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {mode === "register" ? t("onb.auth.subtitle.register") : t("onb.auth.subtitle.other")}
+          </p>
+
+          <form onSubmit={submit} className="mt-6 space-y-4">
+            {mode === "register" && (
+              <div className="space-y-1.5">
+                <Label htmlFor="name">{t("onb.auth.name")}</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={t("onb.auth.name.placeholder")}
+                  maxLength={80}
+                  autoComplete="name"
+                />
+              </div>
+            )}
             <div className="space-y-1.5">
-              <Label htmlFor="name">{t("onb.auth.name")}</Label>
+              <Label htmlFor="email">{t("onb.auth.email")}</Label>
               <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t("onb.auth.name.placeholder")}
-                maxLength={80}
-                autoComplete="name"
-              />
-            </div>
-          )}
-          <div className="space-y-1.5">
-            <Label htmlFor="email">{t("onb.auth.email")}</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t("onb.auth.email.placeholder")}
-              autoComplete="email"
-              required
-            />
-          </div>
-          {mode !== "forgot" && (
-            <div className="space-y-1.5">
-              <Label htmlFor="password">{t("onb.auth.password")}</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={t("onb.auth.password.placeholder")}
-                autoComplete={mode === "login" ? "current-password" : "new-password"}
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t("onb.auth.email.placeholder")}
+                autoComplete="email"
                 required
               />
-              {mode === "register" && (
-                <ul className="mt-2 space-y-1">
-                  {PASSWORD_RULES.map((r) => {
-                    const ok = r.test(password);
-                    return (
-                      <li
-                        key={r.label}
-                        className={cn(
-                          "flex items-center gap-1.5 text-xs transition-colors",
-                          ok ? "text-success" : "text-muted-foreground",
-                        )}
-                      >
-                        {ok ? (
-                          <Check className="size-3.5" strokeWidth={3} />
-                        ) : (
-                          <X className="size-3.5" strokeWidth={3} />
-                        )}
-                        {t(r.label)}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
             </div>
-          )}
-          <Button type="submit" className="w-full" disabled={busy}>
-            {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
-            {mode === "login" && t("onb.auth.submit.login")}
-            {mode === "register" && t("onb.auth.submit.register")}
-            {mode === "forgot" && t("onb.auth.submit.forgot")}
-          </Button>
-        </form>
+            {mode !== "forgot" && (
+              <div className="space-y-1.5">
+                <Label htmlFor="password">{t("onb.auth.password")}</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={t("onb.auth.password.placeholder")}
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
+                  required
+                />
+                {mode === "register" && (
+                  <ul className="mt-2 space-y-1">
+                    {PASSWORD_RULES.map((r) => {
+                      const ok = r.test(password);
+                      return (
+                        <li
+                          key={r.label}
+                          className={cn(
+                            "flex items-center gap-1.5 text-xs transition-colors",
+                            ok ? "text-st-confirmed-fg" : "text-muted-foreground",
+                          )}
+                        >
+                          {ok ? (
+                            <Check className="size-3.5" strokeWidth={3} />
+                          ) : (
+                            <X className="size-3.5" strokeWidth={3} />
+                          )}
+                          {t(r.label)}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
+            <Button type="submit" className="w-full" disabled={busy}>
+              {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
+              {mode === "login" && t("onb.auth.submit.login")}
+              {mode === "register" && t("onb.auth.submit.register")}
+              {mode === "forgot" && t("onb.auth.submit.forgot")}
+            </Button>
+          </form>
 
-        <div className="mt-5 space-y-2 text-center text-sm">
-          {mode === "login" && (
-            <>
-              <button
-                className="text-muted-foreground underline-offset-4 hover:underline"
-                onClick={() => setMode("forgot")}
-              >
-                {t("onb.auth.forgotPassword")}
-              </button>
-              <p className="text-muted-foreground">
-                {t("onb.auth.noAccount")}{" "}
-                <button className="font-medium text-primary" onClick={() => setMode("register")}>
-                  {t("onb.auth.createAccount")}
+          <div className="mt-5 space-y-2 text-center text-sm">
+            {mode === "login" && (
+              <>
+                <button
+                  className="text-muted-foreground underline-offset-4 hover:underline"
+                  onClick={() => setMode("forgot")}
+                >
+                  {t("onb.auth.forgotPassword")}
                 </button>
-              </p>
-            </>
-          )}
-          {mode !== "login" && (
-            <button className="font-medium text-primary" onClick={() => setMode("login")}>
-              {t("onb.auth.backToLogin2")}
-            </button>
-          )}
+                <p className="text-muted-foreground">
+                  {t("onb.auth.noAccount")}{" "}
+                  <button
+                    className="font-bold text-foreground underline-offset-4 hover:underline"
+                    onClick={() => setMode("register")}
+                  >
+                    {t("onb.auth.createAccount")}
+                  </button>
+                </p>
+              </>
+            )}
+            {mode !== "login" && (
+              <button
+                className="font-bold text-foreground underline-offset-4 hover:underline"
+                onClick={() => setMode("login")}
+              >
+                {t("onb.auth.backToLogin2")}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

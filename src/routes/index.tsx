@@ -71,10 +71,14 @@ const SERVICES = [
 
 const SLOTS = ["10:00", "10:30", "11:00", "14:30", "15:00", "16:30"];
 
-const PLAN_FEATURES = {
-  base: ["sub.feature.bookingPage", "sub.feature.calendar", "sub.feature.clients"],
-  pro: ["sub.feature.analytics", "sub.feature.reminders", "sub.feature.team"],
-} as const;
+const PLAN_FEATURES = [
+  "sub.feature.bookingPage",
+  "sub.feature.calendar",
+  "sub.feature.clients",
+  "sub.feature.team",
+  "sub.feature.analytics",
+  "sub.feature.reminders",
+] as const;
 
 function Landing() {
   const { t } = usePrefs();
@@ -85,7 +89,9 @@ function Landing() {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
           <span className="flex items-center gap-2">
             <SycrasLogo className="size-8" />
-            <span className="text-[15px] font-bold tracking-[0.14em]">SYCRAS</span>
+            <span className="hidden text-[15px] font-bold tracking-[0.14em] min-[400px]:inline">
+              SYCRAS
+            </span>
           </span>
           <nav className="hidden items-center gap-7 text-sm font-semibold text-muted-foreground md:flex">
             <a href="#funcionalidades" className="transition-colors hover:text-foreground">
@@ -103,7 +109,7 @@ function Landing() {
             <Link
               to="/auth"
               search={SIGN_IN}
-              className="hidden h-9 items-center rounded-full px-3 text-sm font-bold text-muted-foreground transition-colors hover:text-foreground sm:flex"
+              className="flex h-11 items-center rounded-full px-3 text-sm font-bold text-muted-foreground transition-colors hover:text-foreground"
             >
               {t("home.signin")}
             </Link>
@@ -120,19 +126,19 @@ function Landing() {
         {/* Hero */}
         <section className="animate-enter mx-auto max-w-4xl px-4 pb-14 pt-14 text-center sm:px-6 sm:pt-24">
           <p className="flex items-center justify-center gap-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-            <span aria-hidden className="h-px w-6 bg-subscription-accent/70" />
+            <span aria-hidden className="h-px w-6 bg-border" />
             {t("home.eyebrow")}
-            <span aria-hidden className="h-px w-6 bg-subscription-accent/70" />
+            <span aria-hidden className="h-px w-6 bg-border" />
           </p>
           <h1 className="text-balance-tight mt-6 text-[2.5rem] font-bold leading-[1.05] tracking-[-0.04em] sm:text-6xl lg:text-7xl">
-            {t("home.title.a")} <span className="text-gold-shine">{t("home.title.em")}</span>{" "}
+            {t("home.title.a")} <span className="text-brand-ink">{t("home.title.em")}</span>{" "}
             {t("home.title.b")}
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-base font-medium leading-relaxed text-muted-foreground sm:text-lg">
             {t("home.subtitle")}
           </p>
           <div className="mx-auto mt-8 flex max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
-            <Button asChild size="lg">
+            <Button asChild size="lg" variant="brand">
               <Link to="/auth" search={REGISTER}>
                 {t("home.cta.create")}
               </Link>
@@ -155,14 +161,14 @@ function Landing() {
               <AgendaPreview />
               <BookingPreview />
             </div>
-            <FloatCard className="-left-4 top-10 lg:-left-10">
+            <FloatCard className="-top-6 left-6 lg:left-10">
               <Check className="size-4" strokeWidth={3} />
               <span>
                 <span className="block text-[13px] font-bold">{t("home.float.confirmed")}</span>
                 <span className="block text-xs text-muted-foreground">Sex 16 · 14:30</span>
               </span>
             </FloatCard>
-            <FloatCard className="-right-4 bottom-12 lg:-right-10">
+            <FloatCard className="-bottom-6 right-6 lg:right-10">
               <Lock className="size-4" strokeWidth={2.5} />
               <span>
                 <span className="block text-[13px] font-bold">{t("home.float.blocked")}</span>
@@ -222,22 +228,19 @@ function Landing() {
         <section id="precos" className="scroll-mt-20 border-y border-border bg-muted/40">
           <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 sm:py-24">
             <SectionTitle sub={t("home.pricing.body")}>{t("home.pricing.title")}</SectionTitle>
-            <div className="mt-10 grid gap-4 md:grid-cols-2">
-              <PlanCard
-                name={t("sub.base.name")}
-                desc={t("sub.base.desc")}
-                price={t("sub.base.price")}
-                features={PLAN_FEATURES.base.map(t)}
-              />
+            <div className="mx-auto mt-10 max-w-md">
               <PlanCard
                 pro
-                name={t("sub.pro.name")}
-                desc={t("sub.pro.desc")}
+                name="SYCRAS Pro"
+                desc={t("home.pricing.desc")}
                 price={t("sub.pro.price")}
                 suffix={t("sub.price.suffix")}
-                badge={t("sub.pro.badge")}
-                features={[t("home.pricing.allBase"), ...PLAN_FEATURES.pro.map(t)]}
+                badge={t("sub.trialBadge")}
+                features={PLAN_FEATURES.map(t)}
               />
+              <p className="mt-3 text-center text-sm text-muted-foreground">
+                {t("home.pricing.yearly")}
+              </p>
             </div>
           </div>
         </section>
@@ -264,7 +267,7 @@ function Landing() {
 
         {/* Banner final */}
         <section className="px-4 pb-16 sm:px-6 sm:pb-24">
-          <div className="mx-auto max-w-5xl rounded-[2rem] border border-subscription-accent/40 bg-foreground px-6 py-14 text-center text-background sm:py-20">
+          <div className="mx-auto max-w-5xl rounded-[2rem] bg-foreground px-6 py-14 text-center text-background sm:py-20">
             <h2 className="text-balance-tight text-3xl font-bold tracking-[-0.035em] sm:text-5xl">
               {t("home.final.title")}
             </h2>
@@ -354,7 +357,7 @@ function AgendaPreview() {
               className="flex items-center gap-3 rounded-2xl border border-border p-2.5"
             >
               <span className="w-11 text-xs font-bold tabular-nums">{a.time}</span>
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand/12 text-xs font-bold text-brand-ink">
                 {a.name[0]}
               </span>
               <span className="min-w-0 flex-1">
@@ -365,8 +368,8 @@ function AgendaPreview() {
                 className={cn(
                   "rounded-full px-2 py-0.5 text-[10px] font-bold",
                   a.status === "confirmed"
-                    ? "bg-foreground text-background"
-                    : "border border-border text-muted-foreground",
+                    ? "bg-st-confirmed/15 text-st-confirmed-fg"
+                    : "bg-st-pending/15 text-st-pending-fg",
                 )}
               >
                 {t(a.status === "confirmed" ? "home.mock.confirmed" : "home.mock.pending")}
@@ -391,7 +394,7 @@ function BookingPreview() {
               key={s.key}
               className={cn(
                 "flex items-center justify-between rounded-2xl border p-2.5 text-[13px]",
-                i === 0 ? "border-foreground" : "border-border",
+                i === 0 ? "border-brand bg-brand/5" : "border-border",
               )}
             >
               <span className="font-bold">{t(s.key)}</span>
@@ -408,14 +411,14 @@ function BookingPreview() {
               key={s}
               className={cn(
                 "rounded-xl border py-1.5 text-center text-xs font-bold tabular-nums",
-                s === "14:30" ? "border-foreground bg-foreground text-background" : "border-border",
+                s === "14:30" ? "border-brand bg-brand text-brand-foreground" : "border-border",
               )}
             >
               {s}
             </span>
           ))}
         </div>
-        <div className="mt-4 flex h-10 items-center justify-center rounded-full bg-foreground text-[13px] font-bold text-background">
+        <div className="mt-4 flex h-10 items-center justify-center rounded-xl bg-brand text-[13px] font-bold text-brand-foreground">
           {t("home.mock.confirm")}
         </div>
       </Phone>
@@ -454,7 +457,7 @@ function PlanCard({
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-lg font-bold">{name}</h3>
         {badge && (
-          <span className="rounded-full border border-subscription-accent/50 px-2.5 py-0.5 text-[11px] font-bold text-subscription-accent">
+          <span className="rounded-full border border-subscription-accent px-2.5 py-0.5 text-[11px] font-bold text-foreground">
             {badge}
           </span>
         )}
@@ -474,7 +477,7 @@ function PlanCard({
           </li>
         ))}
       </ul>
-      <Button asChild size="lg" variant={pro ? "outline" : "default"} className="mt-7">
+      <Button asChild size="lg" variant={pro ? "default" : "outline"} className="mt-7">
         <Link to="/auth" search={REGISTER}>
           {t(pro ? "home.cta.start" : "home.cta.create")}
         </Link>

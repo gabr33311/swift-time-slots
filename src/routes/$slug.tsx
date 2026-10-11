@@ -1,14 +1,14 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { usePrefs } from "@/lib/prefs";
+import { localeOf } from "@/lib/prefs-types";
 import { getPublicBusiness, getAvailableSlots, createPublicBooking } from "@/lib/booking.functions";
 import { trackPageView } from "@/lib/analytics.functions";
 import { maskPhonePt } from "@/lib/phone";
 import { isReservedSlug } from "@/lib/reserved-slugs";
-
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,9 +16,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FieldError, FormError } from "@/components/ui-bits";
-import { currentLocale, formatDuration, formatPrice, formatDateLong, initials } from "@/lib/format";
+import { formatDuration, formatPrice, formatDateLong, initials } from "@/lib/format";
 import { addMonthsClamped, todayIn, zonedToUtc, weekdayOf } from "@/lib/time";
 import { cn } from "@/lib/utils";
+import { useBrandColor } from "@/lib/brand";
 import {
   ArrowLeft,
   CalendarDays,
@@ -30,8 +31,8 @@ import {
   Instagram,
   MapPin,
   Phone,
+  Users,
 } from "lucide-react";
-
 
 export const Route = createFileRoute("/$slug")({
   loader: async ({ params }) => {
@@ -109,25 +110,28 @@ function makeFormSchema(t: (key: string) => string) {
 }
 
 function BookPage() {
-  const { t } = usePrefs();
-  const { business, services, staff, openWeekdays, blocks } = Route.useLoaderData();
+  const { t, lang } = usePrefs();
+  const { business, services, staff, openWeekdays, blocks, bookable } = Route.useLoaderData();
+  // The page wears the business's own colour.
+  useBrandColor(business.brand_color);
   // A day is closed if it is a weekly day off or fully covered by a business-wide block (vacation).
   const isClosedDay = (d: string) => {
     if (!openWeekdays.includes(weekdayOf(d))) return true;
     const start = zonedToUtc(d, 0, business.timezone).getTime();
     const end = zonedToUtc(d, 24 * 60, business.timezone).getTime();
-    return blocks.some((b) => new Date(b.from).getTime() <= start + 60000 && new Date(b.to).getTime() >= end - 60000);
+    return blocks.some(
+      (b) => new Date(b.from).getTime() <= start + 60000 && new Date(b.to).getTime() >= end - 60000,
+    );
   };
   const { slug } = Route.useParams();
   const navigate = useNavigate();
   const [serviceId, setServiceId] = useState<string | null>(null);
-  const [staffId, setStaffId] = useState<string | null>(
-    staff.length === 1 ? staff[0]!.id : null,
-  );
+  const [staffId, setStaffId] = useState<string | null>(staff.length === 1 ? staff[0]!.id : null);
   const today = todayIn(business.timezone);
   const [date, setDate] = useState(today);
   // Nothing is highlighted in the calendar until the client actually picks a day.
   const [dayPicked, setDayPicked] = useState(false);
+  const slotsRef = useRef<HTMLDivElement | null>(null);
   const [month, setMonth] = useState(() => today.slice(0, 7));
   const [time, setTime] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -137,14 +141,14 @@ function BookPage() {
   const [busy, setBusy] = useState(false);
   const [stepIdx, setStepIdx] = useState(0);
   // Field errors shown under each input, so the client sees exactly what to fix.
-  const [fieldErrors, setFieldErrors] = useState<Partial<Record<"name" | "phone" | "email", string | undefined>>>({});
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<"name" | "phone" | "email", string | undefined>>
+  >({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const stepKeys = useMemo<readonly string[]>(
     () =>
-      staff.length > 1
-        ? ["staff", "service", "day", "time", "account"]
-        : ["service", "day", "time", "account"],
+      staff.length > 1 ? ["staff", "service", "when", "account"] : ["service", "when", "account"],
     [staff.length],
   );
   const safeIdx = Math.min(stepIdx, stepKeys.length - 1);
@@ -166,7 +170,6 @@ function BookPage() {
     return services.filter((s) => person.service_ids.includes(s.id) || !linked.has(s.id));
   }, [services, staff, staffId]);
 
-
   const monthDays = useMemo(() => {
     const [y, m] = month.split("-").map(Number);
     const first = new Date(Date.UTC(y!, m! - 1, 1));
@@ -181,13 +184,13 @@ function BookPage() {
 
   const monthLabel = useMemo(() => {
     const [y, m] = month.split("-").map(Number);
-    const label = new Intl.DateTimeFormat(currentLocale(), {
+    const label = new Intl.DateTimeFormat(localeOf(lang), {
       month: "long",
       year: "numeric",
       timeZone: "UTC",
     }).format(new Date(Date.UTC(y!, m! - 1, 1)));
     return label.charAt(0).toUpperCase() + label.slice(1);
-  }, [month, t]);
+  }, [month, lang]);
 
   // Farthest date a client may book (admin-configurable, in months).
   const maxDate = useMemo(
@@ -201,9 +204,14 @@ function BookPage() {
     setMonth(`${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, "0")}`);
   }
 
-  const { data: slots, isFetching, isError: slotsError, refetch: refetchSlots } = useQuery({
+  const {
+    data: slots,
+    isFetching,
+    isError: slotsError,
+    refetch: refetchSlots,
+  } = useQuery({
     queryKey: ["slots", business.id, serviceId, staffId, date],
-    enabled: !!serviceId,
+    enabled: !!serviceId && dayPicked,
     retry: 1,
     queryFn: async () => {
       try {
@@ -216,7 +224,6 @@ function BookPage() {
       }
     },
   });
-
 
   // One view per browser session (refreshes don't count again).
   useEffect(() => {
@@ -269,7 +276,7 @@ function BookPage() {
           // Someone took that time meanwhile: send the client straight back to pick another.
           toast.error(t("bk.err.slotTaken"));
           setTime(null);
-          goTo("time");
+          goTo("when");
           void refetchSlots();
           return;
         }
@@ -291,433 +298,506 @@ function BookPage() {
     }
   }
 
+  // Plan locked: show who the business is and how to reach them, but no booking flow.
+  if (!bookable) {
+    return (
+      <main className="mx-auto flex min-h-dvh max-w-xl flex-col px-5 pt-10 pb-10">
+        <BusinessHero business={business} />
+        <section className="surface mt-8 flex flex-col items-center gap-2 p-8 text-center">
+          <CalendarX className="size-6 text-muted-foreground" />
+          <p className="text-base font-bold">{t("bk.unavailable.title")}</p>
+          <p className="max-w-sm text-sm text-muted-foreground">{t("bk.unavailable.body")}</p>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main
       className={cn(
-        "mx-auto flex min-h-dvh max-w-2xl flex-col px-5 pt-6",
+        // Phones: one column. Desktop: the business stays on the left, the steps on the right.
+        "mx-auto min-h-dvh max-w-2xl px-5 pt-6 lg:grid lg:max-w-5xl lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start lg:gap-12 lg:px-8 lg:pt-12 lg:pb-12",
         // Leave room so the fixed confirm bar never hides the last fields.
         currentStep === "account" ? "pb-48" : "pb-6",
       )}
     >
-      <header className="flex items-center gap-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
-          {business.logo_url ? (
-            <img
-              src={business.logo_url}
-              alt={t("bk.logoAlt") + business.name}
-              className="size-full rounded-xl object-cover"
-            />
-          ) : (
-            initials(business.name)
-          )}
+      <aside className="hidden lg:sticky lg:top-12 lg:block">
+        <div className="surface p-6">
+          <BusinessHero business={business} />
         </div>
-        <h1 className="min-w-0 flex-1 truncate text-base font-bold leading-tight tracking-tight">
-          {business.name}
-        </h1>
-        {business.show_contacts && business.phone && (
-          <a
-            href={`tel:${business.phone}`}
-            aria-label={business.phone}
-            className="-mr-2 flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <Phone className="size-4" />
-          </a>
+        <p className="mt-4 px-1 text-xs text-muted-foreground">
+          {t("bk.freeCancellation")}
+          {business.cancellation_hours}
+          {t("bk.freeCancellationAfter")}
+        </p>
+      </aside>
+
+      <div className="flex min-w-0 flex-col">
+        {safeIdx === 0 ? (
+          <div className="lg:hidden">
+            <BusinessHero business={business} />
+          </div>
+        ) : (
+          <header className="flex items-center gap-3 lg:hidden">
+            <BusinessLogo business={business} className="size-10 rounded-xl text-sm" />
+            <p className="min-w-0 flex-1 truncate font-display text-base font-bold leading-tight tracking-tight">
+              {business.name}
+            </p>
+            {business.show_contacts && business.phone && (
+              <a
+                href={`tel:${business.phone}`}
+                aria-label={business.phone}
+                className="-mr-2 flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <Phone className="size-4" />
+              </a>
+            )}
+          </header>
         )}
-      </header>
 
-      {safeIdx > 0 && (
-        <div className="mt-6 mb-2 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={goBack}
-            className="inline-flex h-11 items-center gap-1.5 rounded-full border border-border px-4 text-sm font-bold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <ArrowLeft className="size-4" /> {t("bk.back")}
-          </button>
-          {/* What's chosen so far; tapping a choice jumps straight back to change it. */}
-          {staffId && staff.length > 1 && safeIdx > stepKeys.indexOf("staff") && (
-            <SummaryChip onClick={() => goTo("staff")}>
-              {staff.find((p) => p.id === staffId)?.name}
-            </SummaryChip>
-          )}
-          {service && safeIdx > stepKeys.indexOf("service") && (
-            <SummaryChip onClick={() => goTo("service")}>{service.name}</SummaryChip>
-          )}
-          {safeIdx > stepKeys.indexOf("day") && (
-            <SummaryChip onClick={() => goTo("day")}>
-              {formatDateLong(`${date}T12:00:00Z`, business.timezone)}
-            </SummaryChip>
-          )}
-          {time && safeIdx > stepKeys.indexOf("time") && (
-            <SummaryChip onClick={() => goTo("time")}>{time}</SummaryChip>
-          )}
-        </div>
-      )}
-
-      <div key={currentStep} className="animate-enter flex flex-col py-4">
-      {currentStep === "staff" && (
-        <Section step={stepNumber} total={stepKeys.length} title={t("bk.step.staff")}>
-          <div className="animate-stagger grid gap-2 sm:grid-cols-2">
-            {staff.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => {
-                  setStaffId(p.id);
-                  setServiceId(null);
-                  setTime(null);
-                  goNext();
-                }}
-                className={cn(
-                  "surface surface-hover flex items-center gap-3 border-2 p-4 text-left transition-all",
-                  staffId === p.id ? "border-primary bg-primary/5 shadow-lift" : "border-transparent",
-                )}
-              >
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
-                  {initials(p.name)}
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-bold">{p.name}</span>
-                  {p.specialty && (
-                    <span className="block truncate text-xs text-muted-foreground">
-                      {p.specialty}
-                    </span>
-                  )}
-                </span>
-              </button>
-            ))}
-            <button
-              onClick={() => {
-                setStaffId(null);
-                setServiceId(null);
-                setTime(null);
-                goNext();
-              }}
-              className="surface surface-hover border-2 border-transparent p-4 text-left text-sm font-bold"
-            >
-              {t("bk.step.anyStaff")}
-            </button>
-          </div>
-        </Section>
-      )}
-
-      {currentStep === "service" && (
-        <Section step={stepNumber} total={stepKeys.length} title={t("bk.step.service")}>
-          {visibleServices.length === 0 && (
-            <div className="surface flex flex-col items-center gap-2 p-8 text-center">
-              <CalendarX className="size-5 text-muted-foreground" />
-              <p className="text-sm font-bold">{t("bk.noServices.title")}</p>
-              <p className="text-sm text-muted-foreground">{t("bk.noServices.body")}</p>
-              {business.show_contacts && business.phone && (
-                <a
-                  href={`tel:${business.phone}`}
-                  className="mt-1 inline-flex h-11 items-center gap-2 rounded-full border border-border px-5 text-sm font-bold transition-colors hover:bg-accent"
-                >
-                  <Phone className="size-4" /> {business.phone}
-                </a>
+        {/* Where the client is in the flow, at a glance. */}
+        <div
+          className="mt-6 flex gap-1.5 lg:mt-2"
+          role="progressbar"
+          aria-valuemin={1}
+          aria-valuemax={stepKeys.length}
+          aria-valuenow={stepNumber}
+          aria-label={`${stepNumber}/${stepKeys.length}`}
+        >
+          {stepKeys.map((k, i) => (
+            <span
+              key={k}
+              className={cn(
+                "h-1 flex-1 rounded-full transition-colors duration-300",
+                i <= safeIdx ? "bg-brand" : "bg-border",
               )}
-            </div>
-          )}
-          <div className="animate-stagger grid gap-2 sm:grid-cols-2">
-            {visibleServices.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => {
-                  setServiceId(s.id);
-                  setTime(null);
-                  goNext();
-                }}
-                className={cn(
-                  "surface surface-hover flex items-center justify-between gap-4 border-2 p-4 text-left transition-all",
-                  serviceId === s.id
-                    ? "border-primary bg-primary/5 shadow-lift"
-                    : "border-transparent",
-                )}
-              >
-                <span className="min-w-0">
-                  <span className="block text-sm font-bold">{s.name}</span>
-                  {s.description && (
-                    <span className="mt-0.5 block truncate text-sm text-muted-foreground">
-                      {s.description}
-                    </span>
-                  )}
-                  <span className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Clock className="size-3.5" /> {formatDuration(s.duration_minutes)}
-                  </span>
-                </span>
-                <span className="shrink-0 text-sm font-bold tabular-nums">
-                  {formatPrice(s.price_cents, business.currency)}
-                </span>
-              </button>
-            ))}
-          </div>
-        </Section>
-      )}
+            />
+          ))}
+        </div>
 
-      {currentStep === "day" && (
-        <Section step={stepNumber} total={stepKeys.length} title={t("bk.step.day")}>
-          <div className="rounded-2xl border border-border p-3">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                aria-label={t("bk.prevMonth")}
-                disabled={month <= today.slice(0, 7)}
-                onClick={() => shiftMonth(-1)}
-              >
-                <ChevronLeft className="size-4" />
-              </Button>
-              <span className="text-sm font-bold">{monthLabel}</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                aria-label={t("bk.nextMonth")}
-                disabled={month >= maxDate.slice(0, 7)}
-                onClick={() => shiftMonth(1)}
-              >
-                <ChevronRight className="size-4" />
-              </Button>
-            </div>
-            <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-muted-foreground">
-              {[
-                t("bk.weekday.mon"),
-                t("bk.weekday.tue"),
-                t("bk.weekday.wed"),
-                t("bk.weekday.thu"),
-                t("bk.weekday.fri"),
-                t("bk.weekday.sat"),
-                t("bk.weekday.sun"),
-              ].map((d) => (
-                <span key={d}>{d}</span>
-              ))}
-            </div>
-            <div className="mt-1 grid grid-cols-7 gap-1">
-              {monthDays.map((d, i) => {
-                if (!d) return <span key={`e${i}`} />;
-                const past = d < today || d > maxDate || isClosedDay(d);
-                return (
+        {safeIdx > 0 && (
+          <div className="-mx-5 mt-4 flex items-center gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
+            <button
+              type="button"
+              onClick={goBack}
+              aria-label={t("bk.back")}
+              className="flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-muted"
+            >
+              <ArrowLeft className="size-4" />
+            </button>
+            {/* What's chosen so far; tapping a choice jumps straight back to change it. */}
+            {staffId && staff.length > 1 && safeIdx > stepKeys.indexOf("staff") && (
+              <SummaryChip onClick={() => goTo("staff")}>
+                {staff.find((p) => p.id === staffId)?.name}
+              </SummaryChip>
+            )}
+            {service && safeIdx > stepKeys.indexOf("service") && (
+              <SummaryChip onClick={() => goTo("service")}>{service.name}</SummaryChip>
+            )}
+            {dayPicked && safeIdx > stepKeys.indexOf("when") && (
+              <SummaryChip onClick={() => goTo("when")}>
+                {formatDateLong(`${date}T12:00:00Z`, business.timezone)}
+              </SummaryChip>
+            )}
+            {time && safeIdx > stepKeys.indexOf("when") && (
+              <SummaryChip onClick={() => goTo("when")}>{time}</SummaryChip>
+            )}
+          </div>
+        )}
+
+        <div key={currentStep} className="animate-enter flex flex-col py-4">
+          {currentStep === "staff" && (
+            <Section step={stepNumber} total={stepKeys.length} title={t("bk.step.staff")}>
+              <div className="surface animate-stagger divide-y divide-border overflow-hidden p-0">
+                {staff.map((p) => (
                   <button
-                    key={d}
-                    type="button"
-                    disabled={past}
-                    aria-pressed={dayPicked && date === d}
-                    aria-current={d === today ? "date" : undefined}
+                    key={p.id}
                     onClick={() => {
-                      setDate(d);
-                      setDayPicked(true);
+                      setStaffId(p.id);
+                      setServiceId(null);
                       setTime(null);
                       goNext();
                     }}
                     className={cn(
-                      "mx-auto flex aspect-square w-full max-w-11 items-center justify-center rounded-full text-sm font-bold tabular-nums transition-colors",
-                      past && "cursor-not-allowed font-medium text-muted-foreground/40 line-through",
-                      !past && !(dayPicked && date === d) && "hover:bg-accent",
-                      !past && d === today && !(dayPicked && date === d) && "ring-1 ring-inset ring-foreground/40",
-                      dayPicked && date === d && "bg-primary text-primary-foreground shadow-lift",
+                      "flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50",
+                      staffId === p.id && "bg-muted/70",
                     )}
                   >
-                    {Number(d.slice(-2))}
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
+                      {initials(p.name)}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-bold">{p.name}</span>
+                      {p.specialty && (
+                        <span className="block truncate text-xs font-normal text-muted-foreground">
+                          {p.specialty}
+                        </span>
+                      )}
+                    </span>
+                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
                   </button>
-                );
-              })}
-            </div>
-          </div>
-        </Section>
-      )}
+                ))}
+                <button
+                  onClick={() => {
+                    setStaffId(null);
+                    setServiceId(null);
+                    setTime(null);
+                    goNext();
+                  }}
+                  className="flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
+                >
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-dashed border-border text-muted-foreground">
+                    <Users className="size-4" />
+                  </span>
+                  <span className="min-w-0 flex-1 text-sm font-bold">{t("bk.step.anyStaff")}</span>
+                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                </button>
+              </div>
+            </Section>
+          )}
 
-      {currentStep === "time" && (
-        <Section
-          step={stepNumber}
-          total={stepKeys.length}
-          title={t("bk.step.time")}
-          subtitle={formatDateLong(`${date}T12:00:00Z`, business.timezone)}
-        >
-          {isFetching ? (
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-6">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} className="h-[46px] rounded-xl" />
-              ))}
-            </div>
-          ) : slotsError ? (
-            <div className="surface flex flex-col items-center gap-3 p-8 text-center">
-              <p className="text-sm font-bold">{t("bk.err.slots")}</p>
-              <button
-                type="button"
-                onClick={() => void refetchSlots()}
-                className="rounded-full border border-border px-4 py-2 text-sm font-bold hover:bg-accent"
-              >
-                {t("bk.retry")}
-              </button>
-            </div>
-          ) : (slots?.length ?? 0) === 0 ? (
-            <div className="surface flex flex-col items-center gap-2 p-8 text-center">
-              <CalendarDays className="size-5 text-muted-foreground" />
-              <p className="text-sm font-bold">{t("bk.noSlots.title")}</p>
-              <p className="text-sm text-muted-foreground">{t("bk.noSlots.body")}</p>
-              <button
-                type="button"
-                onClick={() => goTo("day")}
-                className="mt-1 rounded-full border border-border px-4 py-2 text-sm font-bold hover:bg-accent"
-              >
-                {t("bk.pickOtherDay")}
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-5">
-              {(
-                [
-                  [t("bk.period.morning"), slots!.filter((s) => Number(s.time.slice(0, 2)) < 13)],
-                  [t("bk.period.afternoon"), slots!.filter((s) => Number(s.time.slice(0, 2)) >= 13)],
-                ] as const
-              ).map(([label, group]) =>
-                group.length === 0 ? null : (
-                  <SlotGroup
-                    key={label}
-                    label={label}
-                    times={group.map((s) => s.time)}
-                    selected={time}
-                    onSelect={(v) => {
-                      setTime(v);
-                      goNext();
-                    }}
-                  />
-                ),
+          {currentStep === "service" && (
+            <Section step={stepNumber} total={stepKeys.length} title={t("bk.step.service")}>
+              {visibleServices.length === 0 && (
+                <div className="surface flex flex-col items-center gap-2 p-8 text-center">
+                  <CalendarX className="size-5 text-muted-foreground" />
+                  <p className="text-sm font-bold">{t("bk.noServices.title")}</p>
+                  <p className="text-sm text-muted-foreground">{t("bk.noServices.body")}</p>
+                  {business.show_contacts && business.phone && (
+                    <a
+                      href={`tel:${business.phone}`}
+                      className="mt-1 inline-flex h-11 items-center gap-2 rounded-full border border-border px-5 text-sm font-bold transition-colors hover:bg-accent"
+                    >
+                      <Phone className="size-4" /> {business.phone}
+                    </a>
+                  )}
+                </div>
               )}
-            </div>
+              {visibleServices.length > 0 && (
+                <div className="surface animate-stagger divide-y divide-border overflow-hidden p-0">
+                  {visibleServices.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => {
+                        setServiceId(s.id);
+                        setTime(null);
+                        goNext();
+                      }}
+                      className={cn(
+                        "flex min-h-[4.5rem] w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-muted/50",
+                        serviceId === s.id && "bg-muted/70",
+                      )}
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[15px] font-bold leading-snug">{s.name}</span>
+                        {s.description && (
+                          <span className="mt-0.5 line-clamp-2 block text-sm font-normal leading-snug text-muted-foreground">
+                            {s.description}
+                          </span>
+                        )}
+                        <span className="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                          <Clock className="size-3.5" /> {formatDuration(s.duration_minutes)}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-[15px] font-bold tabular-nums">
+                        {formatPrice(s.price_cents, business.currency)}
+                      </span>
+                      <ChevronRight className="-ml-2 size-4 shrink-0 text-muted-foreground" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </Section>
           )}
-        </Section>
-      )}
 
-      {currentStep === "account" && (
-        <Section
-          step={stepNumber}
-          total={stepKeys.length}
-          title={t("bk.step.yourData")}
-        >
-          {(
-            <form
-              id="booking-form"
-              noValidate
-              onSubmit={(e) => {
-                e.preventDefault();
-                void submit();
-              }}
-              className="space-y-2.5"
-            >
-              <div className="space-y-1">
-                <Label htmlFor="n" className="text-xs font-bold">
-                  {t("bk.field.name")}
-                </Label>
-                <Input
-                  id="n"
-                  className="h-11"
-                  autoComplete="name"
-                  aria-invalid={!!fieldErrors.name}
-                  value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                    setFieldErrors((f) => ({ ...f, name: undefined }));
-                  }}
-                  maxLength={80}
-                />
-                <FieldError message={fieldErrors.name} />
+          {currentStep === "when" && (
+            <Section step={stepNumber} total={stepKeys.length} title={t("bk.step.dateTime")}>
+              <div className="rounded-[12px] border border-border bg-card p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={t("bk.prevMonth")}
+                    disabled={month <= today.slice(0, 7)}
+                    onClick={() => shiftMonth(-1)}
+                  >
+                    <ChevronLeft className="size-4" />
+                  </Button>
+                  <span className="text-sm font-bold">{monthLabel}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={t("bk.nextMonth")}
+                    disabled={month >= maxDate.slice(0, 7)}
+                    onClick={() => shiftMonth(1)}
+                  >
+                    <ChevronRight className="size-4" />
+                  </Button>
+                </div>
+                <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-muted-foreground">
+                  {[
+                    t("bk.weekday.mon"),
+                    t("bk.weekday.tue"),
+                    t("bk.weekday.wed"),
+                    t("bk.weekday.thu"),
+                    t("bk.weekday.fri"),
+                    t("bk.weekday.sat"),
+                    t("bk.weekday.sun"),
+                  ].map((d) => (
+                    <span key={d}>{d}</span>
+                  ))}
+                </div>
+                <div className="mt-1 grid grid-cols-7 gap-1">
+                  {monthDays.map((d, i) => {
+                    if (!d) return <span key={`e${i}`} />;
+                    const past = d < today || d > maxDate || isClosedDay(d);
+                    return (
+                      <button
+                        key={d}
+                        type="button"
+                        disabled={past}
+                        aria-pressed={dayPicked && date === d}
+                        aria-current={d === today ? "date" : undefined}
+                        onClick={() => {
+                          setDate(d);
+                          setDayPicked(true);
+                          setTime(null);
+                          // Bring the free times for that day into view.
+                          window.requestAnimationFrame(() =>
+                            slotsRef.current?.scrollIntoView({
+                              behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+                                .matches
+                                ? "auto"
+                                : "smooth",
+                              block: "start",
+                            }),
+                          );
+                        }}
+                        className={cn(
+                          "mx-auto flex aspect-square w-full max-w-11 items-center justify-center rounded-full text-sm font-bold tabular-nums transition-colors",
+                          past &&
+                            "cursor-not-allowed font-medium text-muted-foreground/40 line-through",
+                          !past && !(dayPicked && date === d) && "hover:bg-accent",
+                          !past &&
+                            d === today &&
+                            !(dayPicked && date === d) &&
+                            "ring-2 ring-inset ring-brand/60",
+                          dayPicked && date === d && "bg-brand text-brand-foreground shadow-lift",
+                        )}
+                      >
+                        {Number(d.slice(-2))}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="em" className="text-xs font-bold">
-                  Email
-                </Label>
-                <Input
-                  id="em"
-                  type="email"
-                  inputMode="email"
-                  autoComplete="email"
-                  className="h-11"
-                  aria-invalid={!!fieldErrors.email}
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setFieldErrors((f) => ({ ...f, email: undefined }));
-                  }}
-                  maxLength={160}
-                  placeholder="nome@email.com"
-                />
-                {fieldErrors.email ? (
-                  <FieldError message={fieldErrors.email} />
-                ) : (
-                  <p className="text-xs text-muted-foreground">{t("bk.field.emailHint")}</p>
-                )}
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="p" className="text-xs font-bold">
-                  {t("bk.field.phone")}
-                </Label>
-                <Input
-                  id="p"
-                  className="h-11"
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
-                  aria-invalid={!!fieldErrors.phone}
-                  value={phone}
-                  onChange={(e) => {
-                    setPhone(maskPhonePt(e.target.value));
-                    setFieldErrors((f) => ({ ...f, phone: undefined }));
-                  }}
-                  placeholder="912 345 678"
-                />
-                <FieldError message={fieldErrors.phone} />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="obs" className="text-xs font-bold">
-                  {t("bk.field.notesOptional")}
-                </Label>
-                <Textarea
-                  id="obs"
-                  className="min-h-16"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  maxLength={500}
-                />
-              </div>
-            </form>
+              {dayPicked && (
+                <div ref={slotsRef} className="mt-6 scroll-mt-4">
+                  <h3 className="mb-3 text-base font-bold first-letter:uppercase">
+                    {formatDateLong(`${date}T12:00:00Z`, business.timezone)}
+                  </h3>
+                  {isFetching ? (
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-6">
+                      {Array.from({ length: 8 }).map((_, i) => (
+                        <Skeleton key={i} className="h-[46px] rounded-xl" />
+                      ))}
+                    </div>
+                  ) : slotsError ? (
+                    <div className="surface flex flex-col items-center gap-3 p-8 text-center">
+                      <p className="text-sm font-bold">{t("bk.err.slots")}</p>
+                      <button
+                        type="button"
+                        onClick={() => void refetchSlots()}
+                        className="rounded-full border border-border px-4 py-2 text-sm font-bold hover:bg-accent"
+                      >
+                        {t("bk.retry")}
+                      </button>
+                    </div>
+                  ) : (slots?.length ?? 0) === 0 ? (
+                    <div className="surface flex flex-col items-center gap-2 p-8 text-center">
+                      <CalendarDays className="size-5 text-muted-foreground" />
+                      <p className="text-sm font-bold">{t("bk.noSlots.title")}</p>
+                      <p className="text-sm text-muted-foreground">{t("bk.noSlots.body")}</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDayPicked(false);
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className="mt-1 rounded-full border border-border px-4 py-2 text-sm font-bold hover:bg-accent"
+                      >
+                        {t("bk.pickOtherDay")}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-5">
+                      {(
+                        [
+                          [
+                            t("bk.period.morning"),
+                            slots!.filter((s) => Number(s.time.slice(0, 2)) < 13),
+                          ],
+                          [
+                            t("bk.period.afternoon"),
+                            slots!.filter((s) => Number(s.time.slice(0, 2)) >= 13),
+                          ],
+                        ] as const
+                      ).map(([label, group]) =>
+                        group.length === 0 ? null : (
+                          <SlotGroup
+                            key={label}
+                            label={label}
+                            times={group.map((s) => s.time)}
+                            selected={time}
+                            onSelect={(v) => {
+                              setTime(v);
+                              goNext();
+                            }}
+                          />
+                        ),
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </Section>
           )}
-        </Section>
-      )}
-      </div>
 
-      {currentStep === "account" && service && time && (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 px-5 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur">
-          <div className="mx-auto flex max-w-2xl flex-col gap-2.5">
-            <div className="min-w-0 text-sm">
-              <p className="truncate font-bold">
-                {service.name} · {time}
-              </p>
-              <p className="truncate text-muted-foreground">
-                {formatDateLong(`${date}T12:00:00Z`, business.timezone)}
-              </p>
-            </div>
-            <FormError message={submitError} />
-            <Button type="submit" form="booking-form" disabled={busy} size="lg" className="w-full">
-              {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
-              {busy ? t("bk.booking") : t("bk.confirmBooking")}
-            </Button>
-          </div>
+          {currentStep === "account" && (
+            <Section step={stepNumber} total={stepKeys.length} title={t("bk.step.yourData")}>
+              {
+                <form
+                  id="booking-form"
+                  noValidate
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void submit();
+                  }}
+                  className="space-y-2.5"
+                >
+                  <div className="space-y-1">
+                    <Label htmlFor="n" className="text-xs font-bold">
+                      {t("bk.field.name")}
+                    </Label>
+                    <Input
+                      id="n"
+                      className="h-11"
+                      autoComplete="name"
+                      aria-invalid={!!fieldErrors.name}
+                      value={name}
+                      onChange={(e) => {
+                        setName(e.target.value);
+                        setFieldErrors((f) => ({ ...f, name: undefined }));
+                      }}
+                      maxLength={80}
+                    />
+                    <FieldError message={fieldErrors.name} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="em" className="text-xs font-bold">
+                      Email
+                    </Label>
+                    <Input
+                      id="em"
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      className="h-11"
+                      aria-invalid={!!fieldErrors.email}
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setFieldErrors((f) => ({ ...f, email: undefined }));
+                      }}
+                      maxLength={160}
+                      placeholder="nome@email.com"
+                    />
+                    {fieldErrors.email ? (
+                      <FieldError message={fieldErrors.email} />
+                    ) : (
+                      <p className="text-xs text-muted-foreground">{t("bk.field.emailHint")}</p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="p" className="text-xs font-bold">
+                      {t("bk.field.phone")}
+                    </Label>
+                    <Input
+                      id="p"
+                      className="h-11"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      aria-invalid={!!fieldErrors.phone}
+                      value={phone}
+                      onChange={(e) => {
+                        setPhone(maskPhonePt(e.target.value));
+                        setFieldErrors((f) => ({ ...f, phone: undefined }));
+                      }}
+                      placeholder="912 345 678"
+                    />
+                    <FieldError message={fieldErrors.phone} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="obs" className="text-xs font-bold">
+                      {t("bk.field.notesOptional")}
+                    </Label>
+                    <Textarea
+                      id="obs"
+                      className="min-h-16"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      maxLength={500}
+                    />
+                  </div>
+                </form>
+              }
+            </Section>
+          )}
         </div>
-      )}
 
+        {currentStep === "account" && service && time && (
+          <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 px-5 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur lg:static lg:mt-2 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+            <div className="mx-auto flex max-w-2xl flex-col gap-2.5 lg:mx-0 lg:max-w-none">
+              <div className="min-w-0 text-sm">
+                <p className="truncate font-bold">
+                  {service.name} · {time}
+                </p>
+                <p className="truncate text-muted-foreground">
+                  {formatDateLong(`${date}T12:00:00Z`, business.timezone)}
+                </p>
+              </div>
+              <FormError message={submitError} />
+              <Button
+                type="submit"
+                form="booking-form"
+                variant="brand"
+                disabled={busy}
+                size="lg"
+                className="w-full"
+              >
+                {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
+                {busy ? t("bk.booking") : t("bk.confirmBooking")}
+              </Button>
+            </div>
+          </div>
+        )}
 
-
-      <p className="mt-4 text-center text-xs text-muted-foreground">
-        {t("bk.freeCancellation")}{business.cancellation_hours}{t("bk.freeCancellationAfter")}
-      </p>
-      <div className="mt-2 text-center">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-        >
-          {t("bk.createMyPage")}
-        </Link>
+        <p className="mt-4 text-center text-xs text-muted-foreground lg:hidden">
+          {t("bk.freeCancellation")}
+          {business.cancellation_hours}
+          {t("bk.freeCancellationAfter")}
+        </p>
+        <div className="mt-2 text-center">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            {t("bk.createMyPage")}
+          </Link>
+        </div>
       </div>
     </main>
   );
@@ -737,36 +817,116 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section key={step} className="animate-enter mb-8">
-      <div className="mb-1 flex items-baseline gap-3">
-        <h2 className="text-xl font-bold tracking-tight">{title}</h2>
-        {total ? (
-          <span className="ml-auto shrink-0 text-xs font-bold tabular-nums text-muted-foreground">
-            {step}/{total}
-          </span>
-        ) : null}
-      </div>
-      {subtitle && <p className="mb-3 text-xs font-medium text-muted-foreground">{subtitle}</p>}
-      {!subtitle && <div className="mb-3" />}
+    <section
+      key={step}
+      aria-label={total ? `${step}/${total}` : undefined}
+      className="animate-enter mb-8"
+    >
+      <h2 className="font-display text-2xl font-bold tracking-tight">{title}</h2>
+      {subtitle && <p className="mt-1 text-sm font-medium text-muted-foreground">{subtitle}</p>}
+      <div className="mb-4" />
       {children}
     </section>
   );
 }
 
+type PublicBusiness = ReturnType<typeof Route.useLoaderData>["business"];
+
+function BusinessLogo({ business, className }: { business: PublicBusiness; className?: string }) {
+  const { t } = usePrefs();
+  return (
+    <div
+      className={cn(
+        "flex shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand font-bold text-brand-foreground",
+        className,
+      )}
+    >
+      {business.logo_url ? (
+        <img
+          src={business.logo_url}
+          alt={t("bk.logoAlt") + business.name}
+          className="size-full object-cover"
+        />
+      ) : (
+        initials(business.name)
+      )}
+    </div>
+  );
+}
+
+/** First impression of the business: who they are, where, and how to reach them. */
+function BusinessHero({ business }: { business: PublicBusiness }) {
+  const { t } = usePrefs();
+  const place = [business.address, business.city].filter(Boolean).join(", ");
+  const insta = business.instagram?.replace(/^@/, "").trim();
+  const contacts = business.show_contacts;
+  return (
+    <header className="animate-enter">
+      <div className="flex items-center gap-4">
+        <BusinessLogo business={business} className="size-16 text-lg" />
+        <div className="min-w-0 flex-1">
+          <h1 className="font-display text-[26px] font-bold leading-tight tracking-tight">
+            {business.name}
+          </h1>
+          {contacts && place && (
+            <p className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-muted-foreground">
+              <MapPin className="size-3.5 shrink-0" /> {place}
+            </p>
+          )}
+        </div>
+      </div>
+      {business.description && (
+        <p className="mt-4 line-clamp-3 text-[15px] leading-relaxed text-muted-foreground">
+          {business.description}
+        </p>
+      )}
+      {contacts && (business.phone || insta || place) && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {business.phone && (
+            <a href={`tel:${business.phone}`} className={HERO_CHIP}>
+              <Phone className="size-4" /> {t("bk.hero.call")}
+            </a>
+          )}
+          {place && (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place)}`}
+              target="_blank"
+              rel="noreferrer"
+              className={HERO_CHIP}
+            >
+              <MapPin className="size-4" /> {t("bk.hero.map")}
+            </a>
+          )}
+          {insta && (
+            <a
+              href={`https://instagram.com/${encodeURIComponent(insta)}`}
+              target="_blank"
+              rel="noreferrer"
+              className={HERO_CHIP}
+            >
+              <Instagram className="size-4" /> @{insta}
+            </a>
+          )}
+        </div>
+      )}
+    </header>
+  );
+}
+
+const HERO_CHIP =
+  "inline-flex h-10 items-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-bold transition-colors hover:bg-muted [&_svg]:text-brand-ink";
 
 function SummaryChip({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="h-11 max-w-full truncate rounded-full bg-muted px-4 text-[13px] font-bold text-foreground transition-colors hover:bg-accent"
+      className="h-11 max-w-[14rem] shrink-0 truncate rounded-full border border-border bg-card px-4 text-[13px] font-semibold text-foreground transition-colors hover:bg-muted"
     >
       {children}
     </button>
   );
 }
-
-
 
 function SlotGroup({
   label,
@@ -790,10 +950,10 @@ function SlotGroup({
             type="button"
             onClick={() => onSelect(t)}
             className={cn(
-              "rounded-xl border py-3 text-sm font-bold tabular-nums transition-colors",
+              "rounded-[12px] border py-3 text-sm font-bold tabular-nums transition-colors",
               selected === t
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border hover:bg-accent",
+                ? "border-brand bg-brand text-brand-foreground"
+                : "border-border hover:border-brand/50 hover:bg-brand/5",
             )}
           >
             {t}

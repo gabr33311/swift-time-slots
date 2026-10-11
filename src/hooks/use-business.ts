@@ -23,8 +23,7 @@ export function useMyBusiness() {
 
       const stored =
         typeof window !== "undefined" ? window.localStorage.getItem("active_business") : null;
-      const chosen =
-        memberships.find((m) => m.business_id === stored) ?? memberships[0]!;
+      const chosen = memberships.find((m) => m.business_id === stored) ?? memberships[0]!;
 
       const { data: business } = await supabase
         .from("businesses")

@@ -1,12 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import {
-  CalendarDays,
-  Users,
-  Store,
-  LogOut,
-  Share2,
-  Plus,
-} from "lucide-react";
+import { CalendarDays, House, Users, Store, LogOut, Plus } from "lucide-react";
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,24 +10,26 @@ import { useLogoUrl } from "@/hooks/use-logo";
 import { usePrefs } from "@/lib/prefs";
 import { ShareSheet } from "@/components/share-sheet";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
-import { SubscriptionAlertsPreview } from "@/components/subscription-alerts";
+import { Paywall, SubscriptionBanner } from "@/components/subscription-alerts";
+import { useSubscription } from "@/hooks/use-subscription";
 import { SycrasLogo } from "@/components/sycras-logo";
+import { useBrandColor } from "@/lib/brand";
 
 const NAV = [
+  { to: "/today", label: "nav.today", icon: House },
   { to: "/calendar", label: "nav.calendar", icon: CalendarDays },
   { to: "/customers", label: "nav.customers", icon: Users },
-  { to: "/share", label: "nav.share", icon: Share2 },
   { to: "/profile", label: "nav.manage", icon: Store },
 ] as const;
 
-/** Dock: flow + people on the left, share + management on the right. */
+/** Dock: the day on the left, people and management on the right, "+" in the middle. */
 const DOCK_LEFT = [
+  { to: "/today", label: "nav.today", icon: House },
   { to: "/calendar", label: "nav.calendar", icon: CalendarDays },
-  { to: "/customers", label: "nav.customers", icon: Users },
 ] as const;
 
 const DOCK_RIGHT = [
-  { to: "/share", label: "nav.share", icon: Share2 },
+  { to: "/customers", label: "nav.customers", icon: Users },
   { to: "/profile", label: "nav.manage", icon: Store },
 ] as const;
 
@@ -62,7 +57,7 @@ function NavList() {
             className={cn(
               "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all duration-200",
               active
-                ? "bg-primary/10 text-primary"
+                ? "bg-brand/12 text-foreground shadow-[inset_3px_0_0_var(--brand)]"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
@@ -89,19 +84,23 @@ function DockTab({
   return (
     <Link
       to={to}
-      aria-label={label}
+      aria-current={active ? "page" : undefined}
       className={cn(
-        "flex h-12 w-11 flex-col items-center justify-center gap-0.5 rounded-2xl transition-colors duration-200",
+        "flex h-12 w-14 flex-col items-center justify-center gap-0.5 rounded-2xl transition-colors duration-200",
         active ? "text-foreground" : "text-muted-foreground",
       )}
     >
-      <PopIcon Icon={Icon} className="size-[19px]" />
       <span
         className={cn(
-          "h-1 w-1 rounded-full transition-opacity duration-200",
-          active ? "bg-foreground opacity-100" : "opacity-0",
+          "flex h-7 w-11 items-center justify-center rounded-full transition-colors duration-200",
+          active && "bg-brand/15",
         )}
-      />
+      >
+        <PopIcon Icon={Icon} className="size-[19px]" />
+      </span>
+      <span className={cn("text-[10px] leading-none", active ? "font-bold" : "font-semibold")}>
+        {label}
+      </span>
     </Link>
   );
 }
@@ -115,8 +114,15 @@ export function AppShell({
 }) {
   const { business, isSuccess } = useMyBusiness();
   const logoUrl = useLogoUrl(business?.logo_url);
+  // The business colour tints the whole signed-in app.
+  useBrandColor(business?.brand_color);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { access } = useSubscription();
+  const locked =
+    access?.state === "blocked" &&
+    !pathname.startsWith("/plans") &&
+    !pathname.startsWith("/profile");
   const { t } = usePrefs();
   const [shareOpen, setShareOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
@@ -125,7 +131,8 @@ export function AppShell({
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (isSuccess && (!business || business.onboarding_completed === false)) navigate({ to: "/onboarding", replace: true });
+    if (isSuccess && (!business || business.onboarding_completed === false))
+      navigate({ to: "/onboarding", replace: true });
   }, [isSuccess, business, navigate]);
 
   async function signOut() {
@@ -181,7 +188,12 @@ export function AppShell({
         </div>
         <NavList />
         <div className="mt-auto px-1 pt-4">
-          <Button variant="ghost" size="sm" className="w-full justify-start gap-3" onClick={signOut}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start gap-3"
+            onClick={signOut}
+          >
             <LogOut className="size-4" /> {t("nav.logout")}
           </Button>
         </div>
@@ -189,8 +201,9 @@ export function AppShell({
 
       <div className="lg:pl-64">
         <main className="animate-enter mx-auto w-full max-w-5xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-5 lg:pb-12">
-          <SubscriptionAlertsPreview />
-          {children}
+          <SubscriptionBanner />
+          {/* Trial over without a subscription: only plans and settings stay open. */}
+          {locked ? <Paywall /> : children}
         </main>
       </div>
 

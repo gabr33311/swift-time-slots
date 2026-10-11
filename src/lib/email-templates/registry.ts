@@ -1,13 +1,16 @@
-import { template as appointmentConfirmed } from './appointment-confirmed'
-import type { ComponentType } from 'react'
+import { template as appointmentConfirmed } from "./appointment-confirmed";
+import type { ComponentType } from "react";
+
+/** Values passed to a template: plain strings (names, dates, times). */
+export type TemplateData = Record<string, string | undefined>;
 
 export interface TemplateEntry {
-  component: ComponentType<any>
-  subject: string | ((data: Record<string, any>) => string)
-  displayName?: string
-  previewData?: Record<string, any>
+  component: ComponentType<TemplateData>;
+  subject: string | ((data: TemplateData) => string);
+  displayName?: string;
+  previewData?: TemplateData;
   /** Fixed recipient — overrides caller-provided recipientEmail when set. */
-  to?: string
+  to?: string;
 }
 
 /**
@@ -19,7 +22,7 @@ export interface TemplateEntry {
  *   // then add to TEMPLATES: 'welcome': welcomeTemplate
  */
 export const TEMPLATES: Record<string, TemplateEntry> = {
-  'appointment-confirmed': appointmentConfirmed,
+  "appointment-confirmed": appointmentConfirmed,
   // Add templates here as they are created, e.g.:
   // 'welcome': welcomeTemplate,
-}
+};

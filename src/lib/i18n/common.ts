@@ -23,7 +23,8 @@ export const commonDict: Record<BaseLang, Record<string, string>> = {
     "ui.notFound.body": "A página que procuras não existe ou foi movida.",
     "ui.notFound.goHome": "Voltar ao início",
     "ui.error.page.title": "Esta página não carregou",
-    "ui.error.page.body": "Algo correu mal do nosso lado. Podes tentar atualizar ou voltar ao início.",
+    "ui.error.page.body":
+      "Algo correu mal do nosso lado. Podes tentar atualizar ou voltar ao início.",
     "ui.error.page.tryAgain": "Tentar novamente",
     "ui.error.page.goHome": "Voltar ao início",
     "ui.save.unsaved": "Tens alterações não guardadas.",
@@ -35,7 +36,7 @@ export const commonDict: Record<BaseLang, Record<string, string>> = {
     "dock.passHint": "Desliza para cima ou mantém premido para o QR",
     "dock.whatsapp": "Enviar no WhatsApp",
     "dock.whatsappMsg": "Olá! Podes agendar o teu horário aqui:",
-    "nav.manage": "Negócio",
+    "nav.manage": "Gestão",
   },
   en: {
     "ui.loading": "Loading…",
@@ -59,7 +60,8 @@ export const commonDict: Record<BaseLang, Record<string, string>> = {
     "ui.notFound.body": "The page you're looking for doesn't exist or has been moved.",
     "ui.notFound.goHome": "Go home",
     "ui.error.page.title": "This page didn't load",
-    "ui.error.page.body": "Something went wrong on our end. You can try refreshing or head back home.",
+    "ui.error.page.body":
+      "Something went wrong on our end. You can try refreshing or head back home.",
     "ui.error.page.tryAgain": "Try again",
     "ui.error.page.goHome": "Go home",
     "ui.save.unsaved": "You have unsaved changes.",
@@ -71,6 +73,6 @@ export const commonDict: Record<BaseLang, Record<string, string>> = {
     "dock.passHint": "Swipe up or hold for the QR code",
     "dock.whatsapp": "Send on WhatsApp",
     "dock.whatsappMsg": "Hi! You can book your slot here:",
-    "nav.manage": "Business",
+    "nav.manage": "Manage",
   },
 };

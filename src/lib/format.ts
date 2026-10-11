@@ -197,7 +197,10 @@ export function displayCustomerName(
   const looksTechnical =
     !clean ||
     UUID_LIKE.test(clean) ||
-    (clean.length > 18 && !clean.includes(" ") && /\d/.test(clean) && /[a-f0-9-]{16,}/i.test(clean));
+    (clean.length > 18 &&
+      !clean.includes(" ") &&
+      /\d/.test(clean) &&
+      /[a-f0-9-]{16,}/i.test(clean));
   if (!looksTechnical) return clean;
   const tel = (phone ?? "").trim();
   if (tel) return tel;
