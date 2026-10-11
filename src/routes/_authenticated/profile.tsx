@@ -18,10 +18,12 @@ import { PublicPagePanel } from "@/components/panels/public-page-panel";
 import { SharePanel } from "@/components/panels/share-panel";
 import { AnalyticsPanel } from "@/components/panels/analytics-panel";
 import { SettingsPanel } from "@/components/panels/settings-panel";
+import { RemindersPanel } from "@/components/panels/reminders-panel";
 import {
   ArrowLeft,
   ArrowUpRight,
   BarChart3,
+  BellRing,
   Building2,
   CalendarOff,
   ChevronRight,
@@ -44,6 +46,7 @@ const SECTION_IDS = [
   "hours",
   "timeoff",
   "rules",
+  "reminders",
   "analytics",
   "settings",
 ] as const;
@@ -89,6 +92,7 @@ const GROUPS: { title: string; rows: Row[] }[] = [
       { id: "hours", icon: Clock },
       { id: "timeoff", icon: CalendarOff },
       { id: "rules", icon: SlidersHorizontal },
+      { id: "reminders", icon: BellRing },
     ],
   },
   {
@@ -254,6 +258,7 @@ function ProfilePage() {
           {shown === "hours" && <AvailabilityPanel view="hours" />}
           {shown === "timeoff" && <AvailabilityPanel view="off" />}
           {shown === "rules" && <AvailabilityPanel view="rules" />}
+          {shown === "reminders" && <RemindersPanel />}
           {shown === "analytics" && <AnalyticsPanel />}
           {shown === "settings" && <SettingsPanel />}
         </div>

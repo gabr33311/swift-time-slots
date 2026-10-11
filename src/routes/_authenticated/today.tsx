@@ -156,7 +156,7 @@ function TodayPage() {
       ) : isError ? (
         <ErrorState onRetry={() => void refetch()} />
       ) : (
-        <div className="animate-stagger grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+        <div className="animate-stagger grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start [&>*]:min-w-0">
           <div className="space-y-4">
             <FocusCard
               row={focus}
@@ -306,27 +306,33 @@ function FocusCard({
     <button
       type="button"
       onClick={() => onOpen(row.id)}
-      // Light and calm: a soft tint of the brand, with the time as the one strong accent.
-      className="block w-full overflow-hidden rounded-[var(--radius-2xl)] border border-brand/20 bg-brand/[0.07] p-5 text-left transition-colors hover:bg-brand/10 active:scale-[0.99]"
+      // The day's hero: intense blue, white text, a soft glow of the same colour.
+      className="relative block w-full overflow-hidden rounded-[var(--radius-2xl)] bg-brand bg-[linear-gradient(140deg,var(--brand),color-mix(in_oklch,var(--brand)_70%,#38a3ff))] p-5 text-left text-brand-foreground shadow-[0_18px_40px_-18px_var(--brand)] transition-transform active:scale-[0.99]"
     >
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-bold uppercase tracking-[0.08em] text-brand-ink">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -right-10 -top-12 size-44 rounded-full bg-white/10"
+      />
+      <div className="relative flex items-center justify-between gap-3">
+        <span className="text-xs font-bold uppercase tracking-[0.08em] opacity-80">
           {current ? t("today.now") : t("today.next")}
         </span>
-        <span className="rounded-full bg-brand px-2.5 py-1 text-xs font-bold text-brand-foreground">
+        <span className="rounded-full bg-white/20 px-2.5 py-1 text-xs font-bold backdrop-blur-sm">
           {when}
         </span>
       </div>
-      <p className="mt-4 font-display text-4xl font-bold tabular-nums leading-none text-brand-ink">
+      <p className="relative mt-4 font-display text-4xl font-bold tabular-nums leading-none">
         {formatTime(row.starts_at, tz)}
         {row.ends_at && (
-          <span className="ml-2 text-lg font-semibold text-muted-foreground">
+          <span className="ml-2 text-lg font-semibold opacity-75">
             – {formatTime(row.ends_at, tz)}
           </span>
         )}
       </p>
-      <p className="mt-3 truncate text-lg font-bold">{displayCustomerName(row.customer_name)}</p>
-      <p className="truncate text-sm text-muted-foreground">{row.service_name}</p>
+      <p className="relative mt-3 truncate text-lg font-bold">
+        {displayCustomerName(row.customer_name)}
+      </p>
+      <p className="relative truncate text-sm opacity-85">{row.service_name}</p>
     </button>
   );
 }
@@ -385,7 +391,7 @@ function NeedsYou({
             <button
               type="button"
               onClick={() => onOpen(row.id)}
-              className="min-w-0 flex-1 text-left"
+              className="min-w-0 flex-1 overflow-hidden text-left"
             >
               <span className="block text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
                 {kind === "pending" ? t("today.pending") : t("today.overdue")}

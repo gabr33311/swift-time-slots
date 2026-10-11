@@ -1,7 +1,7 @@
 import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { useEffect, useState, type CSSProperties } from "react";
-import { BRAND_PALETTE, brandColors, effectiveBrand } from "@/lib/brand";
-import { cn } from "@/lib/utils";
+import { useEffect, useRef, useState } from "react";
+import { effectiveBrand } from "@/lib/brand";
+import { ColorSwatches } from "@/components/color-swatches";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,14 @@ import { Label } from "@/components/ui/label";
 
 import { Switch } from "@/components/ui/switch";
 import { useMyBusiness } from "@/hooks/use-business";
+import { useLogoUrl } from "@/hooks/use-logo";
 import { usePrefs } from "@/lib/prefs";
-import { ArrowUp, ArrowDown, Check } from "lucide-react";
+import { ArrowUp, ArrowDown, ImagePlus, Trash2 } from "lucide-react";
 import { SaveBar } from "@/components/save-bar";
+import { PagePreview } from "@/components/page-preview";
+import { ImageCropDialog } from "@/components/image-crop-dialog";
+
+type ImageKind = "logo" | "cover";
 
 export function PublicPagePanel() {
   const { business } = useMyBusiness();
@@ -19,14 +24,17 @@ export function PublicPagePanel() {
   const qc = useQueryClient();
   const edit = true;
   const [busy, setBusy] = useState(false);
-  const [description, setDescription] = useState("");
+  const [uploading, setUploading] = useState<ImageKind | null>(null);
+  // A picked picture waits here until the owner frames it.
+  const [cropping, setCropping] = useState<{ kind: ImageKind; file: File } | null>(null);
   const [showTeam, setShowTeam] = useState(true);
   const [showContacts, setShowContacts] = useState(true);
   const [brandColor, setBrandColor] = useState(effectiveBrand(null));
+  const logoUrl = useLogoUrl(business?.logo_url);
+  const coverUrl = useLogoUrl(business?.cover_url);
 
   function hydrate() {
     if (!business) return;
-    setDescription(business.description ?? "");
     setShowTeam(business.show_team);
     setShowContacts(business.show_contacts);
     setBrandColor(effectiveBrand(business.brand_color));
@@ -63,13 +71,55 @@ export function PublicPagePanel() {
     qc.invalidateQueries({ queryKey: ["services"] });
   }
 
+  /** Images save right away: there is nothing to undo while picking a file. */
+  async function setImage(kind: ImageKind, file: File | null) {
+    if (!business) return;
+    let path: string | null = null;
+    if (file) {
+      setUploading(kind);
+      const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+      path = `${business.id}/${kind}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("business-logos")
+        .upload(path, file, { upsert: true });
+      if (upErr) {
+        setUploading(null);
+        toast.error(t("pf.biz.err.upload"));
+        return;
+      }
+    }
+    setUploading(kind);
+    const { error } = await supabase
+      .from("businesses")
+      .update(kind === "logo" ? { logo_url: path } : { cover_url: path })
+      .eq("id", business.id);
+    setUploading(null);
+    if (error) {
+      toast.error(t("pf.biz.err.savePhoto"));
+      return;
+    }
+    toast.success(t("pf.pub.saved"));
+    qc.invalidateQueries({ queryKey: ["my-business"] });
+  }
+
+  function pick(kind: ImageKind, file: File) {
+    if (!file.type.startsWith("image/")) {
+      toast.error(t("pf.biz.err.imageType"));
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error(t("pf.biz.err.imageSize"));
+      return;
+    }
+    setCropping({ kind, file });
+  }
+
   async function save() {
     if (!business) return;
     setBusy(true);
     const { error } = await supabase
       .from("businesses")
       .update({
-        description: description.trim() || null,
         show_team: showTeam,
         show_contacts: showContacts,
         brand_color: brandColor,
@@ -86,64 +136,57 @@ export function PublicPagePanel() {
 
   const dirty =
     !!business &&
-    (description !== (business.description ?? "") ||
-      showTeam !== business.show_team ||
+    (showTeam !== business.show_team ||
       showContacts !== business.show_contacts ||
       brandColor !== effectiveBrand(business.brand_color));
 
   return (
     <div className="space-y-4">
-      {/* The business colour: used on the public page and to tint the app. */}
-      <section className="surface space-y-4 p-5">
-        <div>
-          <h2 className="text-sm font-bold">{t("pf.brand.title")}</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">{t("pf.brand.desc")}</p>
+      {/* How clients see the business: banner, logo and colour, with a live preview. */}
+      <section className="surface grid gap-6 p-5 md:grid-cols-[minmax(0,1fr)_16rem] md:items-start">
+        <div className="space-y-5">
+          <div>
+            <h2 className="text-sm font-bold">{t("pf.look.title")}</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">{t("pf.look.desc")}</p>
+          </div>
+
+          <ImageRow
+            title={t("pf.look.cover")}
+            hint={t("pf.look.cover.hint")}
+            has={!!business?.cover_url}
+            busy={uploading === "cover"}
+            onPick={(f) => pick("cover", f)}
+            onRemove={() => void setImage("cover", null)}
+          />
+          <ImageRow
+            title={t("pf.look.logo")}
+            hint={t("pf.look.logo.hint")}
+            has={!!business?.logo_url}
+            busy={uploading === "logo"}
+            onPick={(f) => pick("logo", f)}
+            onRemove={() => void setImage("logo", null)}
+          />
+
+          <div className="space-y-2.5">
+            <div>
+              <p className="text-sm font-bold">{t("pf.brand.title")}</p>
+              <p className="text-sm text-muted-foreground">{t("pf.brand.desc")}</p>
+            </div>
+            <ColorSwatches
+              value={brandColor}
+              onChange={setBrandColor}
+              label={t("pf.brand.title")}
+            />
+          </div>
         </div>
-        <div role="radiogroup" aria-label={t("pf.brand.title")} className="flex flex-wrap gap-2.5">
-          {BRAND_PALETTE.map((c) => (
-            <button
-              key={c}
-              type="button"
-              role="radio"
-              aria-checked={brandColor === c}
-              aria-label={c}
-              onClick={() => setBrandColor(c)}
-              className={cn(
-                "flex size-11 items-center justify-center rounded-full ring-offset-2 ring-offset-card transition-transform active:scale-95",
-                brandColor === c ? "ring-2 ring-foreground" : "hover:scale-105",
-              )}
-              style={{ backgroundColor: c }}
-            >
-              {brandColor === c && (
-                <Check
-                  className="size-5"
-                  strokeWidth={3}
-                  style={{ color: brandColors(c).foreground }}
-                />
-              )}
-            </button>
-          ))}
-        </div>
-        {/* Live preview of how clients will see it. */}
-        <div
-          className="flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-border p-4"
-          style={
-            {
-              "--brand": brandColors(brandColor).brand,
-              "--brand-foreground": brandColors(brandColor).foreground,
-            } as CSSProperties
-          }
-        >
-          <span className="h-1 w-16 rounded-full bg-brand" />
-          <span className="flex size-10 items-center justify-center rounded-full bg-brand text-sm font-bold text-brand-foreground">
-            13
-          </span>
-          <span className="rounded-xl border border-brand bg-brand px-3 py-2 text-sm font-bold text-brand-foreground">
-            10:30
-          </span>
-          <Button variant="brand" size="sm" type="button" tabIndex={-1}>
-            {t("pf.brand.preview")}
-          </Button>
+
+        <div className="md:sticky md:top-24">
+          <PagePreview
+            name={business?.name ?? ""}
+            brand={brandColor}
+            logoUrl={logoUrl}
+            coverUrl={coverUrl}
+          />
         </div>
       </section>
 
@@ -202,16 +245,70 @@ export function PublicPagePanel() {
         </div>
       </section>
 
-      <SaveBar
-        dirty={dirty}
-        busy={busy}
-        onSave={() => void save()}
-        onCancel={() => {
-          if (!business) return;
-          setDescription(business.description ?? "");
-          setShowTeam(business.show_team);
-          setShowContacts(business.show_contacts);
-          setBrandColor(effectiveBrand(business.brand_color));
+      <ImageCropDialog
+        file={cropping?.file ?? null}
+        shape={cropping?.kind ?? "logo"}
+        onCancel={() => setCropping(null)}
+        onDone={async (f) => {
+          if (!cropping) return;
+          await setImage(cropping.kind, f);
+          setCropping(null);
+        }}
+      />
+
+      <SaveBar dirty={dirty} busy={busy} onSave={() => void save()} onCancel={hydrate} />
+    </div>
+  );
+}
+
+function ImageRow({
+  title,
+  hint,
+  has,
+  busy,
+  onPick,
+  onRemove,
+}: {
+  title: string;
+  hint: string;
+  has: boolean;
+  busy: boolean;
+  onPick: (file: File) => void;
+  onRemove: () => void;
+}) {
+  const { t } = usePrefs();
+  const ref = useRef<HTMLInputElement>(null);
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="min-w-0">
+        <p className="text-sm font-bold">{title}</p>
+        <p className="text-sm text-muted-foreground">{hint}</p>
+      </div>
+      <div className="flex gap-2">
+        {has && (
+          <Button
+            variant="ghost"
+            size="icon"
+            disabled={busy}
+            onClick={onRemove}
+            aria-label={t("pf.look.remove")}
+          >
+            <Trash2 />
+          </Button>
+        )}
+        <Button variant="outline" size="sm" disabled={busy} onClick={() => ref.current?.click()}>
+          <ImagePlus /> {has ? t("pf.look.change") : t("pf.look.upload")}
+        </Button>
+      </div>
+      <input
+        ref={ref}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onPick(f);
+          e.target.value = "";
         }}
       />
     </div>

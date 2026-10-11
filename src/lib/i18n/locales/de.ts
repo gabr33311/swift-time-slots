@@ -217,7 +217,7 @@ export const de: Record<string, string> = {
   "pf.common.saveError": "Speichern fehlgeschlagen.",
   "pf.biz.err.name": "Gib den Namen deines Geschäfts ein.",
   "pf.biz.err.imageType": "Wähle eine Bilddatei.",
-  "pf.biz.err.imageSize": "Das Bild muss kleiner als 5 MB sein.",
+  "pf.biz.err.imageSize": "Das Bild muss kleiner als 15 MB sein.",
   "pf.biz.err.upload": "Das Foto konnte nicht hochgeladen werden.",
   "pf.biz.err.savePhoto": "Das Foto konnte nicht gespeichert werden.",
   "pf.biz.photoUpdated": "Foto aktualisiert.",

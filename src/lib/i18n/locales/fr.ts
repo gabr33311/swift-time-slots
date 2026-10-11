@@ -217,7 +217,7 @@ export const fr: Record<string, string> = {
   "pf.common.saveError": "Enregistrement impossible.",
   "pf.biz.err.name": "Indiquez le nom de l’entreprise.",
   "pf.biz.err.imageType": "Choisissez un fichier image.",
-  "pf.biz.err.imageSize": "L’image doit faire moins de 5 Mo.",
+  "pf.biz.err.imageSize": "L’image doit faire moins de 15 Mo.",
   "pf.biz.err.upload": "Impossible d’envoyer la photo.",
   "pf.biz.err.savePhoto": "Impossible d’enregistrer la photo.",
   "pf.biz.photoUpdated": "Photo mise à jour.",

@@ -302,7 +302,10 @@ function BookPage() {
   if (!bookable) {
     return (
       <main className="mx-auto flex min-h-dvh max-w-xl flex-col px-5 pt-10 pb-10">
-        <BusinessHero business={business} />
+        <BusinessHero
+          business={business}
+          coverClass="-mx-5 -mt-10 sm:mx-0 sm:mt-0 sm:rounded-2xl"
+        />
         <section className="surface mt-8 flex flex-col items-center gap-2 p-8 text-center">
           <CalendarX className="size-6 text-muted-foreground" />
           <p className="text-base font-bold">{t("bk.unavailable.title")}</p>
@@ -322,8 +325,8 @@ function BookPage() {
       )}
     >
       <aside className="hidden lg:sticky lg:top-12 lg:block">
-        <div className="surface p-6">
-          <BusinessHero business={business} />
+        <div className="surface overflow-hidden p-6">
+          <BusinessHero business={business} onCard coverClass="-mx-6 -mt-6" />
         </div>
         <p className="mt-4 px-1 text-xs text-muted-foreground">
           {t("bk.freeCancellation")}
@@ -335,7 +338,10 @@ function BookPage() {
       <div className="flex min-w-0 flex-col">
         {safeIdx === 0 ? (
           <div className="lg:hidden">
-            <BusinessHero business={business} />
+            <BusinessHero
+              business={business}
+              coverClass="-mx-5 -mt-6 sm:mx-0 sm:mt-0 sm:rounded-2xl"
+            />
           </div>
         ) : (
           <header className="flex items-center gap-3 lg:hidden">
@@ -855,17 +861,36 @@ function BusinessLogo({ business, className }: { business: PublicBusiness; class
 }
 
 /** First impression of the business: who they are, where, and how to reach them. */
-function BusinessHero({ business }: { business: PublicBusiness }) {
+function BusinessHero({
+  business,
+  coverClass,
+  onCard = false,
+}: {
+  business: PublicBusiness;
+  /** Margins that let the banner reach the edges of its container. */
+  coverClass?: string;
+  onCard?: boolean;
+}) {
   const { t } = usePrefs();
   const place = [business.address, business.city].filter(Boolean).join(", ");
   const insta = business.instagram?.replace(/^@/, "").trim();
   const contacts = business.show_contacts;
   return (
     <header className="animate-enter">
-      <div className="flex items-center gap-4">
-        <BusinessLogo business={business} className="size-16 text-lg" />
-        <div className="min-w-0 flex-1">
-          <h1 className="font-display text-[26px] font-bold leading-tight tracking-tight">
+      {business.cover_url ? (
+        // With a banner: the logo sits on its edge and the name goes below.
+        <div>
+          <div className={cn("h-40 overflow-hidden bg-brand sm:h-44", coverClass)}>
+            <img src={business.cover_url} alt="" className="size-full object-cover" />
+          </div>
+          <BusinessLogo
+            business={business}
+            className={cn(
+              "relative -mt-9 size-[4.5rem] border-4 text-lg",
+              onCard ? "border-card" : "border-background",
+            )}
+          />
+          <h1 className="mt-2 font-display text-[26px] font-bold leading-tight tracking-tight">
             {business.name}
           </h1>
           {contacts && place && (
@@ -874,7 +899,21 @@ function BusinessHero({ business }: { business: PublicBusiness }) {
             </p>
           )}
         </div>
-      </div>
+      ) : (
+        <div className="flex items-center gap-4">
+          <BusinessLogo business={business} className="size-16 text-lg" />
+          <div className="min-w-0 flex-1">
+            <h1 className="font-display text-[26px] font-bold leading-tight tracking-tight">
+              {business.name}
+            </h1>
+            {contacts && place && (
+              <p className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-muted-foreground">
+                <MapPin className="size-3.5 shrink-0" /> {place}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
       {business.description && (
         <p className="mt-4 line-clamp-3 text-[15px] leading-relaxed text-muted-foreground">
           {business.description}

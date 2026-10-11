@@ -216,7 +216,7 @@ export const it: Record<string, string> = {
   "pf.common.saveError": "Impossibile salvare.",
   "pf.biz.err.name": "Inserisci il nome dell’attività.",
   "pf.biz.err.imageType": "Scegli un file immagine.",
-  "pf.biz.err.imageSize": "L’immagine deve essere inferiore a 5 MB.",
+  "pf.biz.err.imageSize": "L’immagine deve essere inferiore a 15 MB.",
   "pf.biz.err.upload": "Impossibile caricare la foto.",
   "pf.biz.err.savePhoto": "Impossibile salvare la foto.",
   "pf.biz.photoUpdated": "Foto aggiornata.",

@@ -1,17 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
+import { ArrowLeft, Check, Eye, EyeOff, Loader2, MailCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { emailHasAccount } from "@/lib/booking.functions";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
-import { Loader2, MailCheck, Check, X } from "lucide-react";
-import { usePrefs } from "@/lib/prefs";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { FormError } from "@/components/ui-bits";
 import { SycrasLogo } from "@/components/sycras-logo";
+import { cn } from "@/lib/utils";
+import { usePrefs } from "@/lib/prefs";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -23,7 +24,6 @@ export const Route = createFileRoute("/auth")({
         ? (search["next"] as string)
         : undefined,
   }),
-
   head: () => ({
     meta: [
       { title: "Entrar — SYCRAS" },
@@ -31,27 +31,10 @@ export const Route = createFileRoute("/auth")({
         name: "description",
         content: "Entra na tua conta SYCRAS para gerir marcações, clientes e a tua página pública.",
       },
-      { property: "og:title", content: "Entrar — SYCRAS" },
-      { property: "og:description", content: "Gere as tuas marcações num só lugar." },
       { name: "robots", content: "noindex" },
     ],
   }),
   component: AuthPage,
-});
-
-const passwordSchema = z
-  .string()
-  .min(8, { message: "onb.auth.err.password.min" })
-  .max(72)
-  .regex(/[A-Z]/, { message: "onb.auth.err.password.upper" })
-  .regex(/[a-z]/, { message: "onb.auth.err.password.lower" })
-  .regex(/[0-9]/, { message: "onb.auth.err.password.number" })
-  .regex(/[^A-Za-z0-9]/, { message: "onb.auth.err.password.symbol" });
-
-const schema = z.object({
-  email: z.string().trim().email({ message: "onb.auth.err.email" }).max(255),
-  password: passwordSchema,
-  name: z.string().trim().max(80).optional(),
 });
 
 const PASSWORD_RULES = [
@@ -61,17 +44,32 @@ const PASSWORD_RULES = [
   { label: "onb.auth.rule.number", test: (v: string) => /[0-9]/.test(v) },
   { label: "onb.auth.rule.symbol", test: (v: string) => /[^A-Za-z0-9]/.test(v) },
 ];
+const emailSchema = z.string().trim().email().max(255);
+/** Length of the confirmation code in the email (Supabase default). */
+const CODE_LENGTH = 6;
+const RESEND_SECONDS = 60;
+
+type Mode = "login" | "register" | "verify" | "forgot";
+
+/** Maps Supabase auth errors to clear messages. */
+function authMessage(err: unknown, t: (k: string) => string): string {
+  const message = err instanceof Error ? err.message : "";
+  const status = (err as { status?: number })?.status;
+  if (message.includes("Invalid login credentials")) return t("onb.auth.err.invalidLogin");
+  if (/already registered|User already/i.test(message)) return t("auth.err.exists");
+  if (/weak password/i.test(message)) return t("onb.auth.err.weakPassword");
+  if (/expired|invalid/i.test(message) && /token|otp/i.test(message)) return t("auth.err.code");
+  if (status === 429 || /rate limit|after \d+ seconds/i.test(message))
+    return t("onb.auth.err.rateLimit");
+  return t("onb.auth.err.generic");
+}
 
 function AuthPage() {
   const { t } = usePrefs();
   const navigate = useNavigate();
   const { mode: initialMode, next } = Route.useSearch();
-  const [mode, setMode] = useState<"login" | "register" | "forgot">(initialMode ?? "login");
+  const [mode, setMode] = useState<Mode>(initialMode ?? "login");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [confirmSent, setConfirmSent] = useState<string | null>(null);
 
   // Returns the signed-in user to where they came from, or the pro dashboard.
   function goAfterAuth(fallback: "/dashboard" | "/onboarding" = "/dashboard") {
@@ -82,175 +80,65 @@ function AuthPage() {
     navigate({ to: fallback });
   }
 
+  // Already signed in (or the email link was opened in this browser): move on.
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) goAfterAuth();
     });
-    supabase.auth.getSession().then(({ data }) => {
+    void supabase.auth.getSession().then(({ data }) => {
       if (data.session) goAfterAuth();
     });
     return () => sub.subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, next]);
 
-  /** true = account exists, false = no account, null = check unavailable. */
-  async function emailRegistered(value: string): Promise<boolean | null> {
-    try {
-      const res = await emailHasAccount({ data: { email: value } });
-      return res.known ? res.registered : null;
-    } catch (err) {
-      console.error("[auth] verificação de email falhou:", err);
-      return null;
-    }
-  }
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    try {
-      if (mode === "forgot") {
-        const parsed = z.string().email().safeParse(email.trim());
-        if (!parsed.success) {
-          toast.error(t("onb.auth.err.email"));
-          return;
-        }
-        if ((await emailRegistered(email.trim())) === false) {
-          toast.error(t("onb.auth.err.noAccount"));
-          return;
-        }
-        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-          redirectTo: `${window.location.origin}/reset-password`,
-        });
-        if (error) throw error;
-        toast.success(t("onb.auth.success.resetEmail"));
-        setMode("login");
-        return;
-      }
-
-      const parsed = schema.safeParse({ email, password, name });
-      if (!parsed.success) {
-        toast.error(t(parsed.error.issues[0]?.message ?? "onb.auth.err.checkData"));
-        return;
-      }
-
-      if (mode === "register") {
-        const { data, error } = await supabase.auth.signUp({
-          email: parsed.data.email,
-          password: parsed.data.password,
-          options: {
-            emailRedirectTo: `${window.location.origin}${next ?? "/onboarding"}`,
-            data: { full_name: name.trim() },
-          },
-        });
-        if (error) throw error;
-        // Email already registered (Supabase returns a user with no identities).
-        if (data.user && data.user.identities?.length === 0) {
-          toast.error(t("onb.auth.err.checkData"));
-          setMode("login");
-          return;
-        }
-        // Confirmation not required → session exists, skip the email step.
-        if (!data.session) {
-          setConfirmSent(parsed.data.email);
-          toast.success(t("onb.auth.success.accountCreated"));
-          return;
-        }
-        toast.success(t("onb.auth.success.accountCreatedGo"));
-        goAfterAuth("/onboarding");
-      } else {
-        if ((await emailRegistered(parsed.data.email)) === false) {
-          toast.error(t("onb.auth.err.noAccount"));
-          return;
-        }
-        const { error } = await supabase.auth.signInWithPassword({
-          email: parsed.data.email,
-          password: parsed.data.password,
-        });
-        if (error) throw error;
-        goAfterAuth();
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "";
-      if (message.includes("Invalid login credentials")) {
-        toast.error(t("onb.auth.err.invalidLogin"));
-      } else if (message.includes("already registered") || message.includes("User already")) {
-        toast.error(t("onb.auth.err.alreadyRegistered"));
-      } else if (message.includes("Email not confirmed")) {
-        setConfirmSent(email.trim());
-        toast.error(t("onb.auth.err.emailNotConfirmed"));
-      } else if (message.toLowerCase().includes("weak password")) {
-        toast.error(t("onb.auth.err.weakPassword"));
-      } else if (message.includes("rate limit") || message.includes("after")) {
-        toast.error(t("onb.auth.err.rateLimit"));
-      } else {
-        toast.error(message || t("onb.auth.err.generic"));
-      }
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function resendConfirmation() {
-    if (!confirmSent) return;
-    setBusy(true);
-    try {
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email: confirmSent,
-        options: { emailRedirectTo: `${window.location.origin}${next ?? "/onboarding"}` },
-      });
-      if (error) throw error;
-      toast.success(t("onb.auth.success.resent"));
-    } catch (err) {
-      console.error("[auth] reenvio falhou:", err);
-      const msg = err instanceof Error ? err.message : "";
-      const status = (err as { status?: number })?.status;
-      toast.error(
-        status === 429 || /rate|seconds/i.test(msg)
-          ? "Aguarda cerca de 1 minuto antes de pedir outro email."
-          : `${t("onb.auth.err.resend")}${msg ? ` (${msg})` : ""}`,
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (confirmSent) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
-        <div className="surface animate-enter w-full max-w-sm p-7 text-center">
-          <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
-            <MailCheck className="size-7" strokeWidth={2.5} />
-          </div>
-          <h1 className="text-xl font-semibold">{t("onb.auth.confirmTitle")}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {t("onb.auth.confirmBody1")} <span className="font-medium">{confirmSent}</span>.{" "}
-            {t("onb.auth.confirmBody2")}
-          </p>
-          <div className="mt-6 flex flex-col gap-2">
-            <Button onClick={resendConfirmation} disabled={busy} variant="outline">
-              {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
-              {t("onb.auth.resend")}
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setConfirmSent(null);
-                setMode("login");
-              }}
-            >
-              {t("onb.auth.backToLogin")}
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const redirectTo = () =>
+    typeof window === "undefined" ? undefined : `${window.location.origin}${next ?? "/onboarding"}`;
 
   return (
+    <AuthShell>
+      {mode === "login" && (
+        <LoginForm
+          email={email}
+          setEmail={setEmail}
+          onRegister={() => setMode("register")}
+          onForgot={() => setMode("forgot")}
+          onNeedsVerify={() => setMode("verify")}
+          onDone={() => goAfterAuth()}
+        />
+      )}
+      {mode === "register" && (
+        <RegisterForm
+          email={email}
+          setEmail={setEmail}
+          redirectTo={redirectTo}
+          onLogin={() => setMode("login")}
+          onSent={() => setMode("verify")}
+          onDone={() => goAfterAuth("/onboarding")}
+        />
+      )}
+      {mode === "verify" && (
+        <VerifyCode
+          email={email}
+          redirectTo={redirectTo}
+          onChangeEmail={() => setMode("register")}
+          onDone={() => goAfterAuth("/onboarding")}
+        />
+      )}
+      {mode === "forgot" && (
+        <ForgotForm email={email} setEmail={setEmail} onBack={() => setMode("login")} />
+      )}
+      <p className="mt-6 text-center text-xs text-muted-foreground">{t("auth.terms")}</p>
+    </AuthShell>
+  );
+}
+
+/** Coloured side panel on desktop, the logo above the card on phones. */
+function AuthShell({ children }: { children: ReactNode }) {
+  const { t } = usePrefs();
+  return (
     <div className="min-h-screen bg-background lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-      {/* Desktop: a coloured side that says what the product is for. */}
-      <aside className="relative hidden overflow-hidden bg-brand bg-[linear-gradient(150deg,var(--brand),color-mix(in_oklch,var(--brand)_82%,white))] p-12 text-brand-foreground lg:flex lg:flex-col lg:justify-between">
+      <aside className="relative hidden overflow-hidden bg-brand bg-[linear-gradient(150deg,var(--brand),color-mix(in_oklch,var(--brand)_70%,#38a3ff))] p-12 text-brand-foreground lg:flex lg:flex-col lg:justify-between">
         <span
           aria-hidden
           className="pointer-events-none absolute -right-24 -top-24 size-96 rounded-full bg-white/10 blur-2xl"
@@ -259,7 +147,7 @@ function AuthPage() {
           to="/"
           className="relative flex items-center gap-2.5 text-sm font-bold tracking-[0.14em]"
         >
-          <span className="flex size-10 items-center justify-center rounded-xl bg-brand-foreground">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-white/15">
             <SycrasLogo className="size-6" onColor />
           </span>
           SYCRAS
@@ -279,7 +167,7 @@ function AuthPage() {
             ))}
           </ul>
         </div>
-        <p className="relative text-xs opacity-70">{t("home.reassure")}</p>
+        <p className="relative text-xs opacity-80">{t("home.reassure")}</p>
       </aside>
 
       <div className="flex min-h-screen flex-col items-center justify-center px-4 py-10">
@@ -287,124 +175,580 @@ function AuthPage() {
           to="/"
           className="mb-8 flex items-center gap-2.5 text-sm font-bold tracking-[0.14em] lg:hidden"
         >
-          <span className="flex size-10 items-center justify-center rounded-xl bg-brand-foreground">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-brand">
             <SycrasLogo className="size-6" onColor />
           </span>
           SYCRAS
         </Link>
-
-        <div className="surface animate-enter w-full max-w-sm p-6 sm:p-7">
-          <h1 className="font-display text-2xl font-bold tracking-tight">
-            {mode === "login" && t("onb.auth.title.login")}
-            {mode === "register" && t("onb.auth.title.register")}
-            {mode === "forgot" && t("onb.auth.title.forgot")}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {mode === "register" ? t("onb.auth.subtitle.register") : t("onb.auth.subtitle.other")}
-          </p>
-
-          <form onSubmit={submit} className="mt-6 space-y-4">
-            {mode === "register" && (
-              <div className="space-y-1.5">
-                <Label htmlFor="name">{t("onb.auth.name")}</Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder={t("onb.auth.name.placeholder")}
-                  maxLength={80}
-                  autoComplete="name"
-                />
-              </div>
-            )}
-            <div className="space-y-1.5">
-              <Label htmlFor="email">{t("onb.auth.email")}</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={t("onb.auth.email.placeholder")}
-                autoComplete="email"
-                required
-              />
-            </div>
-            {mode !== "forgot" && (
-              <div className="space-y-1.5">
-                <Label htmlFor="password">{t("onb.auth.password")}</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={t("onb.auth.password.placeholder")}
-                  autoComplete={mode === "login" ? "current-password" : "new-password"}
-                  required
-                />
-                {mode === "register" && (
-                  <ul className="mt-2 space-y-1">
-                    {PASSWORD_RULES.map((r) => {
-                      const ok = r.test(password);
-                      return (
-                        <li
-                          key={r.label}
-                          className={cn(
-                            "flex items-center gap-1.5 text-xs transition-colors",
-                            ok ? "text-st-confirmed-fg" : "text-muted-foreground",
-                          )}
-                        >
-                          {ok ? (
-                            <Check className="size-3.5" strokeWidth={3} />
-                          ) : (
-                            <X className="size-3.5" strokeWidth={3} />
-                          )}
-                          {t(r.label)}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-            )}
-            <Button type="submit" className="w-full" disabled={busy}>
-              {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
-              {mode === "login" && t("onb.auth.submit.login")}
-              {mode === "register" && t("onb.auth.submit.register")}
-              {mode === "forgot" && t("onb.auth.submit.forgot")}
-            </Button>
-          </form>
-
-          <div className="mt-5 space-y-2 text-center text-sm">
-            {mode === "login" && (
-              <>
-                <button
-                  className="text-muted-foreground underline-offset-4 hover:underline"
-                  onClick={() => setMode("forgot")}
-                >
-                  {t("onb.auth.forgotPassword")}
-                </button>
-                <p className="text-muted-foreground">
-                  {t("onb.auth.noAccount")}{" "}
-                  <button
-                    className="font-bold text-foreground underline-offset-4 hover:underline"
-                    onClick={() => setMode("register")}
-                  >
-                    {t("onb.auth.createAccount")}
-                  </button>
-                </p>
-              </>
-            )}
-            {mode !== "login" && (
-              <button
-                className="font-bold text-foreground underline-offset-4 hover:underline"
-                onClick={() => setMode("login")}
-              >
-                {t("onb.auth.backToLogin2")}
-              </button>
-            )}
-          </div>
-        </div>
+        <div className="w-full max-w-sm">{children}</div>
       </div>
     </div>
+  );
+}
+
+function CardHeader({ title, subtitle }: { title: string; subtitle?: ReactNode }) {
+  return (
+    <div className="mb-6">
+      <h1 className="font-display text-2xl font-bold tracking-tight">{title}</h1>
+      {subtitle && <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>}
+    </div>
+  );
+}
+
+function PasswordInput({
+  id,
+  value,
+  onChange,
+  autoComplete,
+  placeholder,
+  invalid,
+}: {
+  id: string;
+  value: string;
+  onChange: (v: string) => void;
+  autoComplete: string;
+  placeholder?: string;
+  invalid?: boolean;
+}) {
+  const { t } = usePrefs();
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <Input
+        id={id}
+        type={show ? "text" : "password"}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        autoComplete={autoComplete}
+        placeholder={placeholder}
+        aria-invalid={invalid || undefined}
+        className="pr-12"
+      />
+      <button
+        type="button"
+        onClick={() => setShow((s) => !s)}
+        aria-label={show ? t("auth.hidePassword") : t("auth.showPassword")}
+        className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-muted-foreground transition-colors hover:text-foreground"
+      >
+        {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+      </button>
+    </div>
+  );
+}
+
+function LoginForm({
+  email,
+  setEmail,
+  onRegister,
+  onForgot,
+  onNeedsVerify,
+  onDone,
+}: {
+  email: string;
+  setEmail: (v: string) => void;
+  onRegister: () => void;
+  onForgot: () => void;
+  onNeedsVerify: () => void;
+  onDone: () => void;
+}) {
+  const { t } = usePrefs();
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!emailSchema.safeParse(email).success) {
+      setError(t("onb.auth.err.email"));
+      return;
+    }
+    if (!password) {
+      setError(t("auth.err.password"));
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      if (signInError) {
+        if (signInError.message.includes("Email not confirmed")) {
+          // Unconfirmed account: send a fresh code and go straight to the code step.
+          await supabase.auth.resend({ type: "signup", email: email.trim() });
+          onNeedsVerify();
+          return;
+        }
+        if (signInError.message.includes("Invalid login credentials")) {
+          const res = await emailHasAccount({ data: { email: email.trim() } }).catch(() => null);
+          setError(
+            res?.known && !res.registered
+              ? t("onb.auth.err.noAccount")
+              : t("onb.auth.err.invalidLogin"),
+          );
+          return;
+        }
+        throw signInError;
+      }
+      onDone();
+    } catch (err) {
+      setError(authMessage(err, t));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="surface animate-enter p-6 sm:p-7">
+      <CardHeader title={t("onb.auth.title.login")} subtitle={t("onb.auth.subtitle.other")} />
+      <form onSubmit={submit} className="space-y-4" noValidate>
+        <div className="space-y-1.5">
+          <Label htmlFor="email">{t("onb.auth.email")}</Label>
+          <Input
+            id="email"
+            type="email"
+            inputMode="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={t("onb.auth.email.placeholder")}
+            autoComplete="email"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">{t("onb.auth.password")}</Label>
+            <button
+              type="button"
+              onClick={onForgot}
+              className="text-xs font-semibold text-brand-ink underline-offset-4 hover:underline"
+            >
+              {t("onb.auth.forgotPassword")}
+            </button>
+          </div>
+          <PasswordInput
+            id="password"
+            value={password}
+            onChange={setPassword}
+            autoComplete="current-password"
+          />
+        </div>
+        <FormError message={error} />
+        <Button type="submit" size="lg" className="w-full" disabled={busy}>
+          {busy && <Loader2 className="animate-spin" />}
+          {t("onb.auth.submit.login")}
+        </Button>
+      </form>
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        {t("onb.auth.noAccount")}{" "}
+        <button
+          type="button"
+          onClick={onRegister}
+          className="font-bold text-brand-ink underline-offset-4 hover:underline"
+        >
+          {t("onb.auth.createAccount")}
+        </button>
+      </p>
+    </section>
+  );
+}
+
+function RegisterForm({
+  email,
+  setEmail,
+  redirectTo,
+  onLogin,
+  onSent,
+  onDone,
+}: {
+  email: string;
+  setEmail: (v: string) => void;
+  redirectTo: () => string | undefined;
+  onLogin: () => void;
+  onSent: () => void;
+  onDone: () => void;
+}) {
+  const { t } = usePrefs();
+  const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [exists, setExists] = useState(false);
+  const passwordOk = PASSWORD_RULES.every((r) => r.test(password));
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setExists(false);
+    if (name.trim().length < 2) {
+      setError(t("auth.err.name"));
+      return;
+    }
+    if (!emailSchema.safeParse(email).success) {
+      setError(t("onb.auth.err.email"));
+      return;
+    }
+    if (!passwordOk) {
+      setError(t("auth.err.passwordRules"));
+      return;
+    }
+    setBusy(true);
+    try {
+      const redirect = redirectTo();
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          ...(redirect ? { emailRedirectTo: redirect } : {}),
+          data: { full_name: name.trim() },
+        },
+      });
+      if (signUpError) throw signUpError;
+      // Email already registered (Supabase returns a user with no identities).
+      if (data.user && data.user.identities?.length === 0) {
+        setExists(true);
+        return;
+      }
+      // Email confirmation switched off in the project: already signed in.
+      if (data.session) {
+        onDone();
+        return;
+      }
+      onSent();
+    } catch (err) {
+      const message = authMessage(err, t);
+      if (message === t("auth.err.exists")) setExists(true);
+      else setError(message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="surface animate-enter p-6 sm:p-7">
+      <StepDots current={1} />
+      <CardHeader title={t("onb.auth.title.register")} subtitle={t("onb.auth.subtitle.register")} />
+      <form onSubmit={submit} className="space-y-4" noValidate>
+        <div className="space-y-1.5">
+          <Label htmlFor="name">{t("auth.yourName")}</Label>
+          <Input
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={t("onb.auth.name.placeholder")}
+            maxLength={80}
+            autoComplete="name"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="email">{t("onb.auth.email")}</Label>
+          <Input
+            id="email"
+            type="email"
+            inputMode="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={t("onb.auth.email.placeholder")}
+            autoComplete="email"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="password">{t("onb.auth.password")}</Label>
+          <PasswordInput
+            id="password"
+            value={password}
+            onChange={setPassword}
+            autoComplete="new-password"
+            placeholder={t("onb.auth.password.placeholder")}
+          />
+          {/* Each rule turns green as it's met. */}
+          <ul className="flex flex-wrap gap-1.5 pt-1">
+            {PASSWORD_RULES.map((r) => {
+              const ok = r.test(password);
+              return (
+                <li
+                  key={r.label}
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors",
+                    ok
+                      ? "bg-st-confirmed/12 text-st-confirmed-fg"
+                      : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {ok && <Check className="size-3" strokeWidth={3.5} />}
+                  {t(r.label)}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+        {exists ? (
+          <div className="rounded-xl border border-border bg-muted p-3.5 text-sm">
+            <p className="font-semibold">{t("auth.err.exists")}</p>
+            <button
+              type="button"
+              onClick={onLogin}
+              className="mt-1 font-bold text-brand-ink underline-offset-4 hover:underline"
+            >
+              {t("auth.loginInstead")}
+            </button>
+          </div>
+        ) : (
+          <FormError message={error} />
+        )}
+        <Button type="submit" size="lg" className="w-full" disabled={busy}>
+          {busy && <Loader2 className="animate-spin" />}
+          {t("auth.continue")}
+        </Button>
+      </form>
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        {t("auth.haveAccount")}{" "}
+        <button
+          type="button"
+          onClick={onLogin}
+          className="font-bold text-brand-ink underline-offset-4 hover:underline"
+        >
+          {t("onb.auth.submit.login")}
+        </button>
+      </p>
+    </section>
+  );
+}
+
+/** Step 2 of sign-up: the 6-digit code from the email (the link in it also works). */
+function VerifyCode({
+  email,
+  redirectTo,
+  onChangeEmail,
+  onDone,
+}: {
+  email: string;
+  redirectTo: () => string | undefined;
+  onChangeEmail: () => void;
+  onDone: () => void;
+}) {
+  const { t } = usePrefs();
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [wait, setWait] = useState(RESEND_SECONDS);
+
+  useEffect(() => {
+    if (wait <= 0) return;
+    const id = window.setTimeout(() => setWait((w) => w - 1), 1000);
+    return () => window.clearTimeout(id);
+  }, [wait]);
+
+  async function verify(value: string) {
+    if (value.length !== CODE_LENGTH || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const { error: otpError } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: value,
+        type: "signup",
+      });
+      if (otpError) throw otpError;
+      toast.success(t("auth.verified"));
+      onDone();
+    } catch (err) {
+      setError(t("auth.err.code"));
+      setCode("");
+      console.error("[auth] code verification failed", err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resend() {
+    setError(null);
+    try {
+      const redirect = redirectTo();
+      const { error: resendError } = await supabase.auth.resend({
+        type: "signup",
+        email: email.trim(),
+        ...(redirect ? { options: { emailRedirectTo: redirect } } : {}),
+      });
+      if (resendError) throw resendError;
+      toast.success(t("onb.auth.success.resent"));
+      setWait(RESEND_SECONDS);
+    } catch (err) {
+      setError(authMessage(err, t));
+    }
+  }
+
+  return (
+    <section className="surface animate-enter p-6 text-center sm:p-7">
+      <StepDots current={2} />
+      <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-brand/12 text-brand-ink">
+        <MailCheck className="size-7" />
+      </span>
+      <h1 className="mt-4 font-display text-2xl font-bold tracking-tight">
+        {t("auth.verify.title")}
+      </h1>
+      <p className="mt-1.5 text-sm text-muted-foreground">
+        {t("auth.verify.body")} <span className="font-bold text-foreground">{email}</span>
+      </p>
+
+      <div className="mt-6 flex justify-center">
+        <InputOTP
+          maxLength={CODE_LENGTH}
+          value={code}
+          onChange={(v) => {
+            setCode(v.replace(/\D/g, ""));
+            setError(null);
+          }}
+          onComplete={(v) => void verify(v)}
+          inputMode="numeric"
+          autoFocus
+          disabled={busy}
+        >
+          <InputOTPGroup className="gap-2">
+            {Array.from({ length: CODE_LENGTH }).map((_, i) => (
+              <InputOTPSlot
+                key={i}
+                index={i}
+                className="size-12 rounded-xl border bg-card text-xl font-bold shadow-none first:rounded-l-xl last:rounded-r-xl sm:size-13"
+              />
+            ))}
+          </InputOTPGroup>
+        </InputOTP>
+      </div>
+
+      <div className="mt-4 min-h-6">
+        {busy ? (
+          <p className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" /> {t("auth.verify.checking")}
+          </p>
+        ) : (
+          <FormError message={error} className="text-left" />
+        )}
+      </div>
+
+      <p className="mt-2 text-xs text-muted-foreground">{t("auth.verify.linkTip")}</p>
+
+      <div className="mt-6 flex flex-col gap-2">
+        <Button variant="outline" onClick={() => void resend()} disabled={wait > 0}>
+          {wait > 0 ? t("auth.verify.resendIn").replace("{s}", String(wait)) : t("onb.auth.resend")}
+        </Button>
+        <Button variant="ghost" onClick={onChangeEmail}>
+          <ArrowLeft /> {t("auth.verify.changeEmail")}
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+function ForgotForm({
+  email,
+  setEmail,
+  onBack,
+}: {
+  email: string;
+  setEmail: (v: string) => void;
+  onBack: () => void;
+}) {
+  const { t } = usePrefs();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!emailSchema.safeParse(email).success) {
+      setError(t("onb.auth.err.email"));
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (resetError) throw resetError;
+      setSent(true);
+    } catch (err) {
+      setError(authMessage(err, t));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (sent) {
+    return (
+      <section className="surface animate-enter p-6 text-center sm:p-7">
+        <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-brand/12 text-brand-ink">
+          <MailCheck className="size-7" />
+        </span>
+        <h1 className="mt-4 font-display text-2xl font-bold tracking-tight">
+          {t("auth.forgot.sentTitle")}
+        </h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          {t("auth.forgot.sentBody")} <span className="font-bold text-foreground">{email}</span>
+        </p>
+        <Button variant="ghost" className="mt-6 w-full" onClick={onBack}>
+          <ArrowLeft /> {t("onb.auth.backToLogin2")}
+        </Button>
+      </section>
+    );
+  }
+
+  return (
+    <section className="surface animate-enter p-6 sm:p-7">
+      <CardHeader title={t("onb.auth.title.forgot")} subtitle={t("auth.forgot.subtitle")} />
+      <form onSubmit={submit} className="space-y-4" noValidate>
+        <div className="space-y-1.5">
+          <Label htmlFor="email">{t("onb.auth.email")}</Label>
+          <Input
+            id="email"
+            type="email"
+            inputMode="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={t("onb.auth.email.placeholder")}
+            autoComplete="email"
+          />
+        </div>
+        <FormError message={error} />
+        <Button type="submit" size="lg" className="w-full" disabled={busy}>
+          {busy && <Loader2 className="animate-spin" />}
+          {t("onb.auth.submit.forgot")}
+        </Button>
+      </form>
+      <Button variant="ghost" className="mt-3 w-full" onClick={onBack}>
+        <ArrowLeft /> {t("onb.auth.backToLogin2")}
+      </Button>
+    </section>
+  );
+}
+
+/** "1 Conta · 2 Email · 3 Negócio" — the three stages of getting started. */
+function StepDots({ current }: { current: 1 | 2 | 3 }) {
+  const { t } = usePrefs();
+  const labels = [t("auth.stage.account"), t("auth.stage.email"), t("auth.stage.business")];
+  return (
+    <ol className="mb-6 flex items-center gap-2 text-[11px] font-bold text-muted-foreground">
+      {labels.map((label, i) => {
+        const n = i + 1;
+        const done = n < current;
+        const active = n === current;
+        return (
+          <li key={label} className="flex min-w-0 flex-1 items-center gap-1.5">
+            <span
+              className={cn(
+                "flex size-5 shrink-0 items-center justify-center rounded-full text-[10px]",
+                done && "bg-st-confirmed text-white",
+                active && "bg-brand text-brand-foreground",
+                !done && !active && "bg-muted",
+              )}
+            >
+              {done ? <Check className="size-3" strokeWidth={3.5} /> : n}
+            </span>
+            <span className={cn("truncate", active && "text-foreground")}>{label}</span>
+          </li>
+        );
+      })}
+    </ol>
   );
 }

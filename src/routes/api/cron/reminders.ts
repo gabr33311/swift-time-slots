@@ -1,0 +1,24 @@
+import { createFileRoute } from "@tanstack/react-router";
+
+// Called every few minutes by a scheduled job (Supabase pg_cron + pg_net).
+// The shared secret proves the call comes from that job.
+export const Route = createFileRoute("/api/cron/reminders")({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        const secret = process.env["CRON_SECRET"];
+        const auth = request.headers.get("authorization");
+        if (!secret || auth !== `Bearer ${secret}`) {
+          return Response.json({ error: "Unauthorized" }, { status: 401 });
+        }
+        try {
+          const { sendDueReminders } = await import("@/lib/reminders.server");
+          return Response.json(await sendDueReminders());
+        } catch (e) {
+          console.error("[cron reminders] failed", e);
+          return Response.json({ error: "Failed" }, { status: 500 });
+        }
+      },
+    },
+  },
+});

@@ -343,6 +343,7 @@ export type Database = {
       businesses: {
         Row: {
           address: string | null
+          auto_complete: boolean
           booking_horizon_months: number
           brand_color: string
           business_type: string
@@ -363,6 +364,8 @@ export type Database = {
           name: string
           onboarding_completed: boolean
           phone: string | null
+          reminder_hours: number
+          reminders_enabled: boolean
           seo_indexable: boolean
           show_contacts: boolean
           show_team: boolean
@@ -374,6 +377,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          auto_complete?: boolean
           booking_horizon_months?: number
           brand_color?: string
           business_type?: string
@@ -394,6 +398,8 @@ export type Database = {
           name: string
           onboarding_completed?: boolean
           phone?: string | null
+          reminder_hours?: number
+          reminders_enabled?: boolean
           seo_indexable?: boolean
           show_contacts?: boolean
           show_team?: boolean
@@ -405,6 +411,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          auto_complete?: boolean
           booking_horizon_months?: number
           brand_color?: string
           business_type?: string
@@ -425,6 +432,8 @@ export type Database = {
           name?: string
           onboarding_completed?: boolean
           phone?: string | null
+          reminder_hours?: number
+          reminders_enabled?: boolean
           seo_indexable?: boolean
           show_contacts?: boolean
           show_team?: boolean

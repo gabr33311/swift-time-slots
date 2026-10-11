@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,9 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useMyBusiness } from "@/hooks/use-business";
 import { usePrefs } from "@/lib/prefs";
-import { useLogoUrl } from "@/hooks/use-logo";
-import { initials } from "@/lib/format";
-import { ImagePlus } from "lucide-react";
 import { SaveBar } from "@/components/save-bar";
 
 const schema = z.object({
@@ -55,8 +52,6 @@ export function BusinessPanel() {
   const qc = useQueryClient();
   const [form, setForm] = useState(EMPTY);
   const [busy, setBusy] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const logoUrl = useLogoUrl(business?.logo_url);
 
   function hydrate() {
     if (!business) return;
@@ -64,40 +59,6 @@ export function BusinessPanel() {
   }
 
   useEffect(hydrate, [business]);
-
-  async function uploadLogo(file: File) {
-    if (!business) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error(t("pf.biz.err.imageType"));
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error(t("pf.biz.err.imageSize"));
-      return;
-    }
-    setBusy(true);
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-    const path = `${business.id}/logo-${Date.now()}.${ext}`;
-    const { error: upErr } = await supabase.storage
-      .from("business-logos")
-      .upload(path, file, { upsert: true });
-    if (upErr) {
-      setBusy(false);
-      toast.error(t("pf.biz.err.upload"));
-      return;
-    }
-    const { error } = await supabase
-      .from("businesses")
-      .update({ logo_url: path })
-      .eq("id", business.id);
-    setBusy(false);
-    if (error) {
-      toast.error(t("pf.biz.err.savePhoto"));
-      return;
-    }
-    toast.success(t("pf.biz.photoUpdated"));
-    qc.invalidateQueries({ queryKey: ["my-business"] });
-  }
 
   async function save() {
     const parsed = schema.safeParse({
@@ -140,47 +101,6 @@ export function BusinessPanel() {
 
   return (
     <section className="surface space-y-5 p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            {logoUrl ? (
-              <img
-                src={logoUrl}
-                alt={`Foto de ${business?.name ?? "perfil"}`}
-                className="size-16 rounded-2xl object-cover ring-1 ring-border"
-              />
-            ) : (
-              <div className="flex size-16 items-center justify-center rounded-2xl bg-primary text-lg font-semibold text-primary-foreground">
-                {business ? initials(business.name) : "S"}
-              </div>
-            )}
-          </div>
-          <div>
-            <p className="text-sm font-semibold">{t("pf.biz.photo")}</p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-2"
-              disabled={busy}
-              onClick={() => fileRef.current?.click()}
-            >
-              <ImagePlus className="mr-2 size-4" /> {t("pf.biz.uploadPhoto")}
-            </Button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) uploadLogo(f);
-                e.target.value = "";
-              }}
-            />
-          </div>
-        </div>
-      </div>
-
       <div className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="bn" className="font-semibold">

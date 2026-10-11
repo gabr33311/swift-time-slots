@@ -216,7 +216,7 @@ export const ptBR: Record<string, string> = {
   "pf.common.saveError": "Não foi possível salvar.",
   "pf.biz.err.name": "Informe o nome do negócio.",
   "pf.biz.err.imageType": "Escolha um arquivo de imagem.",
-  "pf.biz.err.imageSize": "A imagem precisa ter menos de 5 MB.",
+  "pf.biz.err.imageSize": "A imagem precisa ter menos de 15 MB.",
   "pf.biz.err.upload": "Não foi possível enviar a foto.",
   "pf.biz.err.savePhoto": "Não foi possível salvar a foto.",
   "pf.biz.photoUpdated": "Foto atualizada.",

@@ -14,6 +14,7 @@ import { Paywall, SubscriptionBanner } from "@/components/subscription-alerts";
 import { useSubscription } from "@/hooks/use-subscription";
 import { SycrasLogo } from "@/components/sycras-logo";
 import { useBrandColor } from "@/lib/brand";
+import { useAppColor } from "@/hooks/use-app-color";
 
 const NAV = [
   { to: "/today", label: "nav.today", icon: House },
@@ -114,8 +115,9 @@ export function AppShell({
 }) {
   const { business, isSuccess } = useMyBusiness();
   const logoUrl = useLogoUrl(business?.logo_url);
-  // The business colour tints the whole signed-in app.
-  useBrandColor(business?.brand_color);
+  // The app has its own colour (a personal choice); the business colour is for clients.
+  const { color: appColor } = useAppColor();
+  useBrandColor(appColor);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { access } = useSubscription();

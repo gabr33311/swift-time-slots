@@ -215,7 +215,7 @@ export const es: Record<string, string> = {
   "pf.common.saveError": "No se ha podido guardar.",
   "pf.biz.err.name": "Indica el nombre del negocio.",
   "pf.biz.err.imageType": "Elige un archivo de imagen.",
-  "pf.biz.err.imageSize": "La imagen debe pesar menos de 5 MB.",
+  "pf.biz.err.imageSize": "La imagen debe pesar menos de 15 MB.",
   "pf.biz.err.upload": "No se ha podido subir la foto.",
   "pf.biz.err.savePhoto": "No se ha podido guardar la foto.",
   "pf.biz.photoUpdated": "Foto actualizada.",

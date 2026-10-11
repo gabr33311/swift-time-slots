@@ -2,6 +2,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 import { LogOut } from "lucide-react";
+import { ColorSwatches } from "@/components/color-swatches";
+import { useAppColor } from "@/hooks/use-app-color";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
@@ -28,6 +30,7 @@ export function SettingsPanel() {
     navigate({ to: "/auth", search: { mode: undefined, next: undefined }, replace: true });
   }
   const { theme, setTheme, lang, setLang, t } = usePrefs();
+  const { color: appColor, setColor: setAppColor } = useAppColor();
 
   async function toggle(field: "is_published" | "seo_indexable", value: boolean) {
     if (!business) return;
@@ -59,6 +62,20 @@ export function SettingsPanel() {
         disabled={busy}
         onChange={(v) => toggle("seo_indexable", v)}
       />
+      {/* Personal: how the app looks to you. Clients see the page colour instead. */}
+      <div className="space-y-3 p-5">
+        <div>
+          <p className="text-sm font-bold">{t("prefs.appColor")}</p>
+          <p className="text-sm text-muted-foreground">{t("prefs.appColor.desc")}</p>
+        </div>
+        <ColorSwatches
+          value={appColor}
+          onChange={(c) =>
+            void setAppColor(c).then((ok) => !ok && toast.error(t("pf.common.saveError")))
+          }
+          label={t("prefs.appColor")}
+        />
+      </div>
       <Row
         title={t("prefs.theme")}
         description={t("prefs.theme.desc")}

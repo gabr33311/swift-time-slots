@@ -615,6 +615,7 @@ function BookingRules() {
   const [cancellation, setCancellation] = useState("24");
   const [interval, setIntervalMin] = useState("15");
   const [horizon, setHorizon] = useState("2");
+  const [autoComplete, setAutoComplete] = useState(false);
   const [rulesBusy, setBusy] = useState(false);
 
   function resetRules() {
@@ -622,6 +623,7 @@ function BookingRules() {
     setCancellation(String(business.cancellation_hours));
     setIntervalMin(String(business.slot_interval_minutes));
     setHorizon(String(business.booking_horizon_months ?? 2));
+    setAutoComplete(business.auto_complete ?? false);
   }
 
   useEffect(() => {
@@ -629,13 +631,15 @@ function BookingRules() {
     setCancellation(String(business.cancellation_hours));
     setIntervalMin(String(business.slot_interval_minutes));
     setHorizon(String(business.booking_horizon_months ?? 2));
+    setAutoComplete(business.auto_complete ?? false);
   }, [business]);
 
   const rulesDirty =
     !!business &&
     (cancellation !== String(business.cancellation_hours) ||
       interval !== String(business.slot_interval_minutes) ||
-      horizon !== String(business.booking_horizon_months ?? 2));
+      horizon !== String(business.booking_horizon_months ?? 2) ||
+      autoComplete !== (business.auto_complete ?? false));
 
   async function save() {
     if (!business) return;
@@ -663,6 +667,10 @@ function BookingRules() {
         cancellation_hours: ch,
         slot_interval_minutes: si,
         booking_horizon_months: Math.round(hz),
+        // Only sent when changed, so saving still works before the column exists.
+        ...(autoComplete !== (business.auto_complete ?? false)
+          ? { auto_complete: autoComplete }
+          : {}),
       })
       .eq("id", business.id);
     setBusy(false);
@@ -712,6 +720,18 @@ function BookingRules() {
           />
           <p className="text-xs text-muted-foreground">{t("pf.av.horizon.hint")}</p>
         </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-4 rounded-xl border border-border p-4">
+        <div>
+          <p className="text-sm font-bold">{t("pf.av.autoComplete")}</p>
+          <p className="text-sm text-muted-foreground">{t("pf.av.autoComplete.desc")}</p>
+        </div>
+        <Switch
+          checked={autoComplete}
+          onCheckedChange={setAutoComplete}
+          aria-label={t("pf.av.autoComplete")}
+        />
       </div>
 
       <SaveBar

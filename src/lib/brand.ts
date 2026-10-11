@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 /** SYCRAS blue: the default for every business that hasn't picked its own. */
-export const DEFAULT_BRAND = "#2563eb";
+export const DEFAULT_BRAND = "#0a6cf0";
 /** The old default (teal) was never a choice: treat it as "not chosen". */
 const LEGACY_DEFAULT = "#0f766e";
 /** Text colour used on light brand colours (deep navy reads better than black on blue). */
@@ -9,13 +9,11 @@ const DARK_TEXT = "#04263f";
 
 /** Curated brand colours. Text on them switches to white or navy for contrast. */
 export const BRAND_PALETTE = [
-  "#2563eb", // SYCRAS blue
-  "#0369a1", // ocean
+  "#0a6cf0", // SYCRAS electric blue
   "#0e7490", // cyan
   "#4338ca", // indigo
   "#6d28d9", // violet
   "#be185d", // pink
-  "#be123c", // rose
   "#c2410c", // orange
   "#15803d", // green
   "#18181b", // black

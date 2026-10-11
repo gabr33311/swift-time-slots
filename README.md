@@ -1852,20 +1852,13 @@ Manter histórico.
 
 A disponibilidade deve ser calculada através de:
 
-Horário do profissional
-+
-Serviço
-+
-Duração
-+
-Buffers
-+
-Marcações existentes
-+
-Bloqueios
-+
-Férias
-+
+Horário do profissional +
+Serviço +
+Duração +
+Buffers +
+Marcações existentes +
+Bloqueios +
+Férias +
 Excepções
 
 O backend deve calcular os slots disponíveis.
@@ -2609,17 +2602,11 @@ Priorizar estabilidade, segurança, velocidade, UX, mobile e facilidade de utili
 
 A aplicação deve estar preparada para crescer de dezenas para milhares de negócios sem exigir uma reescrita completa da arquitectura.
 
-This project was built with [Lovable](https://lovable.dev).
-
 **Live app**: https://sycras.com
 
-## Build with Lovable
+## Deploy
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/38c1f0db-ca10-4392-beb7-a35dad7f0be2).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+Hosted on Vercel: every push to `main` publishes https://sycras.com. Server settings live in Vercel → Settings → Environment Variables.
 
 ## Development
 

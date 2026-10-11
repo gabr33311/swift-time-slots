@@ -29,8 +29,8 @@ import { Route as AuthenticatedTodayRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedWaitlistRouteImport } from './routes/_authenticated/waitlist'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as BookingTokenRouteImport } from './routes/booking.$token'
+import { Route as ApiCronRemindersRouteImport } from './routes/api/cron/reminders'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhook'
-import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -133,17 +133,16 @@ const BookingTokenRoute = BookingTokenRouteImport.update({
   path: '/booking/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCronRemindersRoute = ApiCronRemindersRouteImport.update({
+  id: '/api/cron/reminders',
+  path: '/api/cron/reminders',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   id: '/api/stripe/webhook',
   path: '/api/stripe/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LovableEmailTransactionalPreviewRoute =
-  LovableEmailTransactionalPreviewRouteImport.update({
-    id: '/lovable/email/transactional/preview',
-    path: '/lovable/email/transactional/preview',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -165,8 +164,8 @@ export interface FileRoutesByFullPath {
   '/waitlist': typeof AuthenticatedWaitlistRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
+  '/api/cron/reminders': typeof ApiCronRemindersRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
-  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -188,8 +187,8 @@ export interface FileRoutesByTo {
   '/waitlist': typeof AuthenticatedWaitlistRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
+  '/api/cron/reminders': typeof ApiCronRemindersRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
-  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -213,8 +212,8 @@ export interface FileRoutesById {
   '/_authenticated/waitlist': typeof AuthenticatedWaitlistRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
+  '/api/cron/reminders': typeof ApiCronRemindersRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
-  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -238,8 +237,8 @@ export interface FileRouteTypes {
     | '/waitlist'
     | '/book/$slug'
     | '/booking/$token'
+    | '/api/cron/reminders'
     | '/api/stripe/webhook'
-    | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -261,8 +260,8 @@ export interface FileRouteTypes {
     | '/waitlist'
     | '/book/$slug'
     | '/booking/$token'
+    | '/api/cron/reminders'
     | '/api/stripe/webhook'
-    | '/lovable/email/transactional/preview'
   id:
     | '__root__'
     | '/'
@@ -285,8 +284,8 @@ export interface FileRouteTypes {
     | '/_authenticated/waitlist'
     | '/book/$slug'
     | '/booking/$token'
+    | '/api/cron/reminders'
     | '/api/stripe/webhook'
-    | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -297,8 +296,8 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   BookSlugRoute: typeof BookSlugRoute
   BookingTokenRoute: typeof BookingTokenRoute
+  ApiCronRemindersRoute: typeof ApiCronRemindersRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
-  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -443,18 +442,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookingTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cron/reminders': {
+      id: '/api/cron/reminders'
+      path: '/api/cron/reminders'
+      fullPath: '/api/cron/reminders'
+      preLoaderRoute: typeof ApiCronRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/stripe/webhook': {
       id: '/api/stripe/webhook'
       path: '/api/stripe/webhook'
       fullPath: '/api/stripe/webhook'
       preLoaderRoute: typeof ApiStripeWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/transactional/preview': {
-      id: '/lovable/email/transactional/preview'
-      path: '/lovable/email/transactional/preview'
-      fullPath: '/lovable/email/transactional/preview'
-      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -503,8 +502,8 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   BookSlugRoute: BookSlugRoute,
   BookingTokenRoute: BookingTokenRoute,
+  ApiCronRemindersRoute: ApiCronRemindersRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
-  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
