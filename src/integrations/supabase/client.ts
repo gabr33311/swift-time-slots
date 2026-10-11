@@ -31,7 +31,9 @@ function createSupabaseClient() {
     import.meta.env["VITE_SUPABASE_ANON_KEY"] ||
     import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
     process.env["SUPABASE_ANON_KEY"] ||
-    process.env["SUPABASE_PUBLISHABLE_KEY"];
+    process.env["SUPABASE_PUBLISHABLE_KEY"] ||
+    process.env["VITE_SUPABASE_ANON_KEY"] ||
+    process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     const missing = [
