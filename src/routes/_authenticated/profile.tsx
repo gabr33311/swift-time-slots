@@ -155,7 +155,7 @@ function ProfilePage() {
       />
 
       <div className="md:grid md:grid-cols-[250px_minmax(0,1fr)] md:items-start md:gap-6 lg:grid-cols-[270px_minmax(0,1fr)]">
-        <div className={cn("space-y-5 md:sticky md:top-24", section && "hidden md:block")}>
+        <div className={cn("space-y-3 md:sticky md:top-24 md:space-y-5", section && "hidden md:block")}>
           {/* The business at a glance: who, its link, and the two things you do with it. */}
           {business && (
             <div className="relative overflow-hidden rounded-[var(--radius-xl)] bg-brand p-4 text-brand-foreground shadow-[0_14px_30px_-18px_var(--brand)]">
@@ -168,10 +168,10 @@ function ProfilePage() {
                   <img
                     src={logoUrl}
                     alt=""
-                    className="size-14 shrink-0 rounded-2xl object-cover ring-2 ring-white/30"
+                    className="size-12 shrink-0 rounded-2xl object-cover ring-2 ring-white/30 sm:size-14"
                   />
                 ) : (
-                  <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-lg font-bold">
+                  <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-base font-bold sm:size-14 sm:text-lg">
                     {initials(business.name)}
                   </span>
                 )}
@@ -184,11 +184,11 @@ function ProfilePage() {
                   </span>
                 </span>
               </div>
-              <div className="relative mt-4 grid grid-cols-2 gap-2">
+              <div className="relative mt-3 grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setShareOpen(true)}
-                  className="flex h-10 items-center justify-center gap-2 rounded-xl bg-white/15 text-sm font-bold transition-[background-color,transform] hover:bg-white/25 active:scale-[0.97]"
+                  className="flex h-9 items-center justify-center gap-2 rounded-xl sm:h-10 bg-white/15 text-sm font-bold transition-[background-color,transform] hover:bg-white/25 active:scale-[0.97]"
                 >
                   <Share2 className="size-4" /> {t("pf.s.share")}
                 </button>
@@ -196,7 +196,7 @@ function ProfilePage() {
                   href={`/${business.slug}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex h-10 items-center justify-center gap-2 rounded-xl bg-white text-sm font-bold text-[color:var(--brand)] transition-transform active:scale-[0.97]"
+                  className="flex h-9 items-center justify-center gap-2 rounded-xl sm:h-10 bg-white text-sm font-bold text-[color:var(--brand)] transition-transform active:scale-[0.97]"
                 >
                   {t("pf.manage.viewPage")} <ArrowUpRight className="size-4" />
                 </a>
@@ -204,8 +204,57 @@ function ProfilePage() {
             </div>
           )}
 
+          <div className="grid grid-cols-2 gap-2.5 md:hidden">
+            {GROUPS.flatMap((g) => g.rows).map((row, i, all) => {
+              const status = summary[row.id];
+              const wide = all.length % 2 === 1 && i === all.length - 1;
+              return (
+                <button
+                  key={row.id}
+                  type="button"
+                  onClick={() => setSection(row.id)}
+                  className={cn(
+                    "surface group flex min-h-[5.5rem] flex-col justify-between gap-2 p-3.5 text-left transition-[background-color,transform] duration-150 active:scale-[0.97] active:bg-muted",
+                    wide && "col-span-2 min-h-0 flex-row items-center",
+                  )}
+                >
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand/12 text-brand-ink">
+                    <row.icon className="size-[17px]" />
+                  </span>
+                  <span className={cn("min-w-0", wide && "flex-1")}>
+                    <span className="block truncate text-sm font-bold leading-tight">
+                      {label(row.id)}
+                    </span>
+                    <span
+                      className={cn(
+                        "mt-0.5 flex items-center gap-1 truncate text-[11px] font-semibold leading-snug",
+                        status?.warn ? "text-st-pending-fg" : "text-muted-foreground",
+                      )}
+                    >
+                      {status?.dot && (
+                        <span
+                          aria-hidden
+                          className="size-2 shrink-0 rounded-full ring-1 ring-black/10"
+                          style={{ backgroundColor: status.dot }}
+                        />
+                      )}
+                      {status?.warn && (
+                        <span
+                          aria-hidden
+                          className="size-1.5 shrink-0 rounded-full bg-st-pending"
+                        />
+                      )}
+                      <span className="truncate">{status?.text ?? desc(row.id)}</span>
+                    </span>
+                  </span>
+                  {wide && <ChevronRight className="size-4 shrink-0 text-muted-foreground" />}
+                </button>
+              );
+            })}
+          </div>
+
           {GROUPS.map((group) => (
-            <section key={group.title}>
+            <section key={group.title} className="hidden md:block">
               <h2 className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
                 {t(group.title)}
               </h2>
