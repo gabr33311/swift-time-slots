@@ -51,16 +51,39 @@ export function brandColors(hex: string | null | undefined): { brand: string; fo
   return { brand, foreground: onWhite >= onNavy ? "#ffffff" : DARK_TEXT };
 }
 
-/** Applies the business colour to the whole document (also reaches dialogs and sheets). */
-export function useBrandColor(hex: string | null | undefined) {
+/**
+ * App colour that follows the theme: black on the light theme, white on the
+ * dark one (never black on black or white on white).
+ */
+export const MONO = "mono";
+
+/** The real colours for an app colour value, given the theme. */
+export function appColors(
+  value: string | null | undefined,
+  dark: boolean,
+): { brand: string; foreground: string; mono: boolean } {
+  if (value === MONO) {
+    return dark
+      ? { brand: "#f5f5f5", foreground: "#0a0a0a", mono: true }
+      : { brand: "#111111", foreground: "#ffffff", mono: true };
+  }
+  return { ...brandColors(value), mono: false };
+}
+
+/** Applies the colour to the whole document (also reaches dialogs and sheets). */
+export function useBrandColor(hex: string | null | undefined, dark = false) {
   useEffect(() => {
-    const { brand, foreground } = brandColors(hex);
+    const { brand, foreground, mono } = appColors(hex, dark);
     const root = document.documentElement;
     root.style.setProperty("--brand", brand);
     root.style.setProperty("--brand-foreground", foreground);
+    // Mono buttons are flat: no blue in the gradient.
+    if (mono) root.style.setProperty("--brand-end", brand);
+    else root.style.removeProperty("--brand-end");
     return () => {
       root.style.removeProperty("--brand");
       root.style.removeProperty("--brand-foreground");
+      root.style.removeProperty("--brand-end");
     };
-  }, [hex]);
+  }, [hex, dark]);
 }

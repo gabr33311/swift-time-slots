@@ -104,6 +104,7 @@ export function SettingsPanel() {
           <p className="text-sm text-muted-foreground">{t("prefs.appColor.desc")}</p>
         </div>
         <ColorSwatches
+          mono={t("prefs.appColor.mono")}
           value={appColor}
           onChange={(c) =>
             void setAppColor(c).then((ok) => !ok && toast.error(t("pf.common.saveError")))

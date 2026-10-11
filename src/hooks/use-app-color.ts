@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { effectiveBrand } from "@/lib/brand";
+import { effectiveBrand, MONO } from "@/lib/brand";
 
 const KEY = "sycras-app-color";
 
@@ -23,7 +23,8 @@ export function useAppColor() {
   }, []);
 
   const saved = user?.user_metadata?.["app_color"] as string | undefined;
-  const color = effectiveBrand(local ?? saved);
+  const raw = local ?? saved;
+  const color = raw === MONO ? MONO : effectiveBrand(raw);
 
   // The account wins once it loads (another device may have changed it).
   useEffect(() => {

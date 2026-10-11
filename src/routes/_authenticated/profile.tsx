@@ -128,12 +128,8 @@ function ProfilePage() {
         title={section ? label(section) : t("pf.manage.title")}
         action={
           !section ? (
-            <Button
-              variant="outline"
-              onClick={() => void navigate({ to: "/settings" })}
-              className="h-11 gap-2 border-brand/30 bg-brand/10 px-4 text-brand-ink hover:bg-brand/15 hover:text-brand-ink"
-            >
-              <Settings className="size-[18px]" />
+            <Button size="sm" variant="outline" onClick={() => void navigate({ to: "/settings" })}>
+              <Settings className="size-4" />
               {t("pf.s.settings")}
             </Button>
           ) : null

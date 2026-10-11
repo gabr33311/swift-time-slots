@@ -131,7 +131,8 @@ export function AppShell({
   const logoUrl = useLogoUrl(business?.logo_url);
   // The app has its own colour (a personal choice); the business colour is for clients.
   const { color: appColor } = useAppColor();
-  useBrandColor(appColor);
+  const { theme } = usePrefs();
+  useBrandColor(appColor, theme === "dark");
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { access } = useSubscription();
