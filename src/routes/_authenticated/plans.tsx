@@ -109,52 +109,65 @@ function PlansPage() {
               <p className="flex items-center gap-2 font-display text-xl font-bold">
                 <Sparkles className="size-5" /> SYCRAS Pro
               </p>
-              <span className="rounded-full bg-black/10 px-2.5 py-1 text-xs font-bold">
-                {t("sub.trialBadge")}
-              </span>
+              {!subscribed && (
+                <span className="rounded-full bg-black/10 px-2.5 py-1 text-xs font-bold">
+                  {t("sub.trialBadge")}
+                </span>
+              )}
             </div>
-            <p className="mt-4 flex items-end gap-1.5">
-              <span className="font-display text-5xl font-bold leading-none tabular-nums">
-                {annual ? t("sub.pro.priceAnnual") : t("sub.pro.price")}
-              </span>
-              <span className="pb-1 text-sm font-semibold opacity-80">{t("sub.price.suffix")}</span>
-            </p>
-            <p className="mt-1 text-sm font-medium opacity-80">
-              {annual ? t("sub.billedYearly") : t("sub.billedMonthly")}
-            </p>
+            {/* Already subscribed: the plan is theirs, no prices or billing choice to show. */}
+            {subscribed ? (
+              <p className="mt-3 text-sm font-semibold opacity-90">{t("sub.yourPlan")}</p>
+            ) : (
+              <>
+                <p className="mt-4 flex items-end gap-1.5">
+                  <span className="font-display text-5xl font-bold leading-none tabular-nums">
+                    {annual ? t("sub.pro.priceAnnual") : t("sub.pro.price")}
+                  </span>
+                  <span className="pb-1 text-sm font-semibold opacity-80">
+                    {t("sub.price.suffix")}
+                  </span>
+                </p>
+                <p className="mt-1 text-sm font-medium opacity-80">
+                  {annual ? t("sub.billedYearly") : t("sub.billedMonthly")}
+                </p>
+              </>
+            )}
           </div>
 
           <div className="space-y-5 p-6">
-            <div
-              role="group"
-              aria-label={t("sub.billing.label")}
-              className="grid grid-cols-2 gap-1 rounded-full bg-muted p-1"
-            >
-              {[
-                [false, t("sub.billing.monthly")],
-                [true, t("sub.billing.annual")],
-              ].map(([value, label]) => (
-                <button
-                  key={String(value)}
-                  type="button"
-                  aria-pressed={annual === value}
-                  onClick={() => setAnnual(value as boolean)}
-                  className={cn(
-                    "h-10 rounded-full text-sm font-bold transition-all",
-                    annual === value
-                      ? "bg-card text-foreground shadow-soft"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {label as string}
-                  {value === true && (
-                    <span className="ml-1.5 rounded-full bg-st-confirmed/15 px-1.5 py-0.5 text-[10px] font-bold text-st-confirmed-fg">
-                      -20%
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
+            {!subscribed && (
+              <div
+                role="group"
+                aria-label={t("sub.billing.label")}
+                className="grid grid-cols-2 gap-1 rounded-full bg-muted p-1"
+              >
+                {[
+                  [false, t("sub.billing.monthly")],
+                  [true, t("sub.billing.annual")],
+                ].map(([value, label]) => (
+                  <button
+                    key={String(value)}
+                    type="button"
+                    aria-pressed={annual === value}
+                    onClick={() => setAnnual(value as boolean)}
+                    className={cn(
+                      "h-10 rounded-full text-sm font-bold transition-all",
+                      annual === value
+                        ? "bg-card text-foreground shadow-soft"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {label as string}
+                    {value === true && (
+                      <span className="ml-1.5 rounded-full bg-st-confirmed/15 px-1.5 py-0.5 text-[10px] font-bold text-st-confirmed-fg">
+                        -20%
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <ul className="space-y-2.5">
               {FEATURES.map((key) => (
