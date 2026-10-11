@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { usePrefs } from "@/lib/prefs";
-import { type ComponentType } from "react";
+import { useState, type ComponentType } from "react";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { TeamPanel } from "@/components/panels/team-panel";
 import { AvailabilityPanel } from "@/components/panels/availability-panel";
 import { PublicPagePanel } from "@/components/panels/public-page-panel";
 import { SharePanel } from "@/components/panels/share-panel";
+import { ShareSheet } from "@/components/share-sheet";
 import { AnalyticsPanel } from "@/components/panels/analytics-panel";
 import { SettingsPanel } from "@/components/panels/settings-panel";
 import { RemindersPanel } from "@/components/panels/reminders-panel";
@@ -108,6 +109,7 @@ function ProfilePage() {
   // Phones drill into one section at a time; from md up the menu stays on the
   // left and the first section fills the right column by default.
   const shown: SectionId = section ?? "info";
+  const [shareOpen, setShareOpen] = useState(false);
   const { business } = useMyBusiness();
   const logoUrl = useLogoUrl(business?.logo_url);
 
@@ -116,13 +118,13 @@ function ProfilePage() {
       <PageHeader
         title={section ? label(section) : t("pf.manage.title")}
         action={
-          !section || section === "settings" ? (
+          !section ? (
             <Button
               variant="outline"
               size="icon"
               aria-label={t("pf.s.settings")}
               title={t("pf.s.settings")}
-              onClick={() => setSection("settings")}
+              onClick={() => void navigate({ to: "/settings" })}
             >
               <Settings className="size-[18px]" />
             </Button>
@@ -173,7 +175,7 @@ function ProfilePage() {
                 className="shrink-0"
                 aria-label={t("pf.s.share")}
                 title={t("pf.s.share")}
-                onClick={() => setSection("share")}
+                onClick={() => setShareOpen(true)}
               >
                 <Share2 className="size-4" />
               </Button>
@@ -240,7 +242,7 @@ function ProfilePage() {
               {/* Time off is part of the hours; it is no longer a separate menu row. */}
               <button
                 type="button"
-                onClick={() => setSection("timeoff")}
+                onClick={() => void navigate({ to: "/time-off" })}
                 className="surface flex min-h-14 w-full items-center gap-3.5 px-4 py-3 text-left transition-colors hover:bg-muted/50"
               >
                 <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand/12 text-brand-ink">
@@ -263,6 +265,7 @@ function ProfilePage() {
           {shown === "settings" && <SettingsPanel />}
         </div>
       </div>
+      <ShareSheet open={shareOpen} onOpenChange={setShareOpen} />
     </AppShell>
   );
 }

@@ -34,6 +34,20 @@ const DOCK_RIGHT = [
   { to: "/profile", label: "nav.manage", icon: Store },
 ] as const;
 
+/** Pages that belong to a tab without living under its path (keeps the tab lit). */
+const TAB_ALIASES: Record<string, string[]> = {
+  "/today": ["/analytics"],
+  "/calendar": ["/time-off", "/appointments"],
+  "/profile": ["/settings", "/plans"],
+};
+
+/** Whether a tab is the current one, including the pages that belong to it. */
+export function isTabActive(pathname: string, to: string): boolean {
+  return [to, ...(TAB_ALIASES[to] ?? [])].some(
+    (p) => pathname === p || pathname.startsWith(p + "/"),
+  );
+}
+
 function PopIcon({
   Icon,
   className,
@@ -50,7 +64,7 @@ function NavList() {
   return (
     <nav className="flex flex-col gap-0.5">
       {NAV.map((item) => {
-        const active = pathname === item.to || pathname.startsWith(item.to + "/");
+        const active = isTabActive(pathname, item.to);
         return (
           <Link
             key={item.to}
@@ -236,7 +250,7 @@ export function AppShell({
               to={item.to}
               label={t(item.label)}
               Icon={item.icon}
-              active={pathname.startsWith(item.to)}
+              active={isTabActive(pathname, item.to)}
             />
           ))}
 
@@ -258,7 +272,7 @@ export function AppShell({
               to={item.to}
               label={t(item.label)}
               Icon={item.icon}
-              active={pathname.startsWith(item.to)}
+              active={isTabActive(pathname, item.to)}
             />
           ))}
         </nav>

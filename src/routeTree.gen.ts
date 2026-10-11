@@ -26,7 +26,9 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedPendentesRouteImport } from './routes/_authenticated/pendentes'
 import { Route as AuthenticatedPlansRouteImport } from './routes/_authenticated/plans'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedShareRouteImport } from './routes/_authenticated/share'
+import { Route as AuthenticatedTimeOffRouteImport } from './routes/_authenticated/time-off'
 import { Route as AuthenticatedTodayRouteImport } from './routes/_authenticated/today'
 import { Route as AuthenticatedWaitlistRouteImport } from './routes/_authenticated/waitlist'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
@@ -120,9 +122,19 @@ const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedShareRoute = AuthenticatedShareRouteImport.update({
   id: '/share',
   path: '/share',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTimeOffRoute = AuthenticatedTimeOffRouteImport.update({
+  id: '/time-off',
+  path: '/time-off',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedTodayRoute = AuthenticatedTodayRouteImport.update({
@@ -173,7 +185,9 @@ export interface FileRoutesByFullPath {
   '/pendentes': typeof AuthenticatedPendentesRoute
   '/plans': typeof AuthenticatedPlansRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/share': typeof AuthenticatedShareRoute
+  '/time-off': typeof AuthenticatedTimeOffRoute
   '/today': typeof AuthenticatedTodayRoute
   '/waitlist': typeof AuthenticatedWaitlistRoute
   '/book/$slug': typeof BookSlugRoute
@@ -198,7 +212,9 @@ export interface FileRoutesByTo {
   '/pendentes': typeof AuthenticatedPendentesRoute
   '/plans': typeof AuthenticatedPlansRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/share': typeof AuthenticatedShareRoute
+  '/time-off': typeof AuthenticatedTimeOffRoute
   '/today': typeof AuthenticatedTodayRoute
   '/waitlist': typeof AuthenticatedWaitlistRoute
   '/book/$slug': typeof BookSlugRoute
@@ -225,7 +241,9 @@ export interface FileRoutesById {
   '/_authenticated/pendentes': typeof AuthenticatedPendentesRoute
   '/_authenticated/plans': typeof AuthenticatedPlansRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/share': typeof AuthenticatedShareRoute
+  '/_authenticated/time-off': typeof AuthenticatedTimeOffRoute
   '/_authenticated/today': typeof AuthenticatedTodayRoute
   '/_authenticated/waitlist': typeof AuthenticatedWaitlistRoute
   '/book/$slug': typeof BookSlugRoute
@@ -252,7 +270,9 @@ export interface FileRouteTypes {
     | '/pendentes'
     | '/plans'
     | '/profile'
+    | '/settings'
     | '/share'
+    | '/time-off'
     | '/today'
     | '/waitlist'
     | '/book/$slug'
@@ -277,7 +297,9 @@ export interface FileRouteTypes {
     | '/pendentes'
     | '/plans'
     | '/profile'
+    | '/settings'
     | '/share'
+    | '/time-off'
     | '/today'
     | '/waitlist'
     | '/book/$slug'
@@ -303,7 +325,9 @@ export interface FileRouteTypes {
     | '/_authenticated/pendentes'
     | '/_authenticated/plans'
     | '/_authenticated/profile'
+    | '/_authenticated/settings'
     | '/_authenticated/share'
+    | '/_authenticated/time-off'
     | '/_authenticated/today'
     | '/_authenticated/waitlist'
     | '/book/$slug'
@@ -447,11 +471,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/share': {
       id: '/_authenticated/share'
       path: '/share'
       fullPath: '/share'
       preLoaderRoute: typeof AuthenticatedShareRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/time-off': {
+      id: '/_authenticated/time-off'
+      path: '/time-off'
+      fullPath: '/time-off'
+      preLoaderRoute: typeof AuthenticatedTimeOffRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/today': {
@@ -510,7 +548,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPendentesRoute: typeof AuthenticatedPendentesRoute
   AuthenticatedPlansRoute: typeof AuthenticatedPlansRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedShareRoute: typeof AuthenticatedShareRoute
+  AuthenticatedTimeOffRoute: typeof AuthenticatedTimeOffRoute
   AuthenticatedTodayRoute: typeof AuthenticatedTodayRoute
   AuthenticatedWaitlistRoute: typeof AuthenticatedWaitlistRoute
 }
@@ -526,7 +566,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPendentesRoute: AuthenticatedPendentesRoute,
   AuthenticatedPlansRoute: AuthenticatedPlansRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedShareRoute: AuthenticatedShareRoute,
+  AuthenticatedTimeOffRoute: AuthenticatedTimeOffRoute,
   AuthenticatedTodayRoute: AuthenticatedTodayRoute,
   AuthenticatedWaitlistRoute: AuthenticatedWaitlistRoute,
 }

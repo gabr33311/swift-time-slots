@@ -596,7 +596,7 @@ function CalendarPage() {
                 title={t("pf.s.timeoff")}
                 className="shrink-0"
               >
-                <Link to="/profile" search={{ section: "timeoff" }}>
+                <Link to="/time-off">
                   <CalendarOff className="size-4" />
                 </Link>
               </Button>

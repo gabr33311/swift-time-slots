@@ -236,8 +236,7 @@ function TodayPage() {
 
           <div className="space-y-4">
             <Link
-              to="/profile"
-              search={{ section: "analytics" }}
+              to="/analytics"
               className="surface flex items-center gap-3.5 p-4 transition-colors hover:bg-muted/40"
             >
               <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand/12 text-brand-ink">

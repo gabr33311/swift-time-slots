@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppShell } from "@/components/app-shell";
-import { PageHeader } from "@/components/ui-bits";
+import { SubPage } from "@/components/sub-page";
 import { AnalyticsPanel } from "@/components/panels/analytics-panel";
 import { usePrefs } from "@/lib/prefs";
 
+// Opened from the "This week" card on Today.
 export const Route = createFileRoute("/_authenticated/analytics")({
   head: () => ({
     meta: [
-      { title: "Relatórios — SYCRAS" },
+      { title: "Estatísticas — SYCRAS" },
       { name: "description", content: "Receita, ocupação e serviços mais procurados." },
       { name: "robots", content: "noindex" },
     ],
@@ -18,9 +18,8 @@ export const Route = createFileRoute("/_authenticated/analytics")({
 function AnalyticsPage() {
   const { t } = usePrefs();
   return (
-    <AppShell>
-      <PageHeader title={t("ui.analytics.title")} subtitle={t("ui.analytics.subtitle")} />
+    <SubPage title={t("pf.s.analytics")} back="/today">
       <AnalyticsPanel />
-    </AppShell>
+    </SubPage>
   );
 }

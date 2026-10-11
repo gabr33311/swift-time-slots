@@ -17,6 +17,7 @@ export const RESERVED_SLUGS = [
   "profile",
   "onboarding",
   "analytics",
+  "time-off",
   "appointments",
   "pendentes",
   "waitlist",
