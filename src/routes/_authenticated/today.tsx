@@ -326,7 +326,7 @@ function FocusCard({
       type="button"
       onClick={() => onOpen(row.id)}
       // The day's hero: intense blue, white text, a soft glow of the same colour.
-      className="relative block w-full overflow-hidden rounded-[var(--radius-2xl)] bg-brand bg-[linear-gradient(140deg,var(--brand),color-mix(in_oklch,var(--brand)_70%,#38a3ff))] p-5 text-left text-brand-foreground shadow-[0_18px_40px_-18px_var(--brand)] transition-transform active:scale-[0.99]"
+      className="relative block w-full overflow-hidden rounded-[var(--radius-2xl)] bg-brand bg-[linear-gradient(140deg,var(--brand),color-mix(in_oklch,var(--brand)_70%,#38a3ff))] p-5 text-left text-brand-foreground transition-transform active:scale-[0.99]"
     >
       <span
         aria-hidden

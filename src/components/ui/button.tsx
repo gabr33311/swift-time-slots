@@ -9,10 +9,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default:
-          "action-gradient text-brand-foreground shadow-[0_8px_20px_-10px_var(--brand)] hover:shadow-[0_12px_26px_-10px_var(--brand)]",
-        brand:
-          "action-gradient text-brand-foreground shadow-[0_8px_20px_-10px_var(--brand)] hover:shadow-[0_12px_26px_-10px_var(--brand)]",
+        default: "action-gradient text-brand-foreground",
+        brand: "action-gradient text-brand-foreground",
         destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         outline:
           "action-gradient-outline border border-border text-foreground hover:text-foreground",

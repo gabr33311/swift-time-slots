@@ -159,7 +159,7 @@ function ProfilePage() {
         >
           {/* The business at a glance: who, its link, and the two things you do with it. */}
           {business && (
-            <div className="relative overflow-hidden rounded-[var(--radius-xl)] bg-brand p-3.5 text-brand-foreground shadow-[0_14px_30px_-18px_var(--brand)] sm:p-4">
+            <div className="relative overflow-hidden rounded-[var(--radius-xl)] bg-brand p-3.5 text-brand-foreground sm:p-4">
               <div
                 aria-hidden
                 className="pointer-events-none absolute -right-10 -top-12 size-40 rounded-full bg-white/10"

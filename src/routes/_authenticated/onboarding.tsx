@@ -1053,7 +1053,7 @@ function Done({ slug, onGo }: { slug: string; onGo: () => void }) {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background px-5 py-10">
       <section className="surface animate-enter w-full max-w-md p-7 text-center">
-        <span className="animate-icon-pop mx-auto flex size-16 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-[0_12px_30px_-12px_var(--brand)]">
+        <span className="animate-icon-pop mx-auto flex size-16 items-center justify-center rounded-full bg-brand text-brand-foreground">
           <Check className="size-8" strokeWidth={3} />
         </span>
         <h1 className="mt-5 font-display text-[28px] font-bold leading-tight tracking-tight">

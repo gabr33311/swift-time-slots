@@ -631,7 +631,6 @@
 @utility appointment-rail {
   border-radius: 999px;
   background-image: linear-gradient(180deg, var(--rail-a), var(--rail-b));
-  box-shadow: 0 0 10px -2px var(--rail-a);
 
   &[data-status="confirmed"] {
     --rail-a: var(--appointment-confirmed-start);
