@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { BUSINESS_TYPES, businessType } from "@/lib/business-types";
 import { slugify } from "@/lib/format";
-import { WEEKDAYS_PT } from "@/lib/format";
+import { weekdays } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Check, Loader2, ArrowRight, ArrowLeft, Copy, ExternalLink, Trash2, CircleCheck, CircleX } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -64,7 +64,7 @@ const DEFAULT_HOURS: DayHours[] = [
 ];
 
 function Onboarding() {
-  const { t } = usePrefs();
+  const { t, lang } = usePrefs();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [step, setStep] = useState(1);
@@ -691,7 +691,7 @@ function Onboarding() {
                     h.open ? "border-primary bg-accent text-accent-foreground" : "border-border text-muted-foreground",
                   )}
                 >
-                  {WEEKDAYS_PT[i]}
+                  {weekdays(lang)[i]}
                 </button>
                 {h.open ? (
                   <div className="flex items-center gap-2">

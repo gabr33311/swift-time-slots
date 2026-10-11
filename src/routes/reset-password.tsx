@@ -50,6 +50,76 @@ const COPY = {
     fail: "Could not update the password.",
     back: "Back to sign in",
   },
+  "pt-BR": {
+    title: "Nova senha",
+    desc: "Escolha uma nova senha para entrar na sua conta.",
+    newPass: "Nova senha",
+    confirm: "Confirmar senha",
+    submit: "Salvar senha",
+    rules: "Mínimo de 8 caracteres, com maiúscula, minúscula e número.",
+    weak: "A senha precisa ter 8 caracteres, maiúscula, minúscula e número.",
+    mismatch: "As senhas não coincidem.",
+    noSession: "Link inválido ou expirado. Peça um novo e-mail de redefinição.",
+    done: "Senha atualizada.",
+    fail: "Não foi possível atualizar a senha.",
+    back: "Voltar para o login",
+  },
+  es: {
+    title: "Nueva contraseña",
+    desc: "Elige una nueva contraseña para entrar en tu cuenta.",
+    newPass: "Nueva contraseña",
+    confirm: "Confirmar contraseña",
+    submit: "Guardar contraseña",
+    rules: "Mínimo 8 caracteres, con mayúscula, minúscula y número.",
+    weak: "La contraseña debe tener 8 caracteres, mayúscula, minúscula y número.",
+    mismatch: "Las contraseñas no coinciden.",
+    noSession: "Enlace no válido o caducado. Pide un nuevo email de recuperación.",
+    done: "Contraseña actualizada.",
+    fail: "No se ha podido actualizar la contraseña.",
+    back: "Volver a entrar",
+  },
+  fr: {
+    title: "Nouveau mot de passe",
+    desc: "Choisissez un nouveau mot de passe pour vous connecter à votre compte.",
+    newPass: "Nouveau mot de passe",
+    confirm: "Confirmer le mot de passe",
+    submit: "Enregistrer le mot de passe",
+    rules: "8 caractères minimum, avec majuscule, minuscule et chiffre.",
+    weak: "Le mot de passe doit contenir 8 caractères, une majuscule, une minuscule et un chiffre.",
+    mismatch: "Les mots de passe ne correspondent pas.",
+    noSession: "Lien invalide ou expiré. Demandez un nouvel e-mail de réinitialisation.",
+    done: "Mot de passe mis à jour.",
+    fail: "Impossible de mettre à jour le mot de passe.",
+    back: "Retour à la connexion",
+  },
+  it: {
+    title: "Nuova password",
+    desc: "Scegli una nuova password per accedere al tuo account.",
+    newPass: "Nuova password",
+    confirm: "Conferma password",
+    submit: "Salva password",
+    rules: "Minimo 8 caratteri, con maiuscola, minuscola e numero.",
+    weak: "La password deve avere 8 caratteri, una maiuscola, una minuscola e un numero.",
+    mismatch: "Le password non coincidono.",
+    noSession: "Link non valido o scaduto. Richiedi una nuova email di reimpostazione.",
+    done: "Password aggiornata.",
+    fail: "Impossibile aggiornare la password.",
+    back: "Torna all’accesso",
+  },
+  de: {
+    title: "Neues Passwort",
+    desc: "Wähle ein neues Passwort für dein Konto.",
+    newPass: "Neues Passwort",
+    confirm: "Passwort bestätigen",
+    submit: "Passwort speichern",
+    rules: "Mindestens 8 Zeichen, mit Groß- und Kleinbuchstaben und einer Zahl.",
+    weak: "Das Passwort braucht 8 Zeichen, Groß- und Kleinbuchstaben und eine Zahl.",
+    mismatch: "Die Passwörter stimmen nicht überein.",
+    noSession: "Ungültiger oder abgelaufener Link. Fordere eine neue E-Mail zum Zurücksetzen an.",
+    done: "Passwort aktualisiert.",
+    fail: "Das Passwort konnte nicht aktualisiert werden.",
+    back: "Zurück zur Anmeldung",
+  },
 } as const;
 
 function strong(v: string) {
@@ -58,7 +128,7 @@ function strong(v: string) {
 
 function ResetPasswordPage() {
   const { lang } = usePrefs();
-  const c = COPY[lang === "en" ? "en" : "pt"];
+  const c = COPY[lang];
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
   const [password, setPassword] = useState("");

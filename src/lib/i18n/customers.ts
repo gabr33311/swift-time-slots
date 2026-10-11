@@ -1,6 +1,6 @@
-import type { Lang } from "../prefs-types";
+import type { BaseLang } from "../prefs-types";
 
-export const customersDict: Record<Lang, Record<string, string>> = {
+export const customersDict: Record<BaseLang, Record<string, string>> = {
   pt: {
     "cust.meta.title": "Clientes — SYCRAS",
     "cust.meta.desc": "A tua base de clientes, com histórico e contactos.",

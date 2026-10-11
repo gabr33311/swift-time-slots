@@ -1,6 +1,6 @@
-import type { Lang } from "../prefs-types";
+import type { BaseLang } from "../prefs-types";
 
-export const appointmentsDict: Record<Lang, Record<string, string>> = {
+export const appointmentsDict: Record<BaseLang, Record<string, string>> = {
   pt: {
     "appt.page.title": "Marcações",
     "appt.page.subtitle": "Gere tudo o que está agendado.",

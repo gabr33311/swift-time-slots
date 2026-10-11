@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { usePrefs } from "@/lib/prefs";
+import { localeOf } from "@/lib/prefs-types";
 import { formatPrice } from "@/lib/format";
 import { canonicalPhone } from "@/lib/phone";
 
@@ -192,7 +193,7 @@ export function EditCustomerDialog({
                       className="flex items-center justify-between gap-3 text-sm"
                     >
                       <span className="tabular-nums text-muted-foreground">
-                        {new Intl.DateTimeFormat(lang === "en" ? "en-GB" : "pt-PT", {
+                        {new Intl.DateTimeFormat(localeOf(lang), {
                           day: "2-digit",
                           month: "2-digit",
                           year: "2-digit",

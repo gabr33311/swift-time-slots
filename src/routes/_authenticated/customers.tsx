@@ -167,7 +167,7 @@ function CustomersPage() {
           }
         />
       ) : (
-        <ul className="grid gap-2.5 lg:grid-cols-2">
+        <ul key={tab} className="animate-stagger grid gap-2.5 lg:grid-cols-2">
           {rows.map((c) => (
             <li key={c.id} className="surface surface-hover flex items-center gap-3.5 p-4">
               <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-bold text-primary">

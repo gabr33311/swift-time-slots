@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { FormError } from "@/components/ui-bits";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,7 @@ import {
   CalendarClock,
   CheckCircle2,
   Loader2,
-  MoreHorizontal,
+  Settings2,
   RotateCcw,
   Trash2,
   XCircle,
@@ -239,7 +240,10 @@ export function AppointmentActions({
           <Button
             variant="ghost"
             size="icon"
-            className={cn("tap-target relative size-9 shrink-0 rounded-full hover:bg-transparent", triggerClassName)}
+            className={cn(
+              "tap-target relative size-9 shrink-0 rounded-full border border-border bg-card text-foreground shadow-sm hover:bg-muted",
+              triggerClassName,
+            )}
             aria-label={`${t("acts.opts.forLabel")}${customerName}`}
             disabled={busy}
             aria-busy={busy}
@@ -247,7 +251,7 @@ export function AppointmentActions({
             {busy ? (
               <Loader2 className="size-[18px] animate-spin text-muted-foreground" />
             ) : (
-              <MoreHorizontal
+              <Settings2
                 className={cn(
                   "size-[18px]",
                   status === "completed" ? "text-muted-foreground" : "text-foreground",
@@ -404,11 +408,7 @@ export function AppointmentActions({
               />
             </div>
           </div>
-          {rescheduleError && (
-            <p role="alert" className="text-sm font-semibold text-destructive">
-              {rescheduleError}
-            </p>
-          )}
+          <FormError message={rescheduleError} />
           <Button className="w-full" onClick={saveReschedule} disabled={busy}>
             {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
             {t("acts.reschedule")}

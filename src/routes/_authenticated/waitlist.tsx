@@ -61,7 +61,7 @@ function WaitlistPage() {
           description={t("cust.wait.empty.desc")}
         />
       ) : (
-        <ul className="space-y-2">
+        <ul className="animate-stagger space-y-2">
           {data!.map((w) => (
             <li key={w.id} className="surface flex flex-wrap items-center gap-3 p-4">
               <div className="min-w-0 flex-1">

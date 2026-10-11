@@ -235,18 +235,21 @@ export const getBookingByToken = createServerFn({ method: "GET" })
       .maybeSingle();
     if (!appt) return null;
 
-    const [{ data: business }, { data: staff }] = await Promise.all([
+    const [{ data: business }, { data: staff }, { data: hours }] = await Promise.all([
       supabaseAdmin
         .from("businesses")
-        .select("name, slug, address, city, phone, timezone, cancellation_hours, brand_color, logo_url")
+        .select("name, slug, address, city, phone, timezone, cancellation_hours, brand_color, logo_url, booking_horizon_months")
         .eq("id", appt.business_id)
         .maybeSingle(),
       appt.staff_id
         ? supabaseAdmin.from("staff").select("name").eq("id", appt.staff_id).maybeSingle()
         : Promise.resolve({ data: null }),
+      // Weekdays with opening hours, so the reschedule picker can grey out closed days.
+      supabaseAdmin.from("working_hours").select("weekday").eq("business_id", appt.business_id),
     ]);
 
     return {
+      openWeekdays: [...new Set((hours ?? []).map((h) => h.weekday as number))],
       appointment: {
         id: appt.id,
         service_name: appt.service_name,

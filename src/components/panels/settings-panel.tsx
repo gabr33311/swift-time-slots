@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { useMyBusiness } from "@/hooks/use-business";
 import { usePrefs } from "@/lib/prefs";
+import { isLang, LANGS } from "@/lib/prefs-types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function SettingsPanel() {
   const { business } = useMyBusiness();
@@ -58,26 +60,23 @@ export function SettingsPanel() {
         disabled={false}
         onChange={(v) => setTheme(v ? "dark" : "light")}
       />
-      <div className="flex items-center justify-between gap-4 p-5">
+      <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div>
           <p className="text-sm font-bold">{t("prefs.lang")}</p>
           <p className="text-sm text-muted-foreground">{t("prefs.lang.desc")}</p>
         </div>
-        <div className="flex gap-1 rounded-xl bg-muted p-1">
-          {(["pt", "en"] as const).map((l) => (
-            <button
-              key={l}
-              type="button"
-              onClick={() => setLang(l)}
-              className={
-                "rounded-lg px-3 py-1.5 text-xs font-bold uppercase transition-colors " +
-                (lang === l ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")
-              }
-            >
-              {l === "pt" ? "Português" : "English"}
-            </button>
-          ))}
-        </div>
+        <Select value={lang} onValueChange={(v) => isLang(v) && setLang(v)}>
+          <SelectTrigger aria-label={t("prefs.lang")} className="w-full shrink-0 font-bold sm:w-52">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent align="end">
+            {LANGS.map((l) => (
+              <SelectItem key={l.code} value={l.code} lang={l.locale} className="font-bold">
+                {l.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <button type="button" onClick={signOut} className="flex w-full items-center gap-3 p-5 text-left text-sm font-bold text-destructive hover:bg-muted">
         <LogOut className="size-4" /> {t("nav.logout")}

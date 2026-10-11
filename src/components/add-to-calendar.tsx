@@ -15,12 +15,16 @@ import { CalendarPlus, ChevronDown } from "lucide-react";
 import { usePrefs } from "@/lib/prefs";
 
 /** Single compact menu with every calendar export option. */
-export function AddToCalendar({ event }: { event: CalendarEvent }) {
+export function AddToCalendar({ event, subtle }: { event: CalendarEvent; subtle?: boolean }) {
   const { t } = usePrefs();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="mt-2 w-full">
+        <Button
+          variant={subtle ? "ghost" : "outline"}
+          size={subtle ? "sm" : "default"}
+          className={subtle ? "mx-auto" : "mt-2 w-full"}
+        >
           <CalendarPlus className="mr-2 size-4" /> {t("cal.add.button")}
           <ChevronDown className="ml-2 size-4" />
         </Button>
