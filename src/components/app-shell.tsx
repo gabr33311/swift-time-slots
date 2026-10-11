@@ -15,6 +15,8 @@ import { useSubscription } from "@/hooks/use-subscription";
 import { SycrasLogo } from "@/components/sycras-logo";
 import { useBrandColor } from "@/lib/brand";
 import { useAppColor } from "@/hooks/use-app-color";
+import { registerPush } from "@/lib/native";
+import { useAuth } from "@/hooks/use-auth";
 
 const NAV = [
   { to: "/today", label: "nav.today", icon: House },
@@ -131,8 +133,14 @@ export function AppShell({
   const logoUrl = useLogoUrl(business?.logo_url);
   // The app has its own colour (a personal choice); the business colour is for clients.
   const { color: appColor } = useAppColor();
-  const { theme } = usePrefs();
+  const { theme, t: tr } = usePrefs();
   useBrandColor(appColor, theme === "dark");
+  // Native app: back button, and this phone registered for booking notifications.
+  const { user } = useAuth();
+  useEffect(() => {
+    if (user?.id)
+      void registerPush(user.id, { channel: tr("push.channel"), open: tr("push.open") });
+  }, [user?.id, tr]);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { access } = useSubscription();

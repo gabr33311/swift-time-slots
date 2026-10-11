@@ -214,12 +214,20 @@ export const createPublicBooking = createServerFn({ method: "POST" })
       expires_at: new Date(new Date(appointment.ends_at).getTime() + 90 * 86400000).toISOString(),
     });
 
-    await supabaseAdmin.from("notifications").insert({
+    const note = {
       business_id: data.businessId,
       type: "appointment_requested",
       title: appointment.status === "confirmed" ? "Nova marcação" : "Novo pedido de marcação",
       body: `${data.name} — ${service.name}`,
       appointment_id: appointment.id,
+    };
+    await supabaseAdmin.from("notifications").insert(note);
+    // The business's phones get it as a push notification too.
+    const { pushToBusiness } = await import("@/lib/push.server");
+    await pushToBusiness(note.business_id, {
+      title: note.title,
+      body: note.body,
+      appointmentId: note.appointment_id,
     });
 
     await logSecurityEvent("booking_created", ipHash, data.phone, data.businessId);
@@ -325,12 +333,20 @@ export const cancelBookingByToken = createServerFn({ method: "POST" })
       status: "cancelled",
       note: "Cancelada pelo cliente",
     });
-    await supabaseAdmin.from("notifications").insert({
+    const note = {
       business_id: appt.business_id,
       type: "appointment_cancelled",
       title: "Marcação cancelada",
       body: `${appt.customer_name} — ${appt.service_name}`,
       appointment_id: appt.id,
+    };
+    await supabaseAdmin.from("notifications").insert(note);
+    // The business's phones get it as a push notification too.
+    const { pushToBusiness } = await import("@/lib/push.server");
+    await pushToBusiness(note.business_id, {
+      title: note.title,
+      body: note.body,
+      appointmentId: note.appointment_id,
     });
     return { ok: true as const };
   });
@@ -433,12 +449,20 @@ export const rescheduleBookingByToken = createServerFn({ method: "POST" })
         message: "Este horário acabou de ser reservado. Escolhe outro horário.",
       };
 
-    await supabaseAdmin.from("notifications").insert({
+    const note = {
       business_id: appt.business_id,
       type: "appointment_rescheduled",
       title: "Marcação reagendada",
       body: `Nova data: ${data.date} às ${data.time}`,
       appointment_id: appt.id,
+    };
+    await supabaseAdmin.from("notifications").insert(note);
+    // The business's phones get it as a push notification too.
+    const { pushToBusiness } = await import("@/lib/push.server");
+    await pushToBusiness(note.business_id, {
+      title: note.title,
+      body: note.body,
+      appointmentId: note.appointment_id,
     });
     return { ok: true as const };
   });

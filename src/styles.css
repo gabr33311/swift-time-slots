@@ -927,3 +927,33 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
 .status-done-text {
   color: var(--st-completed-fg);
 }
+
+/* App feel: no text selection or long-press menu on UI; fields stay editable. */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+input,
+textarea,
+select,
+[contenteditable="true"],
+.selectable {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+/* Full-height screens fit exactly: the status-bar padding on body is taken out,
+   and the small viewport unit keeps phones from scrolling by a few pixels. */
+.min-h-screen {
+  min-height: calc(100svh - var(--sat));
+}
+.min-h-dvh {
+  min-height: calc(100dvh - var(--sat));
+}
+
+/* Inner scrolling areas (sheets, lists) don't stretch or pull the page either. */
+* {
+  overscroll-behavior: none;
+}

@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { PrefsProvider, usePrefs } from "@/lib/prefs";
+import { initNativeShell } from "@/lib/native";
 
 function NotFoundComponent() {
   const { t } = usePrefs();
@@ -133,6 +134,11 @@ function RootComponent() {
     if (hash.includes("type=recovery") && pathname !== "/reset-password") {
       window.location.replace(`/reset-password${hash}`);
     }
+  }, []);
+
+  // Native app: Android back button, and the splash leaves once the page is ready.
+  useEffect(() => {
+    void initNativeShell();
   }, []);
 
   return (

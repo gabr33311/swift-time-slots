@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { onOpenAppointmentRequest } from "@/lib/native";
 import {
   Ban,
   BellRing,
@@ -735,6 +736,9 @@ export function AppSheetsProvider({ children }: { children: ReactNode }) {
       setCustomerId(id);
     },
   };
+  // A tapped push notification opens its appointment here.
+  useEffect(() => onOpenAppointmentRequest(api.openAppointment), []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <AppointmentSheetContext.Provider value={api}>
       {children}

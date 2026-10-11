@@ -2,6 +2,7 @@ import { toast } from "sonner";
 import type { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sendAppointmentConfirmedEmail } from "@/lib/confirmation-email.functions";
+import { haptic } from "@/lib/native";
 
 export type ApptStatus =
   "confirmed" | "completed" | "cancelled" | "no_show" | "pending" | "expired";
@@ -78,6 +79,9 @@ export async function setAppointmentStatus(input: {
       return { ok: false, message: "Este horário já está ocupado por outra marcação." };
     return { ok: false, message: error.message };
   }
+
+  // A light confirmation on the phone (native app only).
+  void haptic(input.status === "cancelled" || input.status === "no_show" ? "warning" : "success");
 
   await supabase.from("appointment_status_history").insert({
     appointment_id: input.id,

@@ -22,7 +22,9 @@ const config: CapacitorConfig = {
       initialViewportFitValueHint: "cover",
     },
     SplashScreen: {
-      launchShowDuration: 600,
+      // Hidden by the app once the page has loaded (no white flash); 4 s safety net.
+      launchAutoHide: true,
+      launchShowDuration: 4000,
       backgroundColor: "#0a6cf0",
       showSpinner: false,
     },

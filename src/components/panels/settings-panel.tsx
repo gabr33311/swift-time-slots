@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ChevronRight, Crown, LogOut } from "lucide-react";
+import { Bell, ChevronRight, Crown, LogOut } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Button } from "@/components/ui/button";
+import { sendTestPush } from "@/lib/push.functions";
 import { useSubscription } from "@/hooks/use-subscription";
 import { ColorSwatches } from "@/components/color-swatches";
 import { useAppColor } from "@/hooks/use-app-color";
@@ -33,6 +36,22 @@ export function SettingsPanel() {
   const { theme, setTheme, lang, setLang, t } = usePrefs();
   const { color: appColor, setColor: setAppColor } = useAppColor();
   const { access } = useSubscription();
+  const [testingPush, setTestingPush] = useState(false);
+  const sendPush = useServerFn(sendTestPush);
+  async function testPush() {
+    if (!business) return;
+    setTestingPush(true);
+    try {
+      const { sent } = await sendPush({ data: { businessId: business.id } });
+      if (sent > 0) toast.success(t("push.test.sent"));
+      else if (sent < 0) toast.error(t("push.test.notConfigured"));
+      else toast.error(t("push.test.noPhone"));
+    } catch {
+      toast.error(t("push.test.failed"));
+    } finally {
+      setTestingPush(false);
+    }
+  }
   const planBadge =
     access?.state === "active"
       ? "Pro"
@@ -83,6 +102,22 @@ export function SettingsPanel() {
         </span>
         <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
       </Link>
+      {/* Push notifications on this phone (native app). */}
+      <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div>
+          <p className="text-sm font-bold">{t("push.title")}</p>
+          <p className="text-sm text-muted-foreground">{t("push.desc")}</p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          disabled={testingPush || !business}
+          onClick={() => void testPush()}
+        >
+          <Bell /> {t("push.test")}
+        </Button>
+      </div>
       <Row
         title={t("pf.set.published")}
         description={t("pf.set.published.desc")}
