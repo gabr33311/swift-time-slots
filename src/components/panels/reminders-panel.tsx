@@ -1,7 +1,10 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { BellRing, Mail } from "lucide-react";
+import { BellRing, Loader2, Mail, Send } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Button } from "@/components/ui/button";
+import { sendTestReminder } from "@/lib/reminders.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { useMyBusiness } from "@/hooks/use-business";
@@ -17,6 +20,25 @@ export function RemindersPanel() {
   const { t } = usePrefs();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const sendTest = useServerFn(sendTestReminder);
+
+  async function test() {
+    if (!business) return;
+    setTesting(true);
+    try {
+      const res = await sendTest({ data: { businessId: business.id } });
+      if (res.ok) toast.success(t("rm.test.sent").replace("{email}", res.to));
+      else
+        toast.error(
+          t(res.reason === "not_configured" ? "rm.test.notConfigured" : "rm.test.failed"),
+        );
+    } catch {
+      toast.error(t("rm.test.failed"));
+    } finally {
+      setTesting(false);
+    }
+  }
   const enabled = business?.reminders_enabled ?? true;
   const hours = business?.reminder_hours ?? 24;
   const page = brandColors(business?.brand_color);
@@ -132,6 +154,10 @@ export function RemindersPanel() {
           </p>
         </div>
         <p className="text-xs text-muted-foreground">{t("rm.onlyEmail")}</p>
+        <Button variant="outline" onClick={() => void test()} disabled={testing || !business}>
+          {testing ? <Loader2 className="animate-spin" /> : <Send />}
+          {t("rm.test")}
+        </Button>
       </section>
     </div>
   );

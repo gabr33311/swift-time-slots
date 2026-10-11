@@ -7,6 +7,7 @@ import {
   Heading,
   Hr,
   Html,
+  Link,
   Preview,
   Section,
   Text,
@@ -20,6 +21,7 @@ interface Props {
   date?: string;
   time?: string;
   address?: string;
+  mapUrl?: string;
   manageUrl?: string;
   brandColor?: string;
   brandText?: string;
@@ -32,6 +34,7 @@ const Email = ({
   date,
   time,
   address,
+  mapUrl,
   manageUrl,
   brandColor,
   brandText,
@@ -58,7 +61,14 @@ const Email = ({
           </Text>
           {address && (
             <Text style={row}>
-              <b>Local:</b> {address}
+              <b>Local:</b>{" "}
+              {mapUrl ? (
+                <Link href={mapUrl} style={{ color: brandColor || "#0a6cf0" }}>
+                  {address}
+                </Link>
+              ) : (
+                address
+              )}
             </Text>
           )}
         </Section>

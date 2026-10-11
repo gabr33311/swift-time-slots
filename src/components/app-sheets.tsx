@@ -134,6 +134,13 @@ function useSheetAppointment(id: string | null) {
         .maybeSingle();
       if (error) throw error;
       if (!data) return null;
+      // When the client's reminder email went out (if it did).
+      const { data: reminder } = await supabase
+        .from("appointment_reminders")
+        .select("created_at")
+        .eq("appointment_id", data.id)
+        .eq("kind", "email")
+        .maybeSingle();
       let staffName: string | null = null;
       if (data.staff_id) {
         const { data: staff } = await supabase
@@ -143,7 +150,11 @@ function useSheetAppointment(id: string | null) {
           .maybeSingle();
         staffName = staff?.name ?? null;
       }
-      return { appt: data as SheetAppointment, staffName };
+      return {
+        appt: data as SheetAppointment,
+        staffName,
+        reminderAt: reminder?.created_at ?? null,
+      };
     },
   });
 }
@@ -152,11 +163,13 @@ function useSheetAppointment(id: string | null) {
 function AppointmentSheetBody({
   appt,
   staffName,
+  reminderAt,
   onClose,
   onOpenCustomer,
 }: {
   appt: SheetAppointment;
   staffName: string | null;
+  reminderAt: string | null;
   onClose: () => void;
   onOpenCustomer: (id: string) => void;
 }) {
@@ -181,6 +194,26 @@ function AppointmentSheetBody({
     ? Math.round((new Date(appt.ends_at).getTime() - new Date(appt.starts_at).getTime()) / 60000)
     : null;
   const due = cmd.can.complete && appt.status !== "no_show";
+  // The client's reminder: sent, scheduled, or impossible (no email).
+  const upcoming =
+    new Date(appt.starts_at).getTime() > Date.now() &&
+    (appt.status === "confirmed" || appt.status === "pending");
+  const sendAt = new Date(
+    new Date(appt.starts_at).getTime() - (business?.reminder_hours ?? 24) * 3600000,
+  );
+  const reminder = reminderAt
+    ? t("sheet.reminder.sent")
+        .replace("{date}", formatDateLong(reminderAt, tz))
+        .replace("{time}", formatTime(reminderAt, tz))
+    : !upcoming || !business?.reminders_enabled
+      ? null
+      : !appt.customer_email
+        ? t("sheet.reminder.noEmail")
+        : sendAt.getTime() > Date.now()
+          ? t("sheet.reminder.scheduled")
+              .replace("{date}", formatDateLong(sendAt.toISOString(), tz))
+              .replace("{time}", formatTime(sendAt.toISOString(), tz))
+          : null;
 
   async function act(next: ApptStatusValue) {
     const ok = await cmd.setStatus(next);
@@ -273,6 +306,11 @@ function AppointmentSheetBody({
             >
               {appt.customer_email}
             </a>
+          </InfoRow>
+        )}
+        {reminder && (
+          <InfoRow icon={<BellRing className="size-4" />} label={t("sheet.reminder")}>
+            {reminder}
           </InfoRow>
         )}
         <InfoRow icon={<CalendarPlus className="size-4" />} label={t("sheet.source")}>
@@ -408,6 +446,7 @@ function AppointmentSheet({
           key={data.appt.id}
           appt={data.appt}
           staffName={data.staffName}
+          reminderAt={data.reminderAt}
           onClose={() => onOpenChange(false)}
           onOpenCustomer={onOpenCustomer}
         />

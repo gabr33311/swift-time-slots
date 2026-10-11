@@ -1,5 +1,6 @@
 // Server-only: emails clients a reminder before their appointment. Never import from the browser.
 import { brandColors } from "@/lib/brand";
+import { mapsUrl } from "@/lib/maps";
 import { businessAllowed } from "@/lib/billing.server";
 
 type DueRow = {
@@ -16,6 +17,8 @@ type DueRow = {
     timezone: string;
     address: string | null;
     city: string | null;
+    latitude: number | null;
+    longitude: number | null;
     brand_color: string;
     created_at: string;
     reminders_enabled: boolean;
@@ -44,7 +47,7 @@ export async function sendDueReminders(): Promise<{ sent: number; skipped: numbe
   const { data, error } = await db
     .from("appointments")
     .select(
-      "id, business_id, customer_name, customer_email, service_name, starts_at, ends_at, created_at, businesses!inner(name, timezone, address, city, brand_color, created_at, reminders_enabled, reminder_hours)",
+      "id, business_id, customer_name, customer_email, service_name, starts_at, ends_at, created_at, businesses!inner(name, timezone, address, city, latitude, longitude, brand_color, created_at, reminders_enabled, reminder_hours)",
     )
     .eq("status", "confirmed")
     .not("customer_email", "is", null)
@@ -113,6 +116,11 @@ export async function sendDueReminders(): Promise<{ sent: number; skipped: numbe
             timeZone: tz,
           }).format(d),
           address: [biz.address, biz.city].filter(Boolean).join(", ") || undefined,
+          mapUrl:
+            mapsUrl({
+              ...biz,
+              address: [biz.address, biz.city].filter(Boolean).join(", "),
+            }) ?? undefined,
           manageUrl: origin && tokenRow ? `${origin}/booking/${tokenRow.token}` : undefined,
           brandColor: colors.brand,
           brandText: colors.foreground,
