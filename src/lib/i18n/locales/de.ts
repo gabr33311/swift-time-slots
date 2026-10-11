@@ -820,6 +820,7 @@ export const de: Record<string, string> = {
   "home.float.blocked": "Zeit gesperrt",
   "home.float.noOverlap": "Keine Überschneidungen",
   "home.mock.today": "Heute",
+  "home.mock.day": "Fr 16",
   "home.mock.confirmed": "Bestätigt",
   "home.mock.pending": "Ausstehend",
   "home.mock.services": "Wähle die Leistung",

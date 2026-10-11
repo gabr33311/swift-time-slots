@@ -821,6 +821,7 @@ export const fr: Record<string, string> = {
   "home.float.blocked": "Créneau bloqué",
   "home.float.noOverlap": "Aucun chevauchement",
   "home.mock.today": "Aujourd’hui",
+  "home.mock.day": "Ven 16",
   "home.mock.confirmed": "Confirmé",
   "home.mock.pending": "En attente",
   "home.mock.services": "Choisissez la prestation",

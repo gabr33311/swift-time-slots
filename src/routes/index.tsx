@@ -107,16 +107,17 @@ function Landing() {
               {t("home.nav.faq")}
             </a>
           </nav>
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex min-w-0 items-center gap-1 sm:gap-2">
             <PrefsToggles />
+            {/* Phones: the hero already has "I have an account"; keep the bar to one action. */}
             <Link
               to="/auth"
               search={SIGN_IN}
-              className="flex h-11 items-center rounded-full px-3 text-sm font-bold text-muted-foreground transition-colors hover:text-foreground"
+              className="hidden h-11 items-center whitespace-nowrap rounded-full px-3 text-sm font-bold text-muted-foreground transition-colors hover:text-foreground sm:flex"
             >
               {t("home.signin")}
             </Link>
-            <Button asChild size="sm">
+            <Button asChild size="sm" className="shrink-0">
               <Link to="/auth" search={REGISTER}>
                 {t("home.cta.start")}
               </Link>
@@ -159,8 +160,9 @@ function Landing() {
 
         {/* Pré-visualização */}
         <section className="mx-auto max-w-5xl px-4 pb-20 sm:px-6 sm:pb-28">
-          <div className="relative rounded-[2rem] border border-border bg-muted/50 px-4 py-8 sm:px-10 sm:py-12">
-            <div className="grid gap-5 sm:grid-cols-2 sm:gap-8">
+          {/* Phones: just the two mocks. From sm up they sit on a soft panel. */}
+          <div className="relative sm:rounded-[2rem] sm:border sm:border-border sm:bg-muted/50 sm:px-10 sm:py-12">
+            <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 sm:gap-8 [&>*]:min-w-0">
               <AgendaPreview />
               <BookingPreview />
             </div>
@@ -168,7 +170,9 @@ function Landing() {
               <Check className="size-4" strokeWidth={3} />
               <span>
                 <span className="block text-[13px] font-bold">{t("home.float.confirmed")}</span>
-                <span className="block text-xs text-muted-foreground">Sex 16 · 14:30</span>
+                <span className="block text-xs text-muted-foreground">
+                  {t("home.mock.day")} · 14:30
+                </span>
               </span>
             </FloatCard>
             <FloatCard className="-bottom-6 right-6 lg:right-10">
@@ -342,7 +346,7 @@ function Phone({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div
       aria-hidden
-      className="mx-auto w-full max-w-[340px] rounded-[2rem] border border-border bg-card p-4 shadow-[var(--shadow-lift)]"
+      className="mx-auto w-full max-w-[340px] overflow-hidden rounded-[2rem] border border-border bg-card p-4 shadow-[var(--shadow-lift)]"
     >
       <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-muted" />
       <p className="px-1 text-sm font-bold">{title}</p>
@@ -355,15 +359,15 @@ function AgendaPreview() {
   const { t } = usePrefs();
   return (
     <figure>
-      <Phone title={`${t("home.mock.today")} · Sex 16`}>
+      <Phone title={`${t("home.mock.today")} · ${t("home.mock.day")}`}>
         <ul className="space-y-2">
           {AGENDA.map((a) => (
             <li
               key={a.time}
               className="flex items-center gap-3 rounded-2xl border border-border p-2.5"
             >
-              <span className="w-11 text-xs font-bold tabular-nums">{a.time}</span>
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand/12 text-xs font-bold text-brand-ink">
+              <span className="w-11 shrink-0 text-xs font-bold tabular-nums">{a.time}</span>
+              <span className="hidden size-8 shrink-0 items-center justify-center rounded-full bg-brand/12 text-xs font-bold text-brand-ink min-[420px]:flex">
                 {a.name[0]}
               </span>
               <span className="min-w-0 flex-1">
@@ -372,7 +376,7 @@ function AgendaPreview() {
               </span>
               <span
                 className={cn(
-                  "rounded-full px-2 py-0.5 text-[10px] font-bold",
+                  "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold",
                   a.status === "confirmed"
                     ? "bg-st-confirmed/15 text-st-confirmed-fg"
                     : "bg-st-pending/15 text-st-pending-fg",
@@ -403,8 +407,8 @@ function BookingPreview() {
                 i === 0 ? "border-brand bg-brand/5" : "border-border",
               )}
             >
-              <span className="font-bold">{t(s.key)}</span>
-              <span className="text-xs text-muted-foreground">
+              <span className="min-w-0 truncate font-bold">{t(s.key)}</span>
+              <span className="shrink-0 pl-2 text-xs text-muted-foreground">
                 {s.min} min · {s.price}
               </span>
             </li>

@@ -812,6 +812,7 @@ export const ptBR: Record<string, string> = {
   "home.float.blocked": "Horário bloqueado",
   "home.float.noOverlap": "Sem sobreposições",
   "home.mock.today": "Hoje",
+  "home.mock.day": "Sex 16",
   "home.mock.confirmed": "Confirmado",
   "home.mock.pending": "Pendente",
   "home.mock.services": "Escolha o serviço",
