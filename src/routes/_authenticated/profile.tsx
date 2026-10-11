@@ -130,12 +130,11 @@ function ProfilePage() {
           !section ? (
             <Button
               variant="outline"
-              size="icon"
-              aria-label={t("pf.s.settings")}
-              title={t("pf.s.settings")}
               onClick={() => void navigate({ to: "/settings" })}
+              className="h-11 gap-2 border-brand/30 bg-brand/10 px-4 text-brand-ink hover:bg-brand/15 hover:text-brand-ink"
             >
               <Settings className="size-[18px]" />
+              {t("pf.s.settings")}
             </Button>
           ) : null
         }
@@ -160,7 +159,7 @@ function ProfilePage() {
         >
           {/* The business at a glance: who, its link, and the two things you do with it. */}
           {business && (
-            <div className="relative overflow-hidden rounded-[var(--radius-xl)] bg-brand p-4 text-brand-foreground shadow-[0_14px_30px_-18px_var(--brand)]">
+            <div className="relative overflow-hidden rounded-[var(--radius-xl)] bg-brand p-3.5 text-brand-foreground shadow-[0_14px_30px_-18px_var(--brand)] sm:p-4">
               <div
                 aria-hidden
                 className="pointer-events-none absolute -right-10 -top-12 size-40 rounded-full bg-white/10"
@@ -178,7 +177,7 @@ function ProfilePage() {
                   </span>
                 )}
                 <span className="min-w-0 flex-1">
-                  <span className="line-clamp-2 font-display text-lg font-bold leading-tight">
+                  <span className="line-clamp-2 font-display text-base font-bold leading-tight sm:text-lg">
                     {business.name}
                   </span>
                   <span className="mt-0.5 block truncate text-xs font-semibold opacity-80">
@@ -216,39 +215,22 @@ function ProfilePage() {
                   type="button"
                   onClick={() => setSection(row.id)}
                   className={cn(
-                    "surface group flex min-h-[5.5rem] flex-col justify-between gap-2 p-3.5 text-left transition-[background-color,transform] duration-150 active:scale-[0.97] active:bg-muted",
-                    wide && "col-span-2 min-h-0 flex-row items-center",
+                    "surface group flex flex-col gap-1.5 p-3 text-left transition-[background-color,transform] duration-150 active:scale-[0.97] active:bg-muted",
+                    wide && "col-span-2 flex-row items-center gap-3",
                   )}
                 >
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand/12 text-brand-ink">
-                    <row.icon className="size-[17px]" />
-                  </span>
-                  <span className={cn("min-w-0", wide && "flex-1")}>
-                    <span className="block truncate text-sm font-bold leading-tight">
-                      {label(row.id)}
+                  <span className={cn("flex min-w-0 items-center gap-2", wide && "flex-1")}>
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand/12 text-brand-ink">
+                      <row.icon className="size-4" />
                     </span>
-                    <span
-                      className={cn(
-                        "mt-0.5 flex items-center gap-1 truncate text-[11px] font-semibold leading-snug",
-                        status?.warn ? "text-st-pending-fg" : "text-muted-foreground",
-                      )}
-                    >
-                      {status?.dot && (
-                        <span
-                          aria-hidden
-                          className="size-2 shrink-0 rounded-full ring-1 ring-black/10"
-                          style={{ backgroundColor: status.dot }}
-                        />
-                      )}
-                      {status?.warn && (
-                        <span
-                          aria-hidden
-                          className="size-1.5 shrink-0 rounded-full bg-st-pending"
-                        />
-                      )}
-                      <span className="truncate">{status?.text ?? desc(row.id)}</span>
+                    <span className="min-w-0">
+                      <span className="line-clamp-2 text-sm font-bold leading-tight">
+                        {label(row.id)}
+                      </span>
+                      {wide && <TileStatus status={status} fallback={desc(row.id)} />}
                     </span>
                   </span>
+                  {!wide && <TileStatus status={status} fallback={desc(row.id)} />}
                   {wide && <ChevronRight className="size-4 shrink-0 text-muted-foreground" />}
                 </button>
               );
@@ -449,4 +431,31 @@ function useManageSummary(): Partial<Record<SectionId, RowStatus>> {
     text: `${manual ? t("mg.rules.manual") : t("mg.rules.auto")} · ${t("mg.rules.cancel").replace("{h}", String(business.cancellation_hours))}`,
   };
   return out;
+}
+
+/** The live state under a tile's title: up to two lines, never cut mid-way. */
+function TileStatus({ status, fallback }: { status: RowStatus | undefined; fallback: string }) {
+  return (
+    <span
+      className={cn(
+        "line-clamp-2 text-[11px] font-semibold leading-snug",
+        status?.warn ? "text-st-pending-fg" : "text-muted-foreground",
+      )}
+    >
+      {status?.dot && (
+        <span
+          aria-hidden
+          className="mr-1 inline-block size-2 rounded-full align-middle ring-1 ring-black/10"
+          style={{ backgroundColor: status.dot }}
+        />
+      )}
+      {status?.warn && (
+        <span
+          aria-hidden
+          className="mr-1 inline-block size-1.5 rounded-full bg-st-pending align-middle"
+        />
+      )}
+      {status?.text ?? fallback}
+    </span>
+  );
 }
