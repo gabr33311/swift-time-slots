@@ -146,7 +146,19 @@ function TodayPage() {
 
   return (
     <AppShell>
-      <PageHeader title={greetingPt(new Date(now), lang)} />
+      <PageHeader
+        title={greetingPt(new Date(now), lang)}
+        action={
+          // Phones: the stats sit up here, like the other tabs' main button.
+          // Desktop shows the "This week" card at the top of the side column instead.
+          <Button asChild variant="outline" size="sm" className="lg:hidden">
+            <Link to="/analytics">
+              <BarChart3 className="size-4" />
+              {t("pf.s.analytics")}
+            </Link>
+          </Button>
+        }
+      />
       <p className="-mt-2 mb-5 text-sm font-medium text-muted-foreground first-letter:uppercase">
         {formatDateLong(new Date(now).toISOString(), tz)}
       </p>
@@ -234,7 +246,7 @@ function TodayPage() {
             </section>
           </div>
 
-          <div className="space-y-4">
+          <div className="hidden space-y-4 lg:block">
             <Link
               to="/analytics"
               className="surface flex items-center gap-3.5 p-4 transition-colors hover:bg-muted/40"
