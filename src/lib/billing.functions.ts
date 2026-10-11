@@ -72,12 +72,24 @@ export const startCheckout = createServerFn({ method: "POST" })
     const { business, sub, supabaseAdmin } = found;
 
     try {
-      // One Stripe customer per business, created the first time.
+      // One Stripe customer per business, created the first time. A saved id from
+      // another Stripe account (e.g. switching test/live) is replaced.
       let customerId = sub?.stripe_customer_id ?? null;
+      if (customerId) {
+        try {
+          const existing = await stripe().customers.retrieve(customerId);
+          if ((existing as { deleted?: boolean }).deleted) customerId = null;
+        } catch {
+          customerId = null;
+        }
+      }
       if (!customerId) {
         const customer = await stripe().customers.create({
           name: business.name,
-          ...(business.email ? { email: business.email } : {}),
+          // Only a well-formed email; a typo there must not block the payment.
+          ...(business.email && /^[^s@]+@[^s@]+.[^s@]+$/.test(business.email)
+            ? { email: business.email }
+            : {}),
           metadata: { business_id: business.id },
         });
         customerId = customer.id;
@@ -115,9 +127,11 @@ export const startCheckout = createServerFn({ method: "POST" })
       return { ok: true as const, url: session.url };
     } catch (e) {
       console.error("[billing] checkout failed", e);
+      // Stripe's own message tells the owner (and us) what to fix.
+      const detail = e instanceof Error ? e.message.slice(0, 160) : "";
       return {
         ok: false as const,
-        message: "Não foi possível abrir o pagamento. Tenta novamente.",
+        message: `Não foi possível abrir o pagamento. Tenta novamente.${detail ? ` (${detail})` : ""}`,
       };
     }
   });
