@@ -61,6 +61,9 @@ function authMessage(err: unknown, t: (k: string) => string): string {
   if (/expired|invalid/i.test(message) && /token|otp/i.test(message)) return t("auth.err.code");
   if (status === 429 || /rate limit|after \d+ seconds/i.test(message))
     return t("onb.auth.err.rateLimit");
+  // Supabase could not send the email (usually the SMTP / sender settings).
+  if (/sending .*email|smtp/i.test(message)) return t("auth.err.emailSend");
+  console.error("[auth]", status, message);
   return t("onb.auth.err.generic");
 }
 
