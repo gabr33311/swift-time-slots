@@ -161,7 +161,13 @@ export function AppShell({
 
   // Hold the panel until we know the setup is finished (avoids ghost-account flashes).
   if (!isSuccess || !business || business.onboarding_completed === false) {
-    return <div className="min-h-screen bg-background" />;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <span className="flex size-12 animate-pulse items-center justify-center rounded-2xl bg-brand">
+          <SycrasLogo className="size-6" onColor />
+        </span>
+      </div>
+    );
   }
 
   return (

@@ -9,22 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMyBusiness } from "@/hooks/use-business";
 import { initials } from "@/lib/format";
-import { Users, Ban, ShieldCheck, Search, ChevronRight, Plus } from "lucide-react";
+import { Users, ShieldCheck, Search, ChevronRight, Plus } from "lucide-react";
 import { EditCustomerDialog, type EditableCustomer } from "@/components/edit-customer-dialog";
 import { cn } from "@/lib/utils";
 import { usePrefs } from "@/lib/prefs";
 import { useAppointmentSheet } from "@/lib/appointment-sheet-context";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/customers")({
   head: () => ({
@@ -209,36 +198,7 @@ function CustomersPage() {
                   <ShieldCheck className="size-4" />
                   <span className="hidden sm:inline">{t("cust.unblock")}</span>
                 </Button>
-              ) : (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`${t("cust.block")} ${c.name}`}
-                      title={t("cust.block")}
-                      className="shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
-                    >
-                      <Ban className="size-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        {t("cust.blockTitle")} {c.name}
-                        {t("cust.blockConfirmSuffix")}
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>{t("cust.blockDesc")}</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>{t("cust.cancel")}</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => toggleBlock(c.id, false)}>
-                        {t("cust.block")}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
+              ) : null}
             </li>
           ))}
         </ul>

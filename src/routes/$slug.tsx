@@ -59,7 +59,16 @@ export const Route = createFileRoute("/$slug")({
         { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
-        { name: "twitter:card", content: "summary_large_image" },
+        // The banner (or logo) shows in WhatsApp / Instagram link previews.
+        ...(b.cover_url || b.logo_url
+          ? [
+              { property: "og:image", content: (b.cover_url ?? b.logo_url)! },
+              {
+                name: "twitter:card",
+                content: b.cover_url ? "summary_large_image" : "summary",
+              },
+            ]
+          : [{ name: "twitter:card", content: "summary" }]),
         ...(b.seo_indexable ? [] : [{ name: "robots", content: "noindex" }]),
       ],
     };
@@ -586,8 +595,11 @@ function BookPage() {
                         }}
                         className={cn(
                           "mx-auto flex aspect-square w-full max-w-11 items-center justify-center rounded-full text-sm font-bold tabular-nums transition-colors",
-                          past &&
-                            "cursor-not-allowed font-medium text-muted-foreground/40 line-through",
+                          past && "cursor-not-allowed font-medium text-muted-foreground/40",
+                          // Closed or gone days are struck through; today is never, it gets a dot.
+                          past && d !== today && "line-through",
+                          d === today &&
+                            "relative after:absolute after:bottom-1 after:size-1 after:rounded-full after:bg-current",
                           !past && !(dayPicked && date === d) && "hover:bg-accent",
                           !past &&
                             d === today &&

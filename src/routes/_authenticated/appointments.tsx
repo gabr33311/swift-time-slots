@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   UserX,
+  Share2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -233,6 +234,14 @@ function AppointmentsPage() {
           icon={<CalendarX className="size-6" />}
           title={t("appt.empty.title")}
           description={t("appt.empty.desc")}
+          action={
+            // No bookings yet: the fix is getting the link out there.
+            <Button variant="outline" asChild>
+              <Link to="/profile" search={{ section: "share" }}>
+                <Share2 /> {t("appt.empty.share")}
+              </Link>
+            </Button>
+          }
         />
       ) : (
         // Grouped by day: the date is said once, the rows only show the time.

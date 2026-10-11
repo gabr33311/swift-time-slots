@@ -374,39 +374,70 @@ export function NewAppointmentDialog({
             </div>
           )}
           <div className="space-y-1.5">
-            <Label htmlFor="svc">{t("cal.field.service")}</Label>
-            <select
-              id="svc"
-              value={serviceId}
-              onChange={(e) => setServiceId(e.target.value)}
-              className="h-11 w-full rounded-xl border border-border bg-card px-3.5 text-base transition-colors focus-visible:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 md:text-sm"
+            <Label id="svc-label">{t("cal.field.service")}</Label>
+            {/* Tappable list: name, duration and price at a glance. */}
+            <div
+              role="radiogroup"
+              aria-labelledby="svc-label"
+              className="max-h-56 space-y-1.5 overflow-y-auto rounded-xl"
             >
-              <option value="">{t("cal.choose")}</option>
-              {data?.services.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} · {s.duration_minutes} min ·{" "}
-                  {formatPrice(s.price_cents, business.currency)}
-                </option>
-              ))}
-            </select>
+              {data?.services.map((s) => {
+                const active = serviceId === s.id;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setServiceId(s.id)}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-left transition-colors",
+                      active
+                        ? "border-brand bg-brand/8 ring-1 ring-brand"
+                        : "border-border bg-card hover:bg-muted",
+                    )}
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-bold">{s.name}</span>
+                      <span className="block text-xs text-muted-foreground">
+                        {s.duration_minutes} min
+                      </span>
+                    </span>
+                    <span className="flex shrink-0 items-center gap-2 text-sm font-bold tabular-nums">
+                      {formatPrice(s.price_cents, business.currency)}
+                      {active && <Check className="size-4 text-brand-ink" strokeWidth={3} />}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
           {/* Only ask for the professional when there is a real choice. */}
           {staffForService.length > 1 && (
             <div className="space-y-1.5">
-              <Label htmlFor="stf">{t("cal.field.staff")}</Label>
-              <select
-                id="stf"
-                value={staffId}
-                onChange={(e) => setStaffId(e.target.value)}
-                className="h-11 w-full rounded-xl border border-border bg-card px-3.5 text-base transition-colors focus-visible:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 md:text-sm"
-              >
-                <option value="">{t("cal.choose")}</option>
-                {staffForService.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+              <Label id="stf-label">{t("cal.field.staff")}</Label>
+              <div role="radiogroup" aria-labelledby="stf-label" className="flex flex-wrap gap-2">
+                {staffForService.map((s) => {
+                  const active = staffId === s.id;
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => setStaffId(s.id)}
+                      className={cn(
+                        "h-10 rounded-full border px-4 text-sm font-bold transition-colors",
+                        active
+                          ? "border-brand bg-brand text-brand-foreground"
+                          : "border-border bg-card hover:bg-muted",
+                      )}
+                    >
+                      {s.name}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
