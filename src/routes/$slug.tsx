@@ -12,12 +12,13 @@ import { isReservedSlug } from "@/lib/reserved-slugs";
 import { LegalLinks } from "@/components/legal-page";
 
 import { Button } from "@/components/ui/button";
+import { SycrasLogo } from "@/components/sycras-logo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FieldError, FormError } from "@/components/ui-bits";
-import { formatDuration, formatPrice, formatDateLong, initials } from "@/lib/format";
+import { currentLocale, formatDuration, formatPrice, formatDateLong, initials } from "@/lib/format";
 import { addMonthsClamped, todayIn, zonedToUtc, weekdayOf } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { useBrandColor } from "@/lib/brand";
@@ -82,12 +83,15 @@ function CenteredMessage({ title, body }: { title: string; body: string }) {
   const { t } = usePrefs();
   return (
     <main className="flex min-h-screen items-center justify-center px-6 text-center">
-      <div>
-        <h1 className="text-xl font-bold">{title}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{body}</p>
-        <Link to="/" className="mt-6 inline-block text-sm font-medium text-primary underline">
-          {t("bk.backHome")}
-        </Link>
+      <div className="animate-enter max-w-sm">
+        <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-brand">
+          <SycrasLogo className="size-7" onColor />
+        </span>
+        <h1 className="mt-6 font-display text-2xl font-bold tracking-tight">{title}</h1>
+        <p className="mt-2 text-[15px] text-muted-foreground">{body}</p>
+        <Button asChild className="mt-6">
+          <Link to="/">{t("bk.backHome")}</Link>
+        </Button>
       </div>
     </main>
   );
@@ -412,13 +416,17 @@ function BookPage() {
             {service && safeIdx > stepKeys.indexOf("service") && (
               <SummaryChip onClick={() => goTo("service")}>{service.name}</SummaryChip>
             )}
+            {/* Day and time in one short chip, so the row fits on a phone. */}
             {dayPicked && safeIdx > stepKeys.indexOf("when") && (
               <SummaryChip onClick={() => goTo("when")}>
-                {formatDateLong(`${date}T12:00:00Z`, business.timezone)}
+                {new Intl.DateTimeFormat(currentLocale(), {
+                  weekday: "short",
+                  day: "numeric",
+                  month: "short",
+                  timeZone: "UTC",
+                }).format(new Date(`${date}T12:00:00Z`))}
+                {time ? ` · ${time}` : ""}
               </SummaryChip>
-            )}
-            {time && safeIdx > stepKeys.indexOf("when") && (
-              <SummaryChip onClick={() => goTo("when")}>{time}</SummaryChip>
             )}
           </div>
         )}

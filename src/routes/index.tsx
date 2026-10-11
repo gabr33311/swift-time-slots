@@ -89,7 +89,9 @@ function Landing() {
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
           <span className="flex items-center gap-2">
-            <SycrasLogo className="size-8" />
+            <span className="flex size-9 items-center justify-center rounded-xl bg-brand">
+              <SycrasLogo className="size-5" onColor />
+            </span>
             <span className="hidden text-[15px] font-bold tracking-[0.14em] min-[400px]:inline">
               SYCRAS
             </span>
