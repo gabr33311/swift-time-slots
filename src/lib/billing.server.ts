@@ -8,7 +8,12 @@ let stripeClient: Stripe | null = null;
 export function stripe(): Stripe {
   const key = process.env["STRIPE_SECRET_KEY"];
   if (!key) throw new Error("Missing STRIPE_SECRET_KEY");
-  stripeClient ??= new Stripe(key, { httpClient: Stripe.createFetchHttpClient() });
+  stripeClient ??= new Stripe(key, {
+    httpClient: Stripe.createFetchHttpClient(),
+    // Managed Payments (Stripe handles VAT) needs 2025-03-31.basil or later.
+    // The period dates moved onto subscription items in that version; periodOf() reads both.
+    apiVersion: "2025-03-31.basil" as Stripe.LatestApiVersion,
+  });
   return stripeClient;
 }
 
