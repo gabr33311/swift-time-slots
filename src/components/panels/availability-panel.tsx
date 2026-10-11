@@ -677,7 +677,7 @@ function ApprovalSetting() {
               )}
             >
               <p className="text-sm font-bold">{title}</p>
-              <p className="text-sm text-muted-foreground">{sub}</p>
+              <p className="text-sm font-normal text-muted-foreground">{sub}</p>
             </button>
           );
         })}
@@ -763,7 +763,7 @@ function BookingRules() {
 
   return (
     <section className="surface space-y-4 p-5">
-      <h2 className="text-base font-semibold">{t("pf.av.rules")}</h2>
+      <h2 className="text-base font-semibold">{t("pf.av.limits")}</h2>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="avch" className="font-semibold">

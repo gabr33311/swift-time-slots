@@ -204,7 +204,7 @@ function ProfilePage() {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-bold leading-tight">{label(row.id)}</span>
-                      <span className="mt-0.5 block truncate text-xs font-normal leading-snug text-muted-foreground md:hidden lg:block">
+                      <span className="mt-0.5 block truncate text-xs font-normal leading-snug text-muted-foreground md:hidden">
                         {desc(row.id)}
                       </span>
                     </span>
@@ -229,7 +229,7 @@ function ProfilePage() {
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-2">
                 <span className="text-sm font-bold leading-tight">{t("sub.menu.title")}</span>
-                <span className="rounded-full border border-subscription-accent px-2 py-px text-[10px] font-bold uppercase text-foreground">
+                <span className="whitespace-nowrap rounded-full border border-subscription-accent px-2 py-px text-[10px] font-bold uppercase text-foreground">
                   {planBadge}
                 </span>
               </span>

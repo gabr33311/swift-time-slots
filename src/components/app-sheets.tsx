@@ -98,7 +98,9 @@ function InfoRow({
       <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
         {icon}
       </span>
-      <span className="w-24 shrink-0 text-xs font-semibold text-muted-foreground">{label}</span>
+      <span className="w-20 shrink-0 text-xs font-semibold text-muted-foreground sm:w-24">
+        {label}
+      </span>
       <span className="min-w-0 flex-1 text-right text-sm font-semibold">{children}</span>
     </div>
   );
@@ -302,7 +304,8 @@ function AppointmentSheetBody({
           <InfoRow icon={<Mail className="size-4" />} label={t("sheet.email")}>
             <a
               href={`mailto:${appt.customer_email}`}
-              className="break-all underline-offset-2 hover:underline"
+              title={appt.customer_email}
+              className="block truncate underline-offset-2 hover:underline"
             >
               {appt.customer_email}
             </a>

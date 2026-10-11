@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { CalendarDays, House, Users, Store, LogOut, Plus } from "lucide-react";
+import { CalendarDays, ExternalLink, House, Users, Store, LogOut, Plus } from "lucide-react";
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -188,8 +188,20 @@ export function AppShell({
             </p>
           </div>
         </div>
+        {/* The main action, always one click away on desktop too. */}
+        <Button
+          className="mb-4 w-full"
+          onClick={() => (onPrimaryAction ? onPrimaryAction() : setNewOpen(true))}
+        >
+          <Plus strokeWidth={3} /> {t("dock.new")}
+        </Button>
         <NavList />
-        <div className="mt-auto px-1 pt-4">
+        <div className="mt-auto space-y-1 px-1 pt-4">
+          <Button variant="ghost" size="sm" className="w-full justify-start gap-3" asChild>
+            <a href={`/${business.slug}`} target="_blank" rel="noreferrer">
+              <ExternalLink className="size-4" /> {t("nav.viewPage")}
+            </a>
+          </Button>
           <Button
             variant="ghost"
             size="sm"

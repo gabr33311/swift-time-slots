@@ -885,13 +885,13 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
 
 /* A light wash of the status colour on calendar cards; the rail carries the full colour. */
 .appointment-pop[data-status="pending"] {
-  background-color: color-mix(in oklch, var(--st-pending) 10%, var(--color-card));
+  background-color: color-mix(in oklab, var(--st-pending) 10%, var(--color-card));
 }
 .appointment-pop[data-status="completed"] {
-  background-color: color-mix(in oklch, var(--st-completed) 9%, var(--color-card));
+  background-color: color-mix(in oklab, var(--st-completed) 9%, var(--color-card));
 }
 .appointment-pop[data-status="no_show"] {
-  background-color: color-mix(in oklch, var(--st-noshow) 9%, var(--color-card));
+  background-color: color-mix(in oklab, var(--st-noshow) 9%, var(--color-card));
 }
 .appointment-rail[data-status="no_show"] {
   --rail-a: var(--st-noshow);

@@ -10,7 +10,7 @@ import { AlertCircle } from "lucide-react";
 /** Pinned top area: stays fixed while the rest of the page scrolls underneath. */
 export function StickyTop({ children }: { children: ReactNode }) {
   return (
-    <div className="sticky top-0 z-30 -mx-4 -mt-6 mb-3 bg-background/95 px-4 pb-2 pt-5 backdrop-blur-xl supports-[backdrop-filter]:bg-background/85 sm:-mx-5 sm:px-5">
+    <div className="sticky top-0 z-30 -mx-4 -mt-6 mb-3 bg-background/95 px-4 pb-2 pt-5 backdrop-blur-xl sm:-mx-5 sm:px-5">
       {children}
     </div>
   );

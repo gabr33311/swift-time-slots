@@ -183,7 +183,15 @@ function TodayPage() {
                 {[
                   [t("today.appts"), String(liveDay.length)],
                   [t("today.done"), `${doneCount}/${liveDay.length}`],
-                  [t("today.revenue"), formatPrice(expected, currency)],
+                  [
+                    // Everything done: the money is earned, not just expected.
+                    t(
+                      liveDay.length > 0 && doneCount === liveDay.length
+                        ? "today.earned"
+                        : "today.revenue",
+                    ),
+                    formatPrice(expected, currency),
+                  ],
                 ].map(([label, value]) => (
                   <div key={label} className="px-3 text-center">
                     <p className="font-display text-xl font-bold tabular-nums">{value}</p>
