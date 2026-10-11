@@ -155,7 +155,9 @@ function ProfilePage() {
       />
 
       <div className="md:grid md:grid-cols-[250px_minmax(0,1fr)] md:items-start md:gap-6 lg:grid-cols-[270px_minmax(0,1fr)]">
-        <div className={cn("space-y-3 md:sticky md:top-24 md:space-y-5", section && "hidden md:block")}>
+        <div
+          className={cn("space-y-3 md:sticky md:top-24 md:space-y-5", section && "hidden md:block")}
+        >
           {/* The business at a glance: who, its link, and the two things you do with it. */}
           {business && (
             <div className="relative overflow-hidden rounded-[var(--radius-xl)] bg-brand p-4 text-brand-foreground shadow-[0_14px_30px_-18px_var(--brand)]">
