@@ -26,6 +26,7 @@ import {
   StickyNote,
   Unlock,
   UserX,
+  CalendarOff,
 } from "lucide-react";
 import { de, enGB, es, fr, it, pt, ptBR, type Locale } from "date-fns/locale";
 import type { Lang } from "@/lib/prefs-types";
@@ -547,7 +548,7 @@ function CalendarPage() {
           action={
             <div className="flex items-center gap-2">
               {isToday && !week && liveToday.length > 0 && (
-                <span className="inline-flex shrink-0 rounded-full border border-border bg-card px-2.5 py-2 text-[11px] font-black tabular-nums text-muted-foreground sm:px-3 sm:text-[11px]">
+                <span className="hidden shrink-0 rounded-full border border-border bg-card px-2.5 py-2 text-[11px] sm:inline-flex font-black tabular-nums text-muted-foreground sm:px-3 sm:text-[11px]">
                   {progressPill}
                 </span>
               )}
@@ -584,6 +585,19 @@ function CalendarPage() {
               >
                 <Link to="/appointments">
                   <List className="size-4" />
+                </Link>
+              </Button>
+              {/* Days off and holidays are planned from the calendar. */}
+              <Button
+                asChild
+                variant="outline"
+                size="icon"
+                aria-label={t("pf.s.timeoff")}
+                title={t("pf.s.timeoff")}
+                className="shrink-0"
+              >
+                <Link to="/profile" search={{ section: "timeoff" }}>
+                  <CalendarOff className="size-4" />
                 </Link>
               </Button>
               <Button className="hidden lg:inline-flex" onClick={() => setNewOpen(true)}>

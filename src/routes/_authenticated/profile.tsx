@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { usePrefs } from "@/lib/prefs";
 import { type ComponentType } from "react";
@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
 import { useMyBusiness } from "@/hooks/use-business";
 import { useLogoUrl } from "@/hooks/use-logo";
-import { useSubscription } from "@/hooks/use-subscription";
 import { BusinessPanel } from "@/components/panels/business-panel";
 import { ServicesPanel } from "@/components/panels/services-panel";
 import { TeamPanel } from "@/components/panels/team-panel";
@@ -22,19 +21,17 @@ import { RemindersPanel } from "@/components/panels/reminders-panel";
 import {
   ArrowLeft,
   ArrowUpRight,
-  BarChart3,
   BellRing,
   Building2,
-  CalendarOff,
   ChevronRight,
   Clock,
-  Crown,
   Palette,
   Scissors,
   Settings,
   Share2,
   SlidersHorizontal,
   Users,
+  CalendarOff,
 } from "lucide-react";
 
 const SECTION_IDS = [
@@ -69,14 +66,17 @@ export const Route = createFileRoute("/_authenticated/profile")({
 
 type Row = { id: SectionId; icon: ComponentType<{ className?: string }> };
 
-/** The menu, grouped the way an owner thinks about their business. */
+/**
+ * The menu: only how the business is set up. Daily things live where they are
+ * used: stats on Today, sharing in the header card, time off in the calendar,
+ * settings and the plan behind the gear.
+ */
 const GROUPS: { title: string; rows: Row[] }[] = [
   {
     title: "pf.group.business",
     rows: [
       { id: "info", icon: Building2 },
       { id: "page", icon: Palette },
-      { id: "share", icon: Share2 },
     ],
   },
   {
@@ -90,16 +90,8 @@ const GROUPS: { title: string; rows: Row[] }[] = [
     title: "pf.group.time",
     rows: [
       { id: "hours", icon: Clock },
-      { id: "timeoff", icon: CalendarOff },
       { id: "rules", icon: SlidersHorizontal },
       { id: "reminders", icon: BellRing },
-    ],
-  },
-  {
-    title: "pf.group.account",
-    rows: [
-      { id: "analytics", icon: BarChart3 },
-      { id: "settings", icon: Settings },
     ],
   },
 ];
@@ -118,22 +110,24 @@ function ProfilePage() {
   const shown: SectionId = section ?? "info";
   const { business } = useMyBusiness();
   const logoUrl = useLogoUrl(business?.logo_url);
-  const { access } = useSubscription();
-  const planBadge =
-    access?.state === "active"
-      ? "Pro"
-      : access?.state === "trial"
-        ? t("sub.menu.trial").replace("{n}", String(access.trialDaysLeft))
-        : access?.state === "past_due"
-          ? t("sub.status.pastDue")
-          : access
-            ? t("sub.menu.ended")
-            : "";
 
   return (
     <AppShell>
       <PageHeader
         title={section ? label(section) : t("pf.manage.title")}
+        action={
+          !section || section === "settings" ? (
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label={t("pf.s.settings")}
+              title={t("pf.s.settings")}
+              onClick={() => setSection("settings")}
+            >
+              <Settings className="size-[18px]" />
+            </Button>
+          ) : null
+        }
         leading={
           section ? (
             <Button
@@ -173,6 +167,16 @@ function ProfilePage() {
                   sycras.com/{business.slug}
                 </span>
               </span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="shrink-0"
+                aria-label={t("pf.s.share")}
+                title={t("pf.s.share")}
+                onClick={() => setSection("share")}
+              >
+                <Share2 className="size-4" />
+              </Button>
               <Button asChild variant="outline" size="sm" className="shrink-0">
                 <a href={`/${business.slug}`} target="_blank" rel="noreferrer">
                   {t("pf.manage.viewPage")}
@@ -217,31 +221,6 @@ function ProfilePage() {
               </nav>
             </section>
           ))}
-
-          {/* Plan: same row shape as the menu; gold only on the small plan badge. */}
-          <Link
-            to="/plans"
-            className="surface group flex min-h-14 w-full items-center gap-3.5 px-4 py-2.5 text-left transition-colors hover:bg-muted/50"
-          >
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
-              <Crown className="size-[17px]" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-2">
-                <span className="text-sm font-bold leading-tight">{t("sub.menu.title")}</span>
-                <span className="whitespace-nowrap rounded-full border border-subscription-accent px-2 py-px text-[10px] font-bold uppercase text-foreground">
-                  {planBadge}
-                </span>
-              </span>
-              <span className="mt-0.5 block truncate text-xs font-normal leading-snug text-muted-foreground">
-                {access?.subscribed ? t("sub.manage") : t("sub.menu.upgrade")}
-              </span>
-            </span>
-            <ChevronRight
-              className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-              strokeWidth={2.5}
-            />
-          </Link>
         </div>
 
         <div key={shown} className={cn("animate-enter min-w-0", !section && "hidden md:block")}>
@@ -255,7 +234,28 @@ function ProfilePage() {
           )}
           {shown === "services" && <ServicesPanel />}
           {shown === "team" && <TeamPanel />}
-          {shown === "hours" && <AvailabilityPanel view="hours" />}
+          {shown === "hours" && (
+            <div className="space-y-4">
+              <AvailabilityPanel view="hours" />
+              {/* Time off is part of the hours; it is no longer a separate menu row. */}
+              <button
+                type="button"
+                onClick={() => setSection("timeoff")}
+                className="surface flex min-h-14 w-full items-center gap-3.5 px-4 py-3 text-left transition-colors hover:bg-muted/50"
+              >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand/12 text-brand-ink">
+                  <CalendarOff className="size-[17px]" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-bold">{t("pf.s.timeoff")}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    {t("pf.s.timeoff.desc")}
+                  </span>
+                </span>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+              </button>
+            </div>
+          )}
           {shown === "timeoff" && <AvailabilityPanel view="off" />}
           {shown === "rules" && <AvailabilityPanel view="rules" />}
           {shown === "reminders" && <RemindersPanel />}

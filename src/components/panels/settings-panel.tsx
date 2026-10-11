@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { useNavigate } from "@tanstack/react-router";
-import { LogOut } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { ChevronRight, Crown, LogOut } from "lucide-react";
+import { useSubscription } from "@/hooks/use-subscription";
 import { ColorSwatches } from "@/components/color-swatches";
 import { useAppColor } from "@/hooks/use-app-color";
 import { useQueryClient } from "@tanstack/react-query";
@@ -31,6 +32,17 @@ export function SettingsPanel() {
   }
   const { theme, setTheme, lang, setLang, t } = usePrefs();
   const { color: appColor, setColor: setAppColor } = useAppColor();
+  const { access } = useSubscription();
+  const planBadge =
+    access?.state === "active"
+      ? "Pro"
+      : access?.state === "trial"
+        ? t("sub.menu.trial").replace("{n}", String(access.trialDaysLeft))
+        : access?.state === "past_due"
+          ? t("sub.status.pastDue")
+          : access
+            ? t("sub.menu.ended")
+            : "";
 
   async function toggle(field: "is_published" | "seo_indexable", value: boolean) {
     if (!business) return;
@@ -47,7 +59,30 @@ export function SettingsPanel() {
   }
 
   return (
-    <section className="surface divide-y divide-border">
+    <section className="surface divide-y divide-border overflow-hidden">
+      {/* The plan: gold only on the small badge. */}
+      <Link
+        to="/plans"
+        className="group flex items-center gap-3.5 p-5 transition-colors hover:bg-muted/50"
+      >
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
+          <Crown className="size-[17px]" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-2">
+            <span className="text-sm font-bold">{t("sub.menu.title")}</span>
+            {planBadge && (
+              <span className="whitespace-nowrap rounded-full border border-subscription-accent px-2 py-px text-[10px] font-bold uppercase text-foreground">
+                {planBadge}
+              </span>
+            )}
+          </span>
+          <span className="mt-0.5 block text-sm text-muted-foreground">
+            {access?.subscribed ? t("sub.manage") : t("sub.menu.upgrade")}
+          </span>
+        </span>
+        <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+      </Link>
       <Row
         title={t("pf.set.published")}
         description={t("pf.set.published.desc")}
