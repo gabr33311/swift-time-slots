@@ -253,9 +253,18 @@
 
   html {
     -webkit-text-size-adjust: 100%;
+    /* Feels like an app: no rubber-band stretch and no pull-to-refresh. The
+       page background also fills the area behind the system bars. */
+    overscroll-behavior: none;
+    background-color: var(--color-background);
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
   }
 
   body {
+    overscroll-behavior: none;
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);

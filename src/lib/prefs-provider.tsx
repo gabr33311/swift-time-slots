@@ -21,6 +21,11 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
+    // System bars (status / navigation) take the page colour, so they blend in.
+    const color = theme === "dark" ? "#0a101d" : "#f4f7fb";
+    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => {
+      m.setAttribute("content", color);
+    });
   }, [theme]);
 
   // Set during render (not only in an effect) so dates and prices switch on the same paint.
