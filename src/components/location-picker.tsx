@@ -78,7 +78,7 @@ export function LocationPicker({
       if (cancelled || !box.current || map.current) return;
       const initial = current.current;
       const start = initial ?? START;
-      const m = L.map(box.current, { zoomControl: true, attributionControl: true }).setView(
+      const m = L.map(box.current, { zoomControl: true, attributionControl: false }).setView(
         [start.lat, start.lng],
         initial ? 17 : 12,
       );
@@ -224,7 +224,18 @@ export function LocationPicker({
         ref={box}
         className="relative isolate z-0 h-60 overflow-hidden rounded-xl border border-border bg-muted"
       />
-      <p className="text-xs text-muted-foreground">{value ? t("loc.set") : t("loc.hint")}</p>
+      <p className="text-xs text-muted-foreground">
+        {value ? t("loc.set") : t("loc.hint")}{" "}
+        {/* Required by the OpenStreetMap licence; kept out of the map itself. */}
+        <a
+          href="https://www.openstreetmap.org/copyright"
+          target="_blank"
+          rel="noreferrer"
+          className="whitespace-nowrap opacity-70 hover:underline"
+        >
+          Mapa © OpenStreetMap
+        </a>
+      </p>
     </div>
   );
 }

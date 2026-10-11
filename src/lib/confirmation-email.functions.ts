@@ -9,20 +9,13 @@ export const sendAppointmentConfirmedEmail = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: appt } = await context.supabase
       .from("appointments")
-      .select(
-        "id, status, customer_name, customer_email, service_name, starts_at, businesses(name, timezone)",
-      )
+      .select("id, status, customer_email")
       .eq("id", data.appointmentId)
       .maybeSingle();
     if (!appt || appt.status !== "confirmed") return { status: "failed" as const };
     if (!appt.customer_email) return { status: "no_email" as const };
 
-    const biz = appt.businesses as unknown as { name: string; timezone: string } | null;
     const { sendConfirmedEmail } = await import("@/lib/confirmation-email.server");
-    const sent = await sendConfirmedEmail({
-      ...appt,
-      businessName: biz?.name,
-      timezone: biz?.timezone,
-    });
+    const sent = await sendConfirmedEmail(appt.id);
     return { status: sent ? ("sent" as const) : ("failed" as const) };
   });

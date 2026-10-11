@@ -1,11 +1,13 @@
 import React from "react";
 import {
   Body,
+  Button,
   Container,
   Head,
   Heading,
   Hr,
   Html,
+  Link,
   Preview,
   Section,
   Text,
@@ -18,12 +20,31 @@ interface Props {
   serviceName?: string;
   date?: string;
   time?: string;
+  address?: string;
+  mapUrl?: string;
+  manageUrl?: string;
+  brandColor?: string;
+  brandText?: string;
 }
 
-const Email = ({ name, businessName, serviceName, date, time }: Props) => (
+const Email = ({
+  name,
+  businessName,
+  serviceName,
+  date,
+  time,
+  address,
+  mapUrl,
+  manageUrl,
+  brandColor,
+  brandText,
+}: Props) => (
   <Html lang="pt" dir="ltr">
     <Head />
-    <Preview>A sua marcação foi confirmada</Preview>
+    <Preview>
+      Marcação confirmada: {serviceName || "serviço"} {date ? `· ${date}` : ""}{" "}
+      {time ? `às ${time}` : ""}
+    </Preview>
     <Body style={main}>
       <Container style={container}>
         {businessName && <Text style={brand}>{businessName}</Text>}
@@ -39,9 +60,35 @@ const Email = ({ name, businessName, serviceName, date, time }: Props) => (
           <Text style={row}>
             <b>Hora:</b> {time || "—"}
           </Text>
+          {address && (
+            <Text style={row}>
+              <b>Local:</b>{" "}
+              {mapUrl ? (
+                <Link href={mapUrl} style={{ color: brandColor || "#0a6cf0" }}>
+                  {address}
+                </Link>
+              ) : (
+                address
+              )}
+            </Text>
+          )}
         </Section>
+        {manageUrl && (
+          <Button
+            href={manageUrl}
+            style={{
+              ...button,
+              backgroundColor: brandColor || "#0a6cf0",
+              color: brandText || "#ffffff",
+            }}
+          >
+            Ver ou cancelar marcação
+          </Button>
+        )}
         <Hr style={hr} />
-        <Text style={footer}>Caso necessite de alterar ou cancelar, por favor contacte-nos.</Text>
+        <Text style={footer}>
+          Se não puder comparecer, cancele com antecedência para libertar o horário.
+        </Text>
       </Container>
     </Body>
   </Html>
@@ -57,6 +104,9 @@ export const template = {
     serviceName: "Corte",
     date: "sábado, 10 de outubro",
     time: "14:30",
+    address: "Rua Augusta 10, Lisboa",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=38.71,-9.14",
+    manageUrl: "https://sycras.com/booking/exemplo",
   },
 } satisfies TemplateEntry;
 
@@ -79,5 +129,13 @@ const box = {
   margin: "16px 0",
 };
 const row = { fontSize: "15px", color: "#111111", margin: "4px 0" };
+const button = {
+  display: "inline-block",
+  fontSize: "15px",
+  fontWeight: 700,
+  textDecoration: "none",
+  borderRadius: "10px",
+  padding: "12px 20px",
+};
 const hr = { borderColor: "#eeeeee", margin: "24px 0" };
 const footer = { fontSize: "13px", color: "#666666" };

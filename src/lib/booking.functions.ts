@@ -226,21 +226,8 @@ export const createPublicBooking = createServerFn({ method: "POST" })
 
     // Confirmed straight away: the client gets the confirmation email now.
     if (appointment.status === "confirmed" && data.email) {
-      const { data: biz } = await supabaseAdmin
-        .from("businesses")
-        .select("name, timezone")
-        .eq("id", data.businessId)
-        .maybeSingle();
       const { sendConfirmedEmail } = await import("@/lib/confirmation-email.server");
-      await sendConfirmedEmail({
-        id: appointment.id,
-        customer_name: data.name,
-        customer_email: data.email,
-        service_name: service.name,
-        starts_at: appointment.starts_at,
-        businessName: biz?.name,
-        timezone: biz?.timezone,
-      });
+      await sendConfirmedEmail(appointment.id);
     }
 
     return { ok: true as const, token, status: appointment.status };
