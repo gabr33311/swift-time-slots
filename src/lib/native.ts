@@ -56,7 +56,7 @@ export async function initNativeShell() {
  * Turned on once the Android app ships with Firebase (google-services.json).
  * Registering without it would crash the app.
  */
-const PUSH_READY = false;
+const PUSH_READY = true;
 
 let pushFor: string | null = null;
 

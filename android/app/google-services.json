@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1089584850539",
+    "project_id": "sycras",
+    "storage_bucket": "sycras.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1089584850539:android:be790a1a1dc231db7cf32e",
+        "android_client_info": {
+          "package_name": "com.sycras.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCoFwsqpSlheRfgaI7H8RokD-CbOxSReb8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
