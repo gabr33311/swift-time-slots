@@ -17,6 +17,7 @@ import { AppointmentStatusIndicator } from "@/components/appointment-status-indi
 import { formatDateLong, formatPrice, formatTime } from "@/lib/format";
 import { addDays, todayIn, weekdayOf } from "@/lib/time";
 import { cn } from "@/lib/utils";
+import { useBrandColor } from "@/lib/brand";
 import { CalendarClock, Check, Loader2, MapPin, Phone } from "lucide-react";
 import { AddToCalendar } from "@/components/add-to-calendar";
 import {
@@ -45,12 +46,8 @@ export const Route = createFileRoute("/booking/$token")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  errorComponent: () => (
-    <MessageT titleKey="bk.tk.errorTitle" bodyKey="bk.tk.errorBody" />
-  ),
-  notFoundComponent: () => (
-    <MessageT titleKey="bk.tk.invalidTitle" bodyKey="bk.tk.invalidBody" />
-  ),
+  errorComponent: () => <MessageT titleKey="bk.tk.errorTitle" bodyKey="bk.tk.errorBody" />,
+  notFoundComponent: () => <MessageT titleKey="bk.tk.invalidTitle" bodyKey="bk.tk.invalidBody" />,
   component: BookingPage,
 });
 
@@ -74,6 +71,7 @@ function BookingPage() {
   const { t, lang } = usePrefs();
   const { token } = Route.useParams();
   const initial = Route.useLoaderData();
+  useBrandColor(initial.business?.brand_color);
   const [data, setData] = useState(initial);
   const [rescheduling, setRescheduling] = useState(false);
   const tz0 = initial.business?.timezone ?? "Europe/Lisbon";
@@ -93,7 +91,12 @@ function BookingPage() {
   const appt = data.appointment;
   const tz = data.business?.timezone ?? "Europe/Lisbon";
 
-  const { data: slots, isFetching, isError: slotsError, refetch } = useQuery({
+  const {
+    data: slots,
+    isFetching,
+    isError: slotsError,
+    refetch,
+  } = useQuery({
     queryKey: ["reschedule-slots", appt.id, appt.starts_at, date],
     enabled: rescheduling && !!appt.service_id,
     retry: 1,
@@ -151,7 +154,9 @@ function BookingPage() {
     setPickedTime(null);
     if (!rescheduling) {
       // Start on the current booking's day when it is within the visible range.
-      const current = new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(new Date(appt.starts_at));
+      const current = new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(
+        new Date(appt.starts_at),
+      );
       const inRange = current >= todayIn(tz) && current <= addDays(todayIn(tz), 13);
       const firstOpen = days.find((d) => !isClosed(d)) ?? todayIn(tz);
       setDate(inRange && !isClosed(current) ? current : firstOpen);
@@ -187,7 +192,7 @@ function BookingPage() {
       {manageable ? (
         // Final state first: the client is done, everything below is optional.
         <header className="animate-enter text-center">
-          <span className="animate-icon-pop mx-auto flex size-16 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <span className="animate-icon-pop mx-auto flex size-16 items-center justify-center rounded-full bg-brand text-brand-foreground">
             <Check className="size-8" strokeWidth={3} />
           </span>
           <h1 className="mt-5 text-2xl font-bold tracking-tight">
@@ -214,17 +219,20 @@ function BookingPage() {
             )}
             <p className="text-base font-bold">{appt.service_name}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              {formatDateLong(appt.starts_at, tz)}{t("bk.tk.at")}{formatTime(appt.starts_at, tz)}
+              {formatDateLong(appt.starts_at, tz)}
+              {t("bk.tk.at")}
+              {formatTime(appt.starts_at, tz)}
             </p>
             {data.staffName && (
-              <p className="mt-0.5 text-sm text-muted-foreground">{t("bk.tk.with")}{data.staffName}</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                {t("bk.tk.with")}
+                {data.staffName}
+              </p>
             )}
           </div>
           <AppointmentStatusIndicator status={appt.status} />
         </div>
-        <p className="mt-4 text-sm font-semibold tabular-nums">
-          {formatPrice(appt.price_cents)}
-        </p>
+        <p className="mt-4 text-sm font-semibold tabular-nums">{formatPrice(appt.price_cents)}</p>
         {data.business && (data.business.address || data.business.phone) && (
           <div className="mt-4 space-y-1.5 border-t border-border pt-4 text-sm text-muted-foreground">
             {data.business.address && (
@@ -258,7 +266,7 @@ function BookingPage() {
       )}
 
       {slug && (
-        <Button asChild size="lg" className="mt-6 w-full">
+        <Button asChild size="lg" variant="brand" className="mt-6 w-full">
           <Link to="/$slug" params={{ slug }}>
             {t(manageable ? "bk.done.finish" : cancelled ? "bk.tk.bookAgain" : "bk.done.back")}
           </Link>
@@ -296,31 +304,35 @@ function BookingPage() {
               )}
             </div>
           ) : (
-          <>
-          <div className="mt-3 flex items-center justify-center gap-1 text-sm">
-            <button
-              type="button"
-              onClick={toggleRescheduling}
-              disabled={busy}
-              className="inline-flex h-11 items-center gap-1.5 rounded-full px-4 font-semibold text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline disabled:opacity-50"
-            >
-              <CalendarClock className="size-4" />
-              {rescheduling ? t("bk.tk.close") : t("bk.tk.reschedule")}
-            </button>
-            <span aria-hidden className="text-border">·</span>
-            <button
-              type="button"
-              onClick={() => setConfirmCancel(true)}
-              disabled={busy}
-              className="h-11 rounded-full px-4 font-semibold text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline disabled:opacity-50"
-            >
-              {t("bk.tk.cancel")}
-            </button>
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            {t("bk.tk.policy1")}{cancellationHours}{t("bk.tk.policy2")}
-          </p>
-          </>
+            <>
+              <div className="mt-3 flex items-center justify-center gap-1 text-sm">
+                <button
+                  type="button"
+                  onClick={toggleRescheduling}
+                  disabled={busy}
+                  className="inline-flex h-11 items-center gap-1.5 rounded-full px-4 font-semibold text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline disabled:opacity-50"
+                >
+                  <CalendarClock className="size-4" />
+                  {rescheduling ? t("bk.tk.close") : t("bk.tk.reschedule")}
+                </button>
+                <span aria-hidden className="text-border">
+                  ·
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setConfirmCancel(true)}
+                  disabled={busy}
+                  className="h-11 rounded-full px-4 font-semibold text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline disabled:opacity-50"
+                >
+                  {t("bk.tk.cancel")}
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {t("bk.tk.policy1")}
+                {cancellationHours}
+                {t("bk.tk.policy2")}
+              </p>
+            </>
           )}
         </section>
       )}
@@ -345,8 +357,9 @@ function BookingPage() {
                 }}
                 className={cn(
                   "flex w-16 shrink-0 flex-col items-center rounded-xl border border-border px-2 py-2.5 text-sm transition-colors",
-                  date === d ? "border-primary bg-primary text-primary-foreground" : "hover:bg-accent",
-                  isClosed(d) && "cursor-not-allowed text-muted-foreground/50 line-through hover:bg-transparent",
+                  date === d ? "border-brand bg-brand text-brand-foreground" : "hover:bg-accent",
+                  isClosed(d) &&
+                    "cursor-not-allowed text-muted-foreground/50 line-through hover:bg-transparent",
                 )}
               >
                 <span className="text-xs uppercase">
@@ -364,7 +377,9 @@ function BookingPage() {
           </div>
           <div className="animate-stagger mt-4 grid grid-cols-3 gap-2 sm:grid-cols-5">
             {isFetching
-              ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-[46px] rounded-xl" />)
+              ? Array.from({ length: 8 }).map((_, i) => (
+                  <Skeleton key={i} className="h-[46px] rounded-xl" />
+                ))
               : (slots ?? []).map((s) => (
                   <button
                     key={s.time}
@@ -372,9 +387,9 @@ function BookingPage() {
                     disabled={busy}
                     onClick={() => setPickedTime(s.time)}
                     className={cn(
-                      "rounded-xl border py-3 text-sm font-bold tabular-nums transition-colors",
+                      "rounded-[12px] border py-3 text-sm font-bold tabular-nums transition-colors",
                       pickedTime === s.time
-                        ? "border-primary bg-primary text-primary-foreground"
+                        ? "border-brand bg-brand text-brand-foreground"
                         : "border-border hover:bg-accent",
                     )}
                   >
@@ -395,7 +410,13 @@ function BookingPage() {
           )}
           <FormError message={error} className="mt-4" />
           {pickedTime && (
-            <Button className="mt-4 w-full" size="lg" onClick={() => void reschedule()} disabled={busy}>
+            <Button
+              className="mt-4 w-full"
+              size="lg"
+              variant="brand"
+              onClick={() => void reschedule()}
+              disabled={busy}
+            >
               {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
               {t("bk.tk.confirmMove")
                 .replace("{date}", formatDateLong(`${date}T12:00:00Z`, tz))
@@ -410,7 +431,8 @@ function BookingPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t("bk.tk.cancelTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {appt.service_name} · {formatDateLong(appt.starts_at, tz)} · {formatTime(appt.starts_at, tz)}
+              {appt.service_name} · {formatDateLong(appt.starts_at, tz)} ·{" "}
+              {formatTime(appt.starts_at, tz)}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -428,7 +450,6 @@ function BookingPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
     </main>
   );
 }

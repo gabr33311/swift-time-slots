@@ -8,18 +8,34 @@ import { ErrorState, LoadingRows, PageHeader, StickyTop } from "@/components/ui-
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { displayCustomerName, formatPrice } from "@/lib/format";
-import { PendingCapsule, PendingDecisionDrawer } from "@/components/pending-sheet";
+import { PendingCapsule } from "@/components/pending-sheet";
+import { useAppointmentSheet } from "@/lib/appointment-sheet-context";
 import { addDays, minutesToTime, timeToMinutes, todayIn, weekdayOf, zonedToUtc } from "@/lib/time";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
-import { BellRing, CalendarDays, List, Check, ChevronDown, ChevronLeft, ChevronRight, Lock, Moon, Plus, StickyNote, Unlock, UserX } from "lucide-react";
+import {
+  BellRing,
+  CalendarDays,
+  List,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Lock,
+  Moon,
+  Plus,
+  StickyNote,
+  Unlock,
+  UserX,
+} from "lucide-react";
 import { de, enGB, es, fr, it, pt, ptBR, type Locale } from "date-fns/locale";
 import type { Lang } from "@/lib/prefs-types";
 
 const DATE_FNS_LOCALE: Record<Lang, Locale> = { pt, "pt-BR": ptBR, en: enGB, es, fr, it, de };
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { AppointmentActions } from "@/components/appointment-actions";
-import { ContactCustomer } from "@/components/contact-customer";
+import { layoutLanes } from "@/lib/calendar-layout";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { CalendarWeek } from "@/components/calendar-week";
 import { usePrefs } from "@/lib/prefs";
 import { currentLocale, formatTime, statusLabel } from "@/lib/format";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -43,7 +59,10 @@ export const Route = createFileRoute("/_authenticated/calendar")({
  */
 function rangesFromRows(rows: { start: string; end: string }[]): { start: number; end: number }[] {
   const sorted = rows
-    .map((r) => ({ start: timeToMinutes(r.start.slice(0, 5)), end: timeToMinutes(r.end.slice(0, 5)) }))
+    .map((r) => ({
+      start: timeToMinutes(r.start.slice(0, 5)),
+      end: timeToMinutes(r.end.slice(0, 5)),
+    }))
     .filter((r) => r.end > r.start)
     .sort((a, b) => a.start - b.start);
   const merged: { start: number; end: number }[] = [];
@@ -55,7 +74,6 @@ function rangesFromRows(rows: { start: string; end: string }[]): { start: number
   return merged;
 }
 
-
 /** Compact, language-neutral duration label: 45 min, 1h, 1h30. */
 function durationLabel(minutes: number): string {
   if (minutes < 60) return `${minutes} min`;
@@ -63,7 +81,6 @@ function durationLabel(minutes: number): string {
   const m = minutes % 60;
   return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, "0")}`;
 }
-
 
 type Appt = {
   id: string;
@@ -121,8 +138,6 @@ function freeChunks(start: number, end: number, step: number): AgendaRow[] {
   return out;
 }
 
-
-
 /**
  * Dynamic timeline: real appointment/block spans, with the actual empty gaps
  * between them surfaced as bookable slots.
@@ -155,7 +170,6 @@ function buildAgenda(
     }),
   ].sort((a, b) => a.start - b.start);
 
-
   const rows: AgendaRow[] = [...busy];
   // Cancelled/expired appointments stay visible but no longer occupy the time.
   const occupying = busy.filter((r) => r.kind !== "appt" || !isReleased(r.appt.status));
@@ -163,7 +177,8 @@ function buildAgenda(
     let cursor = range.start;
     for (const item of occupying) {
       if (item.end <= range.start || item.start >= range.end) continue;
-      if (item.start > cursor) rows.push(...freeChunks(cursor, Math.min(item.start, range.end), step));
+      if (item.start > cursor)
+        rows.push(...freeChunks(cursor, Math.min(item.start, range.end), step));
       cursor = Math.max(cursor, item.end);
       if (cursor >= range.end) break;
     }
@@ -172,40 +187,10 @@ function buildAgenda(
   return rows.sort((a, b) => a.start - b.start || a.end - b.end);
 }
 
-
-/**
- * Side-by-side columns for appointments that overlap in time (several
- * professionals at once), so none is drawn on top of another. Released
- * (cancelled/expired) ones keep the full width, behind the live ones.
- */
-function layoutLanes(
-  rows: { appt: Appt; start: number; end: number }[],
-): Map<string, { lane: number; lanes: number }> {
-  const out = new Map<string, { lane: number; lanes: number }>();
-  const live = rows.filter((r) => !isReleased(r.appt.status)).sort((a, b) => a.start - b.start);
-  let cluster: { id: string; lane: number }[] = [];
-  let laneEnds: number[] = [];
-  let clusterEnd = -1;
-  const flush = () => {
-    for (const c of cluster) out.set(c.id, { lane: c.lane, lanes: laneEnds.length });
-    cluster = [];
-    laneEnds = [];
-  };
-  for (const r of live) {
-    if (r.start >= clusterEnd) flush();
-    let lane = laneEnds.findIndex((end) => end <= r.start);
-    if (lane === -1) lane = laneEnds.push(r.end) - 1;
-    else laneEnds[lane] = r.end;
-    cluster.push({ id: r.appt.id, lane });
-    clusterEnd = Math.max(clusterEnd, r.end);
-  }
-  flush();
-  return out;
-}
-
 function CalendarPage() {
   const { t, lang } = usePrefs();
   const { business } = useMyBusiness();
+  const { openAppointment } = useAppointmentSheet();
   const qc = useQueryClient();
   const tz = business?.timezone ?? "Europe/Lisbon";
   const [date, setDate] = useState(todayIn(tz));
@@ -218,11 +203,11 @@ function CalendarPage() {
     setDate(todayIn(business.timezone));
   }, [business]);
   const [newOpen, setNewOpen] = useState(false);
-  const [pendingFocus, setPendingFocus] = useState<string | null>(null);
   const [newTime, setNewTime] = useState("09:00");
   const [staffFilter, setStaffFilter] = useState<string>("all");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [slotMenu, setSlotMenu] = useState<number | null>(null);
+  const [view, setView] = useState<"day" | "week">("day");
 
   // Pinch changes only the vertical time density; text and controls stay crisp.
   const [zoom, setZoom] = useState(1);
@@ -243,35 +228,35 @@ function CalendarPage() {
       const from = zonedToUtc(date, 0, tz).toISOString();
       const to = zonedToUtc(date, 24 * 60, tz).toISOString();
       const results = await Promise.all([
-          supabase
-            .from("appointments")
-            .select(
-              "id, starts_at, ends_at, customer_name, customer_phone, service_name, price_cents, status, staff_id, notes",
-            )
-            .eq("business_id", business!.id)
-            .gte("starts_at", from)
-            .lt("starts_at", to)
-            .order("starts_at"),
-          supabase
-            .from("staff")
-            .select("id, name")
-            .eq("business_id", business!.id)
-            .eq("is_active", true)
-            .order("sort_order"),
-          supabase
-            .from("working_hours")
-            .select("start_time, end_time")
-            .eq("business_id", business!.id)
-            .eq("weekday", weekdayOf(date))
-            .order("start_time"),
-          supabase
-            .from("blocked_times")
-            .select("id, starts_at, ends_at, reason, staff_id")
-            .eq("business_id", business!.id)
-            .lt("starts_at", to)
-            .gt("ends_at", from)
-            .order("starts_at"),
-        ]);
+        supabase
+          .from("appointments")
+          .select(
+            "id, starts_at, ends_at, customer_name, customer_phone, service_name, price_cents, status, staff_id, notes",
+          )
+          .eq("business_id", business!.id)
+          .gte("starts_at", from)
+          .lt("starts_at", to)
+          .order("starts_at"),
+        supabase
+          .from("staff")
+          .select("id, name")
+          .eq("business_id", business!.id)
+          .eq("is_active", true)
+          .order("sort_order"),
+        supabase
+          .from("working_hours")
+          .select("start_time, end_time")
+          .eq("business_id", business!.id)
+          .eq("weekday", weekdayOf(date))
+          .order("start_time"),
+        supabase
+          .from("blocked_times")
+          .select("id, starts_at, ends_at, reason, staff_id")
+          .eq("business_id", business!.id)
+          .lt("starts_at", to)
+          .gt("ends_at", from)
+          .order("starts_at"),
+      ]);
       // A failed request must never read as an empty day off.
       const failed = results.find((r) => r.error);
       if (failed) throw failed.error;
@@ -286,7 +271,6 @@ function CalendarPage() {
           (hours ?? []).map((h) => ({ start: h.start_time, end: h.end_time })),
         ),
       };
-
     },
   });
 
@@ -302,8 +286,7 @@ function CalendarPage() {
     : [];
 
   // Weekends / closed days: nothing is scheduled and nothing is bookable.
-  const isDayOff =
-    !!data && data.ranges.length === 0 && appts.length === 0 && blocks.length === 0;
+  const isDayOff = !!data && data.ranges.length === 0 && appts.length === 0 && blocks.length === 0;
 
   const isToday = date === todayIn(tz);
   const nowMinutes = timeToMinutes(
@@ -334,11 +317,40 @@ function CalendarPage() {
     { length: Math.max(1, Math.floor((dayEnd - dayStart) / 60) + 1) },
     (_, i) => dayStart + i * 60,
   );
-  const freeRows = agendaRows.filter((r): r is Extract<AgendaRow, { kind: "free" }> => r.kind === "free");
-  const blockRows = agendaRows.filter((r): r is Extract<AgendaRow, { kind: "block" }> => r.kind === "block");
-  const apptRows = agendaRows.filter((r): r is Extract<AgendaRow, { kind: "appt" }> => r.kind === "appt");
-  const lanes = layoutLanes(apptRows);
-
+  const freeRows = agendaRows.filter(
+    (r): r is Extract<AgendaRow, { kind: "free" }> => r.kind === "free",
+  );
+  const blockRows = agendaRows.filter(
+    (r): r is Extract<AgendaRow, { kind: "block" }> => r.kind === "block",
+  );
+  const apptRows = agendaRows.filter(
+    (r): r is Extract<AgendaRow, { kind: "appt" }> => r.kind === "appt",
+  );
+  const isWide = useMediaQuery("(min-width: 1024px)");
+  const week = isWide && view === "week";
+  // Desktop with a team: one column per professional instead of stacking.
+  const staffColumns = isWide && !week && staffFilter === "all" && staffList.length > 1;
+  const lanes = staffColumns
+    ? new Map(
+        apptRows.map((r) => [
+          r.appt.id,
+          {
+            lane: Math.max(
+              0,
+              staffList.findIndex((p) => p.id === r.appt.staff_id),
+            ),
+            lanes: staffList.length,
+          },
+        ]),
+      )
+    : layoutLanes(
+        apptRows.map((r) => ({
+          id: r.appt.id,
+          start: r.start,
+          end: r.end,
+          released: isReleased(r.appt.status),
+        })),
+      );
 
   // On today's agenda, land on the current moment instead of the top of the day.
   useEffect(() => {
@@ -349,8 +361,6 @@ function CalendarPage() {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     node.scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" });
   }, [date, isToday, isLoading, gridHeight]);
-
-
 
   // Live cockpit — only meaningful while looking at today.
   const liveToday = isToday
@@ -365,7 +375,6 @@ function CalendarPage() {
     .replace("{done}", String(doneCount))
     .replace("{total}", String(liveToday.length))
     .replace("{revenue}", formatPrice(dayRevenue));
-
 
   const weekStart = addDays(date, -((weekdayOf(date) + 6) % 7));
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -431,8 +440,6 @@ function CalendarPage() {
     setZoom((z) => (Math.abs(z - 1) < 0.06 ? 1 : z));
   }
 
-
-
   function needsValidation(appt: Appt) {
     if (["completed", "cancelled", "no_show", "expired"].includes(appt.status)) return false;
     const start = new Date(appt.starts_at).getTime();
@@ -460,12 +467,13 @@ function CalendarPage() {
     toast.success(
       t("acts.toast.updated"),
       previous
-        ? { action: { label: t("cal.undo"), onClick: () => void validateAppointment(id, previous) } }
+        ? {
+            action: { label: t("cal.undo"), onClick: () => void validateAppointment(id, previous) },
+          }
         : undefined,
     );
     void invalidateAppointmentData(qc);
   }
-
 
   async function unblock(id: string, silent = false) {
     const removed = data?.blocks.find((b) => b.id === id);
@@ -477,22 +485,23 @@ function CalendarPage() {
     qc.invalidateQueries({ queryKey: ["calendar"] });
     if (silent) return;
     toast.success(t("cal.toast.unblocked"), {
-      action: removed && business
-        ? {
-            label: t("cal.undo"),
-            onClick: async () => {
-              const { error: restoreError } = await supabase.from("blocked_times").insert({
-                business_id: business.id,
-                staff_id: removed.staff_id,
-                starts_at: removed.starts_at,
-                ends_at: removed.ends_at,
-                reason: removed.reason,
-              });
-              if (restoreError) toast.error(t("cal.toast.blockError"));
-              qc.invalidateQueries({ queryKey: ["calendar"] });
-            },
-          }
-        : undefined,
+      action:
+        removed && business
+          ? {
+              label: t("cal.undo"),
+              onClick: async () => {
+                const { error: restoreError } = await supabase.from("blocked_times").insert({
+                  business_id: business.id,
+                  staff_id: removed.staff_id,
+                  starts_at: removed.starts_at,
+                  ends_at: removed.ends_at,
+                  reason: removed.reason,
+                });
+                if (restoreError) toast.error(t("cal.toast.blockError"));
+                qc.invalidateQueries({ queryKey: ["calendar"] });
+              },
+            }
+          : undefined,
     });
   }
 
@@ -502,136 +511,170 @@ function CalendarPage() {
     .format(labelDate)
     .replace(".", "")
     .slice(0, 3);
-  const dayNum = new Intl.DateTimeFormat(locale, { day: "numeric", timeZone: tz }).format(labelDate);
+  const dayNum = new Intl.DateTimeFormat(locale, { day: "numeric", timeZone: tz }).format(
+    labelDate,
+  );
   const monthShort = new Intl.DateTimeFormat(locale, { month: "short", timeZone: tz })
     .format(labelDate)
     .replace(".", "");
   const dm = `${dayNum} ${monthShort}`;
 
   const rawLabel = `${wd}, ${dm}`;
+  const weekLabel = (() => {
+    const fmt = (d: string, opts: Intl.DateTimeFormatOptions) =>
+      new Intl.DateTimeFormat(locale, { ...opts, timeZone: "UTC" })
+        .format(new Date(`${d}T12:00:00Z`))
+        .replace(".", "");
+    const end = addDays(weekStart, 6);
+    return `${fmt(weekStart, { day: "numeric" })} – ${fmt(end, { day: "numeric" })} ${fmt(end, { month: "short" })}`;
+  })();
   const label = rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
-
-
 
   return (
     <AppShell>
       <StickyTop>
-      <PageHeader
-        inline
-        title={t("cal.title")}
-        subtitle={t("cal.subtitle")}
-        action={
-          <div className="flex items-center gap-2">
-            {isToday && liveToday.length > 0 && (
-              <span className="inline-flex shrink-0 rounded-full border border-border bg-card px-2.5 py-2 text-[11px] font-black tabular-nums text-muted-foreground sm:px-3 sm:text-[11px]">
-                {progressPill}
-              </span>
-            )}
-            <PendingCapsule variant="badge" />
-            <Button
-              asChild
-              variant="outline"
-              size="icon"
-              aria-label={t("cal.list")}
-              title={t("cal.list")}
-              className="shrink-0"
-            >
-              <Link to="/appointments">
-                <List className="size-4" />
-              </Link>
-            </Button>
-            <Button className="hidden lg:inline-flex" onClick={() => setNewOpen(true)}>
-              {t("cal.new")}
-            </Button>
-          </div>
-        }
-      />
-
-      <div className="surface p-1">
-        <div className="flex h-11 items-center gap-1">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setDate(todayIn(tz))}
-            disabled={isToday}
-            className="h-9 shrink-0 rounded-full px-3 text-xs font-black disabled:opacity-45"
-          >
-            <CalendarDays className="size-3.5" />
-            {t("cal.today")}
-          </Button>
-          <button
-            onClick={() => setDate(addDays(date, -1))}
-            aria-label={t("cal.prevDay")}
-            className="flex size-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <ChevronLeft className="size-4" />
-          </button>
-          {/* Jumping weeks/months day by day was tedious: the label opens a month picker. */}
-          <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                aria-label={t("cal.pickDate")}
-                className="mx-auto flex h-10 min-w-0 items-center justify-center gap-1 rounded-full px-3 text-sm font-bold transition-colors hover:bg-muted"
-              >
-                <span className="truncate">{label}</span>
-                <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" strokeWidth={2.6} />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent align="center" className="w-auto p-0">
-              <Calendar
-                mode="single"
-                locale={DATE_FNS_LOCALE[lang]}
-                weekStartsOn={1}
-                selected={new Date(`${date}T12:00:00`)}
-                defaultMonth={new Date(`${date}T12:00:00`)}
-                onSelect={(d) => {
-                  if (!d) return;
-                  const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-                  setDate(iso);
-                  setPickerOpen(false);
-                }}
-              />
-            </PopoverContent>
-          </Popover>
-          <button
-            onClick={() => setDate(addDays(date, 1))}
-            aria-label={t("cal.nextDay")}
-            className="flex size-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <ChevronRight className="size-4" />
-          </button>
-        </div>
-
-        <div className="mt-1 grid grid-cols-7 gap-1">
-          {weekDays.map((d) => {
-            const active = d === date;
-            const isTodayCell = d === todayIn(tz);
-            return (
-              <button
-                key={d}
-                onClick={() => setDate(d)}
-                className={cn(
-                  "flex flex-col items-center gap-0.5 rounded-2xl border border-transparent py-1.5 transition-colors",
-                  active
-                    ? "bg-foreground text-background"
-                    : isTodayCell
-                      ? "border-foreground/70 text-foreground hover:bg-muted"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                )}
-              >
-                <span className="text-[11px] font-bold uppercase tracking-wide">
-                  {dayShort(d).replace(".", "").slice(0, 3)}
+        <PageHeader
+          inline
+          title={t("cal.title")}
+          subtitle={t("cal.subtitle")}
+          action={
+            <div className="flex items-center gap-2">
+              {isToday && liveToday.length > 0 && (
+                <span className="inline-flex shrink-0 rounded-full border border-border bg-card px-2.5 py-2 text-[11px] font-black tabular-nums text-muted-foreground sm:px-3 sm:text-[11px]">
+                  {progressPill}
                 </span>
-                <span className="text-sm font-black tabular-nums">{Number(d.slice(8, 10))}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      </StickyTop>
+              )}
+              <PendingCapsule variant="badge" />
+              <div
+                role="group"
+                aria-label={t("cal.view")}
+                className="hidden items-center rounded-full bg-muted p-1 lg:flex"
+              >
+                {(["day", "week"] as const).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    aria-pressed={view === v}
+                    onClick={() => setView(v)}
+                    className={cn(
+                      "h-9 rounded-full px-4 text-[13px] font-bold transition-all duration-200",
+                      view === v
+                        ? "bg-card text-foreground shadow-soft"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {t(v === "day" ? "cal.view.day" : "cal.view.week")}
+                  </button>
+                ))}
+              </div>
+              <Button
+                asChild
+                variant="outline"
+                size="icon"
+                aria-label={t("cal.list")}
+                title={t("cal.list")}
+                className="shrink-0"
+              >
+                <Link to="/appointments">
+                  <List className="size-4" />
+                </Link>
+              </Button>
+              <Button className="hidden lg:inline-flex" onClick={() => setNewOpen(true)}>
+                {t("cal.new")}
+              </Button>
+            </div>
+          }
+        />
 
+        <div className="surface rounded-[12px]! p-1">
+          <div className="flex h-11 items-center gap-1">
+            {/* Only offered when away from today (it does nothing on today itself). */}
+            {!(isToday || (week && weekDays.includes(todayIn(tz)))) && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setDate(todayIn(tz))}
+                className="h-9 shrink-0 rounded-full px-3 text-xs font-bold"
+              >
+                <CalendarDays className="size-3.5 text-brand-ink" />
+                {t("cal.today")}
+              </Button>
+            )}
+            <button
+              onClick={() => setDate(addDays(date, week ? -7 : -1))}
+              aria-label={week ? t("cal.week.prev") : t("cal.prevDay")}
+              className="flex size-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+            {/* Jumping weeks/months day by day was tedious: the label opens a month picker. */}
+            <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={t("cal.pickDate")}
+                  className="mx-auto flex h-10 min-w-0 items-center justify-center gap-1 rounded-full px-3 text-sm font-bold transition-colors hover:bg-muted"
+                >
+                  <span className="truncate">{week ? weekLabel : label}</span>
+                  <ChevronDown
+                    className="size-3.5 shrink-0 text-muted-foreground"
+                    strokeWidth={2.6}
+                  />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="center" className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  locale={DATE_FNS_LOCALE[lang]}
+                  weekStartsOn={1}
+                  selected={new Date(`${date}T12:00:00`)}
+                  defaultMonth={new Date(`${date}T12:00:00`)}
+                  onSelect={(d) => {
+                    if (!d) return;
+                    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                    setDate(iso);
+                    setPickerOpen(false);
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
+            <button
+              onClick={() => setDate(addDays(date, week ? 7 : 1))}
+              aria-label={week ? t("cal.week.next") : t("cal.nextDay")}
+              className="flex size-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <ChevronRight className="size-4" />
+            </button>
+          </div>
+
+          <div className={cn("mt-1 grid grid-cols-7 gap-1", week && "hidden")}>
+            {weekDays.map((d) => {
+              const active = d === date;
+              const isTodayCell = d === todayIn(tz);
+              return (
+                <button
+                  key={d}
+                  onClick={() => setDate(d)}
+                  className={cn(
+                    "flex flex-col items-center gap-0.5 rounded-2xl border border-transparent py-1.5 transition-colors",
+                    active
+                      ? "bg-brand text-brand-foreground"
+                      : isTodayCell
+                        ? "border-brand text-foreground hover:bg-muted"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  <span className="text-[11px] font-bold uppercase tracking-wide">
+                    {dayShort(d).replace(".", "").slice(0, 3)}
+                  </span>
+                  <span className="text-sm font-black tabular-nums">{Number(d.slice(8, 10))}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </StickyTop>
 
       {staffList.length > 1 && (
         <div className="mb-4 flex items-center gap-1.5 overflow-x-auto rounded-full bg-muted p-1">
@@ -652,21 +695,53 @@ function CalendarPage() {
         </div>
       )}
 
-      {isLoading ? (
+      {week && business ? (
+        <CalendarWeek
+          businessId={business.id}
+          tz={tz}
+          weekStart={weekStart}
+          staffFilter={staffFilter}
+          onOpen={openAppointment}
+          onPickDay={(d) => {
+            setDate(d);
+            setView("day");
+          }}
+        />
+      ) : isLoading ? (
         <LoadingRows rows={5} />
       ) : isError ? (
         <ErrorState message={t("cal.loadError")} onRetry={() => void refetch()} />
       ) : isDayOff ? (
         <section className="surface flex flex-col items-center gap-2 px-6 py-12 text-center">
           <Moon className="size-7 text-muted-foreground" strokeWidth={2.2} />
-          <p className="font-display text-[20px] font-black leading-snug">{t("cal.offday.title")}</p>
+          <p className="font-display text-[20px] font-black leading-snug">
+            {t("cal.offday.title")}
+          </p>
           <p className="max-w-xs text-sm leading-snug text-muted-foreground">
             {t("cal.offday.desc")}
           </p>
         </section>
       ) : (
         <>
-
+          {/* One quiet line of help instead of a "+" on every empty slot. */}
+          {freeRows.some((r) => !isPastMinute(r.end)) && (
+            <p className="mb-2 px-1 text-xs font-medium text-muted-foreground">
+              {t("cal.empty.hint")}
+            </p>
+          )}
+          {staffColumns && (
+            // Column titles: one per professional, aligned with the grid below.
+            <div className="mb-1.5 flex pl-14">
+              {staffList.map((p) => (
+                <span
+                  key={p.id}
+                  className="min-w-0 flex-1 truncate px-2 text-center text-xs font-bold text-muted-foreground"
+                >
+                  {p.name}
+                </span>
+              ))}
+            </div>
+          )}
           <div
             // Remount per day so switching days gets the same soft entrance.
             key={date}
@@ -674,14 +749,14 @@ function CalendarPage() {
             onTouchMove={onPinchMove}
             onTouchEnd={onPinchEnd}
             onTouchCancel={onPinchEnd}
-            className="surface animate-enter overflow-hidden p-0"
+            className="surface animate-enter overflow-hidden rounded-[12px]! bg-muted/40 p-0 shadow-none!"
             style={{
               touchAction: "pan-y",
             }}
           >
             <div className="flex">
               <div
-                className="relative w-14 shrink-0 border-r border-border/60"
+                className="relative w-14 shrink-0 border-r border-border/60 bg-card"
                 style={{ height: gridHeight }}
               >
                 {hourMarks.map((m) => (
@@ -745,7 +820,7 @@ function CalendarPage() {
                               )}
                             >
                               {/* Quiet on desktop until hover; always faintly visible on touch screens. */}
-                              <span className="flex items-center gap-1 text-[11px] font-bold tabular-nums text-muted-foreground opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 [@media(hover:none)]:opacity-50">
+                              <span className="flex items-center gap-1 text-[11px] font-bold tabular-nums text-muted-foreground opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
                                 <Plus className="size-3.5" strokeWidth={2.6} />
                                 {minutesToTime(bookFrom)}
                               </span>
@@ -824,29 +899,26 @@ function CalendarPage() {
                   }`;
                   const priceText =
                     row.appt.price_cents != null ? formatPrice(row.appt.price_cents) : null;
-                  const opensPending = !due && row.appt.status === "pending";
                   const lane = lanes.get(row.appt.id) ?? { lane: 0, lanes: 1 };
+                  // The whole card opens the appointment sheet; inner buttons stop the tap.
+                  const stop = (e: { stopPropagation: () => void }) => e.stopPropagation();
                   return (
                     <div
                       key={row.appt.id}
                       data-status={due ? "pending" : row.appt.status}
-                      role={opensPending ? "button" : undefined}
-                      tabIndex={opensPending ? 0 : undefined}
-                      onClick={opensPending ? () => setPendingFocus(row.appt.id) : undefined}
-                      onKeyDown={
-                        opensPending
-                          ? (e) => {
-                              if (e.key !== "Enter" && e.key !== " ") return;
-                              e.preventDefault();
-                              setPendingFocus(row.appt.id);
-                            }
-                          : undefined
-                      }
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`${name} · ${timeText} · ${row.appt.service_name}`}
+                      onClick={() => openAppointment(row.appt.id)}
+                      onKeyDown={(e) => {
+                        if (e.key !== "Enter" && e.key !== " ") return;
+                        e.preventDefault();
+                        openAppointment(row.appt.id);
+                      }}
                       className={cn(
-                        "appointment-state appointment-pop surface surface-hover absolute overflow-hidden p-0",
+                        "appointment-state appointment-pop surface surface-hover absolute cursor-pointer overflow-hidden p-0",
                         // A rebooked slot draws the live appointment over the cancelled one.
                         isReleased(row.appt.status) ? "z-[5] opacity-70" : "z-10",
-                        opensPending && "cursor-pointer",
                         isNext && "ring-1 ring-foreground/40",
                       )}
                       style={{
@@ -855,7 +927,7 @@ function CalendarPage() {
                         // Overlapping appointments (several professionals) share the width.
                         left: `calc(4px + (100% - 8px) * ${lane.lane / lane.lanes})`,
                         width: `calc((100% - 8px) / ${lane.lanes} - ${lane.lanes > 1 ? 2 : 0}px)`,
-                        borderRadius: "8px",
+                        borderRadius: "6px",
                       }}
                     >
                       <span
@@ -865,73 +937,52 @@ function CalendarPage() {
                       />
                       <div
                         className={cn(
-                          "flex h-full min-w-0 items-center gap-1 pl-2.5 pr-1.5 sm:pr-2",
+                          "flex h-full min-w-0 items-center gap-2 pl-3 pr-2",
                           tier === "tiny" ? "py-0.5" : "py-1",
                         )}
                       >
                         <div className="flex h-full min-w-0 flex-1 flex-col justify-center gap-px">
                           {tier === "tiny" ? (
                             // Compact block: everything on one line, so short slots still show it all.
-                            <p className="truncate text-[12px] font-bold leading-tight text-muted-foreground">
-                              <span className="font-display text-[12.5px] font-black text-foreground">{name}</span>
-                              <span className="tabular-nums"> · {formatTime(row.appt.starts_at, tz)}</span>
+                            <p className="truncate text-[12px] font-semibold leading-tight text-muted-foreground">
+                              <span className="font-display text-[13px] font-bold text-foreground">
+                                {name}
+                              </span>
+                              <span className="tabular-nums">
+                                {" "}
+                                · {formatTime(row.appt.starts_at, tz)}
+                              </span>
                               <span> · {row.appt.service_name}</span>
-                              {priceText && <span className="font-black text-foreground"> · {priceText}</span>}
                             </p>
                           ) : (
                             <>
-                              <p className="truncate font-display text-[14px] font-black leading-tight">
+                              <p className="truncate font-display text-[14px] font-bold leading-tight">
                                 {name}
                               </p>
-                              <p className="truncate text-[11px] font-bold tabular-nums leading-tight text-muted-foreground">
-                                {timeText}
-                                <span className="font-bold"> · {row.appt.service_name}</span>
-                                {priceText && (
-                                  <span className="font-black text-foreground"> · {priceText}</span>
-                                )}
-                                {(due || isNext || row.appt.status === "pending") && (
-                                  <span className="font-black uppercase tracking-wide text-foreground/70">
-                                    {" "}·{" "}
-                                    {due
-                                      ? t("cal.validate.label")
-                                      : row.appt.status === "pending"
-                                        ? t("cal.status.pending")
-                                        : t("cal.next.inline")}
-                                  </span>
-                                )}
+                              <p className="truncate text-[12px] font-medium tabular-nums leading-tight text-muted-foreground">
+                                {timeText} · {row.appt.service_name}
+                                {priceText && <span> · {priceText}</span>}
                               </p>
                               {tier === "roomy" && row.appt.notes?.trim() && (
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <button
-                                      type="button"
-                                      aria-label={t("cal.note.label")}
-                                      className="mt-0.5 flex max-w-full items-center gap-1 self-start rounded-full border border-border bg-card px-2 py-0.5 text-[11px] font-semibold text-muted-foreground"
-                                    >
-                                      <StickyNote className="size-3 shrink-0" strokeWidth={2.6} />
-                                      <span className="truncate">{row.appt.notes}</span>
-                                    </button>
-                                  </PopoverTrigger>
-                                  <PopoverContent side="top" align="start" className="w-64 text-sm">
-                                    <p className="mb-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                                      {t("cal.note.label")}
-                                    </p>
-                                    <p className="whitespace-pre-wrap font-medium">{row.appt.notes}</p>
-                                  </PopoverContent>
-                                </Popover>
+                                <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[11px] font-medium text-muted-foreground">
+                                  <StickyNote className="size-3 shrink-0" strokeWidth={2.6} />
+                                  <span className="truncate">{row.appt.notes}</span>
+                                </p>
                               )}
                             </>
                           )}
                         </div>
-                        <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
-                          {due && (tier === "tiny" || lane.lanes > 1) ? (
-                            // Short or narrow cards: one clear button instead of two cramped ones.
+                        <div className="flex shrink-0 items-center">
+                          {due ? (
+                            // Past and not closed yet: one clear button, two choices.
                             <Popover>
                               <PopoverTrigger asChild>
                                 <button
                                   type="button"
+                                  onClick={stop}
+                                  onKeyDown={stop}
                                   className={cn(
-                                    "tap-target relative flex items-center justify-center gap-1 rounded-md bg-primary px-2.5 text-xs font-black text-primary-foreground shadow-sm active:scale-95",
+                                    "tap-target relative flex items-center justify-center gap-1 rounded-lg bg-primary px-2.5 text-xs font-bold text-primary-foreground shadow-sm active:scale-95",
                                     tier === "tiny" ? "h-7" : "h-9",
                                   )}
                                 >
@@ -939,89 +990,55 @@ function CalendarPage() {
                                   {t("cal.validate.short")}
                                 </button>
                               </PopoverTrigger>
-                              <PopoverContent align="end" className="w-52 p-1.5">
+                              <PopoverContent align="end" className="w-52 p-1.5" onClick={stop}>
                                 <button
                                   type="button"
-                                  onClick={() => validateAppointment(row.appt.id, "completed", row.appt.status)}
+                                  onClick={() =>
+                                    validateAppointment(row.appt.id, "completed", row.appt.status)
+                                  }
                                   className="flex h-11 w-full items-center gap-2.5 rounded-xl px-3 text-sm font-bold transition-colors hover:bg-muted"
                                 >
                                   <Check className="size-4" strokeWidth={3} />
-                                  {t("cal.validate.complete")}
+                                  {t("sheet.done")}
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => validateAppointment(row.appt.id, "no_show", row.appt.status)}
+                                  onClick={() =>
+                                    validateAppointment(row.appt.id, "no_show", row.appt.status)
+                                  }
                                   className="flex h-11 w-full items-center gap-2.5 rounded-xl px-3 text-sm font-bold transition-colors hover:bg-muted"
                                 >
                                   <UserX className="size-4" strokeWidth={2.8} />
-                                  {t("cal.validate.noShow")}
+                                  {t("sheet.noShow")}
                                 </button>
                               </PopoverContent>
                             </Popover>
-                          ) : due ? (
-                            <>
-                              <button
-                                type="button"
-                                aria-label={t("cal.validate.complete")}
-                                onClick={() => validateAppointment(row.appt.id, "completed", row.appt.status)}
-                                className={cn(
-                                  "tap-target relative flex items-center justify-center gap-1 rounded-md bg-primary px-2.5 font-black text-primary-foreground shadow-sm active:scale-95 sm:px-4",
-                                  tier === "tiny" ? "h-7 text-xs" : "h-10 text-sm",
-                                )}
-                              >
-                                <Check className="size-4" strokeWidth={3} />
-                                <span className="hidden min-[360px]:inline">{t("cal.validate.complete")}</span>
-                              </button>
-                              <button
-                                type="button"
-                                aria-label={t("cal.validate.noShow")}
-                                onClick={() => validateAppointment(row.appt.id, "no_show", row.appt.status)}
-                                className={cn(
-                                  "tap-target relative flex items-center justify-center gap-1 rounded-md border-2 border-border bg-card px-2.5 font-black text-foreground/80 transition-transform active:scale-95 sm:px-4",
-                                  tier === "tiny" ? "h-7 text-xs" : "h-10 text-sm",
-                                )}
-                              >
-                                <UserX className="size-4" strokeWidth={2.8} />
-                                <span className="hidden min-[360px]:inline">{t("cal.validate.noShow")}</span>
-                              </button>
-                              <ContactCustomer phone={row.appt.customer_phone} compact />
-                            </>
                           ) : row.appt.status === "completed" || row.appt.status === "no_show" ? (
-                            <>
-                              <span
-                                className={cn(
-                                  "hidden items-center gap-1 text-[11px] font-black uppercase tracking-wide min-[380px]:flex",
-                                  row.appt.status === "completed" ? "status-done-text" : "text-destructive",
-                                )}
-                              >
-                                {row.appt.status === "completed" ? <Check className="size-3.5" strokeWidth={3} /> : <UserX className="size-3.5" strokeWidth={2.8} />}
-                                {statusLabel(row.appt.status, lang)}
-                              </span>
-                              <ContactCustomer phone={row.appt.customer_phone} compact={tier === "tiny"} />
-                            </>
-                          ) : row.appt.status === "pending" ? (
                             <span
-                              aria-label={t("cal.status.pending")}
-                              className="pending-halo mr-1 flex size-8 items-center justify-center rounded-full border border-border bg-card"
+                              className={cn(
+                                "hidden items-center gap-1 text-[11px] font-bold uppercase tracking-wide min-[380px]:flex",
+                                row.appt.status === "completed"
+                                  ? "status-done-text"
+                                  : "text-destructive",
+                              )}
                             >
-                              <BellRing className="size-4 text-muted-foreground" strokeWidth={2.6} />
+                              {row.appt.status === "completed" ? (
+                                <Check className="size-3.5" strokeWidth={3} />
+                              ) : (
+                                <UserX className="size-3.5" strokeWidth={2.8} />
+                              )}
+                              {statusLabel(row.appt.status, lang)}
                             </span>
-                          ) : (
-                            <>
-                              <ContactCustomer phone={row.appt.customer_phone} compact />
-                              <AppointmentActions
-                                id={row.appt.id}
-                                status={row.appt.status}
-                                customerName={name}
-                                customerPhone={row.appt.customer_phone}
-                                startsAt={row.appt.starts_at}
-                                serviceName={row.appt.service_name}
-                                timezone={tz}
-                                hideStatusChip
-                                triggerClassName={tier === "tiny" ? "size-7" : "size-8"}
-                              />
-                            </>
-                          )}
+                          ) : row.appt.status === "pending" ? (
+                            <span className="pending-halo flex h-7 items-center gap-1 rounded-full border border-border bg-card px-2.5 text-[11px] font-bold text-muted-foreground">
+                              <BellRing className="size-3.5" strokeWidth={2.6} />
+                              {tier !== "tiny" && t("cal.status.pending")}
+                            </span>
+                          ) : isNext && tier !== "tiny" ? (
+                            <span className="rounded-full bg-foreground px-2.5 py-1 text-[11px] font-bold text-background">
+                              {t("cal.next.inline")}
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                     </div>
@@ -1035,8 +1052,8 @@ function CalendarPage() {
                     className="pointer-events-none absolute inset-x-0 z-20 flex items-center"
                     style={{ top: (nowMinutes - dayStart) * pxPerMinute }}
                   >
-                    <span className="-ml-1 size-2 rounded-full bg-foreground" />
-                    <span className="h-px flex-1 bg-foreground/70" />
+                    <span className="-ml-1 size-2.5 rounded-full bg-brand ring-2 ring-card" />
+                    <span className="h-0.5 flex-1 bg-brand" />
                   </div>
                 )}
               </div>
@@ -1044,14 +1061,6 @@ function CalendarPage() {
           </div>
         </>
       )}
-
-
-
-      <PendingDecisionDrawer
-        onlyId={pendingFocus}
-        open={!!pendingFocus}
-        onOpenChange={(o) => !o && setPendingFocus(null)}
-      />
 
       {business && (
         <NewAppointmentDialog

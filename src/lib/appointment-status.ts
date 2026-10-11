@@ -4,12 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { sendAppointmentConfirmedEmail } from "@/lib/confirmation-email.functions";
 
 export type ApptStatus =
-  | "confirmed"
-  | "completed"
-  | "cancelled"
-  | "no_show"
-  | "pending"
-  | "expired";
+  "confirmed" | "completed" | "cancelled" | "no_show" | "pending" | "expired";
 
 /** Every cached view built from appointments; refreshed together so no screen goes stale. */
 const APPOINTMENT_QUERY_KEYS = [
@@ -24,6 +19,9 @@ const APPOINTMENT_QUERY_KEYS = [
   "customer-history",
   "vacation-conflicts",
   "analytics",
+  "today",
+  "appointment-sheet",
+  "customer-card",
 ] as const;
 
 export function invalidateAppointmentData(qc: QueryClient) {
@@ -93,7 +91,8 @@ export async function setAppointmentStatus(input: {
       const res = await sendAppointmentConfirmedEmail({ data: { appointmentId: input.id } });
       if (res.status === "sent") toast.success("Marcação confirmada e email enviado!");
       else if (res.status === "no_email") toast.success("Marcação confirmada.");
-      else toast.error("A marcação foi confirmada, mas houve um erro ao enviar o email ao cliente.");
+      else
+        toast.error("A marcação foi confirmada, mas houve um erro ao enviar o email ao cliente.");
     } catch {
       toast.error("A marcação foi confirmada, mas houve um erro ao enviar o email ao cliente.");
     }

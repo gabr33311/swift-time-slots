@@ -2,13 +2,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { LoadingRows, FormError } from "@/components/ui-bits";
+import { FieldError, LoadingRows, FormError } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useMyBusiness } from "@/hooks/use-business";
-import { PublicPagePanel } from "@/components/panels/public-page-panel";
 import { weekdays, formatDateShort } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
 import { Trash2, MessageCircle, Mail, Coffee, Loader2 } from "lucide-react";
@@ -26,6 +25,9 @@ type DayState = {
   lunchStart: string;
   lunchEnd: string;
 };
+
+/** Display order: Monday → Sunday (weekday numbers keep 0 = Sunday). */
+const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0] as const;
 
 const DEFAULT_DAY: DayState = {
   enabled: false,
@@ -62,7 +64,8 @@ function fromRows(hours: { weekday: number; start_time: string; end_time: string
   return next;
 }
 
-export function AvailabilityPanel() {
+/** One part of availability at a time; the Manage menu lists each as its own section. */
+export function AvailabilityPanel({ view }: { view: "hours" | "off" | "rules" }) {
   const { business } = useMyBusiness();
   const { t, lang } = usePrefs();
   const dayNames = weekdays(lang);
@@ -70,14 +73,21 @@ export function AvailabilityPanel() {
   const [days, setDays] = useState<DayState[]>(
     Array.from({ length: 7 }, () => ({ ...DEFAULT_DAY })),
   );
-  
-  const [tab, setTab] = useState<"hours" | "off" | "rules">("hours");
+
+  const tab = view;
   const [busy, setBusy] = useState(false);
   const [blockFrom, setBlockFrom] = useState("");
   const [blockTo, setBlockTo] = useState("");
   const [reason, setReason] = useState("");
   const [blockBusy, setBlockBusy] = useState(false);
   const [blockError, setBlockError] = useState<string | null>(null);
+  // Errors shown on the day itself, not in a toast that names it.
+  const [dayErrors, setDayErrors] = useState<Record<number, string>>({});
+
+  function updateDay(i: number, patch: Partial<DayState>) {
+    setDays((prev) => prev.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+    setDayErrors(({ [i]: _cleared, ...rest }) => rest);
+  }
 
   const { data, isLoading } = useQuery({
     queryKey: ["availability", business?.id],
@@ -108,7 +118,6 @@ export function AvailabilityPanel() {
     },
   });
 
-
   useEffect(() => {
     if (!data) return;
     setDays(fromRows(data.hours));
@@ -119,16 +128,22 @@ export function AvailabilityPanel() {
   async function saveHours() {
     if (!business) return;
     // Refuse invalid days instead of silently dropping them (which would close the day).
+    const errors: Record<number, string> = {};
     for (const [i, d] of days.entries()) {
       if (!d.enabled) continue;
       if (d.start >= d.end) {
-        toast.error(t("pf.av.err.dayRange").replace("{day}", dayNames[i] ?? ""));
-        return;
+        errors[i] = t("pf.av.err.dayRange").replace("{day}", dayNames[i] ?? "");
+      } else if (
+        d.lunch &&
+        !(d.start < d.lunchStart && d.lunchStart < d.lunchEnd && d.lunchEnd < d.end)
+      ) {
+        errors[i] = t("pf.av.err.lunchRange").replace("{day}", dayNames[i] ?? "");
       }
-      if (d.lunch && !(d.start < d.lunchStart && d.lunchStart < d.lunchEnd && d.lunchEnd < d.end)) {
-        toast.error(t("pf.av.err.lunchRange").replace("{day}", dayNames[i] ?? ""));
-        return;
-      }
+    }
+    setDayErrors(errors);
+    if (Object.keys(errors).length) {
+      toast.error(t("pf.common.checkData"));
+      return;
     }
     setBusy(true);
     try {
@@ -195,7 +210,6 @@ export function AvailabilityPanel() {
     }
   }
 
-
   async function addBlock() {
     if (!business || blockBusy) return;
     // datetime-local values are wall-clock times in the business timezone, not the browser's.
@@ -250,31 +264,8 @@ export function AvailabilityPanel() {
     toast.success(t("pf.av.copied"));
   }
 
-  const TABS = [
-    { id: "hours" as const, label: t("pf.av.tab.hours") },
-    { id: "off" as const, label: t("pf.av.tab.off") },
-    { id: "rules" as const, label: t("pf.av.tab.rules") },
-  ];
-
   return (
     <div className="space-y-5">
-      <div className="flex gap-1 rounded-2xl border border-border bg-card p-1">
-        {TABS.map((tb) => (
-          <button
-            key={tb.id}
-            type="button"
-            onClick={() => setTab(tb.id)}
-            className={
-              tab === tb.id
-                ? "flex-1 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-accent-foreground"
-                : "flex-1 rounded-xl px-3 py-2 text-sm font-bold text-muted-foreground transition-colors hover:text-foreground"
-            }
-          >
-            {tb.label}
-          </button>
-        ))}
-      </div>
-
       {tab === "hours" && (
         <section className="surface p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -285,104 +276,102 @@ export function AvailabilityPanel() {
           </div>
 
           <div className="mt-3 divide-y divide-border">
-            {days.map((d, i) => (
-              <div key={i} className="py-3 sm:grid sm:grid-cols-[minmax(0,17rem)_minmax(0,24rem)] sm:items-center sm:gap-x-6">
-                <div className="flex items-center gap-2.5">
-                  <Switch
-                    checked={d.enabled}
-                    disabled={locked}
-                    onCheckedChange={(v) =>
-                      setDays((prev) => prev.map((x, j) => (j === i ? { ...x, enabled: v } : x)))
-                    }
-                    aria-label={dayNames[i]}
-                  />
-                  <span className="min-w-0 flex-1 truncate text-sm font-bold">{dayNames[i]}</span>
-                  {d.enabled ? (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setDays((prev) =>
-                          prev.map((x, j) => (j === i ? { ...x, lunch: !x.lunch } : x)),
-                        )
-                      }
-                      aria-pressed={d.lunch}
-                      title={t("pf.av.lunch")}
-                      className={
-                        d.lunch
-                          ? "flex h-9 shrink-0 items-center gap-1.5 rounded-xl border border-border bg-accent px-3 text-xs font-bold text-accent-foreground"
-                          : "flex h-9 shrink-0 items-center gap-1.5 rounded-xl border border-dashed border-border px-3 text-xs font-bold text-muted-foreground transition-colors hover:text-foreground"
-                      }
-                    >
-                      <Coffee className="size-4" strokeWidth={2.5} />
-                      {d.lunch ? t("pf.av.lunch") : `+ ${t("pf.av.addLunch")}`}
-                    </button>
-                  ) : (
-                    <span className="shrink-0 text-sm text-muted-foreground">
-                      {t("pf.av.closed")}
-                    </span>
-                  )}
-                </div>
-
-                {d.enabled && (
-                  <div className="mt-2 flex items-center gap-2 sm:mt-0">
-                    <Input
-                      type="time"
-                      value={d.start}
-                      onChange={(e) =>
-                        setDays((prev) =>
-                          prev.map((x, j) => (j === i ? { ...x, start: e.target.value } : x)),
-                        )
-                      }
-                      className="h-9 w-full min-w-0 flex-1 px-2 text-sm"
+            {/* Monday first, like the calendar; the data keeps 0 = Sunday. */}
+            {WEEK_ORDER.map((i) => {
+              const d = days[i]!;
+              return (
+                <div
+                  key={i}
+                  className="py-3 sm:grid sm:grid-cols-[minmax(0,17rem)_minmax(0,24rem)] sm:items-center sm:gap-x-6"
+                >
+                  <div className="flex min-h-11 items-center gap-2.5">
+                    <Switch
+                      checked={d.enabled}
+                      disabled={locked}
+                      onCheckedChange={(v) => updateDay(i, { enabled: v })}
+                      aria-label={dayNames[i]}
                     />
-                    <span className="shrink-0 text-xs text-muted-foreground">{t("pf.av.to")}</span>
-                    <Input
-                      type="time"
-                      value={d.end}
-                      onChange={(e) =>
-                        setDays((prev) =>
-                          prev.map((x, j) => (j === i ? { ...x, end: e.target.value } : x)),
-                        )
-                      }
-                      className="h-9 w-full min-w-0 flex-1 px-2 text-sm"
-                    />
+                    <span className="min-w-0 flex-1 truncate text-sm font-bold">{dayNames[i]}</span>
+                    {d.enabled ? (
+                      <button
+                        type="button"
+                        onClick={() => updateDay(i, { lunch: !d.lunch })}
+                        aria-pressed={d.lunch}
+                        className={
+                          d.lunch
+                            ? "flex h-11 shrink-0 items-center gap-1.5 rounded-xl border border-border bg-accent px-3 text-xs font-bold text-accent-foreground"
+                            : "flex h-11 shrink-0 items-center gap-1.5 rounded-xl border border-dashed border-border px-3 text-xs font-bold text-muted-foreground transition-colors hover:text-foreground"
+                        }
+                      >
+                        <Coffee className="size-4" strokeWidth={2.5} />
+                        {d.lunch ? t("pf.av.lunch") : `+ ${t("pf.av.lunch")}`}
+                      </button>
+                    ) : (
+                      <span className="shrink-0 text-sm text-muted-foreground">
+                        {t("pf.av.closed")}
+                      </span>
+                    )}
                   </div>
-                )}
 
-                {d.enabled && d.lunch && (
-                  <div className="mt-2 rounded-xl bg-muted/40 p-2 sm:col-start-2">
-                    <span className="mb-1.5 block text-xs font-semibold text-muted-foreground">
-                      {t("pf.av.lunch")}
-                    </span>
-                    <div className="flex items-center gap-2">
+                  {d.enabled && (
+                    <div className="mt-2 flex items-center gap-2 sm:mt-0">
                       <Input
                         type="time"
-                        value={d.lunchStart}
-                        onChange={(e) =>
-                          setDays((prev) =>
-                            prev.map((x, j) => (j === i ? { ...x, lunchStart: e.target.value } : x)),
-                          )
-                        }
-                        className="h-9 w-full min-w-0 flex-1 bg-background px-2 text-sm"
+                        aria-label={`${dayNames[i]} · ${t("pf.av.start")}`}
+                        aria-invalid={!!dayErrors[i]}
+                        value={d.start}
+                        onChange={(e) => updateDay(i, { start: e.target.value })}
+                        className="h-11 w-full min-w-0 flex-1 px-3 text-sm"
                       />
                       <span className="shrink-0 text-xs text-muted-foreground">
                         {t("pf.av.to")}
                       </span>
                       <Input
                         type="time"
-                        value={d.lunchEnd}
-                        onChange={(e) =>
-                          setDays((prev) =>
-                            prev.map((x, j) => (j === i ? { ...x, lunchEnd: e.target.value } : x)),
-                          )
-                        }
-                        className="h-9 w-full min-w-0 flex-1 bg-background px-2 text-sm"
+                        aria-label={`${dayNames[i]} · ${t("pf.av.end")}`}
+                        aria-invalid={!!dayErrors[i]}
+                        value={d.end}
+                        onChange={(e) => updateDay(i, { end: e.target.value })}
+                        className="h-11 w-full min-w-0 flex-1 px-3 text-sm"
                       />
                     </div>
-                  </div>
-                )}
-              </div>
-            ))}
+                  )}
+
+                  {d.enabled && d.lunch && (
+                    <div className="mt-2 rounded-xl bg-muted/40 p-2 sm:col-start-2">
+                      <span className="mb-1.5 block text-xs font-semibold text-muted-foreground">
+                        {t("pf.av.lunch")}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="time"
+                          aria-label={`${dayNames[i]} · ${t("pf.av.lunch")}`}
+                          value={d.lunchStart}
+                          onChange={(e) => updateDay(i, { lunchStart: e.target.value })}
+                          className="h-11 w-full min-w-0 flex-1 bg-background px-3 text-sm"
+                        />
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {t("pf.av.to")}
+                        </span>
+                        <Input
+                          type="time"
+                          aria-label={`${dayNames[i]} · ${t("pf.av.lunch")}`}
+                          value={d.lunchEnd}
+                          onChange={(e) => updateDay(i, { lunchEnd: e.target.value })}
+                          className="h-11 w-full min-w-0 flex-1 bg-background px-3 text-sm"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {dayErrors[i] && (
+                    <div className="mt-2 sm:col-start-2">
+                      <FieldError message={dayErrors[i]} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <SaveBar
@@ -393,7 +382,6 @@ export function AvailabilityPanel() {
           />
         </section>
       )}
-
 
       {tab === "off" && (
         <>
@@ -452,8 +440,13 @@ export function AvailabilityPanel() {
               {t("pf.av.addBlock")}
             </Button>
 
+            {(data?.blocks.length ?? 0) === 0 && (
+              <p className="mt-4 border-t border-border pt-4 text-sm text-muted-foreground">
+                {t("pf.av.blocks.empty")}
+              </p>
+            )}
             {(data?.blocks.length ?? 0) > 0 && (
-              <ul className="animate-stagger mt-4 space-y-2">
+              <ul className="animate-stagger mt-4 space-y-2 border-t border-border pt-4">
                 {data!.blocks.map((b) => (
                   <li
                     key={b.id}
@@ -485,12 +478,7 @@ export function AvailabilityPanel() {
         </>
       )}
 
-      {tab === "rules" && (
-        <>
-          <BookingRules />
-          <PublicPagePanel />
-        </>
-      )}
+      {tab === "rules" && <BookingRules />}
     </div>
   );
 }
@@ -503,10 +491,13 @@ function VacationConflicts({ blocks }: { blocks: Block[] }) {
   const { t } = usePrefs();
   const qc = useQueryClient();
 
-  const from = blocks.length
-    ? blocks.map((b) => b.starts_at).sort()[0]!
+  const from = blocks.length ? blocks.map((b) => b.starts_at).sort()[0]! : null;
+  const to = blocks.length
+    ? blocks
+        .map((b) => b.ends_at)
+        .sort()
+        .slice(-1)[0]!
     : null;
-  const to = blocks.length ? blocks.map((b) => b.ends_at).sort().slice(-1)[0]! : null;
 
   const { data: conflicts = [] } = useQuery({
     queryKey: ["vacation-conflicts", business?.id, from, to],
@@ -514,7 +505,9 @@ function VacationConflicts({ blocks }: { blocks: Block[] }) {
     queryFn: async () => {
       const { data } = await supabase
         .from("appointments")
-        .select("id, starts_at, ends_at, customer_name, customer_phone, customer_email, service_name")
+        .select(
+          "id, starts_at, ends_at, customer_name, customer_phone, customer_email, service_name",
+        )
         .eq("business_id", business!.id)
         .in("status", ["pending", "confirmed"])
         .gte("starts_at", from!)
@@ -631,7 +624,6 @@ function BookingRules() {
     setHorizon(String(business.booking_horizon_months ?? 2));
   }
 
-
   useEffect(() => {
     if (!business) return;
     setCancellation(String(business.cancellation_hours));
@@ -682,7 +674,6 @@ function BookingRules() {
     qc.invalidateQueries({ queryKey: ["my-business"] });
   }
 
-
   return (
     <section className="surface space-y-4 p-5">
       <h2 className="text-base font-semibold">{t("pf.av.rules")}</h2>
@@ -730,6 +721,5 @@ function BookingRules() {
         onCancel={resetRules}
       />
     </section>
-
   );
 }

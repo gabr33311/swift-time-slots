@@ -1,5 +1,7 @@
 import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
+import { BRAND_PALETTE, brandColors, effectiveBrand } from "@/lib/brand";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useMyBusiness } from "@/hooks/use-business";
 import { usePrefs } from "@/lib/prefs";
-import { ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUp, ArrowDown, Check } from "lucide-react";
 import { SaveBar } from "@/components/save-bar";
 
 export function PublicPagePanel() {
@@ -20,12 +22,14 @@ export function PublicPagePanel() {
   const [description, setDescription] = useState("");
   const [showTeam, setShowTeam] = useState(true);
   const [showContacts, setShowContacts] = useState(true);
+  const [brandColor, setBrandColor] = useState(effectiveBrand(null));
 
   function hydrate() {
     if (!business) return;
     setDescription(business.description ?? "");
     setShowTeam(business.show_team);
     setShowContacts(business.show_contacts);
+    setBrandColor(effectiveBrand(business.brand_color));
   }
   useEffect(hydrate, [business]);
 
@@ -49,7 +53,10 @@ export function PublicPagePanel() {
     const current = list[index];
     if (!target || !current) return;
     await Promise.all([
-      supabase.from("services").update({ sort_order: index + dir }).eq("id", current.id),
+      supabase
+        .from("services")
+        .update({ sort_order: index + dir })
+        .eq("id", current.id),
       supabase.from("services").update({ sort_order: index }).eq("id", target.id),
     ]);
     qc.invalidateQueries({ queryKey: ["services-order"] });
@@ -65,6 +72,7 @@ export function PublicPagePanel() {
         description: description.trim() || null,
         show_team: showTeam,
         show_contacts: showContacts,
+        brand_color: brandColor,
       })
       .eq("id", business.id);
     setBusy(false);
@@ -80,11 +88,65 @@ export function PublicPagePanel() {
     !!business &&
     (description !== (business.description ?? "") ||
       showTeam !== business.show_team ||
-      showContacts !== business.show_contacts);
-
+      showContacts !== business.show_contacts ||
+      brandColor !== effectiveBrand(business.brand_color));
 
   return (
     <div className="space-y-4">
+      {/* The business colour: used on the public page and to tint the app. */}
+      <section className="surface space-y-4 p-5">
+        <div>
+          <h2 className="text-sm font-bold">{t("pf.brand.title")}</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">{t("pf.brand.desc")}</p>
+        </div>
+        <div role="radiogroup" aria-label={t("pf.brand.title")} className="flex flex-wrap gap-2.5">
+          {BRAND_PALETTE.map((c) => (
+            <button
+              key={c}
+              type="button"
+              role="radio"
+              aria-checked={brandColor === c}
+              aria-label={c}
+              onClick={() => setBrandColor(c)}
+              className={cn(
+                "flex size-11 items-center justify-center rounded-full ring-offset-2 ring-offset-card transition-transform active:scale-95",
+                brandColor === c ? "ring-2 ring-foreground" : "hover:scale-105",
+              )}
+              style={{ backgroundColor: c }}
+            >
+              {brandColor === c && (
+                <Check
+                  className="size-5"
+                  strokeWidth={3}
+                  style={{ color: brandColors(c).foreground }}
+                />
+              )}
+            </button>
+          ))}
+        </div>
+        {/* Live preview of how clients will see it. */}
+        <div
+          className="flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-border p-4"
+          style={
+            {
+              "--brand": brandColors(brandColor).brand,
+              "--brand-foreground": brandColors(brandColor).foreground,
+            } as CSSProperties
+          }
+        >
+          <span className="h-1 w-16 rounded-full bg-brand" />
+          <span className="flex size-10 items-center justify-center rounded-full bg-brand text-sm font-bold text-brand-foreground">
+            13
+          </span>
+          <span className="rounded-xl border border-brand bg-brand px-3 py-2 text-sm font-bold text-brand-foreground">
+            10:30
+          </span>
+          <Button variant="brand" size="sm" type="button" tabIndex={-1}>
+            {t("pf.brand.preview")}
+          </Button>
+        </div>
+      </section>
+
       <section className="surface space-y-5 p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-bold">{t("pf.pub.title")}</h2>
@@ -149,10 +211,10 @@ export function PublicPagePanel() {
           setDescription(business.description ?? "");
           setShowTeam(business.show_team);
           setShowContacts(business.show_contacts);
+          setBrandColor(effectiveBrand(business.brand_color));
         }}
       />
     </div>
-
   );
 }
 

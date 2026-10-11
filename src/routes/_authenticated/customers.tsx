@@ -9,13 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMyBusiness } from "@/hooks/use-business";
 import { initials } from "@/lib/format";
-import { Users, Ban, ShieldCheck, Search, Pencil, History } from "lucide-react";
-import {
-  EditCustomerDialog,
-  type EditableCustomer,
-} from "@/components/edit-customer-dialog";
+import { Users, Ban, ShieldCheck, Search, ChevronRight, Plus } from "lucide-react";
+import { EditCustomerDialog, type EditableCustomer } from "@/components/edit-customer-dialog";
 import { cn } from "@/lib/utils";
 import { usePrefs } from "@/lib/prefs";
+import { useAppointmentSheet } from "@/lib/appointment-sheet-context";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,11 +40,11 @@ export const Route = createFileRoute("/_authenticated/customers")({
 function CustomersPage() {
   const { business } = useMyBusiness();
   const { t } = usePrefs();
+  const { openCustomer } = useAppointmentSheet();
   const qc = useQueryClient();
   const [term, setTerm] = useState("");
   const [tab, setTab] = useState<"all" | "cancelled" | "blocked">("all");
   const [editing, setEditing] = useState<EditableCustomer | null>(null);
-  const [historyCustomer, setHistoryCustomer] = useState<EditableCustomer | null>(null);
   const [creating, setCreating] = useState(false);
 
   const { data: cancelledMap } = useQuery({
@@ -94,7 +92,10 @@ function CustomersPage() {
   const rows = data ?? [];
 
   async function toggleBlock(id: string, blocked: boolean) {
-    const { error } = await supabase.from("customers").update({ is_blocked: !blocked }).eq("id", id);
+    const { error } = await supabase
+      .from("customers")
+      .update({ is_blocked: !blocked })
+      .eq("id", id);
     if (error) {
       toast.error(t("cust.toast.updateError"));
       return;
@@ -106,18 +107,28 @@ function CustomersPage() {
   return (
     <AppShell onPrimaryAction={() => setCreating(true)}>
       <StickyTop>
-      <PageHeader inline title={t("cust.title")} subtitle={t("cust.subtitle")} />
-
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={term}
-          onChange={(e) => setTerm(e.target.value)}
-          placeholder={t("cust.search.placeholder")}
-          maxLength={60}
-          className="pl-10"
+        <PageHeader
+          inline
+          title={t("cust.title")}
+          subtitle={t("cust.subtitle")}
+          action={
+            <Button size="sm" variant="outline" onClick={() => setCreating(true)}>
+              <Plus className="size-4" />
+              {t("cust.new")}
+            </Button>
+          }
         />
-      </div>
+
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+            placeholder={t("cust.search.placeholder")}
+            maxLength={60}
+            className="pl-10"
+          />
+        </div>
       </StickyTop>
 
       <div className="mb-4 flex items-center gap-1.5 rounded-full bg-muted p-1 lg:max-w-md">
@@ -143,9 +154,6 @@ function CustomersPage() {
         ))}
       </div>
 
-
-
-
       {isLoading ? (
         <LoadingRows />
       ) : rows.length === 0 ? (
@@ -160,49 +168,37 @@ function CustomersPage() {
                   ? t("cust.empty.noResults")
                   : t("cust.empty.none")
           }
-          description={
-            term
-              ? t("cust.empty.desc.search")
-              : t("cust.empty.desc.default")
-          }
+          description={term ? t("cust.empty.desc.search") : t("cust.empty.desc.default")}
         />
       ) : (
         <ul key={tab} className="animate-stagger grid gap-2.5 lg:grid-cols-2">
           {rows.map((c) => (
-            <li key={c.id} className="surface surface-hover flex items-center gap-3.5 p-4">
-              <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-bold text-primary">
-                {initials(c.name)}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[15px] font-bold leading-snug">{c.name}</p>
-                <p className="truncate text-sm font-normal leading-snug text-muted-foreground">
-                  {c.phone ?? c.email ?? t("cust.noContact")}
-                  {(cancelledMap?.[c.id] ?? 0) > 0 && (
-                    <span className="ml-2 font-semibold text-destructive">
-                      {cancelledMap![c.id]} {cancelledMap![c.id]! > 1 ? t("cust.cancellations") : t("cust.cancellation")}
-                    </span>
-                  )}
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`${t("cust.history.open")} ${c.name}`}
-                title={t("cust.history.open")}
-                className="size-9 shrink-0 text-muted-foreground"
-                onClick={() => setHistoryCustomer(c)}
-              >
-                <History className="size-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
+            <li key={c.id} className="surface surface-hover flex items-center gap-2 p-2 pr-3">
+              <button
+                type="button"
+                onClick={() => openCustomer(c.id)}
                 aria-label={`${t("cust.edit")} ${c.name}`}
-                className="size-9 shrink-0 text-muted-foreground"
-                onClick={() => setEditing(c)}
+                className="flex min-h-14 min-w-0 flex-1 items-center gap-3.5 rounded-2xl p-2 text-left transition-colors hover:bg-muted/40"
               >
-                <Pencil className="size-4" />
-              </Button>
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand/12 text-sm font-bold text-brand-ink">
+                  {initials(c.name)}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[15px] font-bold leading-snug">{c.name}</p>
+                  <p className="truncate text-sm font-normal leading-snug text-muted-foreground">
+                    {c.phone ?? c.email ?? t("cust.noContact")}
+                    {(cancelledMap?.[c.id] ?? 0) > 0 && (
+                      <span className="ml-2 font-semibold text-destructive">
+                        {cancelledMap![c.id]}{" "}
+                        {cancelledMap![c.id]! > 1
+                          ? t("cust.cancellations")
+                          : t("cust.cancellation")}
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+              </button>
               {c.is_blocked ? (
                 <Button
                   variant="ghost"
@@ -220,17 +216,19 @@ function CustomersPage() {
                       variant="ghost"
                       size="icon"
                       aria-label={`${t("cust.block")} ${c.name}`}
-                      className="size-9 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      title={t("cust.block")}
+                      className="shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
                     >
                       <Ban className="size-4" />
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>{t("cust.blockTitle")} {c.name}{t("cust.blockConfirmSuffix")}</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {t("cust.blockDesc")}
-                      </AlertDialogDescription>
+                      <AlertDialogTitle>
+                        {t("cust.blockTitle")} {c.name}
+                        {t("cust.blockConfirmSuffix")}
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>{t("cust.blockDesc")}</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>{t("cust.cancel")}</AlertDialogCancel>
@@ -243,9 +241,6 @@ function CustomersPage() {
               )}
             </li>
           ))}
-          <li className="py-6 text-center text-sm font-medium text-muted-foreground lg:col-span-2">
-            {t("cust.noMore")}
-          </li>
         </ul>
       )}
 
@@ -259,15 +254,6 @@ function CustomersPage() {
             setEditing(null);
             setCreating(false);
           }
-        }}
-      />
-      <EditCustomerDialog
-        key={`history-${historyCustomer?.id ?? "idle"}`}
-        customer={historyCustomer}
-        open={!!historyCustomer}
-        mode="history"
-        onOpenChange={(v) => {
-          if (!v) setHistoryCustomer(null);
         }}
       />
     </AppShell>

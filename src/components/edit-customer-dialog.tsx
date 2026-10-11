@@ -18,6 +18,7 @@ import { usePrefs } from "@/lib/prefs";
 import { localeOf } from "@/lib/prefs-types";
 import { formatPrice } from "@/lib/format";
 import { canonicalPhone } from "@/lib/phone";
+import { StatusBadge } from "@/components/ui-bits";
 
 export type EditableCustomer = {
   id: string;
@@ -62,13 +63,12 @@ export function EditCustomerDialog({
     enabled: !!customer && open,
     queryFn: async () => {
       if (!customer) return [];
-      let query = supabase
+      const query = supabase
         .from("appointments")
         .select("id, starts_at, service_name, price_cents, status")
         .eq("customer_id", customer.id)
         .order("starts_at", { ascending: false })
         .limit(20);
-      if (mode === "history") query = query.eq("status", "completed");
       const { data } = await query;
       return data ?? [];
     },
@@ -95,7 +95,9 @@ export function EditCustomerDialog({
     if (customer) {
       ({ error } = await supabase.from("customers").update(payload).eq("id", customer.id));
     } else if (businessId) {
-      ({ error } = await supabase.from("customers").insert({ ...payload, business_id: businessId }));
+      ({ error } = await supabase
+        .from("customers")
+        .insert({ ...payload, business_id: businessId }));
     } else {
       setBusy(false);
       return;
@@ -112,7 +114,12 @@ export function EditCustomerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="max-h-[90vh] overflow-y-auto"
+        onOpenAutoFocus={(e) => {
+          if (customer) e.preventDefault();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>
             {mode === "history"
@@ -127,50 +134,55 @@ export function EditCustomerDialog({
         <div className="space-y-4">
           {mode === "edit" && (
             <>
-          <div className="space-y-1.5">
-            <Label htmlFor="cname" className="font-bold">
-              {t("cust.field.name")}
-            </Label>
-            <Input id="cname" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="cphone" className="font-bold">
-                {t("cust.field.phone")}
-              </Label>
-              <Input
-                id="cphone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                maxLength={30}
-                inputMode="tel"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="cemail" className="font-bold">
-                {t("cust.field.email")}
-              </Label>
-              <Input
-                id="cemail"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                maxLength={120}
-              />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="cnotes" className="font-bold">
-              {t("cust.field.notes")}
-            </Label>
-            <Textarea
-              id="cnotes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              maxLength={500}
-              placeholder={t("cust.field.notes.placeholder")}
-            />
-          </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="cname" className="font-bold">
+                  {t("cust.field.name")}
+                </Label>
+                <Input
+                  id="cname"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={80}
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="cphone" className="font-bold">
+                    {t("cust.field.phone")}
+                  </Label>
+                  <Input
+                    id="cphone"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    maxLength={30}
+                    inputMode="tel"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="cemail" className="font-bold">
+                    {t("cust.field.email")}
+                  </Label>
+                  <Input
+                    id="cemail"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    maxLength={120}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="cnotes" className="font-bold">
+                  {t("cust.field.notes")}
+                </Label>
+                <Textarea
+                  id="cnotes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  maxLength={500}
+                  placeholder={t("cust.field.notes.placeholder")}
+                />
+              </div>
             </>
           )}
 
@@ -199,7 +211,10 @@ export function EditCustomerDialog({
                           year: "2-digit",
                         }).format(new Date(a.starts_at))}
                       </span>
-                      <span className="min-w-0 flex-1 truncate font-semibold">{a.service_name}</span>
+                      <span className="min-w-0 flex-1 truncate font-semibold">
+                        {a.service_name}
+                      </span>
+                      <StatusBadge status={a.status} />
                       <span className="tabular-nums text-muted-foreground">
                         {formatPrice(a.price_cents, "EUR")}
                       </span>

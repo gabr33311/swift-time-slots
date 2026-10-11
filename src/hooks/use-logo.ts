@@ -13,9 +13,7 @@ export function useLogoUrl(path: string | null | undefined) {
     queryFn: async () => {
       if (!path) return null;
       if (path.startsWith("http")) return path;
-      const { data } = await supabase.storage
-        .from("business-logos")
-        .createSignedUrl(path, 60 * 60);
+      const { data } = await supabase.storage.from("business-logos").createSignedUrl(path, 60 * 60);
       return data?.signedUrl ?? null;
     },
   });

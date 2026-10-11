@@ -1,5 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { isLang, LANGS, type BaseLang, type Lang, type Theme } from "./prefs-types";
+import type { BaseLang, Lang } from "./prefs-types";
 import { customersDict } from "./i18n/customers";
 import { calendarDict } from "./i18n/calendar";
 import { profileDict } from "./i18n/profile";
@@ -7,14 +6,6 @@ import { appointmentsDict } from "./i18n/appointments";
 import { bookingDict } from "./i18n/booking";
 import { onboardingDict } from "./i18n/onboarding";
 import { commonDict } from "./i18n/common";
-import { ptBR } from "./i18n/locales/pt-br";
-import { es } from "./i18n/locales/es";
-import { fr } from "./i18n/locales/fr";
-import { it } from "./i18n/locales/it";
-import { de } from "./i18n/locales/de";
-import { setFormatLang } from "./format";
-
-export type { Lang, Theme };
 
 const BASE: Record<BaseLang, Record<string, string>> = {
   pt: {
@@ -28,7 +19,7 @@ const BASE: Record<BaseLang, Record<string, string>> = {
     "home.cta.have": "Já tenho conta",
     "home.cta.start": "Começar agora",
     "home.signin": "Entrar",
-    "home.reassure": "Plano Base grátis · Sem compromisso · Pronto em minutos",
+    "home.reassure": "30 dias grátis · Sem cartão · Pronto em minutos",
     "home.footer": "Marcações online para negócios em Portugal",
     "home.nav.features": "Funcionalidades",
     "home.nav.pricing": "Preços",
@@ -53,16 +44,19 @@ const BASE: Record<BaseLang, Record<string, string>> = {
     "home.steps.3.title": "Recebe marcações",
     "home.steps.3.body": "Os clientes escolhem o horário sozinhos. Tu vês tudo na agenda.",
     "home.features.title": "Uma página, uma agenda, zero confusão.",
-    "home.pricing.title": "Começa grátis",
-    "home.pricing.body": "Sem compromisso. Mudas de plano quando o negócio crescer.",
+    "home.pricing.title": "Um plano. Tudo incluído.",
+    "home.pricing.body": "Experimenta 30 dias grátis, sem cartão. Depois, 19 € por mês.",
     "home.pricing.allBase": "Tudo do Plano Base",
     "home.faq.title": "Perguntas frequentes",
     "home.faq.1.q": "Os meus clientes precisam de criar conta?",
-    "home.faq.1.a": "Não. Escolhem o serviço e o horário na tua página e deixam o nome e o contacto.",
+    "home.faq.1.a":
+      "Não. Escolhem o serviço e o horário na tua página e deixam o nome e o contacto.",
     "home.faq.2.q": "Posso continuar a aceitar marcações por telefone?",
-    "home.faq.2.a": "Sim. Adicionas a marcação na agenda e esse horário deixa de aparecer na página.",
+    "home.faq.2.a":
+      "Sim. Adicionas a marcação na agenda e esse horário deixa de aparecer na página.",
     "home.faq.3.q": "E se um cliente quiser cancelar?",
-    "home.faq.3.a": "Tu defines até quando se pode cancelar online. Depois desse prazo, o cliente fala contigo.",
+    "home.faq.3.a":
+      "Tu defines até quando se pode cancelar online. Depois desse prazo, o cliente fala contigo.",
     "home.faq.4.q": "Funciona no telemóvel?",
     "home.faq.4.a": "Sim. A agenda e a página de marcações funcionam no telemóvel e no computador.",
     "home.final.title": "Pronto em minutos. Sem telefonemas.",
@@ -141,7 +135,7 @@ const BASE: Record<BaseLang, Record<string, string>> = {
     "home.cta.have": "I already have an account",
     "home.cta.start": "Get started",
     "home.signin": "Sign in",
-    "home.reassure": "Free Base plan · No commitment · Ready in minutes",
+    "home.reassure": "30 days free · No card needed · Ready in minutes",
     "home.footer": "Online booking for small businesses",
     "home.nav.features": "Features",
     "home.nav.pricing": "Pricing",
@@ -166,16 +160,18 @@ const BASE: Record<BaseLang, Record<string, string>> = {
     "home.steps.3.title": "Take bookings",
     "home.steps.3.body": "Clients pick their own time. You see everything in your agenda.",
     "home.features.title": "One page, one agenda, zero confusion.",
-    "home.pricing.title": "Start for free",
-    "home.pricing.body": "No commitment. Switch plans as your business grows.",
+    "home.pricing.title": "One plan. Everything included.",
+    "home.pricing.body": "Try it free for 30 days, no card needed. Then €19 a month.",
     "home.pricing.allBase": "Everything in Base",
     "home.faq.title": "Frequently asked questions",
     "home.faq.1.q": "Do my clients need an account?",
-    "home.faq.1.a": "No. They pick the service and time on your page and leave their name and contact.",
+    "home.faq.1.a":
+      "No. They pick the service and time on your page and leave their name and contact.",
     "home.faq.2.q": "Can I still take bookings by phone?",
     "home.faq.2.a": "Yes. Add the booking to your agenda and that slot disappears from your page.",
     "home.faq.3.q": "What if a client wants to cancel?",
-    "home.faq.3.a": "You decide how long before the booking clients can cancel online. After that, they contact you.",
+    "home.faq.3.a":
+      "You decide how long before the booking clients can cancel online. After that, they contact you.",
     "home.faq.4.q": "Does it work on mobile?",
     "home.faq.4.a": "Yes. Your agenda and booking page work on phones and computers.",
     "home.final.title": "Ready in minutes. No phone calls.",
@@ -256,91 +252,32 @@ const MODULES = [
 const PT: Record<string, string> = Object.assign({}, BASE.pt, ...MODULES.map((m) => m.pt));
 const EN: Record<string, string> = Object.assign({}, BASE.en, ...MODULES.map((m) => m.en));
 
-// Extra languages are flat files; anything they miss falls back to English.
-const DICT: Record<Lang, Record<string, string>> = {
-  pt: PT,
-  en: EN,
-  "pt-BR": { ...EN, ...ptBR },
-  es: { ...EN, ...es },
-  fr: { ...EN, ...fr },
-  it: { ...EN, ...it },
-  de: { ...EN, ...de },
+/** Built-in languages: always in the bundle. */
+export const DICT: Record<"pt" | "en", Record<string, string>> = { pt: PT, en: EN };
+
+type ExtraLang = Exclude<Lang, "pt" | "en">;
+
+// Extra languages are flat files loaded only when chosen, so the public booking
+// page doesn't ship every translation. Anything they miss falls back to English.
+const LOADERS: Record<ExtraLang, () => Promise<Record<string, string>>> = {
+  "pt-BR": () => import("./i18n/locales/pt-br").then((m) => m.ptBR),
+  es: () => import("./i18n/locales/es").then((m) => m.es),
+  fr: () => import("./i18n/locales/fr").then((m) => m.fr),
+  it: () => import("./i18n/locales/it").then((m) => m.it),
+  de: () => import("./i18n/locales/de").then((m) => m.de),
 };
 
-type PrefsValue = {
-  theme: Theme;
-  setTheme: (t: Theme) => void;
-  toggleTheme: () => void;
-  lang: Lang;
-  setLang: (l: Lang) => void;
-  toggleLang: () => void;
-  t: (key: string) => string;
-};
+const loaded: Partial<Record<ExtraLang, Record<string, string>>> = {};
 
-const PrefsContext = createContext<PrefsValue | null>(null);
-
-export function PrefsProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("light");
-  const [lang, setLangState] = useState<Lang>("pt");
-
-  useEffect(() => {
-    const storedTheme = (window.localStorage.getItem("sycras-theme") ??
-      window.localStorage.getItem("schedivo-theme")) as Theme | null;
-    const storedLang = (window.localStorage.getItem("sycras-lang") ??
-      window.localStorage.getItem("schedivo-lang")) as Lang | null;
-    if (storedTheme === "dark" || storedTheme === "light") setThemeState(storedTheme);
-    if (isLang(storedLang)) setLangState(storedLang);
-  }, []);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-  }, [theme]);
-
-  // Set during render (not only in an effect) so dates and prices switch on the same paint.
-  setFormatLang(lang);
-  useEffect(() => {
-    document.documentElement.setAttribute("lang", lang);
-  }, [lang]);
-
-  const setTheme = useCallback((next: Theme) => {
-    setThemeState(next);
-    window.localStorage.setItem("sycras-theme", next);
-  }, []);
-
-  const setLang = useCallback((next: Lang) => {
-    setLangState(next);
-    window.localStorage.setItem("sycras-lang", next);
-    document.documentElement.setAttribute("lang", next);
-  }, []);
-
-  const value: PrefsValue = {
-    theme,
-    setTheme,
-    toggleTheme: () => setTheme(theme === "dark" ? "light" : "dark"),
-    lang,
-    setLang,
-    toggleLang: () => {
-      const i = LANGS.findIndex((l) => l.code === lang);
-      setLang(LANGS[(i + 1) % LANGS.length]!.code);
-    },
-    t: (key: string) => DICT[lang][key] ?? DICT.pt[key] ?? key,
-  };
-
-  return <PrefsContext.Provider value={value}>{children}</PrefsContext.Provider>;
+/** The dictionary for a language; English until an extra language has loaded. */
+export function dictFor(lang: Lang): Record<string, string> {
+  if (lang === "pt" || lang === "en") return DICT[lang];
+  return loaded[lang] ?? EN;
 }
 
-export function usePrefs(): PrefsValue {
-  const ctx = useContext(PrefsContext);
-  if (!ctx) {
-    return {
-      theme: "light",
-      setTheme: () => {},
-      toggleTheme: () => {},
-      lang: "pt",
-      setLang: () => {},
-      toggleLang: () => {},
-      t: (key: string) => DICT.pt[key] ?? key,
-    };
-  }
-  return ctx;
+/** Loads an extra language once; resolves immediately for built-in or cached ones. */
+export async function loadLang(lang: Lang): Promise<void> {
+  if (lang === "pt" || lang === "en" || loaded[lang]) return;
+  const extra = await LOADERS[lang]();
+  loaded[lang] = { ...EN, ...extra };
 }

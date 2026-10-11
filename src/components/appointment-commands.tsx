@@ -1,16 +1,10 @@
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { FormError } from "@/components/ui-bits";
-import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { invalidateAppointmentData, setAppointmentStatus } from "@/lib/appointment-status";
-import { useMyBusiness } from "@/hooks/use-business";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,83 +16,71 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  BellRing,
-  CalendarCheck,
-  CalendarClock,
-  CheckCircle2,
-  Loader2,
-  Settings2,
-  RotateCcw,
-  Trash2,
-  XCircle,
-} from "lucide-react";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormError } from "@/components/ui-bits";
 import { supabase } from "@/integrations/supabase/client";
+import { useMyBusiness } from "@/hooks/use-business";
+import { invalidateAppointmentData, setAppointmentStatus } from "@/lib/appointment-status";
 import { normalizePhonePt } from "@/lib/phone";
 import { formatDateLong, formatTime } from "@/lib/format";
 import { timeToMinutes, zonedToUtc } from "@/lib/time";
 import { usePrefs } from "@/lib/prefs";
-import { cn } from "@/lib/utils";
-import { AppointmentStatusIndicator } from "@/components/appointment-status-indicator";
 
-type Status = "pending" | "confirmed" | "completed" | "cancelled" | "no_show" | "expired";
+export type ApptStatusValue =
+  "pending" | "confirmed" | "completed" | "cancelled" | "no_show" | "expired";
 
-/** Quick status actions (confirm, complete, cancel, remind) for one appointment. */
-export function AppointmentActions({
-  id,
-  status,
-  customerName,
-  customerPhone,
-  startsAt,
-  serviceName,
-  timezone,
-  autoOpen,
-  onAutoOpenDone,
-  hideStatusChip,
-  triggerClassName,
-}: {
+export type AppointmentCommandTarget = {
   id: string;
-  status: Status;
+  status: ApptStatusValue;
   customerName: string;
-  customerPhone?: string | null;
-  startsAt?: string;
-  serviceName?: string;
-  timezone?: string;
-  autoOpen?: boolean;
-  onAutoOpenDone?: () => void;
-  hideStatusChip?: boolean;
-  triggerClassName?: string;
-}) {
+  customerPhone?: string | null | undefined;
+  startsAt?: string | undefined;
+  serviceName?: string | undefined;
+  timezone?: string | undefined;
+};
+
+/**
+ * Everything the business can do to one appointment — change its status,
+ * reschedule, cancel, delete, remind — in one place, so the calendar menu and
+ * the appointment sheet behave exactly the same. Render `dialogs` once.
+ */
+export function useAppointmentCommands(target: AppointmentCommandTarget, onDone?: () => void) {
+  const { id, status, customerName, customerPhone, startsAt, serviceName } = target;
   const { t } = usePrefs();
   const qc = useQueryClient();
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const { business } = useMyBusiness();
+  const [busy, setBusy] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
   const [rescheduleError, setRescheduleError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const { business } = useMyBusiness();
 
-  useEffect(() => {
-    if (!autoOpen) return;
-    const timer = window.setTimeout(() => {
-      setMenuOpen(true);
-      onAutoOpenDone?.();
-    }, 420);
-    return () => window.clearTimeout(timer);
-  }, [autoOpen, onAutoOpenDone]);
+  const tz = target.timezone ?? business?.timezone ?? "Europe/Lisbon";
+  const startMs = startsAt ? new Date(startsAt).getTime() : null;
+  const isFuture = startMs !== null && startMs > Date.now();
+  const live = status === "pending" || status === "confirmed";
+  const phone = customerPhone ? normalizePhonePt(customerPhone) : null;
 
-  async function setStatus(next: Status): Promise<boolean> {
+  const can = {
+    confirm: status === "pending",
+    // Completing an appointment that hasn't started yet makes no sense.
+    complete: (live || status === "no_show") && !isFuture,
+    noShow: live && !isFuture,
+    revert: status === "completed" || status === "no_show",
+    reschedule: !!startsAt && live,
+    cancel: live,
+    delete: status === "completed" || status === "cancelled" || status === "expired",
+    remind: !!phone && !!startsAt && isFuture && live,
+  };
+
+  async function setStatus(next: ApptStatusValue): Promise<boolean> {
     if (!business || busy) return false;
     setBusy(true);
     const result = await setAppointmentStatus({
@@ -136,18 +118,8 @@ export function AppointmentActions({
     setDeleteOpen(false);
     toast.success(t("acts.toast.deleted"));
     void invalidateAppointmentData(qc);
+    onDone?.();
   }
-
-  async function cancelAppointment() {
-    if (await setStatus("cancelled")) setConfirmOpen(false);
-  }
-
-  const tz = timezone ?? "Europe/Lisbon";
-  const isFuture = !!startsAt && new Date(startsAt).getTime() > Date.now();
-  const canCancel = status === "pending" || status === "confirmed";
-  // Completing an appointment that hasn't started yet makes no sense.
-  const canComplete = (status === "pending" || status === "confirmed" || status === "no_show") && !isFuture;
-  const canReschedule = !!startsAt && (status === "pending" || status === "confirmed");
 
   function openReschedule() {
     if (!startsAt) return;
@@ -210,9 +182,6 @@ export function AppointmentActions({
     void invalidateAppointmentData(qc);
   }
 
-  const phone = customerPhone ? normalizePhonePt(customerPhone) : null;
-  const canRemind = !!phone && !!startsAt && status !== "cancelled" && status !== "completed";
-
   function remind() {
     if (!phone || !startsAt) return;
     const message = `${t("acts.remind.hello")}${customerName}${t("acts.remind.body1")}${
@@ -225,103 +194,9 @@ export function AppointmentActions({
     );
   }
 
-  return (
+  const dialogs = (
     <>
-      {!hideStatusChip && (
-        <AppointmentStatusIndicator
-          status={status}
-          customerName={customerName}
-          onConfirm={() => setStatus("confirmed")}
-          onCancel={() => setConfirmOpen(true)}
-        />
-      )}
-      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "tap-target relative size-9 shrink-0 rounded-full border border-border bg-card text-foreground shadow-sm hover:bg-muted",
-              triggerClassName,
-            )}
-            aria-label={`${t("acts.opts.forLabel")}${customerName}`}
-            disabled={busy}
-            aria-busy={busy}
-          >
-            {busy ? (
-              <Loader2 className="size-[18px] animate-spin text-muted-foreground" />
-            ) : (
-              <Settings2
-                className={cn(
-                  "size-[18px]",
-                  status === "completed" ? "text-muted-foreground" : "text-foreground",
-                )}
-                strokeWidth={2.5}
-              />
-            )}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="end"
-          side="bottom"
-          avoidCollisions
-          collisionPadding={{ top: 12, bottom: 96, left: 8, right: 8 }}
-          className="z-[60] min-w-64 space-y-1 p-1.5"
-        >
-          {status === "pending" && (
-            <DropdownMenuItem
-              className="py-2.5 font-bold text-foreground"
-              onClick={() => setStatus("confirmed")}
-            >
-              <CalendarCheck className="mr-1 size-4" /> {t("acts.confirm")}
-            </DropdownMenuItem>
-          )}
-          {canReschedule && (
-            <DropdownMenuItem className="py-2.5 font-bold text-foreground" onClick={openReschedule}>
-              <CalendarClock className="mr-1 size-4" /> {t("acts.reschedule")}
-            </DropdownMenuItem>
-          )}
-          {canComplete && (
-            <DropdownMenuItem
-              className="py-2.5 font-bold text-foreground"
-              onClick={() => setStatus("completed")}
-            >
-              <CheckCircle2 className="mr-1 size-4" /> {t("acts.markCompleted")}
-            </DropdownMenuItem>
-          )}
-          {status === "completed" && (
-            <DropdownMenuItem
-              className="py-2.5 font-bold text-foreground"
-              onClick={() => setStatus("confirmed")}
-            >
-              <RotateCcw className="mr-1 size-4" /> {t("acts.revertCompleted")}
-            </DropdownMenuItem>
-          )}
-          {status === "completed" && (
-            <DropdownMenuItem
-              className="py-2.5 font-bold text-foreground"
-              onClick={() => setDeleteOpen(true)}
-            >
-              <Trash2 className="mr-1 size-4" /> {t("acts.deleteAppt")}
-            </DropdownMenuItem>
-          )}
-          {canRemind && (
-            <DropdownMenuItem className="py-2.5 font-bold text-foreground" onClick={remind}>
-              <BellRing className="mr-1 size-4" /> {t("acts.remindWhatsapp")}
-            </DropdownMenuItem>
-          )}
-          {canCancel && (
-            <DropdownMenuItem
-              className="py-2.5 font-bold text-foreground"
-              onClick={() => setConfirmOpen(true)}
-            >
-              <XCircle className="mr-1 size-4" /> {t("acts.cancelAppt")}
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+      <AlertDialog open={cancelOpen} onOpenChange={(o) => !busy && setCancelOpen(o)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -337,7 +212,7 @@ export function AppointmentActions({
               onClick={(e) => {
                 // Stay open until the server answers, so failures are visible here.
                 e.preventDefault();
-                void cancelAppointment();
+                void setStatus("cancelled").then((ok) => ok && setCancelOpen(false));
               }}
             >
               {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
@@ -347,7 +222,7 @@ export function AppointmentActions({
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+      <AlertDialog open={deleteOpen} onOpenChange={(o) => !busy && setDeleteOpen(o)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -409,7 +284,7 @@ export function AppointmentActions({
             </div>
           </div>
           <FormError message={rescheduleError} />
-          <Button className="w-full" onClick={saveReschedule} disabled={busy}>
+          <Button className="w-full" onClick={() => void saveReschedule()} disabled={busy}>
             {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
             {t("acts.reschedule")}
           </Button>
@@ -417,4 +292,15 @@ export function AppointmentActions({
       </Dialog>
     </>
   );
+
+  return {
+    busy,
+    can,
+    setStatus,
+    openCancel: () => setCancelOpen(true),
+    openDelete: () => setDeleteOpen(true),
+    openReschedule,
+    remind,
+    dialogs,
+  };
 }

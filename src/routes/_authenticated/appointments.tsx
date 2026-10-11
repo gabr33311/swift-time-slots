@@ -5,19 +5,35 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { usePrefs } from "@/lib/prefs";
 import { AppShell } from "@/components/app-shell";
-import { EmptyState, ErrorState, LoadingRows, PageHeader } from "@/components/ui-bits";
+import { EmptyState, ErrorState, LoadingRows, PageHeader, StatusBadge } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
-import { formatDateShort, formatPrice, formatTime } from "@/lib/format";
+import { formatDateLong, formatDateShort, formatPrice, formatTime } from "@/lib/format";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
-import { ArrowLeft, CalendarX, Check, ChevronLeft, ChevronRight, UserX } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarX,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  UserX,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { AppointmentActions } from "@/components/appointment-actions";
+import { useAppointmentSheet } from "@/lib/appointment-sheet-context";
 import { invalidateAppointmentData, setAppointmentStatus } from "@/lib/appointment-status";
 import { todayIn, zonedToUtc } from "@/lib/time";
 
-const filterSchema = z.enum(["upcoming", "today", "past", "cancelled", "confirmed", "pending", "completed"]);
+const filterSchema = z.enum([
+  "upcoming",
+  "today",
+  "past",
+  "cancelled",
+  "confirmed",
+  "pending",
+  "completed",
+]);
 
 export const Route = createFileRoute("/_authenticated/appointments")({
   validateSearch: z.object({ new: z.boolean().optional(), filter: filterSchema.optional() }),
@@ -32,7 +48,7 @@ export const Route = createFileRoute("/_authenticated/appointments")({
 });
 
 const STATUS_FILTERS = ["all", "confirmed", "pending", "cancelled", "completed"] as const;
-const TIME_FILTERS = ["all", "upcoming", "today", "past"] as const;
+const TIME_FILTERS = ["upcoming", "today", "past", "all"] as const;
 type StatusFilter = (typeof STATUS_FILTERS)[number];
 type TimeFilter = (typeof TIME_FILTERS)[number];
 
@@ -40,6 +56,7 @@ function AppointmentsPage() {
   const { t } = usePrefs();
   const search = Route.useSearch();
   const { business } = useMyBusiness();
+  const { openAppointment } = useAppointmentSheet();
   const qc = useQueryClient();
   const initial = search.filter;
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(
@@ -63,7 +80,9 @@ function AppointmentsPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("appointments")
-        .select("id, starts_at, customer_name, customer_phone, service_name, price_cents, status, notes")
+        .select(
+          "id, starts_at, customer_name, customer_phone, service_name, price_cents, status, notes",
+        )
         .eq("business_id", business!.id)
         .in("status", ["confirmed", "pending"])
         .lt("starts_at", new Date().toISOString())
@@ -79,7 +98,9 @@ function AppointmentsPage() {
     queryFn: async () => {
       let q = supabase
         .from("appointments")
-        .select("id, starts_at, customer_name, customer_phone, service_name, price_cents, status, notes")
+        .select(
+          "id, starts_at, customer_name, customer_phone, service_name, price_cents, status, notes",
+        )
         .eq("business_id", business!.id);
       const now = new Date().toISOString();
       if (statusFilter !== "all") q = q.eq("status", statusFilter);
@@ -120,13 +141,23 @@ function AppointmentsPage() {
         title={t("appt.page.title")}
         subtitle={t("appt.page.subtitle")}
         leading={
-          <Button asChild variant="ghost" size="icon" aria-label={t("cal.title")} className="text-foreground">
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            aria-label={t("cal.title")}
+            className="text-foreground"
+          >
             <Link to="/calendar">
               <ArrowLeft className="size-5" strokeWidth={2.5} />
             </Link>
           </Button>
         }
-        action={<Button className="hidden lg:inline-flex" onClick={() => setNewOpen(true)}>{t("appt.new")}</Button>}
+        action={
+          <Button className="hidden lg:inline-flex" onClick={() => setNewOpen(true)}>
+            {t("appt.new")}
+          </Button>
+        }
       />
 
       {(overdue?.length ?? 0) > 0 && (
@@ -140,43 +171,57 @@ function AppointmentsPage() {
         />
       )}
 
-      <div className="mb-4 space-y-2.5 lg:flex lg:items-center lg:gap-4 lg:space-y-0">
-        <div role="group" aria-label={t("appt.group.time")} className="grid grid-cols-4 gap-1 rounded-full bg-muted p-1 lg:w-[26rem]">
-          {TIME_FILTERS.map((f) => (
-            <button
-              key={f}
-              type="button"
-              aria-pressed={timeFilter === f}
-              onClick={() => setTimeFilter(f)}
-              className={cn(
-                "h-10 rounded-full px-2 text-[13px] font-bold transition-all duration-200",
-                timeFilter === f
-                  ? "bg-card text-foreground shadow-soft"
-                  : "text-muted-foreground hover:text-foreground",
+      {/* One period switch; the status is a quiet filter next to the count. */}
+      <div
+        role="group"
+        aria-label={t("appt.group.time")}
+        className="grid grid-cols-4 gap-1 rounded-full bg-muted p-1 lg:w-[28rem]"
+      >
+        {TIME_FILTERS.map((f) => (
+          <button
+            key={f}
+            type="button"
+            aria-pressed={timeFilter === f}
+            onClick={() => setTimeFilter(f)}
+            className={cn(
+              "h-10 rounded-full px-2 text-[13px] font-bold transition-all duration-200",
+              timeFilter === f
+                ? "bg-card text-foreground shadow-soft"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {t(f === "all" ? "appt.filter.allTime" : `appt.filter.${f}`)}
+          </button>
+        ))}
+      </div>
+
+      <div className="mb-3 mt-4 flex items-center justify-between gap-3 px-1">
+        <p className="text-sm font-semibold text-muted-foreground">
+          {isLoading
+            ? "\u00a0"
+            : t(data?.length === 1 ? "appt.count.one" : "appt.count").replace(
+                "{n}",
+                String(data?.length ?? 0),
               )}
-            >
-              {t(`appt.filter.${f}`)}
-            </button>
-          ))}
-        </div>
-        <div role="group" aria-label={t("appt.group.status")} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
-          {STATUS_FILTERS.map((f) => (
-            <button
-              key={f}
-              type="button"
-              aria-pressed={statusFilter === f}
-              onClick={() => setStatusFilter(f)}
-              className={cn(
-                "h-10 shrink-0 rounded-full border px-4 text-[13px] font-bold transition-colors",
-                statusFilter === f
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {t(`appt.filter.${f}`)}
-            </button>
-          ))}
-        </div>
+        </p>
+        <label className="relative">
+          <span className="sr-only">{t("appt.group.status")}</span>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+            className={cn(
+              "h-10 appearance-none rounded-full border border-border bg-card pl-4 pr-9 text-[13px] font-bold transition-colors hover:bg-muted",
+              statusFilter !== "all" && "border-brand text-foreground",
+            )}
+          >
+            {STATUS_FILTERS.map((f) => (
+              <option key={f} value={f}>
+                {t(f === "all" ? "appt.filter.allStatus" : `appt.filter.${f}`)}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        </label>
       </div>
 
       {isLoading ? (
@@ -190,40 +235,42 @@ function AppointmentsPage() {
           description={t("appt.empty.desc")}
         />
       ) : (
-        <ul key={`${statusFilter}-${timeFilter}`} className="animate-stagger space-y-2">
-          {data!.map((a) => (
-            <li
-              key={a.id}
-              data-status={a.status}
-              // On wide screens the row reads like a table: when · client · service · actions.
-              className="appointment-state surface flex flex-wrap items-center gap-3 p-4 lg:grid lg:grid-cols-[8rem_minmax(0,1fr)_minmax(0,1fr)_auto] lg:gap-6 lg:py-3"
-            >
-              <div className="w-20 lg:w-auto">
-                <p className="text-sm font-semibold tabular-nums">
-                  {formatTime(a.starts_at, business!.timezone)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {formatDateShort(a.starts_at, business!.timezone)}
-                </p>
-              </div>
-              <div className="min-w-0 flex-1 lg:contents">
-                <p className="truncate text-sm font-medium">{a.customer_name}</p>
-                <p className="truncate text-sm text-muted-foreground">{a.service_name}</p>
-              </div>
-              <div className="flex shrink-0 items-center justify-end gap-2">
-              <AppointmentActions
-                id={a.id}
-                status={a.status as "pending" | "confirmed" | "completed" | "cancelled" | "no_show" | "expired"}
-                customerName={a.customer_name}
-                customerPhone={a.customer_phone}
-                startsAt={a.starts_at}
-                serviceName={a.service_name}
-                timezone={business!.timezone}
-              />
-              </div>
-            </li>
+        // Grouped by day: the date is said once, the rows only show the time.
+        <div key={`${statusFilter}-${timeFilter}`} className="animate-stagger space-y-5">
+          {groupByDay(data!, business!.timezone).map(([day, rows]) => (
+            <section key={day}>
+              <h2 className="mb-2 px-1 text-xs font-bold uppercase tracking-[0.06em] text-muted-foreground">
+                {day === todayIn(business!.timezone)
+                  ? `${t("appt.filter.today")} · ${formatDateLong(rows[0]!.starts_at, business!.timezone)}`
+                  : formatDateLong(rows[0]!.starts_at, business!.timezone)}
+              </h2>
+              <ul className="surface divide-y divide-border overflow-hidden p-0">
+                {rows.map((a) => (
+                  <li key={a.id}>
+                    {/* The row opens the appointment sheet with every action in it. */}
+                    <button
+                      type="button"
+                      onClick={() => openAppointment(a.id)}
+                      className="flex min-h-16 w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-muted/40"
+                    >
+                      <span className="w-12 shrink-0 font-display text-[15px] font-bold tabular-nums">
+                        {formatTime(a.starts_at, business!.timezone)}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-bold">{a.customer_name}</span>
+                        <span className="block truncate text-sm font-normal text-muted-foreground">
+                          {a.service_name}
+                        </span>
+                      </span>
+                      <StatusBadge status={a.status} />
+                      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
           ))}
-        </ul>
+        </div>
       )}
 
       {business && (
@@ -231,6 +278,17 @@ function AppointmentsPage() {
       )}
     </AppShell>
   );
+}
+
+function groupByDay<T extends { starts_at: string }>(rows: T[], tz: string): [string, T[]][] {
+  const groups = new Map<string, T[]>();
+  for (const r of rows) {
+    const day = new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(new Date(r.starts_at));
+    const list = groups.get(day);
+    if (list) list.push(r);
+    else groups.set(day, [r]);
+  }
+  return [...groups.entries()];
 }
 
 type OverdueItem = {

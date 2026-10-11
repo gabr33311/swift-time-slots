@@ -66,7 +66,7 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
           <button
             type="button"
             onClick={copyLink}
-            className="action-gradient-outline flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-bold text-foreground"
+            className="action-gradient-outline flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-border px-4 text-xs font-bold text-foreground"
           >
             <Copy className="size-3.5" strokeWidth={2.5} />
             {t("pf.share.copy")}
@@ -85,13 +85,12 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
         />
       )}
 
-
       {/* 3 buttons below, larger */}
       <div className="flex flex-wrap items-center justify-center gap-4">
         <button
           type="button"
           onClick={share}
-          className="action-gradient-outline flex w-24 flex-col items-center justify-center gap-1.5 rounded-2xl border border-border px-3 py-3 text-foreground"
+          className="action-gradient-outline flex w-28 flex-col items-center justify-center gap-1.5 rounded-2xl border border-border px-2 py-3.5 text-foreground"
         >
           <Share2 className="size-6" strokeWidth={2.5} />
           <span className="text-xs font-bold">{t("pf.share.share")}</span>
@@ -99,7 +98,7 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
         <button
           type="button"
           onClick={() => window.open(url, "_blank", "noopener")}
-          className="action-gradient-outline flex w-24 flex-col items-center justify-center gap-1.5 rounded-2xl border border-border px-3 py-3 text-foreground"
+          className="action-gradient-outline flex w-28 flex-col items-center justify-center gap-1.5 rounded-2xl border border-border px-2 py-3.5 text-foreground"
         >
           <Eye className="size-6" strokeWidth={2.5} />
           <span className="text-xs font-bold">{t("pf.share.preview")}</span>
@@ -107,7 +106,7 @@ export function SharePanel({ compact = false }: { compact?: boolean }) {
         <button
           type="button"
           onClick={downloadQr}
-          className="action-gradient-outline flex w-24 flex-col items-center justify-center gap-1.5 rounded-2xl border border-border px-3 py-3 text-foreground"
+          className="action-gradient-outline flex w-28 flex-col items-center justify-center gap-1.5 rounded-2xl border border-border px-2 py-3.5 text-foreground"
         >
           <Download className="size-6" strokeWidth={2.5} />
           <span className="text-xs font-bold">PNG</span>

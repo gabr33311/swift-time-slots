@@ -9,7 +9,9 @@ export const sendAppointmentConfirmedEmail = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: appt } = await context.supabase
       .from("appointments")
-      .select("id, status, customer_name, customer_email, service_name, starts_at, businesses(name, timezone)")
+      .select(
+        "id, status, customer_name, customer_email, service_name, starts_at, businesses(name, timezone)",
+      )
       .eq("id", data.appointmentId)
       .maybeSingle();
     if (!appt || appt.status !== "confirmed") return { status: "failed" as const };
@@ -18,8 +20,18 @@ export const sendAppointmentConfirmedEmail = createServerFn({ method: "POST" })
     const biz = appt.businesses as unknown as { name: string; timezone: string } | null;
     const tz = biz?.timezone ?? "Europe/Lisbon";
     const d = new Date(appt.starts_at);
-    const date = new Intl.DateTimeFormat("pt-PT", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: tz }).format(d);
-    const time = new Intl.DateTimeFormat("pt-PT", { hour: "2-digit", minute: "2-digit", timeZone: tz }).format(d);
+    const date = new Intl.DateTimeFormat("pt-PT", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: tz,
+    }).format(d);
+    const time = new Intl.DateTimeFormat("pt-PT", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: tz,
+    }).format(d);
 
     try {
       const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");

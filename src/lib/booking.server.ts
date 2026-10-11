@@ -64,7 +64,9 @@ async function admin() {
 async function publicDb() {
   const { createClient } = await import("@supabase/supabase-js");
   const url =
-    process.env["SUPABASE_URL"] || process.env["VITE_SUPABASE_URL"] || import.meta.env["VITE_SUPABASE_URL"];
+    process.env["SUPABASE_URL"] ||
+    process.env["VITE_SUPABASE_URL"] ||
+    import.meta.env["VITE_SUPABASE_URL"];
   const key =
     process.env["SUPABASE_PUBLISHABLE_KEY"] ||
     process.env["SUPABASE_ANON_KEY"] ||
@@ -93,6 +95,8 @@ export async function loadPublicBusiness(slug: string): Promise<{
   staff: PublicStaff[];
   openWeekdays: number[];
   blocks: { from: string; to: string }[];
+  /** False when the business's plan is locked (trial over, no subscription). */
+  bookable: boolean;
 } | null> {
   // Service key may be absent on external hosts (e.g. Vercel) — fall back to anon + RLS.
   const db: Awaited<ReturnType<typeof publicDb>> = process.env["SUPABASE_SERVICE_ROLE_KEY"]
@@ -133,7 +137,9 @@ export async function loadPublicBusiness(slug: string): Promise<{
   ]);
 
   // Calendar availability: open weekdays + business-wide blocks (vacations).
-  const horizonEnd = new Date(Date.now() + ((business.booking_horizon_months ?? 2) + 1) * 31 * 86400000);
+  const horizonEnd = new Date(
+    Date.now() + ((business.booking_horizon_months ?? 2) + 1) * 31 * 86400000,
+  );
   const [{ data: hours }, { data: busyRows }] = await Promise.all([
     db.from("working_hours").select("weekday").eq("business_id", business.id),
     db.rpc("public_busy_intervals", {
@@ -151,6 +157,13 @@ export async function loadPublicBusiness(slug: string): Promise<{
 
   // Contacts only leave the server when the owner enables "show contacts".
   const showContacts = business.show_contacts === true;
+  const { data: created } = await db
+    .from("businesses")
+    .select("created_at")
+    .eq("id", business.id)
+    .maybeSingle();
+  const { businessAllowed } = await import("@/lib/billing.server");
+  const bookable = created ? await businessAllowed(business.id, created.created_at) : true;
 
   return {
     business: {
@@ -167,6 +180,7 @@ export async function loadPublicBusiness(slug: string): Promise<{
     })),
     openWeekdays,
     blocks,
+    bookable,
   };
 }
 
@@ -201,11 +215,14 @@ export async function computeSlots(params: {
   const { data: business } = await db
     .from("businesses")
     .select(
-      "id, timezone, slot_interval_minutes, is_published, deleted_at, booking_horizon_months",
+      "id, timezone, slot_interval_minutes, is_published, deleted_at, booking_horizon_months, created_at",
     )
     .eq("id", params.businessId)
     .maybeSingle();
   if (!business || !business.is_published || business.deleted_at) return [];
+  // Trial over and no subscription: no online bookings until the owner subscribes.
+  const { businessAllowed } = await import("@/lib/billing.server");
+  if (!(await businessAllowed(business.id, business.created_at))) return [];
 
   const { data: service } = await db
     .from("services")
@@ -402,4 +419,3 @@ export async function userIdFromAuthHeader(header?: string | null): Promise<stri
   const { data } = await db.auth.getUser(token);
   return data.user?.id ?? null;
 }
-

@@ -8,7 +8,13 @@ import { Switch } from "@/components/ui/switch";
 import { useMyBusiness } from "@/hooks/use-business";
 import { usePrefs } from "@/lib/prefs";
 import { isLang, LANGS } from "@/lib/prefs-types";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function SettingsPanel() {
   const { business } = useMyBusiness();
@@ -78,7 +84,11 @@ export function SettingsPanel() {
           </SelectContent>
         </Select>
       </div>
-      <button type="button" onClick={signOut} className="flex w-full items-center gap-3 p-5 text-left text-sm font-bold text-destructive hover:bg-muted">
+      <button
+        type="button"
+        onClick={signOut}
+        className="flex w-full items-center gap-3 p-5 text-left text-sm font-bold text-destructive hover:bg-muted"
+      >
         <LogOut className="size-4" /> {t("nav.logout")}
       </button>
     </section>

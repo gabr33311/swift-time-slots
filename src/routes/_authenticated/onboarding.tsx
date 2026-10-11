@@ -12,12 +12,20 @@ import { BUSINESS_TYPES, businessType } from "@/lib/business-types";
 import { slugify } from "@/lib/format";
 import { weekdays } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { Check, Loader2, ArrowRight, ArrowLeft, Copy, ExternalLink, Trash2, CircleCheck, CircleX } from "lucide-react";
+import {
+  Check,
+  Loader2,
+  ArrowRight,
+  ArrowLeft,
+  Copy,
+  ExternalLink,
+  Trash2,
+  CircleCheck,
+  CircleX,
+} from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { isReservedSlug } from "@/lib/reserved-slugs";
 import { checkSlugAvailable } from "@/lib/booking.functions";
-
-
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
@@ -51,7 +59,6 @@ const day = (open: boolean, start: string, end: string, lunch = open): DayHours 
 });
 
 // Paths the app itself owns — shared with the public /$slug route.
-
 
 const DEFAULT_HOURS: DayHours[] = [
   day(false, "09:00", "18:00", false),
@@ -128,7 +135,6 @@ function Onboarding() {
   useEffect(() => {
     const clean = slug.trim().toLowerCase();
     if (!/^[a-z0-9-]{3,48}$/.test(clean) || isReservedSlug(clean)) {
-
       setSlugCheck({ state: "invalid", slug: clean });
       return;
     }
@@ -150,7 +156,6 @@ function Onboarding() {
       }
     }, 450);
 
-
     return () => clearTimeout(id);
   }, [slug, t]);
 
@@ -168,7 +173,9 @@ function Onboarding() {
     hours.every(
       (h) =>
         !h.open ||
-        (h.start < h.end && (!h.lunch || (h.start < h.lunchStart && h.lunchStart < h.lunchEnd && h.lunchEnd < h.end))),
+        (h.start < h.end &&
+          (!h.lunch ||
+            (h.start < h.lunchStart && h.lunchStart < h.lunchEnd && h.lunchEnd < h.end))),
     );
 
   const stepValid = [step1Valid, step2Valid, step3Valid, step4Valid, true][step - 1] ?? true;
@@ -227,7 +234,10 @@ function Onboarding() {
     }
 
     const badLunch = hours.some(
-      (h) => h.open && h.lunch && !(h.start < h.lunchStart && h.lunchStart < h.lunchEnd && h.lunchEnd < h.end),
+      (h) =>
+        h.open &&
+        h.lunch &&
+        !(h.start < h.lunchStart && h.lunchStart < h.lunchEnd && h.lunchEnd < h.end),
     );
 
     if (badLunch) {
@@ -356,16 +366,21 @@ function Onboarding() {
           </div>
           <h1 className="text-2xl font-semibold">{t("onb.success.title")}</h1>
           <ul className="mx-auto mt-5 max-w-xs space-y-2 text-left text-sm text-muted-foreground">
-            {[t("onb.success.item1"), t("onb.success.item2"), t("onb.success.item3"), t("onb.success.item4")].map(
-              (item) => (
-                <li key={item} className="flex items-center gap-2">
-                  <Check className="size-4 text-success" /> {item}
-                </li>
-              ),
-            )}
+            {[
+              t("onb.success.item1"),
+              t("onb.success.item2"),
+              t("onb.success.item3"),
+              t("onb.success.item4"),
+            ].map((item) => (
+              <li key={item} className="flex items-center gap-2">
+                <Check className="size-4 text-success" /> {item}
+              </li>
+            ))}
           </ul>
           <p className="mt-6 text-sm">{t("onb.success.share")}</p>
-          <p className="mt-2 break-all rounded-lg bg-muted px-3 py-2 text-sm font-medium">{bookingUrl}</p>
+          <p className="mt-2 break-all rounded-lg bg-muted px-3 py-2 text-sm font-medium">
+            {bookingUrl}
+          </p>
           <div className="mt-5 flex flex-col gap-2">
             <Button
               size="lg"
@@ -396,7 +411,10 @@ function Onboarding() {
         <p className="text-sm text-muted-foreground">Passo {step} de 5</p>
         <div className="mt-2 flex gap-1.5">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className={cn("h-1.5 flex-1 rounded-full", i <= step ? "bg-primary" : "bg-muted")} />
+            <div
+              key={i}
+              className={cn("h-1.5 flex-1 rounded-full", i <= step ? "bg-primary" : "bg-muted")}
+            />
           ))}
         </div>
       </div>
@@ -464,15 +482,21 @@ function Onboarding() {
                 className="border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
                 placeholder={t("onb.s1.slug.placeholder")}
               />
-              {slugCheck.state === "checking" && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
+              {slugCheck.state === "checking" && (
+                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+              )}
               {slugCheck.state === "free" && <CircleCheck className="size-4 text-success" />}
               {(slugCheck.state === "taken" || slugCheck.state === "invalid") && (
                 <CircleX className="size-4 text-destructive" />
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              {slugCheck.state === "free" && <span className="text-success">{t("onb.s1.slug.free")}</span>}
-              {slugCheck.state === "taken" && <span className="text-destructive">{t("onb.s1.slug.taken")}</span>}
+              {slugCheck.state === "free" && (
+                <span className="text-success">{t("onb.s1.slug.free")}</span>
+              )}
+              {slugCheck.state === "taken" && (
+                <span className="text-destructive">{t("onb.s1.slug.taken")}</span>
+              )}
               {slugCheck.state === "invalid" && (
                 <span className="text-destructive">{t("onb.s1.slug.invalid")}</span>
               )}
@@ -521,7 +545,8 @@ function Onboarding() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="phone" className="font-semibold">
-                Telemóvel <span className="font-normal text-muted-foreground">(opcional, recomendado)</span>
+                Telemóvel{" "}
+                <span className="font-normal text-muted-foreground">(opcional, recomendado)</span>
               </Label>
               <Input
                 id="phone"
@@ -579,7 +604,9 @@ function Onboarding() {
                 <Input
                   value={s.name}
                   onChange={(e) =>
-                    setServices((prev) => prev.map((x, j) => (i === j ? { ...x, name: e.target.value } : x)))
+                    setServices((prev) =>
+                      prev.map((x, j) => (i === j ? { ...x, name: e.target.value } : x)),
+                    )
                   }
                   maxLength={60}
                 />
@@ -593,7 +620,9 @@ function Onboarding() {
                   value={s.duration}
                   onChange={(e) =>
                     setServices((prev) =>
-                      prev.map((x, j) => (i === j ? { ...x, duration: Number(e.target.value) } : x)),
+                      prev.map((x, j) =>
+                        i === j ? { ...x, duration: Number(e.target.value) } : x,
+                      ),
                     )
                   }
                 />
@@ -606,7 +635,9 @@ function Onboarding() {
                   step={0.5}
                   value={s.price}
                   onChange={(e) =>
-                    setServices((prev) => prev.map((x, j) => (i === j ? { ...x, price: Number(e.target.value) } : x)))
+                    setServices((prev) =>
+                      prev.map((x, j) => (i === j ? { ...x, price: Number(e.target.value) } : x)),
+                    )
                   }
                 />
               </div>
@@ -620,7 +651,10 @@ function Onboarding() {
               </Button>
             </div>
           ))}
-          <Button variant="outline" onClick={() => setServices((p) => [...p, { name: "", duration: 30, price: 20 }])}>
+          <Button
+            variant="outline"
+            onClick={() => setServices((p) => [...p, { name: "", duration: 30, price: 20 }])}
+          >
             {t("onb.s2.add")}
           </Button>
         </div>
@@ -641,19 +675,24 @@ function Onboarding() {
                 <Input
                   value={s.name}
                   onChange={(e) =>
-                    setStaff((prev) => prev.map((x, j) => (i === j ? { ...x, name: e.target.value } : x)))
+                    setStaff((prev) =>
+                      prev.map((x, j) => (i === j ? { ...x, name: e.target.value } : x)),
+                    )
                   }
                   maxLength={60}
                 />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">
-                  Especialidade <span className="font-normal text-muted-foreground">(opcional)</span>
+                  Especialidade{" "}
+                  <span className="font-normal text-muted-foreground">(opcional)</span>
                 </Label>
                 <Input
                   value={s.specialty}
                   onChange={(e) =>
-                    setStaff((prev) => prev.map((x, j) => (i === j ? { ...x, specialty: e.target.value } : x)))
+                    setStaff((prev) =>
+                      prev.map((x, j) => (i === j ? { ...x, specialty: e.target.value } : x)),
+                    )
                   }
                   maxLength={60}
                 />
@@ -668,7 +707,10 @@ function Onboarding() {
               </Button>
             </div>
           ))}
-          <Button variant="outline" onClick={() => setStaff((p) => [...p, { name: "", specialty: "" }])}>
+          <Button
+            variant="outline"
+            onClick={() => setStaff((p) => [...p, { name: "", specialty: "" }])}
+          >
             {t("onb.s3.add")}
           </Button>
         </div>
@@ -685,10 +727,14 @@ function Onboarding() {
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setHours((prev) => prev.map((x, j) => (i === j ? { ...x, open: !x.open } : x)))}
+                  onClick={() =>
+                    setHours((prev) => prev.map((x, j) => (i === j ? { ...x, open: !x.open } : x)))
+                  }
                   className={cn(
                     "w-28 rounded-lg border px-3 py-2 text-left text-sm font-semibold",
-                    h.open ? "border-primary bg-accent text-accent-foreground" : "border-border text-muted-foreground",
+                    h.open
+                      ? "border-primary bg-accent text-accent-foreground"
+                      : "border-border text-muted-foreground",
                   )}
                 >
                   {weekdays(lang)[i]}
@@ -699,7 +745,9 @@ function Onboarding() {
                       type="time"
                       value={h.start}
                       onChange={(e) =>
-                        setHours((prev) => prev.map((x, j) => (i === j ? { ...x, start: e.target.value } : x)))
+                        setHours((prev) =>
+                          prev.map((x, j) => (i === j ? { ...x, start: e.target.value } : x)),
+                        )
                       }
                       className="w-32"
                     />
@@ -708,7 +756,9 @@ function Onboarding() {
                       type="time"
                       value={h.end}
                       onChange={(e) =>
-                        setHours((prev) => prev.map((x, j) => (i === j ? { ...x, end: e.target.value } : x)))
+                        setHours((prev) =>
+                          prev.map((x, j) => (i === j ? { ...x, end: e.target.value } : x)),
+                        )
                       }
                       className="w-32"
                     />
@@ -722,7 +772,11 @@ function Onboarding() {
                 <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-border pt-3">
                   <button
                     type="button"
-                    onClick={() => setHours((prev) => prev.map((x, j) => (i === j ? { ...x, lunch: !x.lunch } : x)))}
+                    onClick={() =>
+                      setHours((prev) =>
+                        prev.map((x, j) => (i === j ? { ...x, lunch: !x.lunch } : x)),
+                      )
+                    }
                     className={cn(
                       "w-28 rounded-lg border px-3 py-2 text-left text-xs font-semibold",
                       h.lunch
@@ -738,7 +792,11 @@ function Onboarding() {
                         type="time"
                         value={h.lunchStart}
                         onChange={(e) =>
-                          setHours((prev) => prev.map((x, j) => (i === j ? { ...x, lunchStart: e.target.value } : x)))
+                          setHours((prev) =>
+                            prev.map((x, j) =>
+                              i === j ? { ...x, lunchStart: e.target.value } : x,
+                            ),
+                          )
                         }
                         className="w-32"
                       />
@@ -747,7 +805,9 @@ function Onboarding() {
                         type="time"
                         value={h.lunchEnd}
                         onChange={(e) =>
-                          setHours((prev) => prev.map((x, j) => (i === j ? { ...x, lunchEnd: e.target.value } : x)))
+                          setHours((prev) =>
+                            prev.map((x, j) => (i === j ? { ...x, lunchEnd: e.target.value } : x)),
+                          )
                         }
                         className="w-32"
                       />
@@ -791,7 +851,11 @@ function Onboarding() {
       )}
 
       <div className="mt-6 flex items-center justify-between">
-        <Button variant="ghost" onClick={() => setStep((s) => Math.max(1, s - 1))} disabled={step === 1}>
+        <Button
+          variant="ghost"
+          onClick={() => setStep((s) => Math.max(1, s - 1))}
+          disabled={step === 1}
+        >
           <ArrowLeft className="mr-2 size-4" /> Voltar
         </Button>
         {step < 5 ? (

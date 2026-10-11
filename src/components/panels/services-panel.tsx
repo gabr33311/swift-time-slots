@@ -104,14 +104,23 @@ export function ServicesPanel() {
 
   function reorder(targetId: string) {
     if (!dragId || dragId === targetId) return;
-    void move(dragId, (data ?? []).findIndex((s) => s.id === targetId));
+    void move(
+      dragId,
+      (data ?? []).findIndex((s) => s.id === targetId),
+    );
   }
 
   async function remove(s: ServiceRow): Promise<boolean> {
     // Deleting nulls service_id on its appointments (FK SET NULL), which stops
     // clients from rescheduling them. Keep it: deactivate instead.
     if (await hasUpcomingAppointments("service_id", s.id)) {
-      toast.error(t("pf.svc.err.hasAppointments"));
+      // Offer the safe alternative right where the problem shows up.
+      toast.error(
+        t("pf.svc.err.hasAppointments"),
+        s.is_active
+          ? { action: { label: t("pf.common.deactivate"), onClick: () => void toggleActive(s) } }
+          : undefined,
+      );
       return true;
     }
     const { error } = await supabase.from("services").delete().eq("id", s.id);
@@ -149,7 +158,7 @@ export function ServicesPanel() {
           description={t("pf.svc.empty.desc")}
         />
       ) : (
-        <ul className="animate-stagger grid gap-2 xl:grid-cols-2">
+        <ul className="surface animate-stagger divide-y divide-border overflow-hidden p-0">
           {data!.map((s, index) => (
             <li
               key={s.id}
@@ -161,7 +170,7 @@ export function ServicesPanel() {
                 setDragId(null);
               }}
               onDragEnd={() => setDragId(null)}
-              className="surface flex items-center gap-2 p-3 sm:gap-3 sm:p-4"
+              className="flex min-h-[4.5rem] items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-4"
             >
               {/* Drag only works with a mouse; touch screens get up/down arrows. */}
               <GripVertical className="hidden size-4 shrink-0 cursor-grab text-muted-foreground sm:block" />
@@ -171,7 +180,7 @@ export function ServicesPanel() {
                   aria-label={t("pf.common.up")}
                   disabled={index === 0}
                   onClick={() => void move(s.id, index - 1)}
-                  className="flex h-8 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted disabled:opacity-25"
+                  className="flex size-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted disabled:opacity-25"
                 >
                   <ChevronUp className="size-4" />
                 </button>
@@ -180,7 +189,7 @@ export function ServicesPanel() {
                   aria-label={t("pf.common.down")}
                   disabled={index === data!.length - 1}
                   onClick={() => void move(s.id, index + 1)}
-                  className="flex h-8 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted disabled:opacity-25"
+                  className="flex size-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted disabled:opacity-25"
                 >
                   <ChevronDown className="size-4" />
                 </button>
@@ -193,8 +202,8 @@ export function ServicesPanel() {
                 className={`flex min-w-0 flex-1 items-center gap-2 rounded-lg text-left transition-opacity hover:opacity-80 ${s.is_active ? "" : "opacity-55"}`}
               >
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium">{s.name}</span>
-                  <span className="block truncate text-sm text-muted-foreground">
+                  <span className="block truncate text-[15px] font-bold">{s.name}</span>
+                  <span className="block truncate text-sm font-normal text-muted-foreground">
                     {formatDuration(s.duration_minutes)} ·{" "}
                     {formatPrice(s.price_cents, business!.currency)}
                     {s.buffer_minutes ? ` · +${s.buffer_minutes}${t("pf.svc.bufferSuffix")}` : ""}
@@ -202,22 +211,11 @@ export function ServicesPanel() {
                 </span>
                 <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
               </button>
-              <label className="flex shrink-0 cursor-pointer flex-col items-center gap-0.5">
-                <Switch checked={s.is_active} onCheckedChange={() => toggleActive(s)} />
-                <span className="text-[11px] font-semibold text-muted-foreground">
-                  {s.is_active ? t("pf.common.active") : t("pf.common.inactive")}
-                </span>
-              </label>
-              <ConfirmAction
-                title={t("pf.svc.removeTitle").replace("{name}", s.name)}
-                description={t("pf.svc.removeDesc")}
-                confirmLabel={t("pf.common.remove")}
-                onConfirm={() => remove(s)}
-                trigger={
-                  <Button variant="ghost" size="icon" aria-label={t("pf.common.remove")}>
-                    <Trash2 className="size-4" />
-                  </Button>
-                }
+              <Switch
+                checked={s.is_active}
+                onCheckedChange={() => toggleActive(s)}
+                aria-label={s.is_active ? t("pf.common.active") : t("pf.common.inactive")}
+                className="shrink-0"
               />
             </li>
           ))}
@@ -230,6 +228,7 @@ export function ServicesPanel() {
         service={editing}
         open={open}
         onOpenChange={setOpen}
+        onRemove={editing ? () => remove(editing) : undefined}
       />
     </div>
   );
@@ -240,11 +239,14 @@ function ServiceDialog({
   service,
   open,
   onOpenChange,
+  onRemove,
 }: {
   businessId: string | undefined;
   service: ServiceRow | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  /** Removing lives inside the editor, so the list rows stay calm. */
+  onRemove?: (() => Promise<boolean>) | undefined;
 }) {
   const qc = useQueryClient();
   const { t } = usePrefs();
@@ -308,7 +310,12 @@ function ServiceDialog({
             <Label htmlFor="sname" className="font-semibold">
               {t("pf.svc.name")}
             </Label>
-            <Input id="sname" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
+            <Input
+              id="sname"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={80}
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="sdesc" className="font-semibold">
@@ -375,6 +382,24 @@ function ServiceDialog({
             {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
             {t("pf.common.save")}
           </Button>
+          {onRemove && (
+            <ConfirmAction
+              title={t("pf.svc.removeTitle").replace("{name}", service?.name ?? "")}
+              description={t("pf.svc.removeDesc")}
+              confirmLabel={t("pf.common.remove")}
+              onConfirm={async () => {
+                const ok = await onRemove();
+                if (ok) onOpenChange(false);
+                return ok;
+              }}
+              trigger={
+                <Button variant="ghost" className="w-full" disabled={busy}>
+                  <Trash2 className="size-4" />
+                  {t("pf.common.remove")}
+                </Button>
+              }
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>
