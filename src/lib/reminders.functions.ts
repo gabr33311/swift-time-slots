@@ -11,13 +11,22 @@ export const sendTestReminder = createServerFn({ method: "POST" })
   .validator((d: unknown) => z.object({ businessId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     // RLS: only members can read their business.
-    const { data: biz } = await context.supabase
+    const { data: biz, error: bizError } = await context.supabase
       .from("businesses")
       .select("name, address, city, latitude, longitude, brand_color, reminder_message")
       .eq("id", data.businessId)
       .maybeSingle();
     const to = (context.claims as { email?: string }).email;
-    if (!biz || !to) return { ok: false as const, reason: "forbidden" as const };
+    if (!biz) {
+      console.error("[reminders] test: business not readable", bizError);
+      return {
+        ok: false as const,
+        reason: "failed" as const,
+        detail: bizError?.message ?? "business",
+      };
+    }
+    if (!to)
+      return { ok: false as const, reason: "failed" as const, detail: "no email on account" };
     if (!process.env["RESEND_API_KEY"])
       return { ok: false as const, reason: "not_configured" as const };
 
@@ -59,6 +68,10 @@ export const sendTestReminder = createServerFn({ method: "POST" })
       return { ok: true as const, to };
     } catch (e) {
       console.error("[reminders] test failed", e);
-      return { ok: false as const, reason: "failed" as const };
+      return {
+        ok: false as const,
+        reason: "failed" as const,
+        detail: (e instanceof Error ? e.message : String(e)).slice(0, 160),
+      };
     }
   });

@@ -145,10 +145,14 @@ export function RemindersPanel() {
       if (res.ok) toast.success(t("rm.test.sent").replace("{email}", res.to));
       else
         toast.error(
-          t(res.reason === "not_configured" ? "rm.test.notConfigured" : "rm.test.failed"),
+          res.reason === "not_configured" ? t("rm.test.notConfigured") : t("rm.test.failed"),
+          // The real cause, so a failing setup can be fixed.
+          "detail" in res && res.detail ? { description: res.detail } : undefined,
         );
-    } catch {
-      toast.error(t("rm.test.failed"));
+    } catch (e) {
+      toast.error(t("rm.test.failed"), {
+        description: e instanceof Error ? e.message.slice(0, 160) : undefined,
+      });
     } finally {
       setTesting(false);
     }
