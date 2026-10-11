@@ -87,7 +87,7 @@ export const startCheckout = createServerFn({ method: "POST" })
         const customer = await stripe().customers.create({
           name: business.name,
           // Only a well-formed email; a typo there must not block the payment.
-          ...(business.email && /^[^s@]+@[^s@]+.[^s@]+$/.test(business.email)
+          ...(business.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(business.email)
             ? { email: business.email }
             : {}),
           metadata: { business_id: business.id },
