@@ -1,6 +1,6 @@
-import type { Lang } from "../prefs-types";
+import type { BaseLang } from "../prefs-types";
 
-export const commonDict: Record<Lang, Record<string, string>> = {
+export const commonDict: Record<BaseLang, Record<string, string>> = {
   pt: {
     "ui.loading": "A carregar…",
     "ui.photoOf": "Foto de",
@@ -15,6 +15,8 @@ export const commonDict: Record<Lang, Record<string, string>> = {
     "ui.prefs.lightMode": "Modo claro",
     "ui.prefs.darkMode": "Modo escuro",
     "ui.prefs.changeLang": "Mudar idioma",
+    "ui.contact": "Contactar",
+    "ui.call": "Ligar",
     "ui.analytics.title": "Relatórios",
     "ui.analytics.subtitle": "Os últimos 30 dias do teu negócio.",
     "ui.notFound.title": "Página não encontrada",
@@ -49,6 +51,8 @@ export const commonDict: Record<Lang, Record<string, string>> = {
     "ui.prefs.lightMode": "Light mode",
     "ui.prefs.darkMode": "Dark mode",
     "ui.prefs.changeLang": "Change language",
+    "ui.contact": "Contact",
+    "ui.call": "Call",
     "ui.analytics.title": "Reports",
     "ui.analytics.subtitle": "Your business over the last 30 days.",
     "ui.notFound.title": "Page not found",

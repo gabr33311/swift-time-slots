@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { LoadingRows } from "@/components/ui-bits";
+import { LoadingRows, FormError } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -446,11 +446,7 @@ export function AvailabilityPanel() {
               </div>
             </div>
 
-            {blockError && (
-              <p role="alert" className="mt-3 text-sm font-semibold text-destructive">
-                {blockError}
-              </p>
-            )}
+            <FormError message={blockError} className="mt-3" />
             <Button className="mt-3 w-full sm:w-auto" onClick={addBlock} disabled={blockBusy}>
               {blockBusy && <Loader2 className="mr-2 size-4 animate-spin" />}
               {t("pf.av.addBlock")}

@@ -1,16 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { usePrefs } from "@/lib/prefs";
 import { AppShell } from "@/components/app-shell";
-import { EmptyState, LoadingRows, PageHeader } from "@/components/ui-bits";
+import { EmptyState, ErrorState, LoadingRows, PageHeader } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { formatDateShort, formatPrice, formatTime } from "@/lib/format";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
-import { CalendarX, Check, ChevronLeft, ChevronRight, UserX } from "lucide-react";
+import { ArrowLeft, CalendarX, Check, ChevronLeft, ChevronRight, UserX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { AppointmentActions } from "@/components/appointment-actions";
@@ -73,7 +73,7 @@ function AppointmentsPage() {
     },
   });
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["appointments", business?.id, statusFilter, timeFilter],
     enabled: !!business,
     queryFn: async () => {
@@ -97,7 +97,8 @@ function AppointmentsPage() {
       const descending =
         timeFilter === "past" || statusFilter === "cancelled" || statusFilter === "completed";
       q = q.order("starts_at", { ascending: !descending });
-      const { data } = await q.limit(100);
+      const { data, error } = await q.limit(100);
+      if (error) throw error;
       return data ?? [];
     },
   });
@@ -118,7 +119,14 @@ function AppointmentsPage() {
       <PageHeader
         title={t("appt.page.title")}
         subtitle={t("appt.page.subtitle")}
-        action={<Button onClick={() => setNewOpen(true)}>{t("appt.new")}</Button>}
+        leading={
+          <Button asChild variant="ghost" size="icon" aria-label={t("cal.title")} className="text-foreground">
+            <Link to="/calendar">
+              <ArrowLeft className="size-5" strokeWidth={2.5} />
+            </Link>
+          </Button>
+        }
+        action={<Button className="hidden lg:inline-flex" onClick={() => setNewOpen(true)}>{t("appt.new")}</Button>}
       />
 
       {(overdue?.length ?? 0) > 0 && (
@@ -132,53 +140,49 @@ function AppointmentsPage() {
         />
       )}
 
-      <div className="mb-4 space-y-2.5 lg:flex lg:flex-wrap lg:gap-x-8 lg:space-y-0">
-        <div>
-          <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
-            {t("appt.group.status")}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {STATUS_FILTERS.map((f) => (
-              <button
-                key={f}
-                onClick={() => setStatusFilter(f)}
-                className={cn(
-                  "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
-                  statusFilter === f
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {t(`appt.filter.${f}`)}
-              </button>
-            ))}
-          </div>
+      <div className="mb-4 space-y-2.5 lg:flex lg:items-center lg:gap-4 lg:space-y-0">
+        <div role="group" aria-label={t("appt.group.time")} className="grid grid-cols-4 gap-1 rounded-full bg-muted p-1 lg:w-[26rem]">
+          {TIME_FILTERS.map((f) => (
+            <button
+              key={f}
+              type="button"
+              aria-pressed={timeFilter === f}
+              onClick={() => setTimeFilter(f)}
+              className={cn(
+                "h-10 rounded-full px-2 text-[13px] font-bold transition-all duration-200",
+                timeFilter === f
+                  ? "bg-card text-foreground shadow-soft"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {t(`appt.filter.${f}`)}
+            </button>
+          ))}
         </div>
-        <div>
-          <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
-            {t("appt.group.time")}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {TIME_FILTERS.map((f) => (
-              <button
-                key={f}
-                onClick={() => setTimeFilter(f)}
-                className={cn(
-                  "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
-                  timeFilter === f
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {t(`appt.filter.${f}`)}
-              </button>
-            ))}
-          </div>
+        <div role="group" aria-label={t("appt.group.status")} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+          {STATUS_FILTERS.map((f) => (
+            <button
+              key={f}
+              type="button"
+              aria-pressed={statusFilter === f}
+              onClick={() => setStatusFilter(f)}
+              className={cn(
+                "h-10 shrink-0 rounded-full border px-4 text-[13px] font-bold transition-colors",
+                statusFilter === f
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {t(`appt.filter.${f}`)}
+            </button>
+          ))}
         </div>
       </div>
 
       {isLoading ? (
         <LoadingRows rows={4} />
+      ) : isError ? (
+        <ErrorState onRetry={() => void refetch()} />
       ) : (data?.length ?? 0) === 0 ? (
         <EmptyState
           icon={<CalendarX className="size-6" />}

@@ -1,14 +1,29 @@
-let CURRENT_LANG: "pt" | "en" = "pt";
+import { localeOf, type Lang } from "./prefs-types";
 
-/** Set once by the prefs provider so all formatters follow the chosen language. */
-export function setFormatLang(lang: "pt" | "en") {
+let CURRENT_LANG: Lang = "pt";
+
+/** Set by the prefs provider so all formatters follow the chosen language. */
+export function setFormatLang(lang: Lang) {
   CURRENT_LANG = lang;
 }
 
-const LOCALE: Record<"pt" | "en", string> = { pt: "pt-PT", en: "en-GB" };
+function locale(lang?: Lang) {
+  return localeOf(lang ?? CURRENT_LANG);
+}
 
-function locale(lang?: "pt" | "en") {
-  return LOCALE[lang ?? CURRENT_LANG];
+/** Intl locale of the current language, for components that format by hand. */
+export function currentLocale(): string {
+  return locale();
+}
+
+/** Sunday-first weekday names from Intl, capitalised (2024-01-07 was a Sunday). */
+function intlWeekdays(lang: Lang, weekday: "long" | "short"): string[] {
+  return Array.from({ length: 7 }, (_, i) => {
+    const name = new Intl.DateTimeFormat(localeOf(lang), { weekday, timeZone: "UTC" })
+      .format(new Date(Date.UTC(2024, 0, 7 + i, 12)))
+      .replace(".", "");
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  });
 }
 
 const WEEKDAYS: Record<"pt" | "en", string[]> = {
@@ -21,12 +36,14 @@ const WEEKDAYS_SHORT: Record<"pt" | "en", string[]> = {
   en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
 };
 
-export function weekdays(lang?: "pt" | "en"): string[] {
-  return WEEKDAYS[lang ?? CURRENT_LANG];
+export function weekdays(lang?: Lang): string[] {
+  const l = lang ?? CURRENT_LANG;
+  return l === "pt" || l === "en" ? WEEKDAYS[l] : intlWeekdays(l, "long");
 }
 
-export function weekdaysShort(lang?: "pt" | "en"): string[] {
-  return WEEKDAYS_SHORT[lang ?? CURRENT_LANG];
+export function weekdaysShort(lang?: Lang): string[] {
+  const l = lang ?? CURRENT_LANG;
+  return l === "pt" || l === "en" ? WEEKDAYS_SHORT[l] : intlWeekdays(l, "short");
 }
 
 /** @deprecated use weekdays(lang) */
@@ -74,9 +91,9 @@ export function formatTime(iso: string, timeZone = "Europe/Lisbon"): string {
   }).format(new Date(iso));
 }
 
-export function greetingPt(date = new Date(), lang: "pt" | "en" = "pt"): string {
+export function greetingPt(date = new Date(), lang: Lang = "pt"): string {
   const h = date.getHours();
-  if (lang === "en") {
+  if (lang !== "pt" && lang !== "pt-BR") {
     if (h < 12) return "Good morning";
     if (h < 19) return "Good afternoon";
     return "Good evening";
@@ -105,7 +122,7 @@ export function slugify(value: string): string {
     .slice(0, 48);
 }
 
-const STATUS_LABELS_BY_LANG: Record<"pt" | "en", Record<string, string>> = {
+const STATUS_LABELS_BY_LANG: Record<Lang, Record<string, string>> = {
   pt: {
     pending: "Pendente",
     confirmed: "Confirmada",
@@ -122,9 +139,49 @@ const STATUS_LABELS_BY_LANG: Record<"pt" | "en", Record<string, string>> = {
     no_show: "No show",
     expired: "Expired",
   },
+  "pt-BR": {
+    pending: "Pendente",
+    confirmed: "Confirmado",
+    completed: "Concluído",
+    cancelled: "Cancelado",
+    no_show: "Não compareceu",
+    expired: "Expirado",
+  },
+  es: {
+    pending: "Pendiente",
+    confirmed: "Confirmada",
+    completed: "Completada",
+    cancelled: "Cancelada",
+    no_show: "No se presentó",
+    expired: "Caducada",
+  },
+  fr: {
+    pending: "En attente",
+    confirmed: "Confirmé",
+    completed: "Terminé",
+    cancelled: "Annulé",
+    no_show: "Absent",
+    expired: "Expiré",
+  },
+  it: {
+    pending: "In attesa",
+    confirmed: "Confermato",
+    completed: "Completato",
+    cancelled: "Annullato",
+    no_show: "Non presentato",
+    expired: "Scaduto",
+  },
+  de: {
+    pending: "Ausstehend",
+    confirmed: "Bestätigt",
+    completed: "Abgeschlossen",
+    cancelled: "Storniert",
+    no_show: "Nicht erschienen",
+    expired: "Abgelaufen",
+  },
 };
 
-export function statusLabel(status: string, lang?: "pt" | "en"): string {
+export function statusLabel(status: string, lang?: Lang): string {
   return STATUS_LABELS_BY_LANG[lang ?? CURRENT_LANG][status] ?? status;
 }
 

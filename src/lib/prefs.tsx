@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import type { Lang, Theme } from "./prefs-types";
+import { isLang, LANGS, type BaseLang, type Lang, type Theme } from "./prefs-types";
 import { customersDict } from "./i18n/customers";
 import { calendarDict } from "./i18n/calendar";
 import { profileDict } from "./i18n/profile";
@@ -7,11 +7,16 @@ import { appointmentsDict } from "./i18n/appointments";
 import { bookingDict } from "./i18n/booking";
 import { onboardingDict } from "./i18n/onboarding";
 import { commonDict } from "./i18n/common";
+import { ptBR } from "./i18n/locales/pt-br";
+import { es } from "./i18n/locales/es";
+import { fr } from "./i18n/locales/fr";
+import { it } from "./i18n/locales/it";
+import { de } from "./i18n/locales/de";
 import { setFormatLang } from "./format";
 
 export type { Lang, Theme };
 
-const BASE: Record<Lang, Record<string, string>> = {
+const BASE: Record<BaseLang, Record<string, string>> = {
   pt: {
     "home.eyebrow": "Para barbearias, salões, clínicas e estúdios",
     "home.title.a": "As tuas marcações,",
@@ -248,9 +253,18 @@ const MODULES = [
   onboardingDict,
 ];
 
+const PT: Record<string, string> = Object.assign({}, BASE.pt, ...MODULES.map((m) => m.pt));
+const EN: Record<string, string> = Object.assign({}, BASE.en, ...MODULES.map((m) => m.en));
+
+// Extra languages are flat files; anything they miss falls back to English.
 const DICT: Record<Lang, Record<string, string>> = {
-  pt: Object.assign({}, BASE.pt, ...MODULES.map((m) => m.pt)),
-  en: Object.assign({}, BASE.en, ...MODULES.map((m) => m.en)),
+  pt: PT,
+  en: EN,
+  "pt-BR": { ...EN, ...ptBR },
+  es: { ...EN, ...es },
+  fr: { ...EN, ...fr },
+  it: { ...EN, ...it },
+  de: { ...EN, ...de },
 };
 
 type PrefsValue = {
@@ -275,15 +289,17 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
     const storedLang = (window.localStorage.getItem("sycras-lang") ??
       window.localStorage.getItem("schedivo-lang")) as Lang | null;
     if (storedTheme === "dark" || storedTheme === "light") setThemeState(storedTheme);
-    if (storedLang === "pt" || storedLang === "en") setLangState(storedLang);
+    if (isLang(storedLang)) setLangState(storedLang);
   }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
 
+  // Set during render (not only in an effect) so dates and prices switch on the same paint.
+  setFormatLang(lang);
   useEffect(() => {
-    setFormatLang(lang);
+    document.documentElement.setAttribute("lang", lang);
   }, [lang]);
 
   const setTheme = useCallback((next: Theme) => {
@@ -303,7 +319,10 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
     toggleTheme: () => setTheme(theme === "dark" ? "light" : "dark"),
     lang,
     setLang,
-    toggleLang: () => setLang(lang === "pt" ? "en" : "pt"),
+    toggleLang: () => {
+      const i = LANGS.findIndex((l) => l.code === lang);
+      setLang(LANGS[(i + 1) % LANGS.length]!.code);
+    },
     t: (key: string) => DICT[lang][key] ?? DICT.pt[key] ?? key,
   };
 

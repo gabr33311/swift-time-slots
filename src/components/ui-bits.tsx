@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { statusLabel } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePrefs } from "@/lib/prefs";
+import { AlertCircle } from "lucide-react";
 
 /** Pinned top area: stays fixed while the rest of the page scrolls underneath. */
 export function StickyTop({ children }: { children: ReactNode }) {
@@ -18,16 +19,20 @@ export function StickyTop({ children }: { children: ReactNode }) {
 export function PageHeader({
   title,
   action,
+  leading,
   inline = false,
 }: {
   title: string;
   subtitle?: string;
   action?: ReactNode;
+  /** Shown before the title, e.g. a back button. */
+  leading?: ReactNode;
   /** When true, renders without its own pinned wrapper (use inside StickyTop). */
   inline?: boolean;
 }) {
   const row = (
-    <div className={inline ? "mb-3 flex items-start justify-between gap-3" : "flex items-start justify-between gap-3"}>
+    <div className={inline ? "mb-3 flex items-center justify-between gap-3" : "flex items-center justify-between gap-3"}>
+      {leading && <div className="-ml-2 shrink-0">{leading}</div>}
       <div className="min-w-0 flex-1">
         <h1 className="truncate font-display text-[24px] font-bold leading-tight tracking-tight sm:text-[28px]">{title}</h1>
       </div>
@@ -161,6 +166,37 @@ export function LoadingRows({ rows = 3 }: { rows?: number }) {
         <Skeleton key={i} className="h-16 w-full rounded-xl" />
       ))}
     </div>
+  );
+}
+
+/**
+ * Inline form/action error. The palette is greyscale, so colour alone can't
+ * flag an error: an icon and a framed box make it unmistakable.
+ */
+export function FormError({ message, className }: { message?: string | null | undefined; className?: string | undefined }) {
+  if (!message) return null;
+  return (
+    <p
+      role="alert"
+      className={cn(
+        "animate-enter flex items-start gap-2 rounded-xl border border-foreground/25 bg-muted px-3 py-2.5 text-sm font-semibold text-foreground",
+        className,
+      )}
+    >
+      <AlertCircle className="mt-px size-4 shrink-0" strokeWidth={2.6} />
+      <span className="min-w-0">{message}</span>
+    </p>
+  );
+}
+
+/** Small error under a single field. */
+export function FieldError({ message, id }: { message?: string | null | undefined; id?: string | undefined }) {
+  if (!message) return null;
+  return (
+    <p id={id} role="alert" className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+      <AlertCircle className="size-3.5 shrink-0" strokeWidth={2.8} />
+      {message}
+    </p>
   );
 }
 

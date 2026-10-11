@@ -1,24 +1,27 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
-import { LoadingRows, PageHeader, StickyTop } from "@/components/ui-bits";
+import { ErrorState, LoadingRows, PageHeader, StickyTop } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { displayCustomerName, formatPrice } from "@/lib/format";
 import { PendingCapsule, PendingDecisionDrawer } from "@/components/pending-sheet";
 import { addDays, minutesToTime, timeToMinutes, todayIn, weekdayOf, zonedToUtc } from "@/lib/time";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
-import { BellRing, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Lock, Moon, Plus, StickyNote, Unlock, UserX } from "lucide-react";
-import { enGB, pt } from "date-fns/locale";
+import { BellRing, CalendarDays, List, Check, ChevronDown, ChevronLeft, ChevronRight, Lock, Moon, Plus, StickyNote, Unlock, UserX } from "lucide-react";
+import { de, enGB, es, fr, it, pt, ptBR, type Locale } from "date-fns/locale";
+import type { Lang } from "@/lib/prefs-types";
+
+const DATE_FNS_LOCALE: Record<Lang, Locale> = { pt, "pt-BR": ptBR, en: enGB, es, fr, it, de };
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { AppointmentActions } from "@/components/appointment-actions";
 import { ContactCustomer } from "@/components/contact-customer";
 import { usePrefs } from "@/lib/prefs";
-import { formatTime } from "@/lib/format";
+import { currentLocale, formatTime, statusLabel } from "@/lib/format";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { invalidateAppointmentData, setAppointmentStatus } from "@/lib/appointment-status";
 
@@ -170,8 +173,38 @@ function buildAgenda(
 }
 
 
+/**
+ * Side-by-side columns for appointments that overlap in time (several
+ * professionals at once), so none is drawn on top of another. Released
+ * (cancelled/expired) ones keep the full width, behind the live ones.
+ */
+function layoutLanes(
+  rows: { appt: Appt; start: number; end: number }[],
+): Map<string, { lane: number; lanes: number }> {
+  const out = new Map<string, { lane: number; lanes: number }>();
+  const live = rows.filter((r) => !isReleased(r.appt.status)).sort((a, b) => a.start - b.start);
+  let cluster: { id: string; lane: number }[] = [];
+  let laneEnds: number[] = [];
+  let clusterEnd = -1;
+  const flush = () => {
+    for (const c of cluster) out.set(c.id, { lane: c.lane, lanes: laneEnds.length });
+    cluster = [];
+    laneEnds = [];
+  };
+  for (const r of live) {
+    if (r.start >= clusterEnd) flush();
+    let lane = laneEnds.findIndex((end) => end <= r.start);
+    if (lane === -1) lane = laneEnds.push(r.end) - 1;
+    else laneEnds[lane] = r.end;
+    cluster.push({ id: r.appt.id, lane });
+    clusterEnd = Math.max(clusterEnd, r.end);
+  }
+  flush();
+  return out;
+}
+
 function CalendarPage() {
-  const { t } = usePrefs();
+  const { t, lang } = usePrefs();
   const { business } = useMyBusiness();
   const qc = useQueryClient();
   const tz = business?.timezone ?? "Europe/Lisbon";
@@ -189,6 +222,7 @@ function CalendarPage() {
   const [newTime, setNewTime] = useState("09:00");
   const [staffFilter, setStaffFilter] = useState<string>("all");
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [slotMenu, setSlotMenu] = useState<number | null>(null);
 
   // Pinch changes only the vertical time density; text and controls stay crisp.
   const [zoom, setZoom] = useState(1);
@@ -202,14 +236,13 @@ function CalendarPage() {
     return () => window.clearInterval(id);
   }, []);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["calendar", business?.id, date],
     enabled: !!business,
     queryFn: async () => {
       const from = zonedToUtc(date, 0, tz).toISOString();
       const to = zonedToUtc(date, 24 * 60, tz).toISOString();
-      const [{ data: appts }, { data: staff }, { data: hours }, { data: blocks }] =
-        await Promise.all([
+      const results = await Promise.all([
           supabase
             .from("appointments")
             .select(
@@ -239,6 +272,10 @@ function CalendarPage() {
             .gt("ends_at", from)
             .order("starts_at"),
         ]);
+      // A failed request must never read as an empty day off.
+      const failed = results.find((r) => r.error);
+      if (failed) throw failed.error;
+      const [{ data: appts }, { data: staff }, { data: hours }, { data: blocks }] = results;
       return {
         from,
         to,
@@ -258,7 +295,8 @@ function CalendarPage() {
     staffFilter === "all" || id === staffFilter || id === null;
   const appts = (data?.appts ?? []).filter((a) => matchesStaff(a.staff_id));
   const blocks = (data?.blocks ?? []).filter((b) => matchesStaff(b.staff_id));
-  const step = Math.min(60, Math.max(15, business?.slot_interval_minutes ?? 30));
+  // Free time is offered in chunks of at least 30 min: smaller rows are too thin to tap.
+  const step = Math.min(60, Math.max(30, business?.slot_interval_minutes ?? 30));
   const agendaRows = data
     ? buildAgenda(data.ranges, appts, blocks, tz, step, data.from, data.to)
     : [];
@@ -299,6 +337,7 @@ function CalendarPage() {
   const freeRows = agendaRows.filter((r): r is Extract<AgendaRow, { kind: "free" }> => r.kind === "free");
   const blockRows = agendaRows.filter((r): r is Extract<AgendaRow, { kind: "block" }> => r.kind === "block");
   const apptRows = agendaRows.filter((r): r is Extract<AgendaRow, { kind: "appt" }> => r.kind === "appt");
+  const lanes = layoutLanes(apptRows);
 
 
   // On today's agenda, land on the current moment instead of the top of the day.
@@ -331,7 +370,7 @@ function CalendarPage() {
   const weekStart = addDays(date, -((weekdayOf(date) + 6) % 7));
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const dayShort = (d: string) =>
-    new Intl.DateTimeFormat(t("cal.today") === "Today" ? "en-GB" : "pt-PT", {
+    new Intl.DateTimeFormat(currentLocale(), {
       weekday: "short",
       timeZone: "UTC",
     }).format(new Date(`${d}T12:00:00Z`));
@@ -457,8 +496,7 @@ function CalendarPage() {
     });
   }
 
-  const isEn = t("cal.today") === "Today";
-  const locale = isEn ? "en-GB" : "pt-PT";
+  const locale = currentLocale();
   const labelDate = new Date(`${date}T12:00:00Z`);
   const wd = new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: tz })
     .format(labelDate)
@@ -490,6 +528,18 @@ function CalendarPage() {
               </span>
             )}
             <PendingCapsule variant="badge" />
+            <Button
+              asChild
+              variant="outline"
+              size="icon"
+              aria-label={t("cal.list")}
+              title={t("cal.list")}
+              className="shrink-0"
+            >
+              <Link to="/appointments">
+                <List className="size-4" />
+              </Link>
+            </Button>
             <Button className="hidden lg:inline-flex" onClick={() => setNewOpen(true)}>
               {t("cal.new")}
             </Button>
@@ -532,7 +582,7 @@ function CalendarPage() {
             <PopoverContent align="center" className="w-auto p-0">
               <Calendar
                 mode="single"
-                locale={isEn ? enGB : pt}
+                locale={DATE_FNS_LOCALE[lang]}
                 weekStartsOn={1}
                 selected={new Date(`${date}T12:00:00`)}
                 defaultMonth={new Date(`${date}T12:00:00`)}
@@ -604,6 +654,8 @@ function CalendarPage() {
 
       {isLoading ? (
         <LoadingRows rows={5} />
+      ) : isError ? (
+        <ErrorState message={t("cal.loadError")} onRetry={() => void refetch()} />
       ) : isDayOff ? (
         <section className="surface flex flex-col items-center gap-2 px-6 py-12 text-center">
           <Moon className="size-7 text-muted-foreground" strokeWidth={2.2} />
@@ -636,7 +688,7 @@ function CalendarPage() {
                   <span
                     key={`h-${m}`}
                     className={cn(
-                      "absolute right-2 text-[11px] font-bold leading-none tabular-nums text-muted-foreground/70",
+                      "absolute right-2 text-[11px] font-bold leading-none tabular-nums text-muted-foreground",
                       m <= dayStart
                         ? "translate-y-1"
                         : m >= dayEnd
@@ -678,33 +730,58 @@ function CalendarPage() {
                       {past ? (
                         <div aria-hidden className="size-full rounded-lg bg-muted/25" />
                       ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setNewTime(minutesToTime(bookFrom));
-                            setNewOpen(true);
-                          }}
-                          aria-label={t("cal.newAt").replace("{time}", minutesToTime(bookFrom))}
-                          title={t("cal.newAt").replace("{time}", minutesToTime(bookFrom))}
-                          className="group flex size-full items-start rounded-lg px-2 py-1 text-left transition-colors hover:bg-muted/40 focus-visible:bg-muted/40 active:bg-muted/60"
+                        // One tap on free time asks what to do with it: book or block.
+                        <Popover
+                          open={slotMenu === row.start}
+                          onOpenChange={(o) => setSlotMenu(o ? row.start : null)}
                         >
-                          {/* Empty time stays clean; the hint only appears on hover, focus or touch. */}
-                          <span className="flex items-center gap-1 text-[11px] font-bold tabular-nums text-muted-foreground opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 group-active:opacity-100">
-                            <Plus className="size-3.5" strokeWidth={2.6} />
-                            {minutesToTime(bookFrom)}
-                          </span>
-                        </button>
-                      )}
-                      {!past && (row.end - row.start) * pxPerMinute >= 32 && (
-                        <button
-                          type="button"
-                          onClick={() => blockSlot(row.start, row.end)}
-                          aria-label={t("cal.block")}
-                          title={t("cal.block")}
-                          className="tap-target absolute right-0.5 top-0.5 flex size-7 items-center justify-center rounded-full border border-dashed border-border text-muted-foreground opacity-60 transition-opacity hover:text-foreground hover:opacity-100 focus-visible:opacity-100"
-                        >
-                          <Lock className="size-3" strokeWidth={2.6} />
-                        </button>
+                          <PopoverTrigger asChild>
+                            <button
+                              type="button"
+                              aria-label={t("cal.newAt").replace("{time}", minutesToTime(bookFrom))}
+                              className={cn(
+                                "group flex size-full items-start rounded-lg px-2 py-1 text-left transition-colors hover:bg-muted/40 focus-visible:bg-muted/40 active:bg-muted/60",
+                                slotMenu === row.start && "bg-muted/60",
+                              )}
+                            >
+                              {/* Quiet on desktop until hover; always faintly visible on touch screens. */}
+                              <span className="flex items-center gap-1 text-[11px] font-bold tabular-nums text-muted-foreground opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 [@media(hover:none)]:opacity-50">
+                                <Plus className="size-3.5" strokeWidth={2.6} />
+                                {minutesToTime(bookFrom)}
+                              </span>
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent align="start" className="w-60 p-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSlotMenu(null);
+                                setNewTime(minutesToTime(bookFrom));
+                                setNewOpen(true);
+                              }}
+                              className="flex h-11 w-full items-center gap-2.5 rounded-xl px-3 text-sm font-bold transition-colors hover:bg-muted"
+                            >
+                              <Plus className="size-4" strokeWidth={2.6} />
+                              {t("cal.slot.menu.book")}
+                              <span className="ml-auto tabular-nums text-muted-foreground">
+                                {minutesToTime(bookFrom)}
+                              </span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSlotMenu(null);
+                                void blockSlot(row.start, row.end);
+                              }}
+                              className="flex h-11 w-full items-center gap-2.5 rounded-xl px-3 text-sm font-bold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            >
+                              <Lock className="size-4" strokeWidth={2.6} />
+                              {staffFilter === "all" && staffList.length > 1
+                                ? t("cal.slot.menu.blockAll")
+                                : t("cal.slot.menu.block")}
+                            </button>
+                          </PopoverContent>
+                        </Popover>
                       )}
                     </div>
                   );
@@ -747,25 +824,38 @@ function CalendarPage() {
                   }`;
                   const priceText =
                     row.appt.price_cents != null ? formatPrice(row.appt.price_cents) : null;
+                  const opensPending = !due && row.appt.status === "pending";
+                  const lane = lanes.get(row.appt.id) ?? { lane: 0, lanes: 1 };
                   return (
                     <div
                       key={row.appt.id}
                       data-status={due ? "pending" : row.appt.status}
-                      role={!due && row.appt.status === "pending" ? "button" : undefined}
-                      tabIndex={!due && row.appt.status === "pending" ? 0 : undefined}
-                      onClick={!due && row.appt.status === "pending" ? () => setPendingFocus(row.appt.id) : undefined}
+                      role={opensPending ? "button" : undefined}
+                      tabIndex={opensPending ? 0 : undefined}
+                      onClick={opensPending ? () => setPendingFocus(row.appt.id) : undefined}
+                      onKeyDown={
+                        opensPending
+                          ? (e) => {
+                              if (e.key !== "Enter" && e.key !== " ") return;
+                              e.preventDefault();
+                              setPendingFocus(row.appt.id);
+                            }
+                          : undefined
+                      }
                       className={cn(
-                        "appointment-state surface surface-hover absolute inset-x-1 overflow-hidden p-0",
+                        "appointment-state appointment-pop surface surface-hover absolute overflow-hidden p-0",
                         // A rebooked slot draws the live appointment over the cancelled one.
                         isReleased(row.appt.status) ? "z-[5] opacity-70" : "z-10",
-                        !due && row.appt.status === "pending" && "cursor-pointer",
+                        opensPending && "cursor-pointer",
                         isNext && "ring-1 ring-foreground/40",
                       )}
                       style={{
                         top: (row.start - dayStart) * pxPerMinute,
                         height,
-                        // Near-square corners: ultra-slight rounding only.
-                        borderRadius: "3px",
+                        // Overlapping appointments (several professionals) share the width.
+                        left: `calc(4px + (100% - 8px) * ${lane.lane / lane.lanes})`,
+                        width: `calc((100% - 8px) / ${lane.lanes} - ${lane.lanes > 1 ? 2 : 0}px)`,
+                        borderRadius: "8px",
                       }}
                     >
                       <span
@@ -775,26 +865,19 @@ function CalendarPage() {
                       />
                       <div
                         className={cn(
-                          "flex h-full min-w-0 items-center gap-1 pl-2.5 pr-0.5",
+                          "flex h-full min-w-0 items-center gap-1 pl-2.5 pr-1.5 sm:pr-2",
                           tier === "tiny" ? "py-0.5" : "py-1",
                         )}
                       >
                         <div className="flex h-full min-w-0 flex-1 flex-col justify-center gap-px">
                           {tier === "tiny" ? (
-                            <>
-                              <p className="truncate font-display text-[12.5px] font-black leading-tight">
-                                <span>{name}</span>
-                                <span className="ml-1 font-bold tabular-nums text-muted-foreground">
-                                  {formatTime(row.appt.starts_at, tz)}
-                                </span>
-                              </p>
-                              <p className="truncate text-[10.5px] font-bold leading-tight text-muted-foreground">
-                                {row.appt.service_name}
-                                {priceText && (
-                                  <span className="font-black text-foreground"> · {priceText}</span>
-                                )}
-                              </p>
-                            </>
+                            // Compact block: everything on one line, so short slots still show it all.
+                            <p className="truncate text-[12px] font-bold leading-tight text-muted-foreground">
+                              <span className="font-display text-[12.5px] font-black text-foreground">{name}</span>
+                              <span className="tabular-nums"> · {formatTime(row.appt.starts_at, tz)}</span>
+                              <span> · {row.appt.service_name}</span>
+                              {priceText && <span className="font-black text-foreground"> · {priceText}</span>}
+                            </p>
                           ) : (
                             <>
                               <p className="truncate font-display text-[14px] font-black leading-tight">
@@ -841,7 +924,41 @@ function CalendarPage() {
                           )}
                         </div>
                         <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
-                          {due ? (
+                          {due && (tier === "tiny" || lane.lanes > 1) ? (
+                            // Short or narrow cards: one clear button instead of two cramped ones.
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button
+                                  type="button"
+                                  className={cn(
+                                    "tap-target relative flex items-center justify-center gap-1 rounded-md bg-primary px-2.5 text-xs font-black text-primary-foreground shadow-sm active:scale-95",
+                                    tier === "tiny" ? "h-7" : "h-9",
+                                  )}
+                                >
+                                  <Check className="size-3.5" strokeWidth={3} />
+                                  {t("cal.validate.short")}
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent align="end" className="w-52 p-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => validateAppointment(row.appt.id, "completed", row.appt.status)}
+                                  className="flex h-11 w-full items-center gap-2.5 rounded-xl px-3 text-sm font-bold transition-colors hover:bg-muted"
+                                >
+                                  <Check className="size-4" strokeWidth={3} />
+                                  {t("cal.validate.complete")}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => validateAppointment(row.appt.id, "no_show", row.appt.status)}
+                                  className="flex h-11 w-full items-center gap-2.5 rounded-xl px-3 text-sm font-bold transition-colors hover:bg-muted"
+                                >
+                                  <UserX className="size-4" strokeWidth={2.8} />
+                                  {t("cal.validate.noShow")}
+                                </button>
+                              </PopoverContent>
+                            </Popover>
+                          ) : due ? (
                             <>
                               <button
                                 type="button"
@@ -878,7 +995,7 @@ function CalendarPage() {
                                 )}
                               >
                                 {row.appt.status === "completed" ? <Check className="size-3.5" strokeWidth={3} /> : <UserX className="size-3.5" strokeWidth={2.8} />}
-                                {row.appt.status === "completed" ? t("cal.validate.complete") : t("cal.validate.noShow")}
+                                {statusLabel(row.appt.status, lang)}
                               </span>
                               <ContactCustomer phone={row.appt.customer_phone} compact={tier === "tiny"} />
                             </>

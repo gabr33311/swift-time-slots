@@ -1,6 +1,6 @@
-import type { Lang } from "../prefs-types";
+import type { BaseLang } from "../prefs-types";
 
-export const profileDict: Record<Lang, Record<string, string>> = {
+export const profileDict: Record<BaseLang, Record<string, string>> = {
   pt: {
     "pf.head.title": "Perfil — SYCRAS",
     "pf.head.desc": "Negócio, serviços, equipa, horários e estatísticas num só lugar.",

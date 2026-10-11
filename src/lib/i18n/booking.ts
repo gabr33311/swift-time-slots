@@ -1,6 +1,6 @@
-import type { Lang } from "../prefs-types";
+import type { BaseLang } from "../prefs-types";
 
-export const bookingDict: Record<Lang, Record<string, string>> = {
+export const bookingDict: Record<BaseLang, Record<string, string>> = {
   pt: {
     "bk.notFound.title": "Página não encontrada",
     "bk.error.title": "Não foi possível abrir esta página",
@@ -90,6 +90,9 @@ export const bookingDict: Record<Lang, Record<string, string>> = {
     "bk.tk.noSlots": "Sem horários neste dia.",
     "bk.tk.policy1": "Cancelamento online até ",
     "bk.tk.policy2": "h antes do horário.",
+    "bk.tk.tooLate": "Já não é possível alterar online: faltam menos de {h}h. Para mudar ou cancelar, contacta o negócio.",
+    "bk.noServices.title": "Ainda não há serviços disponíveis.",
+    "bk.noServices.body": "Volta mais tarde ou contacta diretamente.",
     "bk.auth.err.name": "Indica o teu nome próprio.",
     "bk.auth.err.email": "Email inválido.",
     "bk.auth.err.check": "Verifica os dados.",
@@ -218,6 +221,9 @@ export const bookingDict: Record<Lang, Record<string, string>> = {
     "bk.tk.noSlots": "No time slots on this day.",
     "bk.tk.policy1": "Online cancellation up to ",
     "bk.tk.policy2": "h before the appointment.",
+    "bk.tk.tooLate": "Online changes are closed: less than {h}h to go. To change or cancel, contact the business.",
+    "bk.noServices.title": "No services available yet.",
+    "bk.noServices.body": "Check back later or get in touch directly.",
     "bk.auth.err.name": "Enter your first name.",
     "bk.auth.err.email": "Invalid email.",
     "bk.auth.err.check": "Check your details.",

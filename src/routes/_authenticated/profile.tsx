@@ -74,13 +74,13 @@ function ProfilePage() {
       <PageHeader
         title={section ? label(section) : t("pf.manage.title")}
         subtitle={section ? desc(section) : ""}
-        action={
+        leading={
           section ? (
             <Button
               variant="ghost"
               size="icon"
               aria-label={t("pf.back")}
-              className="size-9 text-muted-foreground md:hidden"
+              className="text-foreground md:hidden"
               onClick={() => setSection(null)}
             >
               <ArrowLeft className="size-5" strokeWidth={2.5} />

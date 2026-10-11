@@ -3,7 +3,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { EmptyState, LoadingRows } from "@/components/ui-bits";
+import { EmptyState, LoadingRows, FormError } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -370,11 +370,7 @@ function ServiceDialog({
               aria-label={t("pf.svc.requiresConfirmation")}
             />
           </div>
-          {error && (
-            <p role="alert" className="text-sm font-semibold text-destructive">
-              {error}
-            </p>
-          )}
+          <FormError message={error} />
           <Button className="w-full" onClick={save} disabled={busy}>
             {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
             {t("pf.common.save")}

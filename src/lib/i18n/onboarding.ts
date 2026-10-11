@@ -1,6 +1,6 @@
-import type { Lang } from "../prefs-types";
+import type { BaseLang } from "../prefs-types";
 
-export const onboardingDict: Record<Lang, Record<string, string>> = {
+export const onboardingDict: Record<BaseLang, Record<string, string>> = {
   pt: {
     // Onboarding meta
     "onb.meta.title": "Configurar o teu negócio — SYCRAS",

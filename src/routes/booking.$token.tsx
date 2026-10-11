@@ -1,7 +1,8 @@
 import { usePrefs } from "@/lib/prefs";
+import { localeOf } from "@/lib/prefs-types";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import {
   getBookingByToken,
@@ -11,9 +12,10 @@ import {
 } from "@/lib/booking.functions";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FormError } from "@/components/ui-bits";
 import { AppointmentStatusIndicator } from "@/components/appointment-status-indicator";
 import { formatDateLong, formatPrice, formatTime } from "@/lib/format";
-import { addDays, todayIn } from "@/lib/time";
+import { addDays, todayIn, weekdayOf } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { CalendarClock, Check, Loader2, MapPin, Phone } from "lucide-react";
 import { AddToCalendar } from "@/components/add-to-calendar";
@@ -81,6 +83,13 @@ function BookingPage() {
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Stable ref callback: runs once when the reschedule picker mounts.
+  const revealOnMount = useCallback((el: HTMLElement | null) => {
+    if (!el) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ block: "start", behavior: reduce ? "auto" : "smooth" });
+  }, []);
+
   const appt = data.appointment;
   const tz = data.business?.timezone ?? "Europe/Lisbon";
 
@@ -143,7 +152,9 @@ function BookingPage() {
     if (!rescheduling) {
       // Start on the current booking's day when it is within the visible range.
       const current = new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(new Date(appt.starts_at));
-      setDate(current >= todayIn(tz) && current <= addDays(todayIn(tz), 13) ? current : todayIn(tz));
+      const inRange = current >= todayIn(tz) && current <= addDays(todayIn(tz), 13);
+      const firstOpen = days.find((d) => !isClosed(d)) ?? todayIn(tz);
+      setDate(inRange && !isClosed(current) ? current : firstOpen);
     }
     setRescheduling((v) => !v);
   }
@@ -152,7 +163,12 @@ function BookingPage() {
   // Only upcoming (pending/confirmed) bookings can still be changed by the client.
   const manageable = appt.status === "pending" || appt.status === "confirmed";
   const days = Array.from({ length: 14 }, (_, i) => addDays(todayIn(tz), i));
-  const locale = lang === "en" ? "en-GB" : "pt-PT";
+  const openWeekdays = data.openWeekdays ?? [];
+  const isClosed = (d: string) => openWeekdays.length > 0 && !openWeekdays.includes(weekdayOf(d));
+  // Past the online-change window: say so up front instead of failing after a tap.
+  const cancellationHours = data.business?.cancellation_hours ?? 24;
+  const tooLate = new Date(appt.starts_at).getTime() - Date.now() < cancellationHours * 3600000;
+  const locale = localeOf(lang);
 
   async function copyLink() {
     try {
@@ -249,11 +265,7 @@ function BookingPage() {
         </Button>
       )}
 
-      {error && (
-        <p role="alert" className="mt-4 rounded-xl border border-destructive/40 px-3 py-2 text-sm font-semibold text-destructive">
-          {error}
-        </p>
-      )}
+      {!rescheduling && <FormError message={error} className="mt-4" />}
 
       {manageable && (
         // Optional, later actions: quiet text links so they never read as a next step.
@@ -264,17 +276,33 @@ function BookingPage() {
             <button
               type="button"
               onClick={() => void copyLink()}
-              className="font-bold text-foreground underline underline-offset-2"
+              className="inline-flex min-h-11 items-center font-bold text-foreground underline underline-offset-2"
             >
               {t("bk.done.copy")}
             </button>
           </p>
+          {tooLate ? (
+            <div className="mx-auto mt-3 max-w-xs">
+              <p className="text-sm text-muted-foreground">
+                {t("bk.tk.tooLate").replace("{h}", String(cancellationHours))}
+              </p>
+              {data.business?.phone && (
+                <a
+                  href={`tel:${data.business.phone}`}
+                  className="mt-3 inline-flex h-11 items-center gap-2 rounded-full border border-border px-5 text-sm font-bold transition-colors hover:bg-accent"
+                >
+                  <Phone className="size-4" /> {data.business.phone}
+                </a>
+              )}
+            </div>
+          ) : (
+          <>
           <div className="mt-3 flex items-center justify-center gap-1 text-sm">
             <button
               type="button"
               onClick={toggleRescheduling}
               disabled={busy}
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 font-semibold text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline disabled:opacity-50"
+              className="inline-flex h-11 items-center gap-1.5 rounded-full px-4 font-semibold text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline disabled:opacity-50"
             >
               <CalendarClock className="size-4" />
               {rescheduling ? t("bk.tk.close") : t("bk.tk.reschedule")}
@@ -284,25 +312,33 @@ function BookingPage() {
               type="button"
               onClick={() => setConfirmCancel(true)}
               disabled={busy}
-              className="rounded-full px-3 py-2 font-semibold text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline disabled:opacity-50"
+              className="h-11 rounded-full px-4 font-semibold text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline disabled:opacity-50"
             >
               {t("bk.tk.cancel")}
             </button>
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
-            {t("bk.tk.policy1")}{data.business?.cancellation_hours ?? 24}{t("bk.tk.policy2")}
+            {t("bk.tk.policy1")}{cancellationHours}{t("bk.tk.policy2")}
           </p>
+          </>
+          )}
         </section>
       )}
 
       {rescheduling && manageable && (
-        <section className="mt-6 animate-enter">
+        <section
+          // The picker opens below the fold on phones: bring it into view.
+          ref={revealOnMount}
+          className="mt-6 animate-enter scroll-mt-6"
+        >
           <p className="mb-2 text-sm font-bold">{t("bk.tk.pickNew")}</p>
           <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2">
             {days.map((d) => (
               <button
                 key={d}
                 type="button"
+                disabled={isClosed(d)}
+                aria-pressed={date === d}
                 onClick={() => {
                   setDate(d);
                   setPickedTime(null);
@@ -310,6 +346,7 @@ function BookingPage() {
                 className={cn(
                   "flex w-16 shrink-0 flex-col items-center rounded-xl border border-border px-2 py-2.5 text-sm transition-colors",
                   date === d ? "border-primary bg-primary text-primary-foreground" : "hover:bg-accent",
+                  isClosed(d) && "cursor-not-allowed text-muted-foreground/50 line-through hover:bg-transparent",
                 )}
               >
                 <span className="text-xs uppercase">
@@ -325,9 +362,9 @@ function BookingPage() {
               </button>
             ))}
           </div>
-          <div className="animate-stagger mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4">
+          <div className="animate-stagger mt-4 grid grid-cols-3 gap-2 sm:grid-cols-5">
             {isFetching
-              ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-11 rounded-lg" />)
+              ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-[46px] rounded-xl" />)
               : (slots ?? []).map((s) => (
                   <button
                     key={s.time}
@@ -335,7 +372,7 @@ function BookingPage() {
                     disabled={busy}
                     onClick={() => setPickedTime(s.time)}
                     className={cn(
-                      "rounded-lg border py-3 text-sm font-bold tabular-nums transition-colors",
+                      "rounded-xl border py-3 text-sm font-bold tabular-nums transition-colors",
                       pickedTime === s.time
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-border hover:bg-accent",
@@ -356,6 +393,7 @@ function BookingPage() {
           {!isFetching && !slotsError && (slots?.length ?? 0) === 0 && (
             <p className="mt-4 text-sm text-muted-foreground">{t("bk.tk.noSlots")}</p>
           )}
+          <FormError message={error} className="mt-4" />
           {pickedTime && (
             <Button className="mt-4 w-full" size="lg" onClick={() => void reschedule()} disabled={busy}>
               {busy && <Loader2 className="mr-2 size-4 animate-spin" />}

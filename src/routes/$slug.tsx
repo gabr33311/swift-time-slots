@@ -15,12 +15,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatDuration, formatPrice, formatDateLong, initials } from "@/lib/format";
+import { FieldError, FormError } from "@/components/ui-bits";
+import { currentLocale, formatDuration, formatPrice, formatDateLong, initials } from "@/lib/format";
 import { addMonthsClamped, todayIn, zonedToUtc, weekdayOf } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
   CalendarDays,
+  CalendarX,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -124,6 +126,8 @@ function BookPage() {
   );
   const today = todayIn(business.timezone);
   const [date, setDate] = useState(today);
+  // Nothing is highlighted in the calendar until the client actually picks a day.
+  const [dayPicked, setDayPicked] = useState(false);
   const [month, setMonth] = useState(() => today.slice(0, 7));
   const [time, setTime] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -177,13 +181,13 @@ function BookPage() {
 
   const monthLabel = useMemo(() => {
     const [y, m] = month.split("-").map(Number);
-    const label = new Intl.DateTimeFormat("pt-PT", {
+    const label = new Intl.DateTimeFormat(currentLocale(), {
       month: "long",
       year: "numeric",
       timeZone: "UTC",
     }).format(new Date(Date.UTC(y!, m! - 1, 1)));
     return label.charAt(0).toUpperCase() + label.slice(1);
-  }, [month]);
+  }, [month, t]);
 
   // Farthest date a client may book (admin-configurable, in months).
   const maxDate = useMemo(
@@ -237,6 +241,9 @@ function BookPage() {
       }
       setFieldErrors(errs);
       setSubmitError(null);
+      const first = (["name", "email", "phone"] as const).find((k) => errs[k]);
+      const ids = { name: "n", email: "em", phone: "p" } as const;
+      if (first) document.getElementById(ids[first])?.focus();
       return;
     }
     if (!serviceId || !time) return;
@@ -311,7 +318,7 @@ function BookPage() {
           <a
             href={`tel:${business.phone}`}
             aria-label={business.phone}
-            className="text-muted-foreground hover:text-foreground"
+            className="-mr-2 flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <Phone className="size-4" />
           </a>
@@ -319,11 +326,11 @@ function BookPage() {
       </header>
 
       {safeIdx > 0 && (
-        <div className="mt-6 mb-2 flex flex-wrap items-center gap-1.5">
+        <div className="mt-6 mb-2 flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={goBack}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm font-bold text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="inline-flex h-11 items-center gap-1.5 rounded-full border border-border px-4 text-sm font-bold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <ArrowLeft className="size-4" /> {t("bk.back")}
           </button>
@@ -395,6 +402,21 @@ function BookPage() {
 
       {currentStep === "service" && (
         <Section step={stepNumber} total={stepKeys.length} title={t("bk.step.service")}>
+          {visibleServices.length === 0 && (
+            <div className="surface flex flex-col items-center gap-2 p-8 text-center">
+              <CalendarX className="size-5 text-muted-foreground" />
+              <p className="text-sm font-bold">{t("bk.noServices.title")}</p>
+              <p className="text-sm text-muted-foreground">{t("bk.noServices.body")}</p>
+              {business.show_contacts && business.phone && (
+                <a
+                  href={`tel:${business.phone}`}
+                  className="mt-1 inline-flex h-11 items-center gap-2 rounded-full border border-border px-5 text-sm font-bold transition-colors hover:bg-accent"
+                >
+                  <Phone className="size-4" /> {business.phone}
+                </a>
+              )}
+            </div>
+          )}
           <div className="animate-stagger grid gap-2 sm:grid-cols-2">
             {visibleServices.map((s) => (
               <button
@@ -479,16 +501,20 @@ function BookPage() {
                     key={d}
                     type="button"
                     disabled={past}
+                    aria-pressed={dayPicked && date === d}
+                    aria-current={d === today ? "date" : undefined}
                     onClick={() => {
                       setDate(d);
+                      setDayPicked(true);
                       setTime(null);
                       goNext();
                     }}
                     className={cn(
-                      "mx-auto flex size-10 items-center justify-center rounded-full text-sm font-bold tabular-nums transition-colors",
-                      past && "cursor-not-allowed font-medium text-muted-foreground/35 line-through",
-                      !past && date !== d && "hover:bg-accent",
-                      date === d && "bg-primary text-primary-foreground shadow-lift",
+                      "mx-auto flex aspect-square w-full max-w-11 items-center justify-center rounded-full text-sm font-bold tabular-nums transition-colors",
+                      past && "cursor-not-allowed font-medium text-muted-foreground/40 line-through",
+                      !past && !(dayPicked && date === d) && "hover:bg-accent",
+                      !past && d === today && !(dayPicked && date === d) && "ring-1 ring-inset ring-foreground/40",
+                      dayPicked && date === d && "bg-primary text-primary-foreground shadow-lift",
                     )}
                   >
                     {Number(d.slice(-2))}
@@ -510,7 +536,7 @@ function BookPage() {
           {isFetching ? (
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-6">
               {Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} className="h-10 rounded-lg" />
+                <Skeleton key={i} className="h-[46px] rounded-xl" />
               ))}
             </div>
           ) : slotsError ? (
@@ -570,7 +596,15 @@ function BookPage() {
           title={t("bk.step.yourData")}
         >
           {(
-            <div className="space-y-2.5">
+            <form
+              id="booking-form"
+              noValidate
+              onSubmit={(e) => {
+                e.preventDefault();
+                void submit();
+              }}
+              className="space-y-2.5"
+            >
               <div className="space-y-1">
                 <Label htmlFor="n" className="text-xs font-bold">
                   {t("bk.field.name")}
@@ -646,7 +680,7 @@ function BookPage() {
                   maxLength={500}
                 />
               </div>
-            </div>
+            </form>
           )}
         </Section>
       )}
@@ -663,12 +697,8 @@ function BookPage() {
                 {formatDateLong(`${date}T12:00:00Z`, business.timezone)}
               </p>
             </div>
-            {submitError && (
-              <p role="alert" className="text-sm font-semibold text-destructive">
-                {submitError}
-              </p>
-            )}
-            <Button onClick={submit} disabled={busy} size="lg" className="w-full">
+            <FormError message={submitError} />
+            <Button type="submit" form="booking-form" disabled={busy} size="lg" className="w-full">
               {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
               {busy ? t("bk.booking") : t("bk.confirmBooking")}
             </Button>
@@ -708,14 +738,14 @@ function Section({
 }) {
   return (
     <section key={step} className="animate-enter mb-8">
-      <h2 className="mb-1 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">
-        {title}
+      <div className="mb-1 flex items-baseline gap-3">
+        <h2 className="text-xl font-bold tracking-tight">{title}</h2>
         {total ? (
-          <span className="ml-auto text-[11px] font-bold tabular-nums">
+          <span className="ml-auto shrink-0 text-xs font-bold tabular-nums text-muted-foreground">
             {step}/{total}
           </span>
         ) : null}
-      </h2>
+      </div>
       {subtitle && <p className="mb-3 text-xs font-medium text-muted-foreground">{subtitle}</p>}
       {!subtitle && <div className="mb-3" />}
       {children}
@@ -729,43 +759,14 @@ function SummaryChip({ onClick, children }: { onClick: () => void; children: Rea
     <button
       type="button"
       onClick={onClick}
-      className="max-w-full truncate rounded-full bg-muted px-3 py-1.5 text-xs font-bold text-foreground transition-colors hover:bg-accent"
+      className="h-11 max-w-full truncate rounded-full bg-muted px-4 text-[13px] font-bold text-foreground transition-colors hover:bg-accent"
     >
       {children}
     </button>
   );
 }
 
-function FieldError({ message }: { message?: string | undefined }) {
-  if (!message) return null;
-  return (
-    <p role="alert" className="text-xs font-semibold text-destructive">
-      {message}
-    </p>
-  );
-}
 
-function ChoiceChip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "rounded-full border border-border px-4 py-2 text-sm font-bold transition-colors",
-        active ? "border-primary bg-primary text-primary-foreground" : "hover:bg-accent",
-      )}
-    >
-      {children}
-    </button>
-  );
-}
 
 function SlotGroup({
   label,

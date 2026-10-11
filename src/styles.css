@@ -757,6 +757,20 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
 }
 
 /* Status tints for calendar cards */
+/* Calendar blocks: a touch darker than the grid, with a firmer edge and lift,
+   so appointments stand out at a glance. Status tints below still win. */
+.appointment-pop {
+  background-image: linear-gradient(
+    140deg,
+    color-mix(in oklch, var(--foreground) 5%, var(--card)),
+    color-mix(in oklch, var(--foreground) 11%, var(--card))
+  );
+  border-color: color-mix(in oklch, var(--foreground) 20%, transparent);
+  box-shadow:
+    0 1px 2px oklch(0 0 0 / 0.06),
+    0 8px 18px -10px oklch(0 0 0 / 0.28);
+}
+
 .appointment-state[data-status="completed"] {
   background-image: none;
   background-color: color-mix(in oklch, oklch(0.72 0.17 150) 14%, var(--color-card));

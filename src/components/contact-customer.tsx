@@ -19,12 +19,11 @@ export function ContactCustomer({
   compact?: boolean;
   className?: string;
 }) {
-  const { lang } = usePrefs();
-  const en = lang === "en";
+  const { t } = usePrefs();
   if (!phone) return null;
   const normalized = normalizePhonePt(phone) || phone;
   const digits = normalized.replace(/\D/g, "");
-  const label = en ? "Contact" : "Contactar";
+  const label = t("ui.contact");
 
   return (
     <DropdownMenu>
@@ -51,7 +50,7 @@ export function ContactCustomer({
         </DropdownMenuItem>
         <DropdownMenuItem asChild className="py-2.5 font-bold">
           <a href={`tel:${normalized.replace(/[^\d+]/g, "")}`}>
-            <Phone className="mr-1 size-4" /> {en ? "Call" : "Ligar"}
+            <Phone className="mr-1 size-4" /> {t("ui.call")}
           </a>
         </DropdownMenuItem>
       </DropdownMenuContent>
