@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { brandColors } from "@/lib/brand";
 import { mapsUrl } from "@/lib/maps";
+import { renderReminderMessage } from "@/lib/reminder-message";
 
 /** Sends the reminder email to the signed-in owner, with sample data, to see how it looks. */
 export const sendTestReminder = createServerFn({ method: "POST" })
@@ -12,7 +13,7 @@ export const sendTestReminder = createServerFn({ method: "POST" })
     // RLS: only members can read their business.
     const { data: biz } = await context.supabase
       .from("businesses")
-      .select("name, address, city, latitude, longitude, brand_color")
+      .select("name, address, city, latitude, longitude, brand_color, reminder_message")
       .eq("id", data.businessId)
       .maybeSingle();
     const to = (context.claims as { email?: string }).email;
@@ -37,6 +38,18 @@ export const sendTestReminder = createServerFn({ method: "POST" })
             timeZone: "Europe/Lisbon",
           }).format(tomorrow),
           time: "10:30",
+          message: renderReminderMessage(biz.reminder_message, {
+            nome: "Ana",
+            serviço: "Serviço de exemplo",
+            data: new Intl.DateTimeFormat("pt-PT", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+              timeZone: "Europe/Lisbon",
+            }).format(tomorrow),
+            hora: "10:30",
+            negócio: biz.name,
+          }),
           address: address || undefined,
           mapUrl: mapsUrl({ ...biz, address, name: biz.name }) ?? undefined,
           brandColor: colors.brand,

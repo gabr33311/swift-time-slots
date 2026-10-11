@@ -1,6 +1,7 @@
 // Server-only: emails clients a reminder before their appointment. Never import from the browser.
 import { brandColors } from "@/lib/brand";
 import { mapsUrl } from "@/lib/maps";
+import { renderReminderMessage } from "@/lib/reminder-message";
 import { businessAllowed } from "@/lib/billing.server";
 
 type DueRow = {
@@ -23,6 +24,7 @@ type DueRow = {
     created_at: string;
     reminders_enabled: boolean;
     reminder_hours: number;
+    reminder_message: string | null;
   } | null;
 };
 
@@ -47,7 +49,7 @@ export async function sendDueReminders(): Promise<{ sent: number; skipped: numbe
   const { data, error } = await db
     .from("appointments")
     .select(
-      "id, business_id, customer_name, customer_email, service_name, starts_at, ends_at, created_at, businesses!inner(name, timezone, address, city, latitude, longitude, brand_color, created_at, reminders_enabled, reminder_hours)",
+      "id, business_id, customer_name, customer_email, service_name, starts_at, ends_at, created_at, businesses!inner(name, timezone, address, city, latitude, longitude, brand_color, created_at, reminders_enabled, reminder_hours, reminder_message)",
     )
     .eq("status", "confirmed")
     .not("customer_email", "is", null)
@@ -97,6 +99,17 @@ export async function sendDueReminders(): Promise<{ sent: number; skipped: numbe
     const tz = biz.timezone || "Europe/Lisbon";
     const d = new Date(appt.starts_at);
     const colors = brandColors(biz.brand_color);
+    const date = new Intl.DateTimeFormat("pt-PT", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      timeZone: tz,
+    }).format(d);
+    const time = new Intl.DateTimeFormat("pt-PT", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: tz,
+    }).format(d);
 
     try {
       const res = await sendTemplateEmail("appointment-reminder", appt.customer_email, {
@@ -104,17 +117,15 @@ export async function sendDueReminders(): Promise<{ sent: number; skipped: numbe
           name: appt.customer_name,
           businessName: biz.name,
           serviceName: appt.service_name,
-          date: new Intl.DateTimeFormat("pt-PT", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-            timeZone: tz,
-          }).format(d),
-          time: new Intl.DateTimeFormat("pt-PT", {
-            hour: "2-digit",
-            minute: "2-digit",
-            timeZone: tz,
-          }).format(d),
+          date,
+          time,
+          message: renderReminderMessage(biz.reminder_message, {
+            nome: appt.customer_name,
+            serviço: appt.service_name,
+            data: date,
+            hora: time,
+            negócio: biz.name,
+          }),
           address: [biz.address, biz.city].filter(Boolean).join(", ") || undefined,
           mapUrl:
             mapsUrl({

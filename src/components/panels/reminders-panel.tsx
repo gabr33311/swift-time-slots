@@ -1,18 +1,29 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { BellRing, Loader2, Mail, Send } from "lucide-react";
+import { BellRing, Loader2, Mail, RotateCcw, Send } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { sendTestReminder } from "@/lib/reminders.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
+import { SaveBar } from "@/components/save-bar";
 import { useMyBusiness } from "@/hooks/use-business";
 import { usePrefs } from "@/lib/prefs";
 import { cn } from "@/lib/utils";
 import { brandColors } from "@/lib/brand";
+import {
+  DEFAULT_REMINDER_MESSAGE,
+  REMINDER_VARIABLES,
+  renderReminderMessage,
+} from "@/lib/reminder-message";
 
+/** Suggested lead times, in hours; any other value goes in "Other". */
 const LEADS = [2, 12, 24, 48];
+const MAX_HOURS = 168;
+const MAX_MESSAGE = 600;
 
 /** Pro: clients get an email before their appointment, so fewer of them forget. */
 export function RemindersPanel() {
@@ -22,6 +33,109 @@ export function RemindersPanel() {
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
   const sendTest = useServerFn(sendTestReminder);
+
+  // Draft values, saved together with the save bar.
+  const [hours, setHours] = useState(24);
+  const [custom, setCustom] = useState(false);
+  const [customValue, setCustomValue] = useState("");
+  const [customUnit, setCustomUnit] = useState<"h" | "d">("h");
+  const [message, setMessage] = useState(DEFAULT_REMINDER_MESSAGE);
+  const textRef = useRef<HTMLTextAreaElement>(null);
+
+  const savedHours = business?.reminder_hours ?? 24;
+  const savedMessage = business?.reminder_message?.trim() || DEFAULT_REMINDER_MESSAGE;
+
+  function hydrate() {
+    if (!business) return;
+    setHours(savedHours);
+    const isCustom = !LEADS.includes(savedHours);
+    setCustom(isCustom);
+    const inDays = isCustom && savedHours % 24 === 0;
+    setCustomUnit(inDays ? "d" : "h");
+    setCustomValue(isCustom ? String(inDays ? savedHours / 24 : savedHours) : "");
+    setMessage(savedMessage);
+  }
+  useEffect(hydrate, [business]);
+
+  // "Other": the typed number in hours or days.
+  useEffect(() => {
+    if (!custom) return;
+    const n = Number(customValue);
+    if (Number.isFinite(n) && n > 0) setHours(Math.round(customUnit === "d" ? n * 24 : n));
+  }, [custom, customValue, customUnit]);
+
+  const enabled = business?.reminders_enabled ?? true;
+  const page = brandColors(business?.brand_color);
+  const hoursValid = Number.isInteger(hours) && hours >= 1 && hours <= MAX_HOURS;
+  const dirty = !!business && (hours !== savedHours || message.trim() !== savedMessage);
+
+  const { data: sent } = useQuery({
+    queryKey: ["reminders-sent", business?.id],
+    enabled: !!business,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("appointment_reminders")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", business!.id)
+        .eq("kind", "email")
+        .gte("created_at", new Date(Date.now() - 30 * 86400000).toISOString());
+      return count ?? 0;
+    },
+  });
+
+  async function toggle(v: boolean) {
+    if (!business) return;
+    setBusy(true);
+    const { error } = await supabase
+      .from("businesses")
+      .update({ reminders_enabled: v })
+      .eq("id", business.id);
+    setBusy(false);
+    if (error) {
+      toast.error(t("pf.common.saveError"));
+      return;
+    }
+    toast.success(t("ui.save.auto"));
+    qc.invalidateQueries({ queryKey: ["my-business"] });
+  }
+
+  async function save() {
+    if (!business) return;
+    if (!hoursValid) {
+      toast.error(t("rm.custom.invalid"));
+      return;
+    }
+    const text = message.trim();
+    setBusy(true);
+    const { error } = await supabase
+      .from("businesses")
+      .update({
+        reminder_hours: hours,
+        // The suggestion is stored as "no custom text", so it can improve later.
+        reminder_message: !text || text === DEFAULT_REMINDER_MESSAGE ? null : text,
+      })
+      .eq("id", business.id);
+    setBusy(false);
+    if (error) {
+      toast.error(t("pf.common.saveError"));
+      return;
+    }
+    toast.success(t("pf.common.saved"));
+    qc.invalidateQueries({ queryKey: ["my-business"] });
+  }
+
+  /** Puts a variable where the cursor is (or at the end). */
+  function insertVariable(v: string) {
+    const el = textRef.current;
+    const start = el?.selectionStart ?? message.length;
+    const end = el?.selectionEnd ?? message.length;
+    const next = (message.slice(0, start) + v + message.slice(end)).slice(0, MAX_MESSAGE);
+    setMessage(next);
+    requestAnimationFrame(() => {
+      el?.focus();
+      el?.setSelectionRange(start + v.length, start + v.length);
+    });
+  }
 
   async function test() {
     if (!business) return;
@@ -39,36 +153,22 @@ export function RemindersPanel() {
       setTesting(false);
     }
   }
-  const enabled = business?.reminders_enabled ?? true;
-  const hours = business?.reminder_hours ?? 24;
-  const page = brandColors(business?.brand_color);
 
-  const { data: sent } = useQuery({
-    queryKey: ["reminders-sent", business?.id],
-    enabled: !!business,
-    queryFn: async () => {
-      const { count } = await supabase
-        .from("appointment_reminders")
-        .select("id", { count: "exact", head: true })
-        .eq("business_id", business!.id)
-        .eq("kind", "email")
-        .gte("created_at", new Date(Date.now() - 30 * 86400000).toISOString());
-      return count ?? 0;
-    },
+  const preview = renderReminderMessage(message, {
+    nome: "Ana",
+    serviço: t("rm.preview.sampleService"),
+    data: t("rm.preview.sampleDate"),
+    hora: "10:30",
+    negócio: business?.name,
   });
 
-  async function save(patch: { reminders_enabled?: boolean; reminder_hours?: number }) {
-    if (!business) return;
-    setBusy(true);
-    const { error } = await supabase.from("businesses").update(patch).eq("id", business.id);
-    setBusy(false);
-    if (error) {
-      toast.error(t("pf.common.saveError"));
-      return;
-    }
-    toast.success(t("ui.save.auto"));
-    qc.invalidateQueries({ queryKey: ["my-business"] });
-  }
+  const chip = (active: boolean) =>
+    cn(
+      "h-11 rounded-xl border text-sm font-bold transition-colors",
+      active
+        ? "border-brand bg-brand text-brand-foreground"
+        : "border-border bg-card hover:bg-muted",
+    );
 
   return (
     <div className="space-y-4">
@@ -91,33 +191,114 @@ export function RemindersPanel() {
           <Switch
             checked={enabled}
             disabled={busy || !business}
-            onCheckedChange={(v) => void save({ reminders_enabled: v })}
+            onCheckedChange={(v) => void toggle(v)}
             aria-label={t("rm.toggle")}
           />
         </div>
 
-        <div className={cn("space-y-3 p-5", !enabled && "opacity-50")}>
-          <p className="text-sm font-bold">{t("rm.when")}</p>
-          <div className="grid grid-cols-4 gap-2">
-            {LEADS.map((h) => (
+        <div className={cn("space-y-5 p-5", !enabled && "pointer-events-none opacity-50")}>
+          {/* When: suggestions plus any other value. */}
+          <div className="space-y-3">
+            <p className="text-sm font-bold">{t("rm.when")}</p>
+            <div className="grid grid-cols-5 gap-2">
+              {LEADS.map((h) => (
+                <button
+                  key={h}
+                  type="button"
+                  aria-pressed={!custom && hours === h}
+                  onClick={() => {
+                    setCustom(false);
+                    setHours(h);
+                  }}
+                  className={chip(!custom && hours === h)}
+                >
+                  {h}h
+                </button>
+              ))}
               <button
-                key={h}
                 type="button"
-                disabled={!enabled || busy}
-                aria-pressed={hours === h}
-                onClick={() => void save({ reminder_hours: h })}
-                className={cn(
-                  "h-11 rounded-xl border text-sm font-bold transition-colors",
-                  hours === h
-                    ? "border-brand bg-brand text-brand-foreground"
-                    : "border-border bg-card hover:bg-muted",
-                )}
+                aria-pressed={custom}
+                onClick={() => {
+                  setCustom(true);
+                  if (!customValue) setCustomValue(String(hours));
+                }}
+                className={chip(custom)}
               >
-                {h}h
+                {t("rm.custom")}
               </button>
-            ))}
+            </div>
+            {custom && (
+              <div className="flex items-center gap-2">
+                <Input
+                  inputMode="numeric"
+                  value={customValue}
+                  onChange={(e) => setCustomValue(e.target.value.replace(/[^\d]/g, "").slice(0, 3))}
+                  className="w-24 text-center font-bold tabular-nums"
+                  aria-label={t("rm.custom")}
+                  autoFocus
+                />
+                <div className="grid grid-cols-2 gap-1 rounded-xl border border-border bg-card p-1">
+                  {(["h", "d"] as const).map((u) => (
+                    <button
+                      key={u}
+                      type="button"
+                      aria-pressed={customUnit === u}
+                      onClick={() => setCustomUnit(u)}
+                      className={cn(
+                        "h-9 rounded-lg px-3 text-sm font-bold transition-colors",
+                        customUnit === u ? "bg-brand text-brand-foreground" : "hover:bg-muted",
+                      )}
+                    >
+                      {u === "h" ? t("rm.unit.hours") : t("rm.unit.days")}
+                    </button>
+                  ))}
+                </div>
+                <span className="text-sm text-muted-foreground">{t("rm.custom.before")}</span>
+              </div>
+            )}
+            <p className={cn("text-xs", hoursValid ? "text-muted-foreground" : "text-destructive")}>
+              {hoursValid ? t("rm.when.hint") : t("rm.custom.invalid")}
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground">{t("rm.when.hint")}</p>
+
+          {/* What: the business's own message. */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-bold">{t("rm.message")}</p>
+              {message.trim() !== DEFAULT_REMINDER_MESSAGE && (
+                <button
+                  type="button"
+                  onClick={() => setMessage(DEFAULT_REMINDER_MESSAGE)}
+                  className="flex items-center gap-1 text-xs font-bold text-brand-ink hover:underline"
+                >
+                  <RotateCcw className="size-3" /> {t("rm.message.reset")}
+                </button>
+              )}
+            </div>
+            <Textarea
+              ref={textRef}
+              value={message}
+              onChange={(e) => setMessage(e.target.value.slice(0, MAX_MESSAGE))}
+              rows={4}
+              aria-label={t("rm.message")}
+            />
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">{t("rm.message.insert")}</span>
+              {REMINDER_VARIABLES.map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => insertVariable(v)}
+                  className="rounded-full border border-border bg-card px-2.5 py-1 text-xs font-bold hover:bg-muted"
+                >
+                  {v}
+                </button>
+              ))}
+              <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+                {message.length}/{MAX_MESSAGE}
+              </span>
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center justify-between gap-4 p-5">
@@ -126,7 +307,7 @@ export function RemindersPanel() {
         </div>
       </section>
 
-      {/* What the client receives. */}
+      {/* What the client receives, live. */}
       <section className="surface space-y-3 p-5">
         <p className="flex items-center gap-2 text-sm font-bold">
           <Mail className="size-4 text-brand-ink" /> {t("rm.preview")}
@@ -136,13 +317,13 @@ export function RemindersPanel() {
             {business?.name}
           </p>
           <p className="mt-1 text-lg font-bold">{t("rm.preview.title")}</p>
-          <p className="mt-1 text-muted-foreground">{t("rm.preview.body")}</p>
+          <p className="mt-1 whitespace-pre-line text-muted-foreground">{preview}</p>
           <div className="mt-3 rounded-lg border border-border p-3 text-[13px]">
             <p>
-              <b>{t("rm.preview.service")}</b> {t("pv.service")}
+              <b>{t("rm.preview.service")}</b> {t("rm.preview.sampleService")}
             </p>
             <p>
-              <b>{t("rm.preview.time")}</b> {t("rm.preview.timeValue")}
+              <b>{t("rm.preview.time")}</b> {t("rm.preview.sampleDate")}, 10:30
             </p>
           </div>
           {/* The email uses the page colour, the one clients know. */}
@@ -154,11 +335,18 @@ export function RemindersPanel() {
           </p>
         </div>
         <p className="text-xs text-muted-foreground">{t("rm.onlyEmail")}</p>
-        <Button variant="outline" onClick={() => void test()} disabled={testing || !business}>
+        <Button
+          variant="outline"
+          onClick={() => void test()}
+          disabled={testing || !business || dirty}
+        >
           {testing ? <Loader2 className="animate-spin" /> : <Send />}
           {t("rm.test")}
         </Button>
+        {dirty && <p className="text-xs text-muted-foreground">{t("rm.test.saveFirst")}</p>}
       </section>
+
+      <SaveBar dirty={dirty} busy={busy} onSave={() => void save()} onCancel={hydrate} />
     </div>
   );
 }

@@ -367,6 +367,7 @@ export type Database = {
           onboarding_completed: boolean
           phone: string | null
           reminder_hours: number
+          reminder_message: string | null
           reminders_enabled: boolean
           seo_indexable: boolean
           show_contacts: boolean
@@ -403,6 +404,7 @@ export type Database = {
           onboarding_completed?: boolean
           phone?: string | null
           reminder_hours?: number
+          reminder_message?: string | null
           reminders_enabled?: boolean
           seo_indexable?: boolean
           show_contacts?: boolean
@@ -439,6 +441,7 @@ export type Database = {
           onboarding_completed?: boolean
           phone?: string | null
           reminder_hours?: number
+          reminder_message?: string | null
           reminders_enabled?: boolean
           seo_indexable?: boolean
           show_contacts?: boolean

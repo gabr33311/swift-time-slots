@@ -25,6 +25,8 @@ interface Props {
   manageUrl?: string;
   brandColor?: string;
   brandText?: string;
+  /** The business's own words, variables already filled in. */
+  message?: string;
 }
 
 const Email = ({
@@ -38,6 +40,7 @@ const Email = ({
   manageUrl,
   brandColor,
   brandText,
+  message,
 }: Props) => (
   <Html lang="pt" dir="ltr">
     <Head />
@@ -47,8 +50,10 @@ const Email = ({
     <Body style={main}>
       <Container style={container}>
         {businessName && <Text style={brand}>{businessName}</Text>}
-        <Heading style={h1}>Até já!</Heading>
-        <Text style={text}>Olá {name || "cliente"}, lembramos que tem uma marcação em breve.</Text>
+        <Heading style={h1}>Lembrete da sua marcação</Heading>
+        <Text style={{ ...text, whiteSpace: "pre-line" }}>
+          {message || `Olá ${name || "cliente"}, lembramos que tem uma marcação em breve.`}
+        </Text>
         <Section style={box}>
           <Text style={row}>
             <b>Serviço:</b> {serviceName || "—"}
