@@ -89,7 +89,7 @@ export function PendingDecisionDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+      <DrawerContent className="pb-[calc(1.5rem+var(--sab))]">
         <DrawerHeader className="pb-1 text-center">
           <DrawerTitle>{t("cal.pending.title")}</DrawerTitle>
           <DrawerDescription>

@@ -235,7 +235,7 @@ export function AppShell({
       </aside>
 
       <div className="lg:pl-64">
-        <main className="animate-enter mx-auto w-full max-w-5xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-5 lg:pb-12">
+        <main className="animate-enter mx-auto w-full max-w-5xl px-4 pb-[calc(7rem+var(--sab))] pt-6 sm:px-5 lg:pb-12">
           <SubscriptionBanner />
           {/* Trial over without a subscription: only plans and settings stay open. */}
           {locked ? <Paywall /> : children}
@@ -243,7 +243,7 @@ export function AppShell({
       </div>
 
       {/* Floating dock — the whole navigation of the app in one capsule */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center pb-[calc(0.85rem+env(safe-area-inset-bottom))] lg:hidden">
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center pb-[calc(0.85rem+var(--sab))] lg:hidden">
         <nav className="dock pointer-events-auto flex items-center gap-1 rounded-[2rem] px-2.5 py-1.5">
           {DOCK_LEFT.map((item) => (
             <DockTab

@@ -64,7 +64,7 @@ function ResponsiveSheet({
   if (mobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[92dvh] pb-[env(safe-area-inset-bottom)]">
+        <DrawerContent className="max-h-[92dvh] pb-[var(--sab)]">
           <DrawerTitle className="sr-only">{title}</DrawerTitle>
           {description && <DrawerDescription className="sr-only">{description}</DrawerDescription>}
           <div className="overflow-y-auto px-5 pb-6 pt-3">{children}</div>

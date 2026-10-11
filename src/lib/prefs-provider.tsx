@@ -26,6 +26,13 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
     document.querySelectorAll('meta[name="theme-color"]').forEach((m) => {
       m.setAttribute("content", color);
     });
+    // Inside the native app: status bar icons follow the theme (light/dark).
+    void import("@capacitor/core").then(({ Capacitor, SystemBars, SystemBarsStyle }) => {
+      if (!Capacitor.isNativePlatform()) return;
+      void SystemBars.setStyle({
+        style: theme === "dark" ? SystemBarsStyle.Dark : SystemBarsStyle.Light,
+      }).catch(() => undefined);
+    });
   }, [theme]);
 
   // Set during render (not only in an effect) so dates and prices switch on the same paint.

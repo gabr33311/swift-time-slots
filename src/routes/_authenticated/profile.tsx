@@ -155,7 +155,7 @@ function ProfilePage() {
             // Phones: the menu fills exactly the space above the dock (header ≈ 5rem,
             // dock area = 7rem + safe area). Taller screens get taller tiles; on small
             // ones the tiles stop at their content and the page scrolls.
-            "flex min-h-[calc(100dvh-12rem-env(safe-area-inset-bottom))] flex-col gap-3 md:sticky md:top-24 md:block md:min-h-0 md:space-y-5",
+            "flex min-h-[calc(100dvh-12rem-var(--sab))] flex-col gap-3 md:sticky md:top-24 md:block md:min-h-0 md:space-y-5",
             section && "hidden md:block",
           )}
         >

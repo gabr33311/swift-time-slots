@@ -377,7 +377,7 @@ function Onboarding() {
   return (
     <div className="min-h-dvh bg-background pb-32">
       {/* Top: brand, where you are, how far to go. */}
-      <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur">
+      <header className="sticky top-[var(--sat)] z-20 border-b border-border bg-background/90 backdrop-blur">
         <div className="mx-auto flex max-w-xl items-center gap-3 px-5 py-3">
           <span className="flex size-9 items-center justify-center rounded-xl bg-brand">
             <SycrasLogo className="size-5" onColor />
@@ -880,7 +880,7 @@ function Onboarding() {
       />
 
       {/* Bottom bar: always within thumb reach. */}
-      <footer className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur">
+      <footer className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 pb-[calc(0.75rem+var(--sab))] pt-3 backdrop-blur">
         <div className="mx-auto flex max-w-xl items-center gap-3 px-5">
           {stepIdx > 0 && (
             <Button

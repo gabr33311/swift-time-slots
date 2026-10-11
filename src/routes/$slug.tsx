@@ -788,7 +788,7 @@ function BookPage() {
         </div>
 
         {currentStep === "account" && service && time && (
-          <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 px-5 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur lg:static lg:mt-2 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+          <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 px-5 pt-3 pb-[calc(0.75rem+var(--sab))] backdrop-blur lg:static lg:mt-2 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
             <div className="mx-auto flex max-w-2xl flex-col gap-2.5 lg:mx-0 lg:max-w-none">
               <div className="min-w-0 text-sm">
                 <p className="truncate font-bold">
