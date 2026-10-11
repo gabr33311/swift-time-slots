@@ -197,6 +197,16 @@ export const profileDict: Record<BaseLang, Record<string, string>> = {
     "pf.av.conflict.cancelDesc": "Avisa primeiro o cliente por WhatsApp ou email.",
     "pf.av.horizon": "Marcações até (meses)",
     "pf.av.horizon.hint": "Meses de antecedência que os clientes podem marcar.",
+    "pf.av.approvalMixed":
+      "Alguns serviços pedem aprovação e outros não. Escolhe uma opção para todos, ou ajusta cada serviço em Serviços.",
+    "loc.title": "Localização no mapa",
+    "loc.search": "Procurar morada ou nome da loja",
+    "loc.searchBtn": "Procurar",
+    "loc.here": "Usar a minha localização",
+    "loc.none": "Nada encontrado. Tenta outra morada.",
+    "loc.hint": "Procura a morada ou toca no mapa para marcar a tua loja.",
+    "loc.set":
+      "Pino colocado. Podes arrastá-lo para acertar. Os clientes abrem este ponto no Google Maps.",
     "pf.av.autoComplete": "Concluir marcações automaticamente",
     "pf.av.autoComplete.desc":
       'Quando a hora acaba, a marcação confirmada passa a concluída. Podes sempre mudar para "não compareceu".',
@@ -514,6 +524,15 @@ export const profileDict: Record<BaseLang, Record<string, string>> = {
     "pf.av.conflict.cancelDesc": "Notify the client first by WhatsApp or email.",
     "pf.av.horizon": "Bookings up to (months)",
     "pf.av.horizon.hint": "How many months ahead clients can book.",
+    "pf.av.approvalMixed":
+      "Some services need approval and others do not. Pick one option for all, or adjust each one in Services.",
+    "loc.title": "Location on the map",
+    "loc.search": "Search address or shop name",
+    "loc.searchBtn": "Search",
+    "loc.here": "Use my location",
+    "loc.none": "Nothing found. Try another address.",
+    "loc.hint": "Search the address or tap the map to mark your shop.",
+    "loc.set": "Pin placed. Drag it to fine-tune. Clients open this spot in Google Maps.",
     "pf.av.autoComplete": "Complete bookings automatically",
     "pf.av.autoComplete.desc":
       "When the time is over, a confirmed booking becomes completed. You can still mark it as a no-show.",

@@ -18,36 +18,11 @@ export const sendAppointmentConfirmedEmail = createServerFn({ method: "POST" })
     if (!appt.customer_email) return { status: "no_email" as const };
 
     const biz = appt.businesses as unknown as { name: string; timezone: string } | null;
-    const tz = biz?.timezone ?? "Europe/Lisbon";
-    const d = new Date(appt.starts_at);
-    const date = new Intl.DateTimeFormat("pt-PT", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      timeZone: tz,
-    }).format(d);
-    const time = new Intl.DateTimeFormat("pt-PT", {
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: tz,
-    }).format(d);
-
-    try {
-      const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
-      const res = await sendTemplateEmail("appointment-confirmed", appt.customer_email, {
-        templateData: {
-          name: appt.customer_name,
-          businessName: biz?.name,
-          serviceName: appt.service_name,
-          date,
-          time,
-        },
-        idempotencyKey: `appointment-confirmed-${appt.id}`,
-      });
-      return { status: res.sent ? ("sent" as const) : ("failed" as const) };
-    } catch (e) {
-      console.error("[confirmation-email] send failed", e);
-      return { status: "failed" as const };
-    }
+    const { sendConfirmedEmail } = await import("@/lib/confirmation-email.server");
+    const sent = await sendConfirmedEmail({
+      ...appt,
+      businessName: biz?.name,
+      timezone: biz?.timezone,
+    });
+    return { status: sent ? ("sent" as const) : ("failed" as const) };
   });

@@ -41,7 +41,7 @@ export function PagePreview({
         )}
       </div>
       <div className="px-4 pb-4">
-        <div className="-mt-7 flex size-14 items-center justify-center overflow-hidden rounded-2xl border-4 border-background bg-brand text-sm font-bold text-brand-foreground">
+        <div className="relative -mt-7 flex size-14 items-center justify-center overflow-hidden rounded-2xl border-4 border-background bg-brand text-sm font-bold text-brand-foreground">
           {logoUrl ? (
             <img src={logoUrl} alt="" className="size-full object-cover" />
           ) : (

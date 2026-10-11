@@ -145,8 +145,10 @@ export const onboardingDict: Record<BaseLang, Record<string, string>> = {
     "ob.hours.later":
       "Horários diferentes por dia ou férias? Ajustas tudo depois em Gestão → Horário.",
     "ob.prefs.brandHint": "Usada nos botões e destaques da tua página.",
+    "ob.err.image":
+      "A conta foi criada, mas não foi possível guardar a imagem. Podes adicioná-la em Gestão → A tua página.",
     "ob.prefs.pageColor": "Cor da tua página",
-    "ob.prefs.logoHint": "Opcional. Podes adicionar um banner depois, em Gestão.",
+    "ob.prefs.logoHint": "Opcional. Quadrado, aparece por cima do banner.",
     "ob.prefs.approval": "Quando um cliente marca",
     "ob.prefs.auto": "Confirmar automaticamente",
     "ob.prefs.auto.sub": "A marcação fica logo confirmada. Recomendado.",
@@ -428,8 +430,10 @@ export const onboardingDict: Record<BaseLang, Record<string, string>> = {
     "ob.hours.later":
       "Different hours per day or holidays? Adjust everything later in Manage → Hours.",
     "ob.prefs.brandHint": "Used on the buttons and highlights of your page.",
+    "ob.err.image":
+      "Your account was created, but the picture could not be saved. Add it in Manage → Your page.",
     "ob.prefs.pageColor": "Your page colour",
-    "ob.prefs.logoHint": "Optional. You can add a banner later in Manage.",
+    "ob.prefs.logoHint": "Optional. Square, shown over the banner.",
     "ob.prefs.approval": "When a client books",
     "ob.prefs.auto": "Confirm automatically",
     "ob.prefs.auto.sub": "The booking is confirmed straight away. Recommended.",

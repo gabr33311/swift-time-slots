@@ -175,8 +175,8 @@ export const createPublicBooking = createServerFn({ method: "POST" })
       customerId = created?.id ?? null;
     }
 
-    // Client bookings arrive as requests: the business accepts or refuses them.
-    const status = "pending" as const;
+    // Services that need approval arrive as requests; the others are confirmed at once.
+    const status = service.requires_confirmation ? ("pending" as const) : ("confirmed" as const);
     const { data: appointment, error } = await supabaseAdmin
       .from("appointments")
       .insert({
@@ -217,12 +217,31 @@ export const createPublicBooking = createServerFn({ method: "POST" })
     await supabaseAdmin.from("notifications").insert({
       business_id: data.businessId,
       type: "appointment_requested",
-      title: "Novo pedido de marcação",
+      title: appointment.status === "confirmed" ? "Nova marcação" : "Novo pedido de marcação",
       body: `${data.name} — ${service.name}`,
       appointment_id: appointment.id,
     });
 
     await logSecurityEvent("booking_created", ipHash, data.phone, data.businessId);
+
+    // Confirmed straight away: the client gets the confirmation email now.
+    if (appointment.status === "confirmed" && data.email) {
+      const { data: biz } = await supabaseAdmin
+        .from("businesses")
+        .select("name, timezone")
+        .eq("id", data.businessId)
+        .maybeSingle();
+      const { sendConfirmedEmail } = await import("@/lib/confirmation-email.server");
+      await sendConfirmedEmail({
+        id: appointment.id,
+        customer_name: data.name,
+        customer_email: data.email,
+        service_name: service.name,
+        starts_at: appointment.starts_at,
+        businessName: biz?.name,
+        timezone: biz?.timezone,
+      });
+    }
 
     return { ok: true as const, token, status: appointment.status };
   });
@@ -252,7 +271,7 @@ export const getBookingByToken = createServerFn({ method: "GET" })
       supabaseAdmin
         .from("businesses")
         .select(
-          "name, slug, address, city, phone, timezone, cancellation_hours, brand_color, logo_url, booking_horizon_months",
+          "name, slug, address, city, phone, timezone, cancellation_hours, brand_color, logo_url, booking_horizon_months, latitude, longitude",
         )
         .eq("id", appt.business_id)
         .maybeSingle(),

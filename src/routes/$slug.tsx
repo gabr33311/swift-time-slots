@@ -20,6 +20,7 @@ import { formatDuration, formatPrice, formatDateLong, initials } from "@/lib/for
 import { addMonthsClamped, todayIn, zonedToUtc, weekdayOf } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { useBrandColor } from "@/lib/brand";
+import { mapsUrl } from "@/lib/maps";
 import {
   ArrowLeft,
   CalendarDays,
@@ -875,6 +876,7 @@ function BusinessHero({
   const place = [business.address, business.city].filter(Boolean).join(", ");
   const insta = business.instagram?.replace(/^@/, "").trim();
   const contacts = business.show_contacts;
+  const mapHref = mapsUrl({ ...business, address: place });
   return (
     <header className="animate-enter">
       {business.cover_url ? (
@@ -919,20 +921,15 @@ function BusinessHero({
           {business.description}
         </p>
       )}
-      {contacts && (business.phone || insta || place) && (
+      {contacts && (business.phone || insta || mapHref) && (
         <div className="mt-4 flex flex-wrap gap-2">
           {business.phone && (
             <a href={`tel:${business.phone}`} className={HERO_CHIP}>
               <Phone className="size-4" /> {t("bk.hero.call")}
             </a>
           )}
-          {place && (
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place)}`}
-              target="_blank"
-              rel="noreferrer"
-              className={HERO_CHIP}
-            >
+          {mapHref && (
+            <a href={mapHref} target="_blank" rel="noreferrer" className={HERO_CHIP}>
               <MapPin className="size-4" /> {t("bk.hero.map")}
             </a>
           )}

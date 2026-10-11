@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { useMyBusiness } from "@/hooks/use-business";
 import { weekdays, formatDateShort } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
+import { cn } from "@/lib/utils";
 import { Trash2, MessageCircle, Mail, Coffee, Loader2 } from "lucide-react";
 import { ConfirmAction } from "@/components/confirm-action";
 import { SaveBar } from "@/components/save-bar";
@@ -478,7 +479,12 @@ export function AvailabilityPanel({ view }: { view: "hours" | "off" | "rules" })
         </>
       )}
 
-      {tab === "rules" && <BookingRules />}
+      {tab === "rules" && (
+        <div className="space-y-4">
+          <ApprovalSetting />
+          <BookingRules />
+        </div>
+      )}
     </div>
   );
 }
@@ -604,6 +610,79 @@ function VacationConflicts({ blocks }: { blocks: Block[] }) {
           );
         })}
       </ul>
+    </section>
+  );
+}
+
+/** How online bookings arrive: confirmed straight away, or as requests to approve. */
+function ApprovalSetting() {
+  const { business } = useMyBusiness();
+  const { t } = usePrefs();
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const { data: services } = useQuery({
+    queryKey: ["services-approval", business?.id],
+    enabled: !!business,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("services")
+        .select("id, requires_confirmation")
+        .eq("business_id", business!.id);
+      return data ?? [];
+    },
+  });
+  const manual = (services ?? []).some((s) => s.requires_confirmation);
+  const mixed = manual && (services ?? []).some((s) => !s.requires_confirmation);
+
+  async function choose(next: boolean) {
+    if (!business) return;
+    setBusy(true);
+    const { error } = await supabase
+      .from("services")
+      .update({ requires_confirmation: next })
+      .eq("business_id", business.id);
+    setBusy(false);
+    if (error) {
+      toast.error(t("pf.common.saveError"));
+      return;
+    }
+    toast.success(t("ui.save.auto"));
+    qc.invalidateQueries({ queryKey: ["services-approval"] });
+    qc.invalidateQueries({ queryKey: ["services"] });
+  }
+
+  return (
+    <section className="surface space-y-3 p-5">
+      <h2 className="text-base font-semibold">{t("ob.prefs.approval")}</h2>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {(
+          [
+            [false, t("ob.prefs.auto"), t("ob.prefs.auto.sub")],
+            [true, t("ob.prefs.manual"), t("ob.prefs.manual.sub")],
+          ] as const
+        ).map(([value, title, sub]) => {
+          const active = !mixed && services !== undefined && manual === value;
+          return (
+            <button
+              key={String(value)}
+              type="button"
+              disabled={busy || !services}
+              aria-pressed={active}
+              onClick={() => void choose(value)}
+              className={cn(
+                "rounded-xl border p-4 text-left transition-colors",
+                active
+                  ? "border-brand bg-brand/8 ring-1 ring-brand"
+                  : "border-border bg-card hover:bg-muted",
+              )}
+            >
+              <p className="text-sm font-bold">{title}</p>
+              <p className="text-sm text-muted-foreground">{sub}</p>
+            </button>
+          );
+        })}
+      </div>
+      {mixed && <p className="text-xs text-muted-foreground">{t("pf.av.approvalMixed")}</p>}
     </section>
   );
 }

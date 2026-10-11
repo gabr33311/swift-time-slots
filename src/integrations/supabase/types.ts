@@ -360,7 +360,9 @@ export type Database = {
           instagram: string | null
           is_demo: boolean
           is_published: boolean
+          latitude: number | null
           logo_url: string | null
+          longitude: number | null
           name: string
           onboarding_completed: boolean
           phone: string | null
@@ -394,7 +396,9 @@ export type Database = {
           instagram?: string | null
           is_demo?: boolean
           is_published?: boolean
+          latitude?: number | null
           logo_url?: string | null
+          longitude?: number | null
           name: string
           onboarding_completed?: boolean
           phone?: string | null
@@ -428,7 +432,9 @@ export type Database = {
           instagram?: string | null
           is_demo?: boolean
           is_published?: boolean
+          latitude?: number | null
           logo_url?: string | null
+          longitude?: number | null
           name?: string
           onboarding_completed?: boolean
           phone?: string | null

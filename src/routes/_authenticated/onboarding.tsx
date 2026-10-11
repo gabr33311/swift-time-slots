@@ -30,7 +30,8 @@ import { DEFAULT_BRAND } from "@/lib/brand";
 import { ColorSwatches } from "@/components/color-swatches";
 import { Switch } from "@/components/ui/switch";
 import { PagePreview } from "@/components/page-preview";
-import { ImageCropDialog } from "@/components/image-crop-dialog";
+import { ImageCropDialog, type CropShape } from "@/components/image-crop-dialog";
+import { LocationPicker, type LatLng } from "@/components/location-picker";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { isReservedSlug } from "@/lib/reserved-slugs";
@@ -101,24 +102,31 @@ function Onboarding() {
   const [autoConfirm, setAutoConfirm] = useState(true);
   const [cancelHours, setCancelHours] = useState(24);
   const [autoComplete, setAutoComplete] = useState(true);
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const logoInput = useRef<HTMLInputElement>(null);
-  const [logoToCrop, setLogoToCrop] = useState<File | null>(null);
+  // Logo and banner: framed in the crop dialog, uploaded once the business exists.
+  const [images, setImages] = useState<Record<CropShape, File | null>>({ logo: null, cover: null });
+  const [previews, setPreviews] = useState<Record<CropShape, string | null>>({
+    logo: null,
+    cover: null,
+  });
+  const [cropping, setCropping] = useState<{ kind: CropShape; file: File } | null>(null);
+  // Exact shop location, picked on the map in the contacts step.
+  const [location, setLocation] = useState<LatLng | null>(null);
 
   const [createdSlug, setCreatedSlug] = useState<string | null>(null);
   const ownerName = (user?.user_metadata?.["full_name"] as string | undefined)?.trim() ?? "";
 
-  // A local preview of the chosen logo; released when it changes.
+  // Local previews of the chosen pictures; released when they change.
   useEffect(() => {
-    if (!logoFile) {
-      setLogoPreview(null);
-      return;
-    }
-    const url = URL.createObjectURL(logoFile);
-    setLogoPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [logoFile]);
+    const urls = {
+      logo: images.logo ? URL.createObjectURL(images.logo) : null,
+      cover: images.cover ? URL.createObjectURL(images.cover) : null,
+    };
+    setPreviews(urls);
+    return () => {
+      if (urls.logo) URL.revokeObjectURL(urls.logo);
+      if (urls.cover) URL.revokeObjectURL(urls.cover);
+    };
+  }, [images]);
 
   // Already has a business: nothing to set up.
   useEffect(() => {
@@ -207,6 +215,13 @@ function Onboarding() {
   function back() {
     setError(null);
     setStepIdx((i) => Math.max(0, i - 1));
+  }
+
+  function pickImage(kind: CropShape, f: File) {
+    if (!f.type.startsWith("image/")) return setError(t("pf.biz.err.imageType"));
+    if (f.size > 15 * 1024 * 1024) return setError(t("pf.biz.err.imageSize"));
+    setError(null);
+    setCropping({ kind, file: f });
   }
 
   async function finish() {
@@ -302,19 +317,35 @@ function Onboarding() {
       if (linksError) throw linksError;
       if (hoursError) throw hoursError;
 
-      // Extras that must never block the account: saved one by one, errors ignored.
-      if (logoFile) {
-        const ext = logoFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
-        const path = `${business.id}/logo-${Date.now()}.${ext}`;
+      // Extras that must never block the account: saved one by one.
+      let imageFailed = false;
+      for (const kind of ["logo", "cover"] as const) {
+        const file = images[kind];
+        if (!file) continue;
+        const path = `${business.id}/${kind}-${Date.now()}.webp`;
         const { error: upErr } = await supabase.storage
           .from("business-logos")
-          .upload(path, logoFile, { upsert: true });
-        if (!upErr) {
-          await supabase.from("businesses").update({ logo_url: path }).eq("id", business.id);
+          .upload(path, file, { upsert: true, contentType: file.type });
+        const { error: saveErr } = upErr
+          ? { error: upErr }
+          : await supabase
+              .from("businesses")
+              .update(kind === "logo" ? { logo_url: path } : { cover_url: path })
+              .eq("id", business.id);
+        if (saveErr) {
+          console.error("[onboarding] image failed", kind, saveErr);
+          imageFailed = true;
         }
       }
+      if (imageFailed) toast.error(t("ob.err.image"));
       if (autoComplete) {
         await supabase.from("businesses").update({ auto_complete: true }).eq("id", business.id);
+      }
+      if (location) {
+        await supabase
+          .from("businesses")
+          .update({ latitude: location.lat, longitude: location.lng })
+          .eq("id", business.id);
       }
 
       // The free trial is counted from today; the plan row is created now.
@@ -472,6 +503,17 @@ function Onboarding() {
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   maxLength={140}
+                />
+              </Field>
+              <Field label={t("loc.title")}>
+                <LocationPicker
+                  value={location}
+                  onChange={setLocation}
+                  onAddress={(street, town) => {
+                    if (!address.trim() && street) setAddress(street);
+                    if (!city.trim() && town) setCity(town);
+                  }}
+                  initialQuery={[address, city].filter(Boolean).join(", ")}
                 />
               </Field>
               <Field label="Instagram" htmlFor="ig">
@@ -750,44 +792,26 @@ function Onboarding() {
 
           {step === "prefs" && (
             <>
-              <PagePreview name={name.trim()} brand={brand} logoUrl={logoPreview} />
-              <Field label={t("pf.look.logo")} hint={t("ob.prefs.logoHint")}>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => logoInput.current?.click()}
-                  >
-                    <ImagePlus /> {logoFile ? t("pf.look.change") : t("pf.look.upload")}
-                  </Button>
-                  {logoFile && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      aria-label={t("pf.look.remove")}
-                      onClick={() => setLogoFile(null)}
-                    >
-                      <Trash2 />
-                    </Button>
-                  )}
-                  <input
-                    ref={logoInput}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      e.target.value = "";
-                      if (!f) return;
-                      if (!f.type.startsWith("image/")) return setError(t("pf.biz.err.imageType"));
-                      if (f.size > 15 * 1024 * 1024) return setError(t("pf.biz.err.imageSize"));
-                      setError(null);
-                      setLogoToCrop(f);
-                    }}
-                  />
-                </div>
-              </Field>
+              <PagePreview
+                name={name.trim()}
+                brand={brand}
+                logoUrl={previews.logo}
+                coverUrl={previews.cover}
+              />
+              <PickImage
+                label={t("pf.look.logo")}
+                hint={t("ob.prefs.logoHint")}
+                has={!!images.logo}
+                onPick={(f) => pickImage("logo", f)}
+                onRemove={() => setImages((i) => ({ ...i, logo: null }))}
+              />
+              <PickImage
+                label={t("pf.look.cover")}
+                hint={t("pf.look.cover.hint")}
+                has={!!images.cover}
+                onPick={(f) => pickImage("cover", f)}
+                onRemove={() => setImages((i) => ({ ...i, cover: null }))}
+              />
               <Field label={t("ob.prefs.pageColor")} hint={t("ob.prefs.brandHint")}>
                 <ColorSwatches value={brand} onChange={setBrand} label={t("ob.prefs.pageColor")} />
               </Field>
@@ -846,12 +870,12 @@ function Onboarding() {
       </main>
 
       <ImageCropDialog
-        file={logoToCrop}
-        shape="logo"
-        onCancel={() => setLogoToCrop(null)}
+        file={cropping?.file ?? null}
+        shape={cropping?.kind ?? "logo"}
+        onCancel={() => setCropping(null)}
         onDone={(f) => {
-          setLogoFile(f);
-          setLogoToCrop(null);
+          if (cropping) setImages((i) => ({ ...i, [cropping.kind]: f }));
+          setCropping(null);
         }}
       />
 
@@ -882,6 +906,55 @@ function Onboarding() {
         )}
       </footer>
     </div>
+  );
+}
+
+/** One picture choice: pick (then crop), change or remove. */
+function PickImage({
+  label,
+  hint,
+  has,
+  onPick,
+  onRemove,
+}: {
+  label: string;
+  hint: string;
+  has: boolean;
+  onPick: (f: File) => void;
+  onRemove: () => void;
+}) {
+  const { t } = usePrefs();
+  const input = useRef<HTMLInputElement>(null);
+  return (
+    <Field label={label} hint={hint}>
+      <div className="flex gap-2">
+        <Button type="button" variant="outline" onClick={() => input.current?.click()}>
+          <ImagePlus /> {has ? t("pf.look.change") : t("pf.look.upload")}
+        </Button>
+        {has && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={t("pf.look.remove")}
+            onClick={onRemove}
+          >
+            <Trash2 />
+          </Button>
+        )}
+        <input
+          ref={input}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            if (f) onPick(f);
+          }}
+        />
+      </div>
+    </Field>
   );
 }
 

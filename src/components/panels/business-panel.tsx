@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useMyBusiness } from "@/hooks/use-business";
 import { usePrefs } from "@/lib/prefs";
 import { SaveBar } from "@/components/save-bar";
+import { LocationPicker } from "@/components/location-picker";
 
 const schema = z.object({
   name: z.string().trim().min(2, "pf.biz.err.name").max(80),
@@ -31,6 +32,8 @@ const EMPTY = {
   city: "",
   cancellationHours: "24",
   slotInterval: "15",
+  lat: null as number | null,
+  lng: null as number | null,
 };
 
 function baseline(b: NonNullable<ReturnType<typeof useMyBusiness>["business"]>) {
@@ -43,6 +46,8 @@ function baseline(b: NonNullable<ReturnType<typeof useMyBusiness>["business"]>) 
     city: b.city ?? "",
     cancellationHours: String(b.cancellation_hours),
     slotInterval: String(b.slot_interval_minutes),
+    lat: b.latitude ?? null,
+    lng: b.longitude ?? null,
   };
 }
 
@@ -52,6 +57,8 @@ export function BusinessPanel() {
   const qc = useQueryClient();
   const [form, setForm] = useState(EMPTY);
   const [busy, setBusy] = useState(false);
+  // Remounts the map after "cancel", so the pin goes back too.
+  const [mapKey, setMapKey] = useState(0);
 
   function hydrate() {
     if (!business) return;
@@ -83,6 +90,10 @@ export function BusinessPanel() {
         city: parsed.data.city || null,
         cancellation_hours: parsed.data.cancellationHours,
         slot_interval_minutes: parsed.data.slotInterval,
+        // Only sent when moved, so saving works even before the columns exist.
+        ...(form.lat !== (business.latitude ?? null) || form.lng !== (business.longitude ?? null)
+          ? { latitude: form.lat, longitude: form.lng }
+          : {}),
       })
       .eq("id", business.id);
     setBusy(false);
@@ -155,13 +166,33 @@ export function BusinessPanel() {
             <Input id="ba" value={form.address} onChange={set("address")} maxLength={160} />
           </div>
         </div>
+        <div className="space-y-1.5">
+          <Label className="font-semibold">{t("loc.title")}</Label>
+          <LocationPicker
+            key={mapKey}
+            value={form.lat != null && form.lng != null ? { lat: form.lat, lng: form.lng } : null}
+            onChange={(v) => setForm((f) => ({ ...f, lat: v.lat, lng: v.lng }))}
+            onAddress={(address, city) =>
+              setForm((f) => ({
+                ...f,
+                address: f.address || address || "",
+                city: f.city || city || "",
+              }))
+            }
+            initialQuery={[form.address, form.city].filter(Boolean).join(", ")}
+          />
+        </div>
       </div>
 
       <SaveBar
         dirty={dirty}
         busy={busy}
         onSave={() => void save()}
-        onCancel={() => business && setForm(baseline(business))}
+        onCancel={() => {
+          if (!business) return;
+          setForm(baseline(business));
+          setMapKey((k) => k + 1);
+        }}
       />
     </section>
   );

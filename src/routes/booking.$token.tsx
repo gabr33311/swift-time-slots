@@ -18,6 +18,7 @@ import { formatDateLong, formatPrice, formatTime } from "@/lib/format";
 import { addDays, todayIn, weekdayOf } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { useBrandColor } from "@/lib/brand";
+import { mapsUrl } from "@/lib/maps";
 import { CalendarClock, Check, Loader2, MapPin, Phone } from "lucide-react";
 import { AddToCalendar } from "@/components/add-to-calendar";
 import {
@@ -236,10 +237,21 @@ function BookingPage() {
         {data.business && (data.business.address || data.business.phone) && (
           <div className="mt-4 space-y-1.5 border-t border-border pt-4 text-sm text-muted-foreground">
             {data.business.address && (
-              <p className="flex items-center gap-2">
+              // Opens the exact shop location in Google Maps.
+              <a
+                href={
+                  mapsUrl({
+                    ...data.business,
+                    address: [data.business.address, data.business.city].filter(Boolean).join(", "),
+                  }) ?? undefined
+                }
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 underline-offset-4 hover:text-foreground hover:underline"
+              >
                 <MapPin className="size-4 shrink-0" /> {data.business.address}
                 {data.business.city ? `, ${data.business.city}` : ""}
-              </p>
+              </a>
             )}
             {data.business.phone && (
               <a href={`tel:${data.business.phone}`} className="flex items-center gap-2">
