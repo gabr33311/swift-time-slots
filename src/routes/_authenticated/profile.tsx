@@ -151,7 +151,13 @@ function ProfilePage() {
 
       <div className="md:grid md:grid-cols-[250px_minmax(0,1fr)] md:items-start md:gap-6 lg:grid-cols-[270px_minmax(0,1fr)]">
         <div
-          className={cn("space-y-3 md:sticky md:top-24 md:space-y-5", section && "hidden md:block")}
+          className={cn(
+            // Phones: the menu fills exactly the space above the dock (header ≈ 5rem,
+            // dock area = 7rem + safe area). Taller screens get taller tiles; on small
+            // ones the tiles stop at their content and the page scrolls.
+            "flex min-h-[calc(100dvh-12rem-env(safe-area-inset-bottom))] flex-col gap-3 md:sticky md:top-24 md:block md:min-h-0 md:space-y-5",
+            section && "hidden md:block",
+          )}
         >
           {/* The business at a glance: who, its link, and the two things you do with it. */}
           {business && (
@@ -201,7 +207,7 @@ function ProfilePage() {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-2.5 md:hidden">
+          <div className="grid flex-1 grid-cols-2 grid-rows-[repeat(3,minmax(min-content,1fr))_auto] gap-2.5 md:hidden">
             {GROUPS.flatMap((g) => g.rows).map((row, i, all) => {
               const status = summary[row.id];
               const wide = all.length % 2 === 1 && i === all.length - 1;
@@ -211,7 +217,7 @@ function ProfilePage() {
                   type="button"
                   onClick={() => setSection(row.id)}
                   className={cn(
-                    "surface group flex flex-col gap-1.5 p-3 text-left transition-[background-color,transform] duration-150 active:scale-[0.97] active:bg-muted",
+                    "surface group flex flex-col justify-between gap-1.5 p-3 text-left transition-[background-color,transform] duration-150 active:scale-[0.97] active:bg-muted",
                     wide && "col-span-2 flex-row items-center gap-3",
                   )}
                 >
