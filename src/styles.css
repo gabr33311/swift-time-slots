@@ -952,8 +952,3 @@ select,
 .min-h-dvh {
   min-height: calc(100dvh - var(--sat));
 }
-
-/* Inner scrolling areas (sheets, lists) don't stretch or pull the page either. */
-* {
-  overscroll-behavior: none;
-}
