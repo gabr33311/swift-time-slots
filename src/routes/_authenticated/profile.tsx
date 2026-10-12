@@ -7,6 +7,7 @@ import { usePrefs } from "@/lib/prefs";
 import { useEffect, useState, type ComponentType } from "react";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/ui-bits";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { initials, weekdaysShort } from "@/lib/format";
@@ -36,6 +37,8 @@ import {
   SlidersHorizontal,
   Users,
   CalendarOff,
+  CalendarCheck,
+  Store,
 } from "lucide-react";
 
 const SECTION_IDS = [
@@ -75,9 +78,10 @@ type Row = { id: SectionId; icon: ComponentType<{ className?: string }> };
  * used: stats on Today, sharing in the header card, time off in the calendar,
  * settings and the plan behind the gear.
  */
-const GROUPS: { title: string; tone: string; rows: Row[] }[] = [
+const GROUPS: { title: string; tone: string; icon: Row["icon"]; rows: Row[] }[] = [
   {
     title: "pf.group.business",
+    icon: Store,
     tone: "bg-brand text-brand-foreground",
     rows: [
       { id: "info", icon: Building2 },
@@ -86,6 +90,7 @@ const GROUPS: { title: string; tone: string; rows: Row[] }[] = [
   },
   {
     title: "pf.group.offer",
+    icon: Scissors,
     tone: "bg-brand text-brand-foreground",
     rows: [
       { id: "services", icon: Scissors },
@@ -94,6 +99,7 @@ const GROUPS: { title: string; tone: string; rows: Row[] }[] = [
   },
   {
     title: "pf.group.time",
+    icon: Clock,
     tone: "bg-brand text-brand-foreground",
     rows: [
       { id: "hours", icon: Clock },
@@ -102,6 +108,7 @@ const GROUPS: { title: string; tone: string; rows: Row[] }[] = [
   },
   {
     title: "pf.group.bookings",
+    icon: CalendarCheck,
     tone: "bg-brand text-brand-foreground",
     rows: [
       { id: "rules", icon: SlidersHorizontal },
@@ -109,6 +116,11 @@ const GROUPS: { title: string; tone: string; rows: Row[] }[] = [
     ],
   },
 ];
+
+/** The category a setting belongs to. */
+function groupOf(id: SectionId) {
+  return GROUPS.find((g) => g.rows.some((r) => r.id === id)) ?? GROUPS[0]!;
+}
 
 function ProfilePage() {
   const { t } = usePrefs();
@@ -123,6 +135,7 @@ function ProfilePage() {
   // left and the first section fills the right column by default.
   const shown: SectionId = section ?? "info";
   const [shareOpen, setShareOpen] = useState(false);
+  const isPhone = !useMediaQuery("(min-width: 768px)");
   const { business } = useMyBusiness();
   const logoUrl = useLogoUrl(business?.logo_url);
   const summary = useManageSummary();
@@ -135,7 +148,9 @@ function ProfilePage() {
   return (
     <AppShell>
       <PageHeader
-        title={section ? label(section) : t("pf.manage.title")}
+        title={
+          section ? (isPhone ? t(groupOf(section).title) : label(section)) : t("pf.manage.title")
+        }
         action={
           !section ? (
             <Button size="sm" variant="outline" onClick={() => void navigate({ to: "/settings" })}>
@@ -209,40 +224,48 @@ function ProfilePage() {
             </div>
           )}
 
-          {/* Phones: each category with its two settings side by side, in the app colour. */}
-          {GROUPS.map((group) => (
-            <section key={group.title} className="md:hidden">
-              <h2 className="mb-1.5 flex items-center gap-2 px-1 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
-                <span aria-hidden className={cn("size-2 rounded-full", group.tone)} />
-                {t(group.title)}
-              </h2>
-              <div className="grid grid-cols-2 gap-2.5">
-                {group.rows.map((row) => (
-                  <button
-                    key={row.id}
-                    type="button"
-                    onClick={() => setSection(row.id)}
-                    className="surface group flex items-center gap-2.5 p-2.5 text-left transition-[background-color,transform] duration-150 active:scale-[0.97] active:bg-muted"
+          {/* Phones: one square per category; inside, its settings as tabs. */}
+          <div className="grid grid-cols-2 gap-3 md:hidden">
+            {GROUPS.map((group) => (
+              <button
+                key={group.title}
+                type="button"
+                onClick={() => setSection(group.rows[0]!.id)}
+                className="surface group flex aspect-[1/0.92] flex-col justify-between p-4 text-left transition-[background-color,transform] duration-150 active:scale-[0.97] active:bg-muted"
+              >
+                <span className="flex w-full items-start justify-between">
+                  <span
+                    className={cn(
+                      "flex size-11 items-center justify-center rounded-2xl shadow-sm",
+                      group.tone,
+                    )}
                   >
-                    <span
-                      className={cn(
-                        "flex size-9 shrink-0 items-center justify-center rounded-xl shadow-sm",
-                        group.tone,
-                      )}
-                    >
-                      <row.icon className="size-[18px]" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-[13px] font-bold leading-tight">
-                        {label(row.id)}
+                    <group.icon className="size-5" />
+                  </span>
+                  <ChevronRight className="size-4 text-muted-foreground" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-display text-base font-bold leading-tight">
+                    {t(group.title)}
+                  </span>
+                  {group.rows.map((row) => {
+                    const st = summary[row.id];
+                    return (
+                      <span
+                        key={row.id}
+                        className={cn(
+                          "mt-0.5 block truncate text-xs font-semibold",
+                          st?.warn ? "text-st-pending-fg" : "text-muted-foreground",
+                        )}
+                      >
+                        {st?.text ?? label(row.id)}
                       </span>
-                      <TileStatus status={summary[row.id]} fallback={desc(row.id)} />
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </section>
-          ))}
+                    );
+                  })}
+                </span>
+              </button>
+            ))}
+          </div>
 
           {GROUPS.map((group) => (
             <section key={group.title} className="hidden md:block">
@@ -311,6 +334,32 @@ function ProfilePage() {
         </div>
 
         <div key={shown} className={cn("animate-enter min-w-0", !section && "hidden md:block")}>
+          {section && (
+            <div
+              role="tablist"
+              className="mb-4 grid grid-cols-2 gap-1 rounded-full bg-muted p-1 md:hidden"
+            >
+              {groupOf(section).rows.map((row) => (
+                <button
+                  key={row.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={row.id === section}
+                  onClick={() =>
+                    void navigate({ to: "/profile", search: { section: row.id }, replace: true })
+                  }
+                  className={cn(
+                    "h-9 truncate rounded-full px-2 text-[13px] font-bold transition-all",
+                    row.id === section
+                      ? "bg-card text-foreground shadow-soft"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  {label(row.id)}
+                </button>
+              ))}
+            </div>
+          )}
           <p className="mb-4 hidden text-sm text-muted-foreground md:block">{desc(shown)}</p>
           {shown === "info" && <BusinessPanel />}
           {shown === "page" && <PublicPagePanel />}
@@ -324,23 +373,6 @@ function ProfilePage() {
           {shown === "hours" && (
             <div className="space-y-4">
               <AvailabilityPanel view="hours" />
-              {/* Time off is part of the hours; it is no longer a separate menu row. */}
-              <button
-                type="button"
-                onClick={() => void navigate({ to: "/time-off" })}
-                className="surface flex min-h-14 w-full items-center gap-3.5 px-4 py-3 text-left transition-colors hover:bg-muted/50"
-              >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand/12 dark:bg-brand/25 text-brand-ink">
-                  <CalendarOff className="size-[17px]" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-bold">{t("pf.s.timeoff")}</span>
-                  <span className="block text-xs text-muted-foreground">
-                    {t("pf.s.timeoff.desc")}
-                  </span>
-                </span>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-              </button>
             </div>
           )}
           {shown === "timeoff" && <AvailabilityPanel view="off" />}
