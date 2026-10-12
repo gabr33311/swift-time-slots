@@ -146,19 +146,7 @@ function TodayPage() {
 
   return (
     <AppShell>
-      <PageHeader
-        title={greetingPt(new Date(now), lang)}
-        action={
-          // Phones: the stats sit up here, like the other tabs' main button.
-          // Desktop shows the "This week" card at the top of the side column instead.
-          <Button asChild variant="outline" size="sm" className="lg:hidden">
-            <Link to="/analytics">
-              <BarChart3 className="size-4" />
-              {t("pf.s.analytics")}
-            </Link>
-          </Button>
-        }
-      />
+      <PageHeader title={greetingPt(new Date(now), lang)} />
       <p className="-mt-2 mb-5 text-sm font-medium text-muted-foreground first-letter:uppercase">
         {formatDateLong(new Date(now).toISOString(), tz)}
       </p>
@@ -168,7 +156,7 @@ function TodayPage() {
       ) : isError ? (
         <ErrorState onRetry={() => void refetch()} />
       ) : (
-        <div className="animate-stagger grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start [&>*]:min-w-0">
+        <div className="animate-stagger mx-auto grid max-w-3xl grid-cols-1 gap-4 [&>*]:min-w-0">
           <div className="space-y-4">
             <FocusCard
               row={focus}
@@ -181,37 +169,27 @@ function TodayPage() {
 
             <NeedsYou items={needs} tz={tz} onOpen={openAppointment} />
 
-            <section className="surface p-0">
-              <div className="flex items-center justify-between px-4 pt-4">
-                <h2 className="text-sm font-bold">{t("today.day")}</h2>
-                <Link
-                  to="/calendar"
-                  className="inline-flex h-9 items-center gap-1 rounded-full px-2 text-xs font-bold text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  {t("today.seeCalendar")} <ArrowRight className="size-3.5" />
-                </Link>
-              </div>
-              <div className="grid grid-cols-3 divide-x divide-border px-1 py-3">
-                {[
-                  [t("today.appts"), String(liveDay.length)],
-                  [t("today.done"), `${doneCount}/${liveDay.length}`],
-                  [
-                    // Everything done: the money is earned, not just expected.
-                    t(
-                      liveDay.length > 0 && doneCount === liveDay.length
-                        ? "today.earned"
-                        : "today.revenue",
-                    ),
-                    formatPrice(expected, currency),
-                  ],
-                ].map(([label, value]) => (
-                  <div key={label} className="px-3 text-center">
-                    <p className="font-display text-xl font-bold tabular-nums">{value}</p>
-                    <p className="text-[11px] font-semibold text-muted-foreground">{label}</p>
-                  </div>
-                ))}
-              </div>
-              {day.length > 0 && (
+            <DaySummary
+              total={liveDay.length}
+              done={doneCount}
+              money={expected}
+              earned={liveDay.length > 0 && doneCount === liveDay.length}
+              weekCount={weekLive.length}
+              weekMoney={weekLive.reduce((s, r) => s + (r.price_cents ?? 0), 0)}
+              currency={currency}
+            />
+
+            {day.length > 0 && (
+              <section className="surface p-0">
+                <div className="flex items-center justify-between px-4 pt-4 pb-1">
+                  <h2 className="text-sm font-bold">{t("today.list")}</h2>
+                  <Link
+                    to="/calendar"
+                    className="inline-flex h-9 items-center gap-1 rounded-full px-2 text-xs font-bold text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {t("today.seeCalendar")} <ArrowRight className="size-3.5" />
+                  </Link>
+                </div>
                 <ul className="divide-y divide-border border-t border-border">
                   {day.map((r) => {
                     const past = endOf(r) <= now;
@@ -242,40 +220,102 @@ function TodayPage() {
                     );
                   })}
                 </ul>
-              )}
-            </section>
-          </div>
-
-          <div className="hidden space-y-4 lg:block">
-            <Link
-              to="/analytics"
-              className="surface flex items-center gap-3.5 p-4 transition-colors hover:bg-muted/40"
-            >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand/12 text-brand-ink">
-                <BarChart3 className="size-[18px]" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-xs font-semibold text-muted-foreground">
-                  {t("today.week")}
-                </span>
-                <span className="block truncate text-sm font-bold">
-                  {t("today.weekBody")
-                    .replace("{n}", String(weekLive.length))
-                    .replace(
-                      "{revenue}",
-                      formatPrice(
-                        weekLive.reduce((s, r) => s + (r.price_cents ?? 0), 0),
-                        currency,
-                      ),
-                    )}
-                </span>
-              </span>
-              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-            </Link>
+              </section>
+            )}
           </div>
         </div>
       )}
     </AppShell>
+  );
+}
+
+/** The day in numbers: money in big, a progress ring, and the week below. Opens the stats. */
+function DaySummary({
+  total,
+  done,
+  money,
+  earned,
+  weekCount,
+  weekMoney,
+  currency,
+}: {
+  total: number;
+  done: number;
+  money: number;
+  earned: boolean;
+  weekCount: number;
+  weekMoney: number;
+  currency: string;
+}) {
+  const { t } = usePrefs();
+  const pct = total ? done / total : 0;
+  const r = 26;
+  const len = 2 * Math.PI * r;
+  return (
+    <Link
+      to="/analytics"
+      className="surface group relative block overflow-hidden p-0 transition-transform active:scale-[0.99]"
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,color-mix(in_oklab,var(--brand)_16%,transparent),transparent_60%)]"
+      />
+      <div className="relative flex items-center gap-4 p-5">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
+            {t("today.day")}
+          </p>
+          <p className="mt-1 font-display text-4xl font-bold tabular-nums tracking-tight">
+            {formatPrice(money, currency)}
+          </p>
+          <p className="mt-0.5 text-sm font-semibold text-muted-foreground">
+            {t(earned ? "today.earned" : "today.revenue")} ·{" "}
+            {t(total === 1 ? "today.apptsOne" : "today.apptsMany").replace("{n}", String(total))}
+          </p>
+        </div>
+        {/* Done of today's appointments. */}
+        <div className="relative size-[68px] shrink-0">
+          <svg viewBox="0 0 64 64" className="size-full -rotate-90">
+            <circle cx="32" cy="32" r={r} fill="none" strokeWidth="7" className="stroke-muted" />
+            <circle
+              cx="32"
+              cy="32"
+              r={r}
+              fill="none"
+              strokeWidth="7"
+              strokeLinecap="round"
+              stroke="var(--brand)"
+              strokeDasharray={len}
+              strokeDashoffset={len * (1 - pct)}
+              className="transition-[stroke-dashoffset] duration-700"
+            />
+          </svg>
+          <span className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="font-display text-base font-bold tabular-nums leading-none">
+              {done}/{total}
+            </span>
+            <span className="text-[10px] font-semibold text-muted-foreground">
+              {t("today.done")}
+            </span>
+          </span>
+        </div>
+      </div>
+      <div className="relative flex items-center gap-3 border-t border-border px-5 py-3">
+        <BarChart3 className="size-4 shrink-0 text-brand-ink" />
+        <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+          {t("today.week")}:{" "}
+          <span className="text-muted-foreground">
+            {t("today.weekBody")
+              .replace("{n}", String(weekCount))
+              .replace("{revenue}", formatPrice(weekMoney, currency))}
+          </span>
+        </span>
+        <span className="flex shrink-0 items-center gap-0.5 text-xs font-bold text-brand-ink">
+          {t("pf.s.analytics")}
+          <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+        </span>
+      </div>
+    </Link>
   );
 }
 
@@ -299,7 +339,7 @@ function FocusCard({
   if (!row) {
     return (
       <section className="surface flex items-center gap-4 p-5">
-        <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-brand/12 text-brand-ink">
+        <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-brand/12 dark:bg-brand/25 text-brand-ink">
           <Sparkles className="size-5" />
         </span>
         <div className="min-w-0">

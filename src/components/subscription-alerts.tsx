@@ -69,7 +69,7 @@ export function Paywall() {
   const { t } = usePrefs();
   return (
     <section className="surface animate-enter mx-auto mt-6 flex max-w-md flex-col items-center gap-3 px-6 py-10 text-center">
-      <span className="flex size-14 items-center justify-center rounded-2xl bg-brand/12 text-brand-ink">
+      <span className="flex size-14 items-center justify-center rounded-2xl bg-brand/12 dark:bg-brand/25 text-brand-ink">
         <Lock className="size-6" />
       </span>
       <h1 className="font-display text-2xl font-bold tracking-tight">{t("sub.paywall.title")}</h1>

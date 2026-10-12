@@ -169,7 +169,7 @@ function CustomersPage() {
                 aria-label={`${t("cust.edit")} ${c.name}`}
                 className="flex min-h-14 min-w-0 flex-1 items-center gap-3.5 rounded-2xl p-2 text-left transition-colors hover:bg-muted/40"
               >
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand/12 text-sm font-bold text-brand-ink">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand/12 dark:bg-brand/25 text-sm font-bold text-brand-ink">
                   {initials(c.name)}
                 </span>
                 <div className="min-w-0 flex-1">

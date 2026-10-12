@@ -587,7 +587,7 @@ function VerifyCode({
   return (
     <section className="surface animate-enter p-6 text-center sm:p-7">
       <StepDots current={2} />
-      <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-brand/12 text-brand-ink">
+      <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-brand/12 dark:bg-brand/25 text-brand-ink">
         <MailCheck className="size-7" />
       </span>
       <h1 className="mt-4 font-display text-2xl font-bold tracking-tight">
@@ -684,7 +684,7 @@ function ForgotForm({
   if (sent) {
     return (
       <section className="surface animate-enter p-6 text-center sm:p-7">
-        <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-brand/12 text-brand-ink">
+        <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-brand/12 dark:bg-brand/25 text-brand-ink">
           <MailCheck className="size-7" />
         </span>
         <h1 className="mt-4 font-display text-2xl font-bold tracking-tight">

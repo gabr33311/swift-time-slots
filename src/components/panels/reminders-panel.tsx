@@ -179,7 +179,7 @@ export function RemindersPanel() {
       <section className="surface divide-y divide-border">
         <div className="flex items-center justify-between gap-4 p-5">
           <div className="flex items-start gap-3">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand/12 text-brand-ink">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand/12 dark:bg-brand/25 text-brand-ink">
               <BellRing className="size-[17px]" />
             </span>
             <div>

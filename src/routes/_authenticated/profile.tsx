@@ -75,9 +75,10 @@ type Row = { id: SectionId; icon: ComponentType<{ className?: string }> };
  * used: stats on Today, sharing in the header card, time off in the calendar,
  * settings and the plan behind the gear.
  */
-const GROUPS: { title: string; rows: Row[] }[] = [
+const GROUPS: { title: string; tone: string; rows: Row[] }[] = [
   {
     title: "pf.group.business",
+    tone: "bg-brand text-brand-foreground",
     rows: [
       { id: "info", icon: Building2 },
       { id: "page", icon: Palette },
@@ -85,6 +86,7 @@ const GROUPS: { title: string; rows: Row[] }[] = [
   },
   {
     title: "pf.group.offer",
+    tone: "bg-[#7c3aed] text-white",
     rows: [
       { id: "services", icon: Scissors },
       { id: "team", icon: Users },
@@ -92,8 +94,16 @@ const GROUPS: { title: string; rows: Row[] }[] = [
   },
   {
     title: "pf.group.time",
+    tone: "bg-[#f59e0b] text-white",
     rows: [
       { id: "hours", icon: Clock },
+      { id: "timeoff", icon: CalendarOff },
+    ],
+  },
+  {
+    title: "pf.group.bookings",
+    tone: "bg-[#10b981] text-white",
+    rows: [
       { id: "rules", icon: SlidersHorizontal },
       { id: "reminders", icon: BellRing },
     ],
@@ -151,13 +161,7 @@ function ProfilePage() {
 
       <div className="md:grid md:grid-cols-[250px_minmax(0,1fr)] md:items-start md:gap-6 lg:grid-cols-[270px_minmax(0,1fr)]">
         <div
-          className={cn(
-            // Phones: the menu fills exactly the space above the dock (header ≈ 5rem,
-            // dock area = 7rem + safe area). Taller screens get taller tiles; on small
-            // ones the tiles stop at their content and the page scrolls.
-            "flex min-h-[calc(100dvh-12rem-var(--sab))] flex-col gap-3 md:sticky md:top-24 md:block md:min-h-0 md:space-y-5",
-            section && "hidden md:block",
-          )}
+          className={cn("space-y-4 md:sticky md:top-24 md:space-y-5", section && "hidden md:block")}
         >
           {/* The business at a glance: who, its link, and the two things you do with it. */}
           {business && (
@@ -207,37 +211,41 @@ function ProfilePage() {
             </div>
           )}
 
-          <div className="grid flex-1 grid-cols-2 grid-rows-[repeat(3,minmax(min-content,1fr))_auto] gap-2.5 md:hidden">
-            {GROUPS.flatMap((g) => g.rows).map((row, i, all) => {
-              const status = summary[row.id];
-              const wide = all.length % 2 === 1 && i === all.length - 1;
-              return (
-                <button
-                  key={row.id}
-                  type="button"
-                  onClick={() => setSection(row.id)}
-                  className={cn(
-                    "surface group flex flex-col justify-between gap-1.5 p-3 text-left transition-[background-color,transform] duration-150 active:scale-[0.97] active:bg-muted",
-                    wide && "col-span-2 flex-row items-center gap-3",
-                  )}
-                >
-                  <span className={cn("flex min-w-0 items-center gap-2", wide && "flex-1")}>
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand/12 text-brand-ink">
-                      <row.icon className="size-4" />
+          {/* Phones: each category with its colour, its two settings side by side. */}
+          {GROUPS.map((group) => (
+            <section key={group.title} className="md:hidden">
+              <h2 className="mb-2 flex items-center gap-2 px-1 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                <span aria-hidden className={cn("size-2 rounded-full", group.tone)} />
+                {t(group.title)}
+              </h2>
+              <div className="grid grid-cols-2 gap-2.5">
+                {group.rows.map((row) => (
+                  <button
+                    key={row.id}
+                    type="button"
+                    onClick={() => setSection(row.id)}
+                    className="surface group flex flex-col items-start gap-2.5 p-3 text-left transition-[background-color,transform] duration-150 active:scale-[0.97] active:bg-muted"
+                  >
+                    <span className="flex w-full items-center justify-between">
+                      <span
+                        className={cn(
+                          "flex size-9 items-center justify-center rounded-xl shadow-sm",
+                          group.tone,
+                        )}
+                      >
+                        <row.icon className="size-[18px]" />
+                      </span>
+                      <ChevronRight className="size-4 text-muted-foreground" />
                     </span>
                     <span className="min-w-0">
-                      <span className="line-clamp-2 text-sm font-bold leading-tight">
-                        {label(row.id)}
-                      </span>
-                      {wide && <TileStatus status={status} fallback={desc(row.id)} />}
+                      <span className="block text-sm font-bold leading-tight">{label(row.id)}</span>
+                      <TileStatus status={summary[row.id]} fallback={desc(row.id)} />
                     </span>
-                  </span>
-                  {!wide && <TileStatus status={status} fallback={desc(row.id)} />}
-                  {wide && <ChevronRight className="size-4 shrink-0 text-muted-foreground" />}
-                </button>
-              );
-            })}
-          </div>
+                  </button>
+                ))}
+              </div>
+            </section>
+          ))}
 
           {GROUPS.map((group) => (
             <section key={group.title} className="hidden md:block">
@@ -258,7 +266,12 @@ function ProfilePage() {
                         shown === row.id && "md:bg-muted",
                       )}
                     >
-                      <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-brand/12 text-brand-ink transition-transform duration-200 group-hover:scale-105">
+                      <span
+                        className={cn(
+                          "flex size-10 shrink-0 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-105",
+                          group.tone,
+                        )}
+                      >
                         <row.icon className="size-[18px]" />
                       </span>
                       <span className="min-w-0 flex-1">
@@ -320,7 +333,7 @@ function ProfilePage() {
                 onClick={() => void navigate({ to: "/time-off" })}
                 className="surface flex min-h-14 w-full items-center gap-3.5 px-4 py-3 text-left transition-colors hover:bg-muted/50"
               >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand/12 text-brand-ink">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand/12 dark:bg-brand/25 text-brand-ink">
                   <CalendarOff className="size-[17px]" />
                 </span>
                 <span className="min-w-0 flex-1">

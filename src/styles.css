@@ -150,14 +150,14 @@
   --brand-ink: color-mix(in oklch, var(--brand) 72%, black);
 
   /* Status colours: they carry meaning (booked, waiting, done, missed). */
-  --st-confirmed: oklch(0.62 0.13 162);
-  --st-confirmed-fg: oklch(0.42 0.1 162);
-  --st-pending: oklch(0.76 0.15 75);
-  --st-pending-fg: oklch(0.48 0.11 65);
-  --st-completed: oklch(0.58 0.13 255);
-  --st-completed-fg: oklch(0.45 0.13 258);
-  --st-noshow: oklch(0.62 0.19 25);
-  --st-noshow-fg: oklch(0.5 0.17 25);
+  --st-confirmed: oklch(0.66 0.17 155);
+  --st-confirmed-fg: oklch(0.47 0.14 155);
+  --st-pending: oklch(0.78 0.17 70);
+  --st-pending-fg: oklch(0.52 0.15 60);
+  --st-completed: oklch(0.6 0.19 258);
+  --st-completed-fg: oklch(0.48 0.19 260);
+  --st-noshow: oklch(0.63 0.22 25);
+  --st-noshow-fg: oklch(0.52 0.2 25);
   --st-cancelled: oklch(0.72 0 0);
   --st-cancelled-fg: oklch(0.48 0 0);
 
@@ -233,17 +233,18 @@
   --action-gradient-end: color-mix(in oklch, var(--brand) 72%, #38a3ff);
   --action-outline-start: oklch(0.24 0 0);
   --action-outline-end: oklch(0.2 0 0);
-  --st-confirmed: oklch(0.72 0.13 162);
-  --st-confirmed-fg: oklch(0.8 0.12 162);
-  --st-pending: oklch(0.8 0.14 78);
-  --st-pending-fg: oklch(0.85 0.12 80);
-  --st-completed: oklch(0.7 0.12 255);
-  --st-completed-fg: oklch(0.8 0.1 255);
-  --st-noshow: oklch(0.7 0.17 25);
-  --st-noshow-fg: oklch(0.78 0.14 25);
+  --st-confirmed: oklch(0.74 0.18 155);
+  --st-confirmed-fg: oklch(0.82 0.16 155);
+  --st-pending: oklch(0.82 0.17 75);
+  --st-pending-fg: oklch(0.87 0.15 78);
+  --st-completed: oklch(0.7 0.18 258);
+  --st-completed-fg: oklch(0.8 0.15 258);
+  --st-noshow: oklch(0.72 0.2 25);
+  --st-noshow-fg: oklch(0.8 0.17 25);
   --st-cancelled: oklch(0.5 0 0);
   --st-cancelled-fg: oklch(0.7 0 0);
-  --brand-ink: color-mix(in oklch, var(--brand) 40%, white);
+  /* Keeps the app colour saturated on black (it was washed out with 60% white). */
+  --brand-ink: color-mix(in oklab, var(--brand) 78%, white);
 }
 
 @layer base {

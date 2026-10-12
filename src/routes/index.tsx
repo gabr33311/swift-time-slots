@@ -367,7 +367,7 @@ function AgendaPreview() {
               className="flex items-center gap-3 rounded-2xl border border-border p-2.5"
             >
               <span className="w-11 shrink-0 text-xs font-bold tabular-nums">{a.time}</span>
-              <span className="hidden size-8 shrink-0 items-center justify-center rounded-full bg-brand/12 text-xs font-bold text-brand-ink min-[420px]:flex">
+              <span className="hidden size-8 shrink-0 items-center justify-center rounded-full bg-brand/12 dark:bg-brand/25 text-xs font-bold text-brand-ink min-[420px]:flex">
                 {a.name[0]}
               </span>
               <span className="min-w-0 flex-1">

@@ -74,7 +74,7 @@ function NavList() {
             className={cn(
               "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all duration-200",
               active
-                ? "bg-brand/12 text-foreground shadow-[inset_3px_0_0_var(--brand)]"
+                ? "bg-brand/12 dark:bg-brand/25 text-foreground shadow-[inset_3px_0_0_var(--brand)]"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
