@@ -86,7 +86,7 @@ const GROUPS: { title: string; tone: string; rows: Row[] }[] = [
   },
   {
     title: "pf.group.offer",
-    tone: "bg-[#7c3aed] text-white",
+    tone: "bg-brand text-brand-foreground",
     rows: [
       { id: "services", icon: Scissors },
       { id: "team", icon: Users },
@@ -94,7 +94,7 @@ const GROUPS: { title: string; tone: string; rows: Row[] }[] = [
   },
   {
     title: "pf.group.time",
-    tone: "bg-[#f59e0b] text-white",
+    tone: "bg-brand text-brand-foreground",
     rows: [
       { id: "hours", icon: Clock },
       { id: "timeoff", icon: CalendarOff },
@@ -102,7 +102,7 @@ const GROUPS: { title: string; tone: string; rows: Row[] }[] = [
   },
   {
     title: "pf.group.bookings",
-    tone: "bg-[#10b981] text-white",
+    tone: "bg-brand text-brand-foreground",
     rows: [
       { id: "rules", icon: SlidersHorizontal },
       { id: "reminders", icon: BellRing },
@@ -163,55 +163,53 @@ function ProfilePage() {
         <div
           className={cn("space-y-3 md:sticky md:top-24 md:space-y-5", section && "hidden md:block")}
         >
-          {/* The business at a glance: who, its link, and the two things you do with it. */}
+          {/* The business in one line: who, its link, share and open. Neutral card, colour on the details. */}
           {business && (
-            <div className="relative overflow-hidden rounded-[var(--radius-xl)] bg-brand p-3.5 text-brand-foreground sm:p-4">
-              <div
-                aria-hidden
-                className="pointer-events-none absolute -right-10 -top-12 size-40 rounded-full bg-white/10"
-              />
-              <div className="relative flex items-center gap-3.5">
-                {logoUrl ? (
-                  <img
-                    src={logoUrl}
-                    alt=""
-                    className="size-12 shrink-0 rounded-2xl object-cover ring-2 ring-white/30 sm:size-14"
-                  />
-                ) : (
-                  <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-base font-bold sm:size-14 sm:text-lg">
-                    {initials(business.name)}
-                  </span>
-                )}
-                <span className="min-w-0 flex-1">
-                  <span className="line-clamp-2 font-display text-base font-bold leading-tight sm:text-lg">
-                    {business.name}
-                  </span>
-                  <span className="mt-0.5 block truncate text-xs font-semibold opacity-80">
-                    sycras.com/{business.slug}
-                  </span>
+            <div className="surface flex items-center gap-3 p-3">
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt=""
+                  className="size-11 shrink-0 rounded-xl object-cover ring-1 ring-border"
+                />
+              ) : (
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand text-sm font-bold text-brand-foreground">
+                  {initials(business.name)}
                 </span>
-              </div>
-              <div className="relative mt-3 grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShareOpen(true)}
-                  className="flex h-9 items-center justify-center gap-2 rounded-xl sm:h-10 bg-white/15 text-sm font-bold transition-[background-color,transform] hover:bg-white/25 active:scale-[0.97]"
-                >
-                  <Share2 className="size-4" /> {t("pf.s.share")}
-                </button>
+              )}
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-display text-[15px] font-bold leading-tight">
+                  {business.name}
+                </span>
+                <span className="mt-0.5 block truncate text-xs font-semibold text-brand-ink">
+                  sycras.com/{business.slug}
+                </span>
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-10 shrink-0"
+                aria-label={t("pf.s.share")}
+                title={t("pf.s.share")}
+                onClick={() => setShareOpen(true)}
+              >
+                <Share2 className="size-4" />
+              </Button>
+              <Button asChild size="icon" className="size-10 shrink-0">
                 <a
                   href={`/${business.slug}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex h-9 items-center justify-center gap-2 rounded-xl sm:h-10 bg-white text-sm font-bold text-[color:var(--brand)] transition-transform active:scale-[0.97]"
+                  aria-label={t("pf.manage.viewPage")}
+                  title={t("pf.manage.viewPage")}
                 >
-                  {t("pf.manage.viewPage")} <ArrowUpRight className="size-4" />
+                  <ArrowUpRight className="size-4" />
                 </a>
-              </div>
+              </Button>
             </div>
           )}
 
-          {/* Phones: each category with its colour, its two settings side by side. */}
+          {/* Phones: each category with its two settings side by side, in the app colour. */}
           {GROUPS.map((group) => (
             <section key={group.title} className="md:hidden">
               <h2 className="mb-1.5 flex items-center gap-2 px-1 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
