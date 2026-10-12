@@ -231,7 +231,7 @@ function ProfilePage() {
                 key={group.title}
                 type="button"
                 onClick={() => setSection(group.rows[0]!.id)}
-                className="surface group flex h-[max(7.5rem,calc((100dvh-17rem-var(--sab)-var(--sat))/2))] flex-col justify-between p-4 text-left transition-[background-color,transform] duration-150 active:scale-[0.97] active:bg-muted"
+                className="surface group flex h-[max(7.5rem,calc((100dvh-17.5rem-var(--sab)-var(--sat))/2))] flex-col justify-between p-4 text-left transition-[background-color,transform] duration-150 active:scale-[0.97] active:bg-muted"
               >
                 <span className="flex w-full items-start justify-between">
                   <span
