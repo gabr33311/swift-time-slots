@@ -161,7 +161,7 @@ function ProfilePage() {
 
       <div className="md:grid md:grid-cols-[250px_minmax(0,1fr)] md:items-start md:gap-6 lg:grid-cols-[270px_minmax(0,1fr)]">
         <div
-          className={cn("space-y-4 md:sticky md:top-24 md:space-y-5", section && "hidden md:block")}
+          className={cn("space-y-3 md:sticky md:top-24 md:space-y-5", section && "hidden md:block")}
         >
           {/* The business at a glance: who, its link, and the two things you do with it. */}
           {business && (
@@ -214,7 +214,7 @@ function ProfilePage() {
           {/* Phones: each category with its colour, its two settings side by side. */}
           {GROUPS.map((group) => (
             <section key={group.title} className="md:hidden">
-              <h2 className="mb-2 flex items-center gap-2 px-1 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+              <h2 className="mb-1.5 flex items-center gap-2 px-1 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
                 <span aria-hidden className={cn("size-2 rounded-full", group.tone)} />
                 {t(group.title)}
               </h2>
@@ -224,21 +224,20 @@ function ProfilePage() {
                     key={row.id}
                     type="button"
                     onClick={() => setSection(row.id)}
-                    className="surface group flex flex-col items-start gap-2.5 p-3 text-left transition-[background-color,transform] duration-150 active:scale-[0.97] active:bg-muted"
+                    className="surface group flex items-center gap-2.5 p-2.5 text-left transition-[background-color,transform] duration-150 active:scale-[0.97] active:bg-muted"
                   >
-                    <span className="flex w-full items-center justify-between">
-                      <span
-                        className={cn(
-                          "flex size-9 items-center justify-center rounded-xl shadow-sm",
-                          group.tone,
-                        )}
-                      >
-                        <row.icon className="size-[18px]" />
-                      </span>
-                      <ChevronRight className="size-4 text-muted-foreground" />
+                    <span
+                      className={cn(
+                        "flex size-9 shrink-0 items-center justify-center rounded-xl shadow-sm",
+                        group.tone,
+                      )}
+                    >
+                      <row.icon className="size-[18px]" />
                     </span>
-                    <span className="min-w-0">
-                      <span className="block text-sm font-bold leading-tight">{label(row.id)}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[13px] font-bold leading-tight">
+                        {label(row.id)}
+                      </span>
                       <TileStatus status={summary[row.id]} fallback={desc(row.id)} />
                     </span>
                   </button>

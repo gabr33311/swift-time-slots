@@ -310,10 +310,10 @@ function DaySummary({
               .replace("{revenue}", formatPrice(weekMoney, currency))}
           </span>
         </span>
-        <span className="flex shrink-0 items-center gap-0.5 text-xs font-bold text-brand-ink">
-          {t("pf.s.analytics")}
-          <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-        </span>
+        <ChevronRight
+          aria-label={t("pf.s.analytics")}
+          className="size-4 shrink-0 text-brand-ink transition-transform group-hover:translate-x-0.5"
+        />
       </div>
     </Link>
   );
