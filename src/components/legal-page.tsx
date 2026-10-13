@@ -14,13 +14,13 @@ export function Fill({ value, label }: { value: string | null; label: string }) 
   );
 }
 
-/** The responsible entity, as one line. */
+/** The responsible entity, as one line (NIF and address only when given). */
 export function Entity() {
   return (
     <>
-      <Fill value={LEGAL.entity} label="nome do responsável" />, NIF{" "}
-      <Fill value={LEGAL.nif} label="NIF" />, com morada em{" "}
-      <Fill value={LEGAL.address} label="morada" />
+      <Fill value={LEGAL.entity} label="nome do responsável" />
+      {LEGAL.nif ? `, NIF ${LEGAL.nif}` : ""}
+      {LEGAL.address ? `, com morada em ${LEGAL.address}` : ""}
     </>
   );
 }

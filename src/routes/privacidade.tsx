@@ -54,7 +54,12 @@ function PrivacyPage() {
           </li>
           <li>
             Dados de subscrição: plano, estado e datas. Os dados do cartão são tratados diretamente
-            pelo Stripe; a SYCRAS não os vê nem os guarda.
+            pelo Stripe ou pela Google Play; a SYCRAS não os vê nem os guarda.
+          </li>
+          <li>
+            Na app para telemóvel: um código do aparelho para enviar notificações (só se as
+            aceitares) e a localização do telemóvel, apenas quando carregas em &quot;Usar a minha
+            localização&quot; para marcar a loja no mapa.
           </li>
         </ul>
         <p>
@@ -78,6 +83,7 @@ function PrivacyPage() {
         <ul>
           <li>Criar e gerir a tua conta e o teu negócio na SYCRAS.</li>
           <li>Receber, confirmar, alterar e cancelar marcações.</li>
+          <li>Avisar no telemóvel de marcações novas, pedidos e cancelamentos.</li>
           <li>
             Enviar emails de serviço: código de confirmação da conta, confirmação de marcação e
             lembretes automáticos antes da marcação (quando o negócio os tem ligados).
@@ -123,6 +129,13 @@ function PrivacyPage() {
           </li>
           <li>
             <strong>Stripe</strong>: pagamentos das subscrições.
+          </li>
+          <li>
+            <strong>Google Play e RevenueCat</strong>: pagamentos de subscrições feitas na app para
+            Android.
+          </li>
+          <li>
+            <strong>Google Firebase</strong>: envio das notificações para o telemóvel.
           </li>
           <li>
             <strong>OpenStreetMap</strong>: mapa e pesquisa de moradas quando um negócio escolhe a
