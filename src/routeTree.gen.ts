@@ -34,6 +34,8 @@ import { Route as AuthenticatedWaitlistRouteImport } from './routes/_authenticat
 import { Route as ApiSlugRouteImport } from './routes/api/slug'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as BookingTokenRouteImport } from './routes/booking.$token'
+import { Route as ApiBillingCheckoutRouteImport } from './routes/api/billing/checkout'
+import { Route as ApiBillingReturnRouteImport } from './routes/api/billing/return'
 import { Route as ApiCronRemindersRouteImport } from './routes/api/cron/reminders'
 import { Route as ApiPushTestRouteImport } from './routes/api/push/test'
 import { Route as ApiRemindersTestRouteImport } from './routes/api/reminders/test'
@@ -166,6 +168,16 @@ const BookingTokenRoute = BookingTokenRouteImport.update({
   path: '/booking/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiBillingCheckoutRoute = ApiBillingCheckoutRouteImport.update({
+  id: '/api/billing/checkout',
+  path: '/api/billing/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBillingReturnRoute = ApiBillingReturnRouteImport.update({
+  id: '/api/billing/return',
+  path: '/api/billing/return',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCronRemindersRoute = ApiCronRemindersRouteImport.update({
   id: '/api/cron/reminders',
   path: '/api/cron/reminders',
@@ -217,6 +229,8 @@ export interface FileRoutesByFullPath {
   '/api/slug': typeof ApiSlugRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
+  '/api/billing/checkout': typeof ApiBillingCheckoutRoute
+  '/api/billing/return': typeof ApiBillingReturnRoute
   '/api/cron/reminders': typeof ApiCronRemindersRoute
   '/api/push/test': typeof ApiPushTestRoute
   '/api/reminders/test': typeof ApiRemindersTestRoute
@@ -248,6 +262,8 @@ export interface FileRoutesByTo {
   '/api/slug': typeof ApiSlugRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
+  '/api/billing/checkout': typeof ApiBillingCheckoutRoute
+  '/api/billing/return': typeof ApiBillingReturnRoute
   '/api/cron/reminders': typeof ApiCronRemindersRoute
   '/api/push/test': typeof ApiPushTestRoute
   '/api/reminders/test': typeof ApiRemindersTestRoute
@@ -281,6 +297,8 @@ export interface FileRoutesById {
   '/api/slug': typeof ApiSlugRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
+  '/api/billing/checkout': typeof ApiBillingCheckoutRoute
+  '/api/billing/return': typeof ApiBillingReturnRoute
   '/api/cron/reminders': typeof ApiCronRemindersRoute
   '/api/push/test': typeof ApiPushTestRoute
   '/api/reminders/test': typeof ApiRemindersTestRoute
@@ -314,6 +332,8 @@ export interface FileRouteTypes {
     | '/api/slug'
     | '/book/$slug'
     | '/booking/$token'
+    | '/api/billing/checkout'
+    | '/api/billing/return'
     | '/api/cron/reminders'
     | '/api/push/test'
     | '/api/reminders/test'
@@ -345,6 +365,8 @@ export interface FileRouteTypes {
     | '/api/slug'
     | '/book/$slug'
     | '/booking/$token'
+    | '/api/billing/checkout'
+    | '/api/billing/return'
     | '/api/cron/reminders'
     | '/api/push/test'
     | '/api/reminders/test'
@@ -377,6 +399,8 @@ export interface FileRouteTypes {
     | '/api/slug'
     | '/book/$slug'
     | '/booking/$token'
+    | '/api/billing/checkout'
+    | '/api/billing/return'
     | '/api/cron/reminders'
     | '/api/push/test'
     | '/api/reminders/test'
@@ -395,6 +419,8 @@ export interface RootRouteChildren {
   ApiSlugRoute: typeof ApiSlugRoute
   BookSlugRoute: typeof BookSlugRoute
   BookingTokenRoute: typeof BookingTokenRoute
+  ApiBillingCheckoutRoute: typeof ApiBillingCheckoutRoute
+  ApiBillingReturnRoute: typeof ApiBillingReturnRoute
   ApiCronRemindersRoute: typeof ApiCronRemindersRoute
   ApiPushTestRoute: typeof ApiPushTestRoute
   ApiRemindersTestRoute: typeof ApiRemindersTestRoute
@@ -579,6 +605,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookingTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/billing/checkout': {
+      id: '/api/billing/checkout'
+      path: '/api/billing/checkout'
+      fullPath: '/api/billing/checkout'
+      preLoaderRoute: typeof ApiBillingCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/billing/return': {
+      id: '/api/billing/return'
+      path: '/api/billing/return'
+      fullPath: '/api/billing/return'
+      preLoaderRoute: typeof ApiBillingReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/cron/reminders': {
       id: '/api/cron/reminders'
       path: '/api/cron/reminders'
@@ -667,6 +707,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSlugRoute: ApiSlugRoute,
   BookSlugRoute: BookSlugRoute,
   BookingTokenRoute: BookingTokenRoute,
+  ApiBillingCheckoutRoute: ApiBillingCheckoutRoute,
+  ApiBillingReturnRoute: ApiBillingReturnRoute,
   ApiCronRemindersRoute: ApiCronRemindersRoute,
   ApiPushTestRoute: ApiPushTestRoute,
   ApiRemindersTestRoute: ApiRemindersTestRoute,
