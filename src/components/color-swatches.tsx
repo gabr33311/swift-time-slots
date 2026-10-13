@@ -21,7 +21,7 @@ export function ColorSwatches({
     <div
       role="radiogroup"
       aria-label={label}
-      className={cn("grid max-w-md gap-2", mono ? "grid-cols-9" : "grid-cols-8", className)}
+      className={cn("grid max-w-md grid-cols-8 gap-2", className)}
     >
       {mono && (
         <button
@@ -32,20 +32,18 @@ export function ColorSwatches({
           title={mono}
           onClick={() => onChange(MONO)}
           className={cn(
-            "flex aspect-square w-full items-center justify-center rounded-full ring-1 ring-border ring-offset-2 ring-offset-card transition-transform active:scale-95",
+            // Black on the light theme, white on the dark one.
+            "flex aspect-square w-full items-center justify-center rounded-full bg-foreground ring-1 ring-border ring-offset-2 ring-offset-card transition-transform active:scale-95",
             value === MONO ? "ring-2 ring-foreground" : "hover:scale-105",
           )}
-          style={{ background: "linear-gradient(135deg, #111111 50%, #f5f5f5 50%)" }}
         >
           {value === MONO && (
-            <Check
-              className="size-1/2 max-h-5 max-w-5 text-white mix-blend-difference"
-              strokeWidth={3}
-            />
+            <Check className="size-1/2 max-h-5 max-w-5 text-background" strokeWidth={3} />
           )}
         </button>
       )}
-      {BRAND_PALETTE.map((c) => {
+      {/* With the black-and-white choice, plain black is left out (black on black). */}
+      {BRAND_PALETTE.filter((c) => !mono || c !== "#18181b").map((c) => {
         const active = value.toLowerCase() === c;
         return (
           <button

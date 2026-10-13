@@ -24,7 +24,8 @@ export function useAppColor() {
 
   const saved = user?.user_metadata?.["app_color"] as string | undefined;
   const raw = local ?? saved;
-  const color = raw === MONO ? MONO : effectiveBrand(raw);
+  // Plain black became the black-and-white choice (black on black was unreadable).
+  const color = raw === MONO || raw?.toLowerCase() === "#18181b" ? MONO : effectiveBrand(raw);
 
   // The account wins once it loads (another device may have changed it).
   useEffect(() => {
