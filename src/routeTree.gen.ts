@@ -31,6 +31,7 @@ import { Route as AuthenticatedShareRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedTimeOffRouteImport } from './routes/_authenticated/time-off'
 import { Route as AuthenticatedTodayRouteImport } from './routes/_authenticated/today'
 import { Route as AuthenticatedWaitlistRouteImport } from './routes/_authenticated/waitlist'
+import { Route as ApiSlugRouteImport } from './routes/api/slug'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as BookingTokenRouteImport } from './routes/booking.$token'
 import { Route as ApiCronRemindersRouteImport } from './routes/api/cron/reminders'
@@ -150,6 +151,11 @@ const AuthenticatedWaitlistRoute = AuthenticatedWaitlistRouteImport.update({
   path: '/waitlist',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiSlugRoute = ApiSlugRouteImport.update({
+  id: '/api/slug',
+  path: '/api/slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BookSlugRoute = BookSlugRouteImport.update({
   id: '/book/$slug',
   path: '/book/$slug',
@@ -208,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/time-off': typeof AuthenticatedTimeOffRoute
   '/today': typeof AuthenticatedTodayRoute
   '/waitlist': typeof AuthenticatedWaitlistRoute
+  '/api/slug': typeof ApiSlugRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
   '/api/cron/reminders': typeof ApiCronRemindersRoute
@@ -238,6 +245,7 @@ export interface FileRoutesByTo {
   '/time-off': typeof AuthenticatedTimeOffRoute
   '/today': typeof AuthenticatedTodayRoute
   '/waitlist': typeof AuthenticatedWaitlistRoute
+  '/api/slug': typeof ApiSlugRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
   '/api/cron/reminders': typeof ApiCronRemindersRoute
@@ -270,6 +278,7 @@ export interface FileRoutesById {
   '/_authenticated/time-off': typeof AuthenticatedTimeOffRoute
   '/_authenticated/today': typeof AuthenticatedTodayRoute
   '/_authenticated/waitlist': typeof AuthenticatedWaitlistRoute
+  '/api/slug': typeof ApiSlugRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
   '/api/cron/reminders': typeof ApiCronRemindersRoute
@@ -302,6 +311,7 @@ export interface FileRouteTypes {
     | '/time-off'
     | '/today'
     | '/waitlist'
+    | '/api/slug'
     | '/book/$slug'
     | '/booking/$token'
     | '/api/cron/reminders'
@@ -332,6 +342,7 @@ export interface FileRouteTypes {
     | '/time-off'
     | '/today'
     | '/waitlist'
+    | '/api/slug'
     | '/book/$slug'
     | '/booking/$token'
     | '/api/cron/reminders'
@@ -363,6 +374,7 @@ export interface FileRouteTypes {
     | '/_authenticated/time-off'
     | '/_authenticated/today'
     | '/_authenticated/waitlist'
+    | '/api/slug'
     | '/book/$slug'
     | '/booking/$token'
     | '/api/cron/reminders'
@@ -380,6 +392,7 @@ export interface RootRouteChildren {
   PrivacidadeRoute: typeof PrivacidadeRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermosRoute: typeof TermosRoute
+  ApiSlugRoute: typeof ApiSlugRoute
   BookSlugRoute: typeof BookSlugRoute
   BookingTokenRoute: typeof BookingTokenRoute
   ApiCronRemindersRoute: typeof ApiCronRemindersRoute
@@ -545,6 +558,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWaitlistRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/slug': {
+      id: '/api/slug'
+      path: '/api/slug'
+      fullPath: '/api/slug'
+      preLoaderRoute: typeof ApiSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/book/$slug': {
       id: '/book/$slug'
       path: '/book/$slug'
@@ -644,6 +664,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacidadeRoute: PrivacidadeRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TermosRoute: TermosRoute,
+  ApiSlugRoute: ApiSlugRoute,
   BookSlugRoute: BookSlugRoute,
   BookingTokenRoute: BookingTokenRoute,
   ApiCronRemindersRoute: ApiCronRemindersRoute,
