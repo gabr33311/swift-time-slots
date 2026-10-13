@@ -28,12 +28,12 @@ export const Route = createFileRoute("/api/push/test")({
           .maybeSingle();
         if (!member) return Response.json({ sent: 0 });
 
-        const { pushToBusiness } = await import("@/lib/push.server");
-        const sent = await pushToBusiness(businessId, {
+        const push = await import("@/lib/push.server");
+        const sent = await push.pushToBusiness(businessId, {
           title: "SYCRAS",
           body: "As notificações estão a funcionar. Vais saber de cada marcação nova.",
         });
-        return Response.json({ sent });
+        return Response.json({ sent, error: push.lastPushError });
       },
     },
   },

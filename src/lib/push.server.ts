@@ -65,6 +65,9 @@ async function accessToken(sa: ServiceAccount): Promise<string> {
   return json.access_token;
 }
 
+/** Why the last send failed (shown by the test button, to fix the setup). */
+export let lastPushError: string | null = null;
+
 /**
  * Sends a push to every phone of every member of the business. Never throws.
  * Returns how many phones it reached (-1 when push is not configured).
@@ -73,6 +76,7 @@ export async function pushToBusiness(businessId: string, push: Push): Promise<nu
   const sa = account();
   if (!sa) return -1;
   let sent = 0;
+  lastPushError = null;
   try {
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
     const { data: members } = await db
@@ -112,11 +116,17 @@ export async function pushToBusiness(businessId: string, push: Push): Promise<nu
           if (/UNREGISTERED|INVALID_ARGUMENT|registration-token/i.test(text)) {
             await db.from("push_tokens").delete().eq("token", token);
           } else console.error("[push] send failed", res.status, text);
-        } else if (!res.ok) console.error("[push] send failed", res.status, await res.text());
+          lastPushError = `FCM ${res.status}: ${text.slice(0, 200)}`;
+        } else if (!res.ok) {
+          const text = await res.text();
+          console.error("[push] send failed", res.status, text);
+          lastPushError = `FCM ${res.status}: ${text.slice(0, 200)}`;
+        }
       }),
     );
   } catch (e) {
     console.error("[push] failed", e);
+    lastPushError = (e instanceof Error ? e.message : String(e)).slice(0, 200);
   }
   return sent;
 }
