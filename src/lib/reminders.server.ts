@@ -154,3 +154,64 @@ export async function sendDueReminders(): Promise<{ sent: number; skipped: numbe
 
   return { sent, skipped };
 }
+
+/** The business fields the test reminder email needs. */
+export type TestReminderBusiness = {
+  name: string;
+  address: string | null;
+  city: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  brand_color: string | null;
+  reminder_message: string | null;
+};
+
+export type TestReminderResult =
+  { ok: true; to: string } | { ok: false; reason: "failed" | "not_configured"; detail?: string };
+
+/** Sends the reminder email with sample data to `to`, to see how it looks. */
+export async function sendTestReminderEmail(
+  biz: TestReminderBusiness,
+  to: string,
+): Promise<TestReminderResult> {
+  if (!process.env["RESEND_API_KEY"]) return { ok: false, reason: "not_configured" };
+  const address = [biz.address, biz.city].filter(Boolean).join(", ");
+  const colors = brandColors(biz.brand_color);
+  const date = new Intl.DateTimeFormat("pt-PT", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "Europe/Lisbon",
+  }).format(new Date(Date.now() + 86400000));
+  try {
+    const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+    await sendTemplateEmail("appointment-reminder", to, {
+      templateData: {
+        name: "Ana (exemplo)",
+        businessName: biz.name,
+        serviceName: "Serviço de exemplo",
+        date,
+        time: "10:30",
+        message: renderReminderMessage(biz.reminder_message, {
+          nome: "Ana",
+          serviço: "Serviço de exemplo",
+          data: date,
+          hora: "10:30",
+          negócio: biz.name,
+        }),
+        address: address || undefined,
+        mapUrl: mapsUrl({ ...biz, address, name: biz.name }) ?? undefined,
+        brandColor: colors.brand,
+        brandText: colors.foreground,
+      },
+    });
+    return { ok: true, to };
+  } catch (e) {
+    console.error("[reminders] test failed", e);
+    return {
+      ok: false,
+      reason: "failed",
+      detail: (e instanceof Error ? e.message : String(e)).slice(0, 160),
+    };
+  }
+}

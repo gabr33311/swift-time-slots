@@ -35,6 +35,7 @@ import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as BookingTokenRouteImport } from './routes/booking.$token'
 import { Route as ApiCronRemindersRouteImport } from './routes/api/cron/reminders'
 import { Route as ApiPushTestRouteImport } from './routes/api/push/test'
+import { Route as ApiRemindersTestRouteImport } from './routes/api/reminders/test'
 import { Route as ApiRevenuecatWebhookRouteImport } from './routes/api/revenuecat/webhook'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhook'
 
@@ -169,6 +170,11 @@ const ApiPushTestRoute = ApiPushTestRouteImport.update({
   path: '/api/push/test',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRemindersTestRoute = ApiRemindersTestRouteImport.update({
+  id: '/api/reminders/test',
+  path: '/api/reminders/test',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiRevenuecatWebhookRoute = ApiRevenuecatWebhookRouteImport.update({
   id: '/api/revenuecat/webhook',
   path: '/api/revenuecat/webhook',
@@ -206,6 +212,7 @@ export interface FileRoutesByFullPath {
   '/booking/$token': typeof BookingTokenRoute
   '/api/cron/reminders': typeof ApiCronRemindersRoute
   '/api/push/test': typeof ApiPushTestRoute
+  '/api/reminders/test': typeof ApiRemindersTestRoute
   '/api/revenuecat/webhook': typeof ApiRevenuecatWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
@@ -235,6 +242,7 @@ export interface FileRoutesByTo {
   '/booking/$token': typeof BookingTokenRoute
   '/api/cron/reminders': typeof ApiCronRemindersRoute
   '/api/push/test': typeof ApiPushTestRoute
+  '/api/reminders/test': typeof ApiRemindersTestRoute
   '/api/revenuecat/webhook': typeof ApiRevenuecatWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
@@ -266,6 +274,7 @@ export interface FileRoutesById {
   '/booking/$token': typeof BookingTokenRoute
   '/api/cron/reminders': typeof ApiCronRemindersRoute
   '/api/push/test': typeof ApiPushTestRoute
+  '/api/reminders/test': typeof ApiRemindersTestRoute
   '/api/revenuecat/webhook': typeof ApiRevenuecatWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
@@ -297,6 +306,7 @@ export interface FileRouteTypes {
     | '/booking/$token'
     | '/api/cron/reminders'
     | '/api/push/test'
+    | '/api/reminders/test'
     | '/api/revenuecat/webhook'
     | '/api/stripe/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -326,6 +336,7 @@ export interface FileRouteTypes {
     | '/booking/$token'
     | '/api/cron/reminders'
     | '/api/push/test'
+    | '/api/reminders/test'
     | '/api/revenuecat/webhook'
     | '/api/stripe/webhook'
   id:
@@ -356,6 +367,7 @@ export interface FileRouteTypes {
     | '/booking/$token'
     | '/api/cron/reminders'
     | '/api/push/test'
+    | '/api/reminders/test'
     | '/api/revenuecat/webhook'
     | '/api/stripe/webhook'
   fileRoutesById: FileRoutesById
@@ -372,6 +384,7 @@ export interface RootRouteChildren {
   BookingTokenRoute: typeof BookingTokenRoute
   ApiCronRemindersRoute: typeof ApiCronRemindersRoute
   ApiPushTestRoute: typeof ApiPushTestRoute
+  ApiRemindersTestRoute: typeof ApiRemindersTestRoute
   ApiRevenuecatWebhookRoute: typeof ApiRevenuecatWebhookRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
 }
@@ -560,6 +573,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPushTestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/reminders/test': {
+      id: '/api/reminders/test'
+      path: '/api/reminders/test'
+      fullPath: '/api/reminders/test'
+      preLoaderRoute: typeof ApiRemindersTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/revenuecat/webhook': {
       id: '/api/revenuecat/webhook'
       path: '/api/revenuecat/webhook'
@@ -628,6 +648,7 @@ const rootRouteChildren: RootRouteChildren = {
   BookingTokenRoute: BookingTokenRoute,
   ApiCronRemindersRoute: ApiCronRemindersRoute,
   ApiPushTestRoute: ApiPushTestRoute,
+  ApiRemindersTestRoute: ApiRemindersTestRoute,
   ApiRevenuecatWebhookRoute: ApiRevenuecatWebhookRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
 }
