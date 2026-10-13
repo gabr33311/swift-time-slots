@@ -26,6 +26,14 @@ export const Route = createFileRoute("/_authenticated/plans")({
   component: PlansPage,
 });
 
+const STORE_MANAGE = {
+  play_store: {
+    name: "Google Play",
+    url: "https://play.google.com/store/account/subscriptions?package=com.sycras.mobile",
+  },
+  app_store: { name: "App Store", url: "https://apps.apple.com/account/subscriptions" },
+} as const;
+
 const FEATURES = [
   "sub.feature.bookingPage",
   "sub.feature.calendar",
@@ -78,6 +86,11 @@ function PlansPage() {
 
   async function manage() {
     if (!business) return;
+    // Bought in the phone app: only Google / Apple can cancel or change it.
+    if (access && access.store !== "stripe") {
+      window.location.assign(STORE_MANAGE[access.store].url);
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -185,7 +198,9 @@ function PlansPage() {
             {subscribed ? (
               <Button size="lg" className="w-full" onClick={() => void manage()} disabled={busy}>
                 {busy ? <Loader2 className="animate-spin" /> : <CreditCard />}
-                {t("sub.manage")}
+                {access && access.store !== "stripe"
+                  ? t("sub.manageStore").replace("{store}", STORE_MANAGE[access.store].name)
+                  : t("sub.manage")}
               </Button>
             ) : (
               <Button
@@ -201,7 +216,10 @@ function PlansPage() {
             )}
 
             <p className="flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground">
-              <ShieldCheck className="size-3.5" /> {t("sub.secure")}
+              <ShieldCheck className="size-3.5" />{" "}
+              {subscribed && access && access.store !== "stripe"
+                ? t("sub.storeNote").replace("{store}", STORE_MANAGE[access.store].name)
+                : t("sub.secure")}
             </p>
           </div>
         </section>

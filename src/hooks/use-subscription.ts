@@ -14,7 +14,8 @@ export function useSubscription(): { access: Access | null; isLoading: boolean }
     queryFn: async () => {
       const { data: row, error } = await supabase
         .from("subscriptions")
-        .select("plan, status, current_period_end, stripe_subscription_id")
+        // "*" so it keeps working whether or not the store columns exist yet.
+        .select("*")
         .eq("business_id", business!.id)
         .maybeSingle();
       if (error) throw error;

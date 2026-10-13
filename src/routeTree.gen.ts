@@ -34,6 +34,7 @@ import { Route as AuthenticatedWaitlistRouteImport } from './routes/_authenticat
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as BookingTokenRouteImport } from './routes/booking.$token'
 import { Route as ApiCronRemindersRouteImport } from './routes/api/cron/reminders'
+import { Route as ApiRevenuecatWebhookRouteImport } from './routes/api/revenuecat/webhook'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -162,6 +163,11 @@ const ApiCronRemindersRoute = ApiCronRemindersRouteImport.update({
   path: '/api/cron/reminders',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRevenuecatWebhookRoute = ApiRevenuecatWebhookRouteImport.update({
+  id: '/api/revenuecat/webhook',
+  path: '/api/revenuecat/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   id: '/api/stripe/webhook',
   path: '/api/stripe/webhook',
@@ -193,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
   '/api/cron/reminders': typeof ApiCronRemindersRoute
+  '/api/revenuecat/webhook': typeof ApiRevenuecatWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -220,6 +227,7 @@ export interface FileRoutesByTo {
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
   '/api/cron/reminders': typeof ApiCronRemindersRoute
+  '/api/revenuecat/webhook': typeof ApiRevenuecatWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
 export interface FileRoutesById {
@@ -249,6 +257,7 @@ export interface FileRoutesById {
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
   '/api/cron/reminders': typeof ApiCronRemindersRoute
+  '/api/revenuecat/webhook': typeof ApiRevenuecatWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
 export interface FileRouteTypes {
@@ -278,6 +287,7 @@ export interface FileRouteTypes {
     | '/book/$slug'
     | '/booking/$token'
     | '/api/cron/reminders'
+    | '/api/revenuecat/webhook'
     | '/api/stripe/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -305,6 +315,7 @@ export interface FileRouteTypes {
     | '/book/$slug'
     | '/booking/$token'
     | '/api/cron/reminders'
+    | '/api/revenuecat/webhook'
     | '/api/stripe/webhook'
   id:
     | '__root__'
@@ -333,6 +344,7 @@ export interface FileRouteTypes {
     | '/book/$slug'
     | '/booking/$token'
     | '/api/cron/reminders'
+    | '/api/revenuecat/webhook'
     | '/api/stripe/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -347,6 +359,7 @@ export interface RootRouteChildren {
   BookSlugRoute: typeof BookSlugRoute
   BookingTokenRoute: typeof BookingTokenRoute
   ApiCronRemindersRoute: typeof ApiCronRemindersRoute
+  ApiRevenuecatWebhookRoute: typeof ApiRevenuecatWebhookRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
 }
 
@@ -527,6 +540,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCronRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/revenuecat/webhook': {
+      id: '/api/revenuecat/webhook'
+      path: '/api/revenuecat/webhook'
+      fullPath: '/api/revenuecat/webhook'
+      preLoaderRoute: typeof ApiRevenuecatWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/stripe/webhook': {
       id: '/api/stripe/webhook'
       path: '/api/stripe/webhook'
@@ -587,6 +607,7 @@ const rootRouteChildren: RootRouteChildren = {
   BookSlugRoute: BookSlugRoute,
   BookingTokenRoute: BookingTokenRoute,
   ApiCronRemindersRoute: ApiCronRemindersRoute,
+  ApiRevenuecatWebhookRoute: ApiRevenuecatWebhookRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
 }
 export const routeTree = rootRouteImport

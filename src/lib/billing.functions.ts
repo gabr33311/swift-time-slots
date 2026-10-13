@@ -44,11 +44,7 @@ async function billableBusiness(
       .select("id, name, email, created_at")
       .eq("id", businessId)
       .maybeSingle(),
-    supabaseAdmin
-      .from("subscriptions")
-      .select("plan, status, current_period_end, stripe_subscription_id, stripe_customer_id")
-      .eq("business_id", businessId)
-      .maybeSingle(),
+    supabaseAdmin.from("subscriptions").select("*").eq("business_id", businessId).maybeSingle(),
   ]);
   if (!business) return null;
   return { business, sub, supabaseAdmin };
@@ -70,6 +66,10 @@ export const startCheckout = createServerFn({ method: "POST" })
     if (!found) return { ok: false as const, message: "Sem permissão para gerir a subscrição." };
     const { stripe, priceId } = await import("@/lib/billing.server");
     const { business, sub, supabaseAdmin } = found;
+    // Already paying through the phone app: a second charge on the site would be a mistake.
+    if (sub && sub.store !== "stripe" && sub.store_subscription_id && sub.status !== "canceled") {
+      return { ok: false as const, message: "Já tens o SYCRAS Pro ativo pela app do telemóvel." };
+    }
 
     try {
       // One Stripe customer per business, created the first time. A saved id from

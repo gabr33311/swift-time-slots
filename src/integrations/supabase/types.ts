@@ -814,6 +814,8 @@ export type Database = {
           id: string
           plan: Database["public"]["Enums"]["plan_tier"]
           status: string
+          store: string
+          store_subscription_id: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           updated_at: string
@@ -826,6 +828,8 @@ export type Database = {
           id?: string
           plan?: Database["public"]["Enums"]["plan_tier"]
           status?: string
+          store?: string
+          store_subscription_id?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string
@@ -838,6 +842,8 @@ export type Database = {
           id?: string
           plan?: Database["public"]["Enums"]["plan_tier"]
           status?: string
+          store?: string
+          store_subscription_id?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string

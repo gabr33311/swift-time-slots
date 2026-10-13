@@ -1,7 +1,7 @@
 /**
  * Access rules for the single paid plan (SYCRAS Pro).
  * Every business gets a free trial from the day it is created; after that a
- * live Stripe subscription is required. Shared by the browser and the server.
+ * live subscription is required: Stripe (site) or Google Play / App Store (phone app). Shared by the browser and the server.
  */
 
 export const TRIAL_DAYS = 30;
@@ -11,7 +11,12 @@ export type SubscriptionRow = {
   status: string;
   current_period_end: string | null;
   stripe_subscription_id: string | null;
+  /** Where it was bought; missing on rows read before the store columns existed. */
+  store?: Store;
+  store_subscription_id?: string | null;
 } | null;
+
+export type Store = "stripe" | "play_store" | "app_store";
 
 export type AccessState =
   /** Free trial still running. */
@@ -33,8 +38,10 @@ export type Access = {
   periodEnd: Date | null;
   /** True when the business can use the app and take bookings. */
   allowed: boolean;
-  /** True when a Stripe subscription exists (show "Manage" instead of "Subscribe"). */
+  /** True when a subscription exists (show "Manage" instead of "Subscribe"). */
   subscribed: boolean;
+  /** Where the subscription is managed (cancel, change card). */
+  store: Store;
 };
 
 const LIVE = new Set(["active", "trialing"]);
@@ -50,7 +57,10 @@ export function computeAccess(
   const trialDaysLeft = Math.max(0, Math.ceil(msLeft / 86_400_000));
   const periodEnd = sub?.current_period_end ? new Date(sub.current_period_end) : null;
   const isPro = sub?.plan === "pro" || sub?.plan === "business";
-  const subscribed = !!sub?.stripe_subscription_id && sub.status !== "canceled";
+  const store: Store = sub?.store ?? "stripe";
+  const subscribed =
+    !!(store === "stripe" ? sub?.stripe_subscription_id : sub?.store_subscription_id) &&
+    sub!.status !== "canceled";
 
   let state: AccessState;
   if (isPro && LIVE.has(sub!.status)) state = "active";
@@ -58,5 +68,13 @@ export function computeAccess(
   else if (msLeft > 0) state = "trial";
   else state = "blocked";
 
-  return { state, trialEndsAt, trialDaysLeft, periodEnd, allowed: state !== "blocked", subscribed };
+  return {
+    state,
+    trialEndsAt,
+    trialDaysLeft,
+    periodEnd,
+    allowed: state !== "blocked",
+    subscribed,
+    store,
+  };
 }
