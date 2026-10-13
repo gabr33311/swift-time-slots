@@ -2,7 +2,17 @@
 // Cloud Messaging (HTTP v1). Never import from the browser.
 
 type ServiceAccount = { client_email: string; private_key: string; project_id: string };
-type Push = { title: string; body: string; appointmentId?: string | null };
+/** What happened: each owner chooses which of these reach their phone. */
+export type PushKind = "booking" | "request" | "cancelled" | "rescheduled";
+type Push = { title: string; body: string; appointmentId?: string | null; kind?: PushKind };
+
+/** Saved in the account (user_metadata.push_prefs); anything missing counts as on. */
+type PushPrefs = { enabled?: boolean } & Partial<Record<PushKind, boolean>>;
+
+function wants(prefs: PushPrefs | undefined, kind: PushKind | undefined): boolean {
+  if (prefs?.enabled === false) return false;
+  return !kind || prefs?.[kind] !== false;
+}
 
 let cachedToken: { value: string; expires: number } | null = null;
 
@@ -83,7 +93,15 @@ export async function pushToBusiness(businessId: string, push: Push): Promise<nu
       .from("business_members")
       .select("user_id")
       .eq("business_id", businessId);
-    const userIds = (members ?? []).map((m) => m.user_id);
+    // Only the people who want this kind of notification.
+    const people = await Promise.all(
+      (members ?? []).map(async (m) => {
+        const { data } = await db.auth.admin.getUserById(m.user_id);
+        const prefs = data.user?.user_metadata?.["push_prefs"] as PushPrefs | undefined;
+        return wants(prefs, push.kind) ? m.user_id : null;
+      }),
+    );
+    const userIds = people.filter((id): id is string => !!id);
     if (!userIds.length) return 0;
     const { data: tokens } = await db.from("push_tokens").select("token").in("user_id", userIds);
     if (!tokens?.length) return 0;

@@ -228,6 +228,7 @@ export const createPublicBooking = createServerFn({ method: "POST" })
       title: note.title,
       body: note.body,
       appointmentId: note.appointment_id,
+      kind: appointment.status === "confirmed" ? "booking" : "request",
     });
 
     await logSecurityEvent("booking_created", ipHash, data.phone, data.businessId);
@@ -347,6 +348,7 @@ export const cancelBookingByToken = createServerFn({ method: "POST" })
       title: note.title,
       body: note.body,
       appointmentId: note.appointment_id,
+      kind: "cancelled",
     });
     return { ok: true as const };
   });
@@ -463,6 +465,7 @@ export const rescheduleBookingByToken = createServerFn({ method: "POST" })
       title: note.title,
       body: note.body,
       appointmentId: note.appointment_id,
+      kind: "rescheduled",
     });
     return { ok: true as const };
   });
