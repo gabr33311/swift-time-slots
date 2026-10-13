@@ -4,9 +4,9 @@
  * privacy pages become linked across the app and indexable.
  */
 export const LEGAL = {
-  ready: false,
+  ready: true,
   /** Full name (sole trader) or company name, e.g. "SYCRAS, Unipessoal Lda". */
-  entity: null as string | null,
+  entity: "Gabriel Pinto" as string | null,
   /** NIF / NIPC. */
   nif: null as string | null,
   /** Registered (fiscal) address. */
@@ -14,5 +14,5 @@ export const LEGAL = {
   /** Contact for legal and privacy requests. */
   email: "privacidade@sycras.com" as string | null,
   /** Last time the texts changed (shown on the pages). */
-  updated: "11 de outubro de 2026",
+  updated: "13 de outubro de 2026",
 };
