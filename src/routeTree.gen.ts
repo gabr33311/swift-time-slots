@@ -34,6 +34,7 @@ import { Route as AuthenticatedWaitlistRouteImport } from './routes/_authenticat
 import { Route as ApiSlugRouteImport } from './routes/api/slug'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as BookingTokenRouteImport } from './routes/booking.$token'
+import { Route as ApiAppointmentsMovedRouteImport } from './routes/api/appointments/moved'
 import { Route as ApiBillingCheckoutRouteImport } from './routes/api/billing/checkout'
 import { Route as ApiBillingReturnRouteImport } from './routes/api/billing/return'
 import { Route as ApiCronRemindersRouteImport } from './routes/api/cron/reminders'
@@ -168,6 +169,11 @@ const BookingTokenRoute = BookingTokenRouteImport.update({
   path: '/booking/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAppointmentsMovedRoute = ApiAppointmentsMovedRouteImport.update({
+  id: '/api/appointments/moved',
+  path: '/api/appointments/moved',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiBillingCheckoutRoute = ApiBillingCheckoutRouteImport.update({
   id: '/api/billing/checkout',
   path: '/api/billing/checkout',
@@ -229,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/api/slug': typeof ApiSlugRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
+  '/api/appointments/moved': typeof ApiAppointmentsMovedRoute
   '/api/billing/checkout': typeof ApiBillingCheckoutRoute
   '/api/billing/return': typeof ApiBillingReturnRoute
   '/api/cron/reminders': typeof ApiCronRemindersRoute
@@ -262,6 +269,7 @@ export interface FileRoutesByTo {
   '/api/slug': typeof ApiSlugRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
+  '/api/appointments/moved': typeof ApiAppointmentsMovedRoute
   '/api/billing/checkout': typeof ApiBillingCheckoutRoute
   '/api/billing/return': typeof ApiBillingReturnRoute
   '/api/cron/reminders': typeof ApiCronRemindersRoute
@@ -297,6 +305,7 @@ export interface FileRoutesById {
   '/api/slug': typeof ApiSlugRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
+  '/api/appointments/moved': typeof ApiAppointmentsMovedRoute
   '/api/billing/checkout': typeof ApiBillingCheckoutRoute
   '/api/billing/return': typeof ApiBillingReturnRoute
   '/api/cron/reminders': typeof ApiCronRemindersRoute
@@ -332,6 +341,7 @@ export interface FileRouteTypes {
     | '/api/slug'
     | '/book/$slug'
     | '/booking/$token'
+    | '/api/appointments/moved'
     | '/api/billing/checkout'
     | '/api/billing/return'
     | '/api/cron/reminders'
@@ -365,6 +375,7 @@ export interface FileRouteTypes {
     | '/api/slug'
     | '/book/$slug'
     | '/booking/$token'
+    | '/api/appointments/moved'
     | '/api/billing/checkout'
     | '/api/billing/return'
     | '/api/cron/reminders'
@@ -399,6 +410,7 @@ export interface FileRouteTypes {
     | '/api/slug'
     | '/book/$slug'
     | '/booking/$token'
+    | '/api/appointments/moved'
     | '/api/billing/checkout'
     | '/api/billing/return'
     | '/api/cron/reminders'
@@ -419,6 +431,7 @@ export interface RootRouteChildren {
   ApiSlugRoute: typeof ApiSlugRoute
   BookSlugRoute: typeof BookSlugRoute
   BookingTokenRoute: typeof BookingTokenRoute
+  ApiAppointmentsMovedRoute: typeof ApiAppointmentsMovedRoute
   ApiBillingCheckoutRoute: typeof ApiBillingCheckoutRoute
   ApiBillingReturnRoute: typeof ApiBillingReturnRoute
   ApiCronRemindersRoute: typeof ApiCronRemindersRoute
@@ -605,6 +618,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookingTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/appointments/moved': {
+      id: '/api/appointments/moved'
+      path: '/api/appointments/moved'
+      fullPath: '/api/appointments/moved'
+      preLoaderRoute: typeof ApiAppointmentsMovedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/billing/checkout': {
       id: '/api/billing/checkout'
       path: '/api/billing/checkout'
@@ -707,6 +727,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSlugRoute: ApiSlugRoute,
   BookSlugRoute: BookSlugRoute,
   BookingTokenRoute: BookingTokenRoute,
+  ApiAppointmentsMovedRoute: ApiAppointmentsMovedRoute,
   ApiBillingCheckoutRoute: ApiBillingCheckoutRoute,
   ApiBillingReturnRoute: ApiBillingReturnRoute,
   ApiCronRemindersRoute: ApiCronRemindersRoute,

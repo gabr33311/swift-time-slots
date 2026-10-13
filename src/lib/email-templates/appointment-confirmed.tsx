@@ -25,6 +25,8 @@ interface Props {
   manageUrl?: string;
   brandColor?: string;
   brandText?: string;
+  /** "1" when the business moved the appointment to a new day/time. */
+  changed?: string;
 }
 
 const Email = ({
@@ -38,18 +40,23 @@ const Email = ({
   manageUrl,
   brandColor,
   brandText,
+  changed,
 }: Props) => (
   <Html lang="pt" dir="ltr">
     <Head />
     <Preview>
-      Marcação confirmada: {serviceName || "serviço"} {date ? `· ${date}` : ""}{" "}
-      {time ? `às ${time}` : ""}
+      {changed ? "Marcação alterada" : "Marcação confirmada"}: {serviceName || "serviço"}{" "}
+      {date ? `· ${date}` : ""} {time ? `às ${time}` : ""}
     </Preview>
     <Body style={main}>
       <Container style={container}>
         {businessName && <Text style={brand}>{businessName}</Text>}
-        <Heading style={h1}>Marcação confirmada</Heading>
-        <Text style={text}>Olá {name || "cliente"}, a sua marcação está confirmada.</Text>
+        <Heading style={h1}>{changed ? "Marcação alterada" : "Marcação confirmada"}</Heading>
+        <Text style={text}>
+          {changed
+            ? `Olá ${name || "cliente"}, a sua marcação mudou de hora. Este é o novo horário.`
+            : `Olá ${name || "cliente"}, a sua marcação está confirmada.`}
+        </Text>
         <Section style={box}>
           <Text style={row}>
             <b>Serviço:</b> {serviceName || "—"}
@@ -96,7 +103,8 @@ const Email = ({
 
 export const template = {
   component: Email,
-  subject: "A sua marcação foi confirmada!",
+  subject: (d) =>
+    d["changed"] ? "A sua marcação mudou de hora" : "A sua marcação foi confirmada!",
   displayName: "Marcação confirmada",
   previewData: {
     name: "Ana",

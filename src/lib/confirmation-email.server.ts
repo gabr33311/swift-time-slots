@@ -29,7 +29,10 @@ function appOrigin(): string | null {
  * Sends the confirmation email for one appointment: date, place (with a map
  * link) and a button to view or cancel. Returns false when it was not sent.
  */
-export async function sendConfirmedEmail(appointmentId: string): Promise<boolean> {
+export async function sendConfirmedEmail(
+  appointmentId: string,
+  opts: { changed?: boolean } = {},
+): Promise<boolean> {
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
   const [{ data }, { data: tokenRow }] = await Promise.all([
     db
@@ -75,8 +78,12 @@ export async function sendConfirmedEmail(appointmentId: string): Promise<boolean
         manageUrl: origin && tokenRow ? `${origin}/booking/${tokenRow.token}` : undefined,
         brandColor: colors.brand,
         brandText: colors.foreground,
+        changed: opts.changed ? "1" : undefined,
       },
-      idempotencyKey: `appointment-confirmed-${appt.id}`,
+      // A move sends one email per new time; a confirmation only once.
+      idempotencyKey: opts.changed
+        ? `appointment-changed-${appt.id}-${appt.starts_at}`
+        : `appointment-confirmed-${appt.id}`,
     });
     return res.sent;
   } catch (e) {
