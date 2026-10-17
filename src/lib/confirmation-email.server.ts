@@ -17,6 +17,7 @@ type Row = {
     longitude: number | null;
     brand_color: string;
     show_map: boolean;
+    email: string | null;
   } | null;
 };
 
@@ -32,7 +33,7 @@ export async function sendCancelledEmail(
   const { data } = await db
     .from("appointments")
     .select(
-      "id, customer_name, customer_email, service_name, starts_at, businesses(name, slug, timezone, brand_color, suspended_at)",
+      "id, customer_name, customer_email, service_name, starts_at, businesses(name, slug, timezone, brand_color, suspended_at, email)",
     )
     .eq("id", appointmentId)
     .maybeSingle();
@@ -48,6 +49,7 @@ export async function sendCancelledEmail(
       timezone: string;
       brand_color: string;
       suspended_at: string | null;
+      email: string | null;
     } | null;
   } | null;
   if (!appt?.customer_email) return false;
@@ -80,6 +82,7 @@ export async function sendCancelledEmail(
         brandColor: colors.brand,
         brandText: colors.foreground,
       },
+      ...(biz?.email ? { replyTo: biz.email } : {}),
       idempotencyKey: `appointment-cancelled-${appt.id}`,
     });
     return res.sent;
@@ -108,7 +111,7 @@ export async function sendConfirmedEmail(
     db
       .from("appointments")
       .select(
-        "id, customer_name, customer_email, service_name, starts_at, businesses(name, timezone, address, city, latitude, longitude, brand_color, show_map)",
+        "id, customer_name, customer_email, service_name, starts_at, businesses(name, timezone, address, city, latitude, longitude, brand_color, show_map, email)",
       )
       .eq("id", appointmentId)
       .maybeSingle(),
@@ -154,6 +157,7 @@ export async function sendConfirmedEmail(
         brandText: colors.foreground,
         changed: opts.changed ? "1" : undefined,
       },
+      ...(biz?.email ? { replyTo: biz.email } : {}),
       // A move sends one email per new time; a confirmation only once.
       idempotencyKey: opts.changed
         ? `appointment-changed-${appt.id}-${appt.starts_at}`

@@ -22,6 +22,7 @@ type DueRow = {
     longitude: number | null;
     brand_color: string;
     show_map: boolean;
+    email: string | null;
     created_at: string;
     reminders_enabled: boolean;
     reminder_hours: number;
@@ -50,7 +51,7 @@ export async function sendDueReminders(): Promise<{ sent: number; skipped: numbe
   const { data, error } = await db
     .from("appointments")
     .select(
-      "id, business_id, customer_name, customer_email, service_name, starts_at, ends_at, created_at, businesses!inner(name, timezone, address, city, latitude, longitude, brand_color, show_map, created_at, reminders_enabled, reminder_hours, reminder_message)",
+      "id, business_id, customer_name, customer_email, service_name, starts_at, ends_at, created_at, businesses!inner(name, timezone, address, city, latitude, longitude, brand_color, show_map, email, created_at, reminders_enabled, reminder_hours, reminder_message)",
     )
     .eq("status", "confirmed")
     .not("customer_email", "is", null)
@@ -139,6 +140,7 @@ export async function sendDueReminders(): Promise<{ sent: number; skipped: numbe
           brandColor: colors.brand,
           brandText: colors.foreground,
         },
+        ...(biz.email ? { replyTo: biz.email } : {}),
         idempotencyKey: `appointment-reminder-${appt.id}`,
       });
       if (res.sent) sent++;
@@ -156,6 +158,11 @@ export async function sendDueReminders(): Promise<{ sent: number; skipped: numbe
   }
 
   const reviews = await sendDueReviews(db, sendTemplateEmail);
+  // Not part of the count: help for new owners and the weekly error report.
+  await sendOwnerNudges(db, sendTemplateEmail).catch((e) => console.error("[nudge] failed", e));
+  await sendWeeklyErrorSummary(db, sendTemplateEmail).catch((e) =>
+    console.error("[errors] summary failed", e),
+  );
   return { sent: sent + reviews, skipped };
 }
 
@@ -170,6 +177,7 @@ type ReviewRow = {
     brand_color: string;
     created_at: string;
     review_url: string | null;
+    email: string | null;
   } | null;
 };
 
@@ -187,7 +195,7 @@ async function sendDueReviews(
   const { data, error } = await db
     .from("appointments")
     .select(
-      "id, business_id, customer_name, customer_email, service_name, businesses!inner(name, brand_color, created_at, review_url)",
+      "id, business_id, customer_name, customer_email, service_name, businesses!inner(name, brand_color, created_at, review_url, email)",
     )
     .eq("status", "completed")
     .not("customer_email", "is", null)
@@ -224,6 +232,7 @@ async function sendDueReviews(
           brandColor: colors.brand,
           brandText: colors.foreground,
         },
+        ...(biz.email ? { replyTo: biz.email } : {}),
         idempotencyKey: `appointment-review-${appt.id}`,
       });
       if (res.sent) sent++;
@@ -298,4 +307,82 @@ export async function sendTestReminderEmail(
       detail: (e instanceof Error ? e.message : String(e)).slice(0, 160),
     };
   }
+}
+
+type Db = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
+type Send = Awaited<typeof import("@/lib/email-templates/send-email")>["sendTemplateEmail"];
+
+/** The job runs every 10 minutes: each window of that size is handled by one run. */
+const WINDOW_MS = 10 * 60 * 1000;
+
+/**
+ * Three days after signing up, an owner with no booking yet gets three simple
+ * steps to get the first one (once: the time window plus an idempotency key).
+ */
+async function sendOwnerNudges(db: Db, send: Send): Promise<void> {
+  const origin = appOrigin();
+  const at = Date.now() - 3 * 86_400_000;
+  const { data: fresh } = await db
+    .from("businesses")
+    .select("id, name, slug, created_by")
+    .eq("is_demo", false)
+    .is("deleted_at", null)
+    .is("suspended_at", null)
+    .gte("created_at", new Date(at - WINDOW_MS).toISOString())
+    .lt("created_at", new Date(at).toISOString())
+    .limit(100);
+  for (const biz of fresh ?? []) {
+    const { count } = await db
+      .from("appointments")
+      .select("id", { count: "exact", head: true })
+      .eq("business_id", biz.id);
+    if ((count ?? 0) > 0) continue;
+    const { data: owner } = await db.auth.admin.getUserById(biz.created_by);
+    const to = owner.user?.email;
+    if (!to) continue;
+    await send("owner-nudge", to, {
+      templateData: {
+        businessName: biz.name,
+        pageUrl: origin ? `${origin}/${biz.slug}` : undefined,
+      },
+      idempotencyKey: `owner-nudge-${biz.id}`,
+    });
+  }
+}
+
+/** Where the weekly error report goes (every @sycras.com address is forwarded). */
+const ERRORS_EMAIL = "erros@sycras.com";
+
+/** Monday 09:00–09:10 in Lisbon: last week's phone app errors, grouped, to the team. */
+async function sendWeeklyErrorSummary(db: Db, send: Send): Promise<void> {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Lisbon",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date());
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  if (get("weekday") !== "Mon" || get("hour") !== "09" || Number(get("minute")) >= 10) return;
+
+  const { data } = await db
+    .from("app_errors")
+    .select("message, screen")
+    .gte("created_at", new Date(Date.now() - 7 * 86_400_000).toISOString())
+    .limit(5000);
+  const rows = data ?? [];
+  const groups = new Map<string, number>();
+  for (const r of rows) {
+    const key = `${r.message.slice(0, 140)} (${r.screen ?? "?"})`;
+    groups.set(key, (groups.get(key) ?? 0) + 1);
+  }
+  const lines = [...groups.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 15)
+    .map(([k, n]) => `${n}× ${k}`)
+    .join("\n");
+  await send("error-summary", ERRORS_EMAIL, {
+    templateData: { total: String(rows.length), lines: lines || "Nenhum erro. Boa semana!" },
+    idempotencyKey: `error-summary-${new Date().toISOString().slice(0, 10)}`,
+  });
 }

@@ -355,6 +355,10 @@ export const profileDict: Record<BaseLang, Record<string, string>> = {
     "acc.reactivated": "Conta reativada. A tua página voltou.",
     "acc.suspend.paying":
       "A subscrição continua ativa. Se não a quiseres pagar enquanto a conta está suspensa, cancela-a em Planos.",
+    "acc.export": "Exportar os meus dados",
+    "acc.export.desc": "Recebe por email uma cópia de tudo: conta, negócio, clientes e marcações.",
+    "acc.export.send": "Enviar cópia",
+    "acc.export.sent": "Enviámos a cópia para {email}.",
     "acc.delete": "Eliminar conta",
     "acc.delete.desc":
       "Apaga para sempre a conta, o negócio, as marcações e os clientes. Não dá para desfazer.",
@@ -778,6 +782,11 @@ export const profileDict: Record<BaseLang, Record<string, string>> = {
     "acc.reactivated": "Account reactivated. Your page is back.",
     "acc.suspend.paying":
       "Your subscription is still active. Cancel it in Plans if you don't want to pay while suspended.",
+    "acc.export": "Export my data",
+    "acc.export.desc":
+      "Get a copy of everything by email: account, business, clients and bookings.",
+    "acc.export.send": "Send copy",
+    "acc.export.sent": "We sent the copy to {email}.",
     "acc.delete": "Delete account",
     "acc.delete.desc":
       "Deletes the account, business, bookings and clients forever. This cannot be undone.",

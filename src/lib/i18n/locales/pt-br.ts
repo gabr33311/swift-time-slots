@@ -1000,4 +1000,8 @@ export const ptBR: Record<string, string> = {
   "home.demo": "Ver uma página de exemplo",
   "bk.demo.banner": "Página de exemplo: teste à vontade, nada é salvo.",
   "bk.demo.cta": "Criar a minha",
+  "acc.export": "Exportar meus dados",
+  "acc.export.desc": "Receba por email uma cópia de tudo: conta, negócio, clientes e agendamentos.",
+  "acc.export.send": "Enviar cópia",
+  "acc.export.sent": "Enviamos a cópia para {email}.",
 };

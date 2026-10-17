@@ -7,6 +7,9 @@ import { TEMPLATES, type TemplateData } from "./registry";
 /** Sender shown to clients. The domain must be verified in Resend. */
 const DEFAULT_FROM = "SYCRAS <noreply@sycras.com>";
 
+/** Where replies go when nobody more specific is given (every @sycras.com address is forwarded). */
+export const SUPPORT_EMAIL = "suporte@sycras.com";
+
 export type SendTemplateEmailResult = { sent: true } | { sent: false; reason: "not_configured" };
 
 export interface SendTemplateEmailOptions {
@@ -14,6 +17,8 @@ export interface SendTemplateEmailOptions {
   /** Dedupes retries of the same logical send (Resend keeps it for 24 h). */
   idempotencyKey?: string;
   replyTo?: string;
+  /** Files sent with the email (content in base64). */
+  attachments?: { filename: string; content: string }[];
 }
 
 /**
@@ -67,7 +72,9 @@ export async function sendTemplateEmail(
       html,
       text,
       tags: [{ name: "template", value: templateName }],
-      ...(options.replyTo ? { reply_to: options.replyTo } : {}),
+      // Replies reach a person: the business (when given) or SYCRAS support, never noreply.
+      reply_to: options.replyTo || SUPPORT_EMAIL,
+      ...(options.attachments?.length ? { attachments: options.attachments } : {}),
     }),
   });
   if (!res.ok) {

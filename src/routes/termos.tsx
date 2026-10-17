@@ -66,21 +66,26 @@ function TermsPage() {
         <h2>4. Período experimental e subscrição</h2>
         <ul>
           <li>
-            Cada negócio tem {TRIAL_DAYS} dias grátis a contar da criação, com todas as
-            funcionalidades e sem pedir cartão.
+            Cada negócio tem {TRIAL_DAYS} dias grátis a contar da criação, sem pedir cartão, com a
+            página de marcações, a agenda, os clientes e a equipa.
+          </li>
+          <li>
+            Algumas funcionalidades são exclusivas do plano Pro pago e não fazem parte do período
+            experimental: lembretes automáticos por email aos clientes, pedidos de avaliação depois
+            da visita, bloqueio de clientes e estatísticas completas.
           </li>
           <li>
             Depois desse período, para continuar a usar a SYCRAS é necessário o plano Pro: 19 € por
             mês, ou 180 € por ano. Os preços incluem IVA à taxa legal em vigor, quando aplicável.
           </li>
           <li>
-            A subscrição renova-se automaticamente no fim de cada período e é cobrada pelo Stripe no
-            método de pagamento indicado.
+            A subscrição renova-se automaticamente no fim de cada período. É cobrada pelo Stripe no
+            método de pagamento indicado ou, quando subscrita na app para Android, pela Google Play.
           </li>
           <li>
-            Podes cancelar a qualquer momento em Gestão → Plano → Gerir subscrição e faturas. O
-            cancelamento produz efeitos no fim do período já pago; não há reembolso de períodos
-            parciais, salvo quando a lei o exija.
+            Podes cancelar a qualquer momento em Gestão → Plano → Gerir subscrição e faturas (ou na
+            Google Play, se subscreveste na app). O cancelamento produz efeitos no fim do período já
+            pago; não há reembolso de períodos parciais, salvo quando a lei o exija.
           </li>
           <li>
             Sem subscrição ativa no fim do período experimental, ou se um pagamento falhar e não for
@@ -149,8 +154,10 @@ function TermsPage() {
       <section>
         <h2>9. Fim da conta</h2>
         <p>
-          Podes deixar de usar a SYCRAS e pedir o fecho da conta a qualquer momento através de{" "}
-          <ContactEmail />. Os dados são tratados como descrito na Política de Privacidade.
+          Podes eliminar a conta a qualquer momento, sozinho, nas Definições da app ou do site, ou
+          pedir ajuda através de <ContactEmail />. Antes disso, podes pedir uma cópia dos teus dados
+          em Definições → Conta → Exportar os meus dados. Os dados são tratados como descrito na
+          Política de Privacidade.
         </p>
       </section>
 

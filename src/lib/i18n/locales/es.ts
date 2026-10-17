@@ -998,4 +998,8 @@ export const es: Record<string, string> = {
   "home.demo": "Ver una página de ejemplo",
   "bk.demo.banner": "Página de ejemplo: pruébala, no se guarda nada.",
   "bk.demo.cta": "Crear la mía",
+  "acc.export": "Exportar mis datos",
+  "acc.export.desc": "Recibe por email una copia de todo: cuenta, negocio, clientes y citas.",
+  "acc.export.send": "Enviar copia",
+  "acc.export.sent": "Hemos enviado la copia a {email}.",
 };

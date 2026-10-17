@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { KeyRound, Loader2, Mail, PauseCircle, PlayCircle, Trash2 } from "lucide-react";
+import { Download, KeyRound, Loader2, Mail, PauseCircle, PlayCircle, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,26 @@ export function AccountPanel() {
   const [deleting, setDeleting] = useState(false);
   const [confirmWord, setConfirmWord] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  /** A copy of everything, sent as a file to the account's email. */
+  async function exportData() {
+    setExporting(true);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const res = await fetch("/api/account/export", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${data.session?.access_token ?? ""}` },
+      });
+      const body = (await res.json()) as { ok: boolean; message?: string };
+      if (body.ok) toast.success(t("acc.export.sent").replace("{email}", user?.email ?? ""));
+      else toast.error(body.message ?? t("acc.error"));
+    } catch {
+      toast.error(t("acc.error"));
+    } finally {
+      setExporting(false);
+    }
+  }
   const canManage = role === "owner" || role === "manager";
   // Suspended, or an older page left unpublished: both are offline, and "Reactivate" brings them back.
   const suspended = !!business?.suspended_at || business?.is_published === false;
@@ -239,6 +259,19 @@ export function AccountPanel() {
           )}
         </div>
       )}
+
+      <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div>
+          <p className="flex items-center gap-2 text-sm font-bold">
+            <Download className="size-4 text-muted-foreground" /> {t("acc.export")}
+          </p>
+          <p className="text-sm text-muted-foreground">{t("acc.export.desc")}</p>
+        </div>
+        <Button variant="outline" size="sm" disabled={exporting} onClick={() => void exportData()}>
+          {exporting && <Loader2 className="animate-spin" />}
+          {t("acc.export.send")}
+        </Button>
+      </div>
 
       <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div>

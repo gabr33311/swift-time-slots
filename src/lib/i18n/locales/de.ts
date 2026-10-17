@@ -1011,4 +1011,9 @@ export const de: Record<string, string> = {
   "home.demo": "Beispielseite ansehen",
   "bk.demo.banner": "Beispielseite: probier alles aus, nichts wird gespeichert.",
   "bk.demo.cta": "Meine erstellen",
+  "acc.export": "Meine Daten exportieren",
+  "acc.export.desc":
+    "Erhalte eine Kopie von allem per E-Mail: Konto, Unternehmen, Kunden und Termine.",
+  "acc.export.send": "Kopie senden",
+  "acc.export.sent": "Wir haben die Kopie an {email} gesendet.",
 };

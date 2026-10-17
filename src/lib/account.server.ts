@@ -75,3 +75,73 @@ export async function deleteAccount(
   }
   return { ok: true };
 }
+
+/** Tables copied in the data export, all filtered by the business. */
+const EXPORT_TABLES = [
+  "services",
+  "staff",
+  "staff_services",
+  "working_hours",
+  "blocked_times",
+  "customers",
+  "appointments",
+  "subscriptions",
+] as const;
+
+/**
+ * Emails the person a copy of their data (account, businesses and everything
+ * in them) as a JSON file. Right of access / portability (RGPD art. 15 and 20).
+ */
+export async function exportAccount(
+  userId: string,
+  email: string,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+  const [{ data: profile }, { data: memberships }] = await Promise.all([
+    db.from("profiles").select("*").eq("id", userId).maybeSingle(),
+    db.from("business_members").select("business_id, role").eq("user_id", userId),
+  ]);
+
+  const businesses = [];
+  for (const m of memberships ?? []) {
+    const { data: business } = await db
+      .from("businesses")
+      .select("*")
+      .eq("id", m.business_id)
+      .maybeSingle();
+    if (!business) continue;
+    const parts = await Promise.all(
+      EXPORT_TABLES.map((t) =>
+        db.from(t).select("*").eq("business_id", m.business_id).limit(20000),
+      ),
+    );
+    businesses.push({
+      role: m.role,
+      business,
+      ...Object.fromEntries(EXPORT_TABLES.map((t, i) => [t, parts[i]?.data ?? []])),
+    });
+  }
+
+  const file = {
+    exported_at: new Date().toISOString(),
+    account: { id: userId, email, profile },
+    businesses,
+  };
+  try {
+    const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+    const res = await sendTemplateEmail("data-export", email, {
+      templateData: { name: profile?.full_name ?? undefined },
+      attachments: [
+        {
+          filename: `sycras-dados-${new Date().toISOString().slice(0, 10)}.json`,
+          content: Buffer.from(JSON.stringify(file, null, 2)).toString("base64"),
+        },
+      ],
+    });
+    if (!res.sent) return { ok: false, message: "O envio de emails não está configurado." };
+    return { ok: true };
+  } catch (e) {
+    console.error("[account] export failed", e);
+    return { ok: false, message: "Não foi possível enviar a cópia. Tenta novamente." };
+  }
+}
