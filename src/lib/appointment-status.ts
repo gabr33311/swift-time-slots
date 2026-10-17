@@ -1,7 +1,10 @@
 import { toast } from "sonner";
 import type { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { sendAppointmentConfirmedEmail } from "@/lib/confirmation-email.functions";
+import {
+  sendAppointmentCancelledEmail,
+  sendAppointmentConfirmedEmail,
+} from "@/lib/confirmation-email.functions";
 import { haptic } from "@/lib/native";
 
 export type ApptStatus =
@@ -58,7 +61,7 @@ export async function setAppointmentStatus(input: {
   note?: string;
 }): Promise<{ ok: true; emailed?: boolean } | { ok: false; message: string }> {
   let wasPending = false;
-  if (input.status === "confirmed") {
+  if (input.status === "confirmed" || input.status === "cancelled") {
     const { data } = await supabase
       .from("appointments")
       .select("status")
@@ -90,7 +93,22 @@ export async function setAppointmentStatus(input: {
     note: input.note ?? null,
   });
 
-  if (wasPending) {
+  // Cancelled by the business (or a request not accepted): the client must know.
+  if (input.status === "cancelled") {
+    try {
+      const res = await sendAppointmentCancelledEmail({
+        data: { appointmentId: input.id, declined: wasPending },
+      });
+      if (res.status === "sent") toast.success("Cancelada. O cliente recebeu um email.");
+      else if (res.status === "no_email") toast.success("Marcação cancelada.");
+      else toast.error("A marcação foi cancelada, mas o email ao cliente não foi enviado.");
+    } catch {
+      toast.error("A marcação foi cancelada, mas o email ao cliente não foi enviado.");
+    }
+    return { ok: true, emailed: true };
+  }
+
+  if (wasPending && input.status === "confirmed") {
     try {
       const res = await sendAppointmentConfirmedEmail({ data: { appointmentId: input.id } });
       if (res.status === "sent") toast.success("Marcação confirmada e email enviado!");

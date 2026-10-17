@@ -72,8 +72,16 @@ export const profileDict: Record<BaseLang, Record<string, string>> = {
     "rm.preview.sampleDate": "sábado, 17 de outubro",
     "rm.test.saveFirst": "Guarda as alterações antes de enviar o teste.",
     "rm.test": "Enviar email de teste para mim",
+    "mg.rules.code": "código por email",
+    "rv.title": "Pedir avaliação depois da visita",
+    "rv.desc":
+      "Algumas horas depois de uma marcação concluída, o cliente recebe um email a agradecer, com o teu link de avaliação (por exemplo, do Google).",
+    "rv.label": "Link de avaliação",
+    "rv.hint":
+      "No Google: Perfil da empresa → Pedir avaliações → copiar o link. Deixa vazio para não enviar.",
+    "rv.invalid": "O link tem de começar por https://",
     "rm.locked":
-      'Os lembretes aos clientes só são enviados com o Pro pago. Já podes ver como ficam: carrega em "Enviar email de teste para mim", no fim desta página.',
+      'Os lembretes aos clientes só são enviados com o Pro pago. Já podes ver como ficam: carrega em "Enviar email de teste para mim", mais abaixo.',
     "rm.test.sent": "Email de teste enviado para {email}.",
     "rm.test.notConfigured": "O envio de emails ainda não está configurado no servidor.",
     "rm.test.failed": "Não foi possível enviar o email de teste.",
@@ -487,8 +495,16 @@ export const profileDict: Record<BaseLang, Record<string, string>> = {
     "rm.preview.sampleDate": "Saturday, 17 October",
     "rm.test.saveFirst": "Save your changes before sending the test.",
     "rm.test": "Send me a test email",
+    "mg.rules.code": "email code",
+    "rv.title": "Ask for a review after the visit",
+    "rv.desc":
+      "A few hours after a completed booking, the client gets a thank-you email with your review link (for example, Google).",
+    "rv.label": "Review link",
+    "rv.hint":
+      "On Google: Business Profile → Ask for reviews → copy the link. Leave empty to send nothing.",
+    "rv.invalid": "The link must start with https://",
     "rm.locked":
-      'Reminders to clients are only sent with paid Pro. You can already see how they look: tap "Send me a test email" at the end of this page.',
+      'Reminders to clients are only sent with paid Pro. You can already see how they look: tap "Send me a test email" further down.',
     "rm.test.sent": "Test email sent to {email}.",
     "rm.test.notConfigured": "Email sending is not configured on the server yet.",
     "rm.test.failed": "Could not send the test email.",

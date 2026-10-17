@@ -7,7 +7,8 @@ import { AppShell } from "@/components/app-shell";
 import { ErrorState, LoadingRows, PageHeader, StickyTop } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
-import { displayCustomerName, formatPrice } from "@/lib/format";
+import { displayCustomerName } from "@/lib/format";
+import { useMoney } from "@/hooks/use-money-hidden";
 import { PendingCapsule } from "@/components/pending-sheet";
 import { useAppointmentSheet } from "@/lib/appointment-sheet-context";
 import { addDays, minutesToTime, timeToMinutes, todayIn, weekdayOf, zonedToUtc } from "@/lib/time";
@@ -190,6 +191,7 @@ function buildAgenda(
 
 function CalendarPage() {
   const { t, lang } = usePrefs();
+  const formatPrice = useMoney();
   const { business } = useMyBusiness();
   const { openAppointment } = useAppointmentSheet();
   const qc = useQueryClient();

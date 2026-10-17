@@ -155,7 +155,88 @@ export async function sendDueReminders(): Promise<{ sent: number; skipped: numbe
     }
   }
 
-  return { sent, skipped };
+  const reviews = await sendDueReviews(db, sendTemplateEmail);
+  return { sent: sent + reviews, skipped };
+}
+
+type ReviewRow = {
+  id: string;
+  business_id: string;
+  customer_name: string;
+  customer_email: string | null;
+  service_name: string;
+  businesses: {
+    name: string;
+    brand_color: string;
+    created_at: string;
+    review_url: string | null;
+  } | null;
+};
+
+/**
+ * "How did it go?" a few hours after a finished visit, with the business's
+ * review link (a Pro extra). One email per appointment at most.
+ */
+async function sendDueReviews(
+  db: Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"],
+  sendTemplateEmail: Awaited<
+    typeof import("@/lib/email-templates/send-email")
+  >["sendTemplateEmail"],
+): Promise<number> {
+  const now = Date.now();
+  const { data, error } = await db
+    .from("appointments")
+    .select(
+      "id, business_id, customer_name, customer_email, service_name, businesses!inner(name, brand_color, created_at, review_url)",
+    )
+    .eq("status", "completed")
+    .not("customer_email", "is", null)
+    .not("businesses.review_url", "is", null)
+    // Finished 2 to 48 hours ago: soon enough to remember, not straight away.
+    .lte("ends_at", new Date(now - 2 * 3600000).toISOString())
+    .gte("ends_at", new Date(now - 48 * 3600000).toISOString())
+    .limit(300);
+  if (error) {
+    console.error("[reviews] query failed", error);
+    return 0;
+  }
+  let sent = 0;
+  const pro = new Map<string, boolean>();
+  for (const appt of (data ?? []) as unknown as ReviewRow[]) {
+    const biz = appt.businesses;
+    if (!biz?.review_url || !appt.customer_email) continue;
+    if (!pro.has(appt.business_id)) {
+      pro.set(appt.business_id, await businessHasPro(appt.business_id, biz.created_at));
+    }
+    if (!pro.get(appt.business_id)) continue;
+    const { error: claimError } = await db
+      .from("appointment_reminders")
+      .insert({ appointment_id: appt.id, business_id: appt.business_id, kind: "review" });
+    if (claimError) continue;
+    const colors = brandColors(biz.brand_color);
+    try {
+      const res = await sendTemplateEmail("appointment-review", appt.customer_email, {
+        templateData: {
+          name: appt.customer_name,
+          businessName: biz.name,
+          serviceName: appt.service_name,
+          reviewUrl: biz.review_url,
+          brandColor: colors.brand,
+          brandText: colors.foreground,
+        },
+        idempotencyKey: `appointment-review-${appt.id}`,
+      });
+      if (res.sent) sent++;
+    } catch (e) {
+      await db
+        .from("appointment_reminders")
+        .delete()
+        .eq("appointment_id", appt.id)
+        .eq("kind", "review");
+      console.error("[reviews] send failed", appt.id, e);
+    }
+  }
+  return sent;
 }
 
 /** The business fields the test reminder email needs. */

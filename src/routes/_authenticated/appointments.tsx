@@ -8,7 +8,8 @@ import { AppShell } from "@/components/app-shell";
 import { EmptyState, ErrorState, LoadingRows, PageHeader, StatusBadge } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
-import { formatDateLong, formatDateShort, formatPrice, formatTime } from "@/lib/format";
+import { formatDateLong, formatDateShort, formatTime } from "@/lib/format";
+import { useMoney } from "@/hooks/use-money-hidden";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
 import {
   ArrowLeft,
@@ -327,6 +328,7 @@ function OverdueReview({
   onSetStatus: (id: string, status: "completed" | "no_show") => void;
 }) {
   const { t } = usePrefs();
+  const money = useMoney();
   const a = items[idx];
   if (!a) return null;
   return (
@@ -357,7 +359,7 @@ function OverdueReview({
           <p className="truncate text-sm text-muted-foreground">{a.service_name}</p>
           <p className="mt-1 text-xs font-semibold tabular-nums text-muted-foreground">
             {formatDateShort(a.starts_at, timezone)} · {formatTime(a.starts_at, timezone)} ·{" "}
-            {formatPrice(a.price_cents, currency)}
+            {money(a.price_cents, currency)}
           </p>
           <div className="mt-3 flex justify-center gap-2">
             <Button size="sm" onClick={() => onSetStatus(a.id, "completed")}>

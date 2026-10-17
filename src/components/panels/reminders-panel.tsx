@@ -355,7 +355,75 @@ export function RemindersPanel() {
         {dirty && <p className="text-xs text-muted-foreground">{t("rm.test.saveFirst")}</p>}
       </section>
 
+      <ReviewLink />
+
       <SaveBar dirty={dirty} busy={busy} onSave={() => void save()} onCancel={hydrate} />
     </div>
+  );
+}
+
+/** The review link for the "How did it go?" email (a Pro extra, sent with the reminders). */
+function ReviewLink() {
+  const { business } = useMyBusiness();
+  const { t } = usePrefs();
+  const qc = useQueryClient();
+  const saved = business?.review_url ?? "";
+  const [url, setUrl] = useState(saved);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => setUrl(saved), [saved]);
+
+  async function save() {
+    if (!business) return;
+    const next = url.trim();
+    if (next && !/^https:\/\/\S+$/.test(next)) {
+      toast.error(t("rv.invalid"));
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase
+      .from("businesses")
+      .update({ review_url: next || null })
+      .eq("id", business.id);
+    setBusy(false);
+    if (error) {
+      toast.error(t("pf.common.saveError"));
+      return;
+    }
+    toast.success(t("pf.common.saved"));
+    qc.invalidateQueries({ queryKey: ["my-business"] });
+  }
+
+  return (
+    <section className="surface space-y-3 p-5">
+      <div>
+        <p className="flex items-center gap-2 text-sm font-bold">
+          {t("rv.title")}
+          <span className="rounded-full border border-subscription-accent px-2 py-px text-[10px] font-bold uppercase">
+            Pro
+          </span>
+        </p>
+        <p className="text-sm text-muted-foreground">{t("rv.desc")}</p>
+      </div>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Input
+          type="url"
+          inputMode="url"
+          placeholder="https://g.page/r/…/review"
+          aria-label={t("rv.label")}
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          maxLength={500}
+        />
+        <Button
+          variant="outline"
+          disabled={busy || url.trim() === saved}
+          onClick={() => void save()}
+        >
+          {busy && <Loader2 className="animate-spin" />}
+          {t("pf.common.save")}
+        </Button>
+      </div>
+      <p className="text-xs text-muted-foreground">{t("rv.hint")}</p>
+    </section>
   );
 }

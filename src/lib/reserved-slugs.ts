@@ -31,6 +31,7 @@ export const RESERVED_SLUGS = [
   "termos",
   "privacy",
   "privacidade",
+  "eliminar-conta",
   "assets",
   "static",
   "public",

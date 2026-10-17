@@ -19,6 +19,8 @@ import { formatPrice } from "@/lib/format";
 import { zonedToUtc, todayIn } from "@/lib/time";
 import { invalidateAppointmentData } from "@/lib/appointment-status";
 import { canonicalPhone } from "@/lib/phone";
+import { Checkbox } from "@/components/ui/checkbox";
+import { sendAppointmentConfirmedEmail } from "@/lib/confirmation-email.functions";
 import type { Business } from "@/hooks/use-business";
 import { usePrefs } from "@/lib/prefs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -54,6 +56,9 @@ export function NewAppointmentDialog({
   const [busy, setBusy] = useState(false);
   const [customerName, setCustomerName] = useState(defaultCustomer?.name ?? "");
   const [phone, setPhone] = useState(defaultCustomer?.phone ?? "");
+  const [email, setEmail] = useState("");
+  // On by default: a client booked by phone also gets the date in writing.
+  const [notify, setNotify] = useState(true);
   const [customerId, setCustomerId] = useState<string | null>(defaultCustomer?.id ?? null);
   const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -129,6 +134,7 @@ export function NewAppointmentDialog({
     setCustomerId(customer.id);
     setCustomerName(customer.name);
     setPhone(customer.phone ?? "");
+    setEmail(customer.email ?? "");
     setSearch("");
     setCustomerPickerOpen(false);
   }
@@ -137,6 +143,7 @@ export function NewAppointmentDialog({
     setCustomerId(null);
     setCustomerName(name.trim());
     setPhone("");
+    setEmail("");
     setSearch("");
     setCustomerPickerOpen(false);
   }
@@ -145,6 +152,7 @@ export function NewAppointmentDialog({
     setCustomerId(null);
     setCustomerName("");
     setPhone("");
+    setEmail("");
   }
 
   // With a single possible professional there is nothing to pick: select it.
@@ -182,6 +190,7 @@ export function NewAppointmentDialog({
         startsAt.getTime() + (service.duration_minutes + service.buffer_minutes) * 60000,
       );
       const cleanPhone = phone.trim() ? canonicalPhone(phone) : null;
+      const cleanEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ? email.trim() : null;
 
       let savedCustomerId: string | null = customerId;
       if (!savedCustomerId && cleanPhone) {
@@ -200,6 +209,7 @@ export function NewAppointmentDialog({
             business_id: business.id,
             name: customerName.trim(),
             phone: cleanPhone,
+            email: cleanEmail,
           })
           .select("id")
           .single();
@@ -210,21 +220,26 @@ export function NewAppointmentDialog({
         savedCustomerId = created.id;
       }
 
-      const { error } = await supabase.from("appointments").insert({
-        business_id: business.id,
-        service_id: service.id,
-        staff_id: staffId,
-        customer_id: savedCustomerId,
-        service_name: service.name,
-        customer_name: customerName.trim(),
-        customer_phone: cleanPhone,
-        starts_at: startsAt.toISOString(),
-        ends_at: endsAt.toISOString(),
-        price_cents: service.price_cents,
-        status: "confirmed",
-        notes: notes.trim() || null,
-        source: "manual",
-      });
+      const { data: createdAppt, error } = await supabase
+        .from("appointments")
+        .insert({
+          business_id: business.id,
+          service_id: service.id,
+          staff_id: staffId,
+          customer_id: savedCustomerId,
+          service_name: service.name,
+          customer_name: customerName.trim(),
+          customer_phone: cleanPhone,
+          customer_email: cleanEmail,
+          starts_at: startsAt.toISOString(),
+          ends_at: endsAt.toISOString(),
+          price_cents: service.price_cents,
+          status: "confirmed",
+          notes: notes.trim() || null,
+          source: "manual",
+        })
+        .select("id")
+        .single();
 
       if (error) {
         if (error.code === "23P01") {
@@ -234,11 +249,18 @@ export function NewAppointmentDialog({
         throw error;
       }
 
-      toast.success(t("cal.success.created"));
+      if (notify && cleanEmail && createdAppt) {
+        const res = await sendAppointmentConfirmedEmail({
+          data: { appointmentId: createdAppt.id },
+        }).catch(() => ({ status: "failed" as const }));
+        if (res.status === "sent") toast.success(t("cal.success.emailed"));
+        else toast.error(t("cal.success.notEmailed"));
+      } else toast.success(t("cal.success.created"));
       void invalidateAppointmentData(qc);
       onOpenChange(false);
       setCustomerName("");
       setPhone("");
+      setEmail("");
       setCustomerId(null);
       setNotes("");
     } catch {
@@ -372,6 +394,26 @@ export function NewAppointmentDialog({
                 placeholder="912 345 678"
               />
             </div>
+          )}
+          {customerName && !customerId && (
+            <div className="space-y-1.5 animate-enter">
+              <Label htmlFor="cemail">{t("cal.field.email")}</Label>
+              <Input
+                id="cemail"
+                type="email"
+                inputMode="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                maxLength={160}
+                placeholder="nome@email.com"
+              />
+            </div>
+          )}
+          {customerName && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) && (
+            <label className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold">
+              <Checkbox checked={notify} onCheckedChange={(v) => setNotify(v === true)} />
+              {t("cal.notify")}
+            </label>
           )}
           <div className="space-y-1.5">
             <Label id="svc-label">{t("cal.field.service")}</Label>

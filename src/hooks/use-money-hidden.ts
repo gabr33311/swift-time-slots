@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { formatPrice } from "@/lib/format";
 
 const KEY = "sycras-hide-money";
 const listeners = new Set<() => void>();
@@ -37,3 +38,9 @@ export function useMoneyHidden(): [boolean, (hidden: boolean) => void] {
 
 /** What is shown instead of an amount while hidden. */
 export const HIDDEN_MONEY = "••••";
+
+/** formatPrice that respects "hide amounts" (earnings and what clients paid; not the price list). */
+export function useMoney(): (cents: number, currency?: string) => string {
+  const [hidden] = useMoneyHidden();
+  return (cents, currency) => (hidden ? HIDDEN_MONEY : formatPrice(cents, currency));
+}

@@ -1,6 +1,8 @@
 import { template as appointmentConfirmed } from "./appointment-confirmed";
 import { template as appointmentReminder } from "./appointment-reminder";
 import { template as bookingCode } from "./booking-code";
+import { template as appointmentCancelled } from "./appointment-cancelled";
+import { template as appointmentReview } from "./appointment-review";
 import type { ComponentType } from "react";
 
 /** Values passed to a template: plain strings (names, dates, times). */
@@ -27,6 +29,8 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   "appointment-confirmed": appointmentConfirmed,
   "appointment-reminder": appointmentReminder,
   "booking-code": bookingCode,
+  "appointment-cancelled": appointmentCancelled,
+  "appointment-review": appointmentReview,
   // Add templates here as they are created, e.g.:
   // 'welcome': welcomeTemplate,
 };

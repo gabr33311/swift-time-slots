@@ -84,6 +84,10 @@ export function LegalLinks({ className }: { className?: string }) {
       <Link to="/privacidade" className="underline-offset-4 hover:underline">
         Privacidade
       </Link>
+      {" · "}
+      <Link to="/eliminar-conta" className="underline-offset-4 hover:underline">
+        Eliminar conta
+      </Link>
     </span>
   );
 }

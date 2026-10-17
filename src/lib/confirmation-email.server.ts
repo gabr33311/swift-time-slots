@@ -20,6 +20,75 @@ type Row = {
   } | null;
 };
 
+/**
+ * Tells the client the business cancelled the appointment, or did not accept
+ * the request, with a button to pick another time. False when not sent.
+ */
+export async function sendCancelledEmail(
+  appointmentId: string,
+  opts: { declined?: boolean } = {},
+): Promise<boolean> {
+  const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+  const { data } = await db
+    .from("appointments")
+    .select(
+      "id, customer_name, customer_email, service_name, starts_at, businesses(name, slug, timezone, brand_color, suspended_at)",
+    )
+    .eq("id", appointmentId)
+    .maybeSingle();
+  const appt = data as unknown as {
+    id: string;
+    customer_name: string;
+    customer_email: string | null;
+    service_name: string;
+    starts_at: string;
+    businesses: {
+      name: string;
+      slug: string;
+      timezone: string;
+      brand_color: string;
+      suspended_at: string | null;
+    } | null;
+  } | null;
+  if (!appt?.customer_email) return false;
+  const biz = appt.businesses;
+  const tz = biz?.timezone || "Europe/Lisbon";
+  const d = new Date(appt.starts_at);
+  const colors = brandColors(biz?.brand_color);
+  const origin = appOrigin();
+  try {
+    const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+    const res = await sendTemplateEmail("appointment-cancelled", appt.customer_email, {
+      templateData: {
+        name: appt.customer_name,
+        businessName: biz?.name,
+        serviceName: appt.service_name,
+        date: new Intl.DateTimeFormat("pt-PT", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          timeZone: tz,
+        }).format(d),
+        time: new Intl.DateTimeFormat("pt-PT", {
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: tz,
+        }).format(d),
+        declined: opts.declined ? "1" : undefined,
+        // A paused page cannot take another booking: no button then.
+        bookUrl: origin && biz?.slug && !biz.suspended_at ? `${origin}/${biz.slug}` : undefined,
+        brandColor: colors.brand,
+        brandText: colors.foreground,
+      },
+      idempotencyKey: `appointment-cancelled-${appt.id}`,
+    });
+    return res.sent;
+  } catch (e) {
+    console.error("[cancel-email] send failed", e);
+    return false;
+  }
+}
+
 /** Public origin for the links in the email. */
 function appOrigin(): string | null {
   const url = process.env["PUBLIC_APP_URL"];

@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_errors: {
+        Row: {
+          app_version: string | null
+          created_at: string
+          id: string
+          message: string
+          platform: string | null
+          screen: string | null
+          stack: string | null
+          user_id: string | null
+        }
+        Insert: {
+          app_version?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          platform?: string | null
+          screen?: string | null
+          stack?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          app_version?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          platform?: string | null
+          screen?: string | null
+          stack?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       appointment_reminders: {
         Row: {
           appointment_id: string
@@ -411,6 +444,7 @@ export type Database = {
           show_map: boolean
           suspended_at: string | null
           verify_bookings: boolean
+          review_url: string | null
         }
         Insert: {
           address?: string | null
@@ -452,6 +486,7 @@ export type Database = {
           show_map?: boolean
           suspended_at?: string | null
           verify_bookings?: boolean
+          review_url?: string | null
         }
         Update: {
           address?: string | null
@@ -493,6 +528,7 @@ export type Database = {
           show_map?: boolean
           suspended_at?: string | null
           verify_bookings?: boolean
+          review_url?: string | null
         }
         Relationships: []
       }

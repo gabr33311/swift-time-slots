@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as EliminarContaRouteImport } from './routes/eliminar-conta'
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as TermosRouteImport } from './routes/termos'
@@ -35,6 +36,7 @@ import { Route as ApiSlugRouteImport } from './routes/api/slug'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as BookingTokenRouteImport } from './routes/booking.$token'
 import { Route as ApiAccountDeleteRouteImport } from './routes/api/account/delete'
+import { Route as ApiAppointmentsCancelledRouteImport } from './routes/api/appointments/cancelled'
 import { Route as ApiAppointmentsConfirmedRouteImport } from './routes/api/appointments/confirmed'
 import { Route as ApiAppointmentsMovedRouteImport } from './routes/api/appointments/moved'
 import { Route as ApiBillingCheckoutRouteImport } from './routes/api/billing/checkout'
@@ -62,6 +64,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EliminarContaRoute = EliminarContaRouteImport.update({
+  id: '/eliminar-conta',
+  path: '/eliminar-conta',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacidadeRoute = PrivacidadeRouteImport.update({
@@ -176,6 +183,12 @@ const ApiAccountDeleteRoute = ApiAccountDeleteRouteImport.update({
   path: '/api/account/delete',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAppointmentsCancelledRoute =
+  ApiAppointmentsCancelledRouteImport.update({
+    id: '/api/appointments/cancelled',
+    path: '/api/appointments/cancelled',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAppointmentsConfirmedRoute =
   ApiAppointmentsConfirmedRouteImport.update({
     id: '/api/appointments/confirmed',
@@ -227,6 +240,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
+  '/eliminar-conta': typeof EliminarContaRoute
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
@@ -249,6 +263,7 @@ export interface FileRoutesByFullPath {
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
+  '/api/appointments/cancelled': typeof ApiAppointmentsCancelledRoute
   '/api/appointments/confirmed': typeof ApiAppointmentsConfirmedRoute
   '/api/appointments/moved': typeof ApiAppointmentsMovedRoute
   '/api/billing/checkout': typeof ApiBillingCheckoutRoute
@@ -263,6 +278,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
+  '/eliminar-conta': typeof EliminarContaRoute
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
@@ -285,6 +301,7 @@ export interface FileRoutesByTo {
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
+  '/api/appointments/cancelled': typeof ApiAppointmentsCancelledRoute
   '/api/appointments/confirmed': typeof ApiAppointmentsConfirmedRoute
   '/api/appointments/moved': typeof ApiAppointmentsMovedRoute
   '/api/billing/checkout': typeof ApiBillingCheckoutRoute
@@ -301,6 +318,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
+  '/eliminar-conta': typeof EliminarContaRoute
   '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
@@ -323,6 +341,7 @@ export interface FileRoutesById {
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
   '/api/account/delete': typeof ApiAccountDeleteRoute
+  '/api/appointments/cancelled': typeof ApiAppointmentsCancelledRoute
   '/api/appointments/confirmed': typeof ApiAppointmentsConfirmedRoute
   '/api/appointments/moved': typeof ApiAppointmentsMovedRoute
   '/api/billing/checkout': typeof ApiBillingCheckoutRoute
@@ -339,6 +358,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$slug'
     | '/auth'
+    | '/eliminar-conta'
     | '/privacidade'
     | '/reset-password'
     | '/termos'
@@ -361,6 +381,7 @@ export interface FileRouteTypes {
     | '/book/$slug'
     | '/booking/$token'
     | '/api/account/delete'
+    | '/api/appointments/cancelled'
     | '/api/appointments/confirmed'
     | '/api/appointments/moved'
     | '/api/billing/checkout'
@@ -375,6 +396,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$slug'
     | '/auth'
+    | '/eliminar-conta'
     | '/privacidade'
     | '/reset-password'
     | '/termos'
@@ -397,6 +419,7 @@ export interface FileRouteTypes {
     | '/book/$slug'
     | '/booking/$token'
     | '/api/account/delete'
+    | '/api/appointments/cancelled'
     | '/api/appointments/confirmed'
     | '/api/appointments/moved'
     | '/api/billing/checkout'
@@ -412,6 +435,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/$slug'
     | '/auth'
+    | '/eliminar-conta'
     | '/privacidade'
     | '/reset-password'
     | '/termos'
@@ -434,6 +458,7 @@ export interface FileRouteTypes {
     | '/book/$slug'
     | '/booking/$token'
     | '/api/account/delete'
+    | '/api/appointments/cancelled'
     | '/api/appointments/confirmed'
     | '/api/appointments/moved'
     | '/api/billing/checkout'
@@ -450,6 +475,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   SlugRoute: typeof SlugRoute
   AuthRoute: typeof AuthRoute
+  EliminarContaRoute: typeof EliminarContaRoute
   PrivacidadeRoute: typeof PrivacidadeRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermosRoute: typeof TermosRoute
@@ -457,6 +483,7 @@ export interface RootRouteChildren {
   BookSlugRoute: typeof BookSlugRoute
   BookingTokenRoute: typeof BookingTokenRoute
   ApiAccountDeleteRoute: typeof ApiAccountDeleteRoute
+  ApiAppointmentsCancelledRoute: typeof ApiAppointmentsCancelledRoute
   ApiAppointmentsConfirmedRoute: typeof ApiAppointmentsConfirmedRoute
   ApiAppointmentsMovedRoute: typeof ApiAppointmentsMovedRoute
   ApiBillingCheckoutRoute: typeof ApiBillingCheckoutRoute
@@ -496,6 +523,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/eliminar-conta': {
+      id: '/eliminar-conta'
+      path: '/eliminar-conta'
+      fullPath: '/eliminar-conta'
+      preLoaderRoute: typeof EliminarContaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacidade': {
@@ -652,6 +686,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAccountDeleteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/appointments/cancelled': {
+      id: '/api/appointments/cancelled'
+      path: '/api/appointments/cancelled'
+      fullPath: '/api/appointments/cancelled'
+      preLoaderRoute: typeof ApiAppointmentsCancelledRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/appointments/confirmed': {
       id: '/api/appointments/confirmed'
       path: '/api/appointments/confirmed'
@@ -762,6 +803,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   SlugRoute: SlugRoute,
   AuthRoute: AuthRoute,
+  EliminarContaRoute: EliminarContaRoute,
   PrivacidadeRoute: PrivacidadeRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TermosRoute: TermosRoute,
@@ -769,6 +811,7 @@ const rootRouteChildren: RootRouteChildren = {
   BookSlugRoute: BookSlugRoute,
   BookingTokenRoute: BookingTokenRoute,
   ApiAccountDeleteRoute: ApiAccountDeleteRoute,
+  ApiAppointmentsCancelledRoute: ApiAppointmentsCancelledRoute,
   ApiAppointmentsConfirmedRoute: ApiAppointmentsConfirmedRoute,
   ApiAppointmentsMovedRoute: ApiAppointmentsMovedRoute,
   ApiBillingCheckoutRoute: ApiBillingCheckoutRoute,

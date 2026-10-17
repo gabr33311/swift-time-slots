@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { onOpenAppointmentRequest } from "@/lib/native";
 import { useNavigate } from "@tanstack/react-router";
 import { useHasPro } from "@/hooks/use-subscription";
+import { useMoney } from "@/hooks/use-money-hidden";
 import {
   Ban,
   BellRing,
@@ -194,6 +195,7 @@ function AppointmentSheetBody({
     onClose,
   );
   const phone = appt.customer_phone ? normalizePhonePt(appt.customer_phone) : null;
+  const money = useMoney();
   const end = appt.ends_at ? ` – ${formatTime(appt.ends_at, tz)}` : "";
   const minutes = appt.ends_at
     ? Math.round((new Date(appt.ends_at).getTime() - new Date(appt.starts_at).getTime()) / 60000)
@@ -292,7 +294,7 @@ function AppointmentSheetBody({
         {appt.price_cents != null && (
           <InfoRow icon={<span className="text-xs font-bold">€</span>} label={t("sheet.price")}>
             <span className="tabular-nums">
-              {formatPrice(appt.price_cents, business?.currency ?? "EUR")}
+              {money(appt.price_cents, business?.currency ?? "EUR")}
             </span>
           </InfoRow>
         )}
@@ -502,6 +504,7 @@ function CustomerSheet({
   const { data, isLoading } = useCustomerCard(id);
   const hasPro = useHasPro();
   const navigate = useNavigate();
+  const money = useMoney();
   const [editing, setEditing] = useState(false);
   const [booking, setBooking] = useState(false);
   const tz = business?.timezone ?? "Europe/Lisbon";
@@ -613,7 +616,7 @@ function CustomerSheet({
             <div className="grid grid-cols-3 divide-x divide-border rounded-2xl border border-border bg-card">
               {[
                 [t("ccard.visits"), String(visits)],
-                [t("ccard.spent"), formatPrice(spent, currency)],
+                [t("ccard.spent"), money(spent, currency)],
                 [t("ccard.noShows"), String(noShows)],
               ].map(([label, value]) => (
                 <div key={label} className="px-3 py-3 text-center">
@@ -645,6 +648,19 @@ function CustomerSheet({
                 </span>
                 <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
               </button>
+            )}
+
+            {/* Two or more no-shows: offer to block, in one tap. */}
+            {noShows >= 2 && !data.customer.is_blocked && (
+              <div className="flex items-center gap-3 rounded-2xl border border-st-noshow/30 bg-st-noshow/8 p-3.5">
+                <Ban className="size-4 shrink-0 text-st-noshow-fg" />
+                <p className="min-w-0 flex-1 text-sm font-semibold">
+                  {t("cust.noShowHint").replace("{n}", String(noShows))}
+                </p>
+                <Button size="sm" variant="outline" onClick={() => void toggleBlock()}>
+                  {t("cust.noShowBlock")}
+                </Button>
+              </div>
             )}
 
             {data.customer.notes?.trim() && (

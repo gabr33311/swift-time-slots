@@ -472,7 +472,11 @@ function useManageSummary(): Partial<Record<SectionId, RowStatus>> {
   } else out.hours = { text: t("mg.noHours"), warn: true };
   const manual = active.some((s) => s.requires_confirmation);
   out.rules = {
-    text: `${manual ? t("mg.rules.manual") : t("mg.rules.auto")} · ${t("mg.rules.cancel").replace("{h}", String(business.cancellation_hours))}`,
+    text: [
+      manual ? t("mg.rules.manual") : t("mg.rules.auto"),
+      t("mg.rules.cancel").replace("{h}", String(business.cancellation_hours)),
+      ...(business.verify_bookings ? [t("mg.rules.code")] : []),
+    ].join(" · "),
   };
   return out;
 }

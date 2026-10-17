@@ -2,6 +2,8 @@ import type { BaseLang } from "../prefs-types";
 
 export const customersDict: Record<BaseLang, Record<string, string>> = {
   pt: {
+    "cust.noShowHint": "Faltou {n} vezes sem avisar. Queres bloquear este cliente?",
+    "cust.noShowBlock": "Bloquear",
     "cust.meta.title": "Clientes — SYCRAS",
     "cust.meta.desc": "A tua base de clientes, com histórico e contactos.",
     "cust.title": "Clientes",
@@ -68,6 +70,8 @@ export const customersDict: Record<BaseLang, Record<string, string>> = {
     "cust.wait.toast.updateError": "Não foi possível atualizar.",
   },
   en: {
+    "cust.noShowHint": "Missed {n} bookings without notice. Block this client?",
+    "cust.noShowBlock": "Block",
     "cust.meta.title": "Customers — SYCRAS",
     "cust.meta.desc": "Your customer base, with history and contacts.",
     "cust.title": "Customers",

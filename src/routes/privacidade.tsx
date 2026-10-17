@@ -61,6 +61,10 @@ function PrivacyPage() {
             aceitares) e a localização do telemóvel, apenas quando carregas em &quot;Usar a minha
             localização&quot; para marcar a loja no mapa.
           </li>
+          <li>
+            Registos de erros da app (o ecrã e a mensagem do erro, sem conteúdo das marcações), para
+            corrigirmos falhas. São apagados ao fim de 90 dias.
+          </li>
         </ul>
         <p>
           <strong>Clientes que fazem marcações:</strong>
@@ -167,6 +171,10 @@ function PrivacyPage() {
             obrigue a guardar (por exemplo, registos de faturação).
           </li>
           <li>Registos técnicos de segurança: o tempo necessário para prevenir abusos.</li>
+          <li>
+            Códigos de confirmação enviados por email antes de uma marcação: válidos 10 minutos e
+            apagados no dia seguinte.
+          </li>
         </ul>
       </section>
 
@@ -185,6 +193,14 @@ function PrivacyPage() {
           Tens direito a aceder aos teus dados, corrigi-los, apagá-los, limitar ou opor-te ao seu
           tratamento e recebê-los num formato portátil. Para exercer estes direitos, contacta{" "}
           <ContactEmail />.
+        </p>
+        <p>
+          Podes eliminar a tua conta e todos os dados do teu negócio a qualquer momento, sozinho,
+          nas Definições da app ou do site.{" "}
+          <Link to="/eliminar-conta" className="font-semibold text-brand-ink underline">
+            Ver como eliminar a conta
+          </Link>
+          .
         </p>
         <p>
           Se és cliente de um negócio que usa a SYCRAS, podes também pedir diretamente ao negócio,
