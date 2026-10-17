@@ -132,3 +132,20 @@ describe("page links", () => {
     expect(isReservedSlug("barbearia-lisboa")).toBe(false);
   });
 });
+
+describe("map tiles (OpenStreetMap card)", () => {
+  it("puts the point at the right place on the world map", async () => {
+    const { worldPixel, tileGrid, directionsUrl } = await import("./map-tiles");
+    expect(worldPixel(0, 0, 0)).toEqual({ x: 128, y: 128 });
+    const grid = tileGrid(38.7223, -9.1393, 16);
+    expect(grid.tiles).toHaveLength(15);
+    // The pin falls inside the middle tile of the grid.
+    expect(grid.pin.x).toBeGreaterThanOrEqual(2 * 256);
+    expect(grid.pin.x).toBeLessThan(3 * 256);
+    expect(grid.pin.y).toBeGreaterThanOrEqual(256);
+    expect(grid.pin.y).toBeLessThan(2 * 256);
+    expect(directionsUrl(38.7, -9.1)).toBe(
+      "https://www.google.com/maps/dir/?api=1&destination=38.7,-9.1",
+    );
+  });
+});

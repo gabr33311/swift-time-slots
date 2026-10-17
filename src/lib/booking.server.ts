@@ -6,6 +6,7 @@ import {
   timeToMinutes,
   todayIn,
 } from "./time";
+import { directionsUrl } from "./map-tiles";
 
 export type PublicBusiness = {
   id: string;
@@ -36,47 +37,25 @@ export type PublicBusiness = {
   show_map: boolean;
   /** Clients confirm their email with a code before the booking is made. */
   verify_bookings: boolean;
-  /** The shop on a Google map (light and dark images), when the owner shows the map. */
-  map: { light: string; dark: string; directions: string; label: string } | null;
+  /** The shop's map card (OpenStreetMap), when the owner shows the map and placed the pin. */
+  map: { lat: number; lng: number; directions: string; label: string } | null;
 };
 
-/** Night look for the static map, matching the dark theme. */
-const DARK_MAP_STYLE = [
-  "element:geometry|color:0x1d1d1f",
-  "element:labels.text.fill|color:0x9a9a9f",
-  "element:labels.text.stroke|color:0x1d1d1f",
-  "feature:road|element:geometry|color:0x2c2c2e",
-  "feature:poi|element:geometry|color:0x232325",
-  "feature:water|element:geometry|color:0x0e1626",
-]
-  .map((s) => `&style=${encodeURIComponent(s)}`)
-  .join("");
-
-/**
- * Google Maps Static image of the shop and a link to the route there (opens
- * the Google Maps app on phones). Needs GOOGLE_MAPS_API_KEY on the server.
- */
+/** Where the shop is on the map, and the route there (no map service key needed). */
 function shopMap(b: {
   latitude: number | null;
   longitude: number | null;
   address: string | null;
   city: string | null;
-  brand_color: string;
   show_map: boolean;
 }): PublicBusiness["map"] {
-  const key = process.env["GOOGLE_MAPS_API_KEY"];
-  if (!key || b.show_map === false) return null;
+  if (b.show_map === false || b.latitude == null || b.longitude == null) return null;
   const place = [b.address, b.city].filter(Boolean).join(", ");
-  const hasPin = b.latitude != null && b.longitude != null;
-  if (!hasPin && !place) return null;
-  const center = hasPin ? `${b.latitude},${b.longitude}` : place;
-  const pin = (b.brand_color || "#0a6cf0").replace("#", "0x");
-  const base = `https://maps.googleapis.com/maps/api/staticmap?size=640x260&scale=2&zoom=16&center=${encodeURIComponent(center)}&markers=${encodeURIComponent(`color:${pin}|${center}`)}&key=${key}`;
   return {
-    light: base,
-    dark: base + DARK_MAP_STYLE,
-    directions: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(center)}`,
-    label: place || `${Number(b.latitude).toFixed(5)}, ${Number(b.longitude).toFixed(5)}`,
+    lat: b.latitude,
+    lng: b.longitude,
+    directions: directionsUrl(b.latitude, b.longitude),
+    label: place || `${b.latitude.toFixed(5)}, ${b.longitude.toFixed(5)}`,
   };
 }
 

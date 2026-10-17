@@ -28,6 +28,7 @@ import { addMonthsClamped, todayIn, zonedToUtc, weekdayOf } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { useBrandColor } from "@/lib/brand";
 import { mapsUrl } from "@/lib/maps";
+import { TILE_SIZE, tileGrid } from "@/lib/map-tiles";
 import {
   ArrowLeft,
   CalendarDays,
@@ -1019,12 +1020,11 @@ function BusinessHero({
           aria-label={`${t("bk.map.go")}: ${map.label}`}
           className="relative mt-3 block h-32 overflow-hidden rounded-2xl border border-border bg-muted transition-transform active:scale-[0.99] sm:h-36"
         >
-          <img
-            src={theme === "dark" ? map.dark : map.light}
-            alt=""
-            loading="lazy"
-            className="size-full object-cover"
-          />
+          <ShopMapTiles lat={map.lat} lng={map.lng} dark={theme === "dark"} />
+          {/* Required by the OpenStreetMap licence. */}
+          <span className="absolute right-1.5 top-1.5 rounded bg-black/45 px-1.5 py-0.5 text-[9px] font-medium text-white/85">
+            © OpenStreetMap
+          </span>
           <span className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-black/55 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur-sm">
             <MapPin className="size-3 shrink-0" />
             <span className="min-w-0 flex-1 truncate">{map.label}</span>
@@ -1060,6 +1060,51 @@ function BusinessHero({
         </div>
       )}
     </header>
+  );
+}
+
+/**
+ * The shop on an OpenStreetMap map: a few map tiles around the pin, no
+ * library and no key. Dark theme: the same map, inverted to a night look.
+ */
+function ShopMapTiles({ lat, lng, dark }: { lat: number; lng: number; dark: boolean }) {
+  const grid = useMemo(() => tileGrid(lat, lng, 16), [lat, lng]);
+  return (
+    <>
+      <div
+        aria-hidden
+        className={cn("absolute left-1/2 top-1/2", dark && "map-dark-tiles")}
+        style={{
+          width: grid.width,
+          height: grid.height,
+          transform: `translate(${-grid.pin.x}px, ${-grid.pin.y}px)`,
+        }}
+      >
+        {grid.tiles.map((tile) => (
+          <img
+            key={tile.key}
+            src={tile.src}
+            alt=""
+            loading="lazy"
+            draggable={false}
+            className="absolute max-w-none select-none"
+            style={{ left: tile.left, top: tile.top, width: TILE_SIZE, height: TILE_SIZE }}
+          />
+        ))}
+      </div>
+      {/* The pin, in the business colour, with its tip on the shop. */}
+      <svg
+        aria-hidden
+        viewBox="0 0 24 32"
+        className="absolute left-1/2 top-1/2 h-9 w-7 -translate-x-1/2 -translate-y-full drop-shadow-md"
+      >
+        <path
+          d="M12 0C5.4 0 0 5.2 0 11.7 0 20.4 12 32 12 32s12-11.6 12-20.3C24 5.2 18.6 0 12 0Z"
+          fill="var(--brand)"
+        />
+        <circle cx="12" cy="11.5" r="4.5" fill="#fff" />
+      </svg>
+    </>
   );
 }
 

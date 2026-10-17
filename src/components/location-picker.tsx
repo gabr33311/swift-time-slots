@@ -58,7 +58,7 @@ export function LocationPicker({
   onAddress?: (address?: string, city?: string) => void;
   initialQuery?: string;
 }) {
-  const { t } = usePrefs();
+  const { t, theme } = usePrefs();
   const box = useRef<HTMLDivElement>(null);
   const map = useRef<LeafletMap | null>(null);
   const marker = useRef<Marker | null>(null);
@@ -222,7 +222,7 @@ export function LocationPicker({
       {/* isolate: Leaflet's own layers never cover sticky headers or bars. */}
       <div
         ref={box}
-        className="relative isolate z-0 h-60 overflow-hidden rounded-xl border border-border bg-muted"
+        className={`relative isolate z-0 h-60 overflow-hidden rounded-xl border border-border bg-muted ${theme === "dark" ? "map-dark" : ""}`}
       />
       <p className="text-xs text-muted-foreground">
         {value ? t("loc.set") : t("loc.hint")}{" "}

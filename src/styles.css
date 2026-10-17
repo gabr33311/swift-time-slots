@@ -953,3 +953,13 @@ select,
 .min-h-dvh {
   min-height: calc(100dvh - var(--sat));
 }
+
+/* OpenStreetMap in the dark theme: the normal map inverted to a night look. */
+@utility map-dark-tiles {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9) saturate(0.6);
+}
+
+/* The owner's map picker (Leaflet): only the map tiles go dark, not the pin. */
+.map-dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9) saturate(0.6);
+}
