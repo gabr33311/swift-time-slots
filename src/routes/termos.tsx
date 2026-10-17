@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ContactEmail, Entity, LegalPage } from "@/components/legal-page";
-import { LEGAL } from "@/lib/legal";
 import { TRIAL_DAYS } from "@/lib/subscription";
 
 export const Route = createFileRoute("/termos")({
@@ -12,7 +11,9 @@ export const Route = createFileRoute("/termos")({
         content: "As regras de utilização da SYCRAS, do período experimental e da subscrição.",
       },
       // Not indexed until the responsible entity is filled in.
-      ...(LEGAL.ready ? [] : [{ name: "robots", content: "noindex" }]),
+      // Always reachable (footer, app, Google Play) but kept out of search results,
+      // so the provider details (NIF) are not found by searching.
+      { name: "robots", content: "noindex" },
     ],
   }),
   component: TermsPage,
@@ -35,7 +36,7 @@ function TermsPage() {
       <section>
         <h2>1. Quem presta o serviço</h2>
         <p>
-          A SYCRAS é disponibilizada por <Entity />. Contacto: <ContactEmail />.
+          A SYCRAS é disponibilizada por <Entity withNif />. Contacto: <ContactEmail />.
         </p>
       </section>
 

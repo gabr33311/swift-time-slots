@@ -14,12 +14,15 @@ export function Fill({ value, label }: { value: string | null; label: string }) 
   );
 }
 
-/** The responsible entity, as one line (NIF and address only when given). */
-export function Entity() {
+/**
+ * The responsible entity, as one line. The NIF only where the law asks for it
+ * (the provider identification in the Terms), never by default.
+ */
+export function Entity({ withNif = false }: { withNif?: boolean }) {
   return (
     <>
       <Fill value={LEGAL.entity} label="nome do responsável" />
-      {LEGAL.nif ? `, NIF ${LEGAL.nif}` : ""}
+      {withNif && LEGAL.nif ? `, NIF ${LEGAL.nif}` : ""}
       {LEGAL.address ? `, com morada em ${LEGAL.address}` : ""}
     </>
   );

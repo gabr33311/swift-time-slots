@@ -8,7 +8,7 @@ export const LEGAL = {
   /** Full name (sole trader) or company name, e.g. "SYCRAS, Unipessoal Lda". */
   entity: "Gabriel Pinto" as string | null,
   /** NIF / NIPC. */
-  nif: null as string | null,
+  nif: "259866024" as string | null,
   /** Registered (fiscal) address. */
   address: null as string | null,
   /** Contact for legal and privacy requests. */
