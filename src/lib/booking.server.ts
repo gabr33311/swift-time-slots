@@ -37,6 +37,8 @@ export type PublicBusiness = {
   show_map: boolean;
   /** Clients confirm their email with a code before the booking is made. */
   verify_bookings: boolean;
+  /** The example page from the homepage: bookings are never saved. */
+  is_demo: boolean;
   /** The shop's map card (OpenStreetMap), when the owner shows the map and placed the pin. */
   map: { lat: number; lng: number; directions: string; label: string } | null;
 };
@@ -80,7 +82,7 @@ export type PublicStaff = {
 };
 
 const BUSINESS_FIELDS =
-  "id, slug, name, description, business_type, address, city, phone, email, website, instagram, logo_url, cover_url, brand_color, timezone, currency, cancellation_hours, slot_interval_minutes, seo_indexable, show_team, show_contacts, booking_horizon_months, latitude, longitude, show_map, verify_bookings";
+  "id, slug, name, description, business_type, address, city, phone, email, website, instagram, logo_url, cover_url, brand_color, timezone, currency, cancellation_hours, slot_interval_minutes, seo_indexable, show_team, show_contacts, booking_horizon_months, latitude, longitude, show_map, verify_bookings, is_demo";
 
 async function admin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

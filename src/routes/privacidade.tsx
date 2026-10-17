@@ -185,6 +185,10 @@ function PrivacyPage() {
           o necessário para a app funcionar: a sessão iniciada e preferências como o tema, o idioma
           e a cor da app.
         </p>
+        <p>
+          Para sabermos que páginas são visitadas, usamos estatísticas anónimas do Vercel Web
+          Analytics: não usam cookies, não identificam pessoas e não seguem ninguém entre sites.
+        </p>
       </section>
 
       <section>

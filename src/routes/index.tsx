@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import {
+  ArrowRight,
   CalendarCheck,
   Check,
   Clock,
@@ -47,6 +48,8 @@ export const Route = createFileRoute("/")({
 });
 
 const REGISTER = { mode: "register", next: undefined } as const;
+/** The demo business (see supabase/migrations/20261017140000_demo_page.sql). */
+const DEMO_SLUG = "exemplo";
 /** Inside the old Android shell, "install the app" makes no sense (checked after load: SSR-safe). */
 function useInNativeShell(): boolean {
   const [native, setNative] = useState(false);
@@ -205,7 +208,14 @@ function Landing() {
               </p>
             </>
           )}
-          <p className="mt-5 text-[13px] font-semibold text-muted-foreground">
+          <Link
+            to="/$slug"
+            params={{ slug: DEMO_SLUG }}
+            className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-brand-ink underline-offset-4 hover:underline"
+          >
+            {t("home.demo")} <ArrowRight className="size-4" />
+          </Link>
+          <p className="mt-4 text-[13px] font-semibold text-muted-foreground">
             {t("home.reassure")}
           </p>
         </section>
@@ -292,14 +302,12 @@ function Landing() {
                 pro
                 name="SYCRAS Pro"
                 desc={t("home.pricing.desc")}
-                price={t("sub.pro.price")}
-                suffix={t("sub.price.suffix")}
-                badge={t("sub.trialBadge")}
+                price={t("home.pricing.free")}
+                after={t("home.pricing.after")}
+                note={t("home.pricing.value")}
+                badge={t("home.pricing.noCard")}
                 features={PLAN_FEATURES.map(t)}
               />
-              <p className="mt-3 text-center text-sm text-muted-foreground">
-                {t("home.pricing.yearly")}
-              </p>
             </div>
           </div>
         </section>
@@ -322,34 +330,6 @@ function Landing() {
               </AccordionItem>
             ))}
           </Accordion>
-        </section>
-
-        {/* Banner final */}
-        <section className="px-4 pb-16 sm:px-6 sm:pb-24">
-          <div className="mx-auto max-w-5xl rounded-[2rem] bg-foreground px-6 py-14 text-center text-background sm:py-20">
-            <h2 className="text-balance-tight text-3xl font-bold tracking-[-0.035em] sm:text-5xl">
-              {t("home.final.title")}
-            </h2>
-            <p className="mx-auto mt-4 max-w-md text-base font-medium opacity-70">
-              {t("home.final.body")}
-            </p>
-            <div className="mx-auto mt-8 flex max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
-              <Link
-                to="/auth"
-                search={REGISTER}
-                className="flex h-12 items-center justify-center rounded-full bg-background px-7 text-base font-bold text-foreground transition-opacity hover:opacity-90"
-              >
-                {t("home.cta.create")}
-              </Link>
-              <Link
-                to="/auth"
-                search={SIGN_IN}
-                className="flex h-12 items-center justify-center rounded-full border border-background/25 px-7 text-base font-bold transition-colors hover:bg-background/10"
-              >
-                {t("home.cta.have")}
-              </Link>
-            </div>
-          </div>
         </section>
       </main>
 
@@ -499,11 +479,17 @@ function PlanCard({
   badge,
   features,
   pro,
+  after,
+  note,
 }: {
   name: string;
   desc: string;
   price: string;
   suffix?: string;
+  /** Under the big line, smaller (e.g. what it costs after the free month). */
+  after?: string;
+  /** A short line after the features (the value, in the owner's words). */
+  note?: string;
   badge?: string;
   features: string[];
   pro?: boolean;
@@ -531,6 +517,7 @@ function PlanCard({
           <span className="ml-1 text-base font-semibold text-muted-foreground">{suffix}</span>
         )}
       </p>
+      {after && <p className="mt-1.5 text-sm font-medium text-muted-foreground">{after}</p>}
       <ul className="mt-6 flex-1 space-y-2.5">
         {features.map((f) => (
           <li key={f} className="flex items-start gap-2.5 text-sm font-medium">
@@ -539,6 +526,11 @@ function PlanCard({
           </li>
         ))}
       </ul>
+      {note && (
+        <p className="mt-6 rounded-xl bg-muted px-4 py-3 text-center text-sm font-semibold">
+          {note}
+        </p>
+      )}
       <Button asChild size="lg" variant={pro ? "default" : "outline"} className="mt-7">
         <Link to="/auth" search={REGISTER}>
           {t(pro ? "home.cta.start" : "home.cta.create")}

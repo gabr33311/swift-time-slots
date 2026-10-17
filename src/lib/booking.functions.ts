@@ -122,7 +122,7 @@ export const createPublicBooking = createServerFn({ method: "POST" })
     // A business whose plan is locked takes no online bookings.
     const { data: owner } = await supabaseAdmin
       .from("businesses")
-      .select("created_at, name, verify_bookings, suspended_at")
+      .select("created_at, name, verify_bookings, suspended_at, is_demo")
       .eq("id", data.businessId)
       .maybeSingle();
     const { businessAllowed } = await import("@/lib/billing.server");
@@ -135,6 +135,16 @@ export const createPublicBooking = createServerFn({ method: "POST" })
         ok: false as const,
         code: "unavailable",
         message: "Este negócio não está a aceitar marcações online de momento.",
+      };
+    }
+
+    // The example page: everything works up to here, but nothing is saved.
+    if (owner.is_demo) {
+      return {
+        ok: false as const,
+        code: "demo",
+        message:
+          "Esta é uma página de exemplo: as marcações não são guardadas. Cria a tua página para receber marcações reais.",
       };
     }
 

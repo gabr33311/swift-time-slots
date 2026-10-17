@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Analytics } from "@vercel/analytics/react";
 import {
   Outlet,
   Link,
@@ -117,6 +118,8 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         {children}
+        {/* Anonymous visit counts (no cookies, nobody identified), to see what brings sign-ups. */}
+        <Analytics />
         <Scripts />
       </body>
     </html>

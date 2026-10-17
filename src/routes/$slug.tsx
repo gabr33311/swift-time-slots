@@ -39,6 +39,7 @@ import {
   Loader2,
   Instagram,
   MapPin,
+  Sparkles,
   Navigation,
   Phone,
   Users,
@@ -386,6 +387,20 @@ function BookPage() {
       </aside>
 
       <div className="flex min-w-0 flex-col">
+        {/* The example page from the homepage: say so, and offer the real thing. */}
+        {business.is_demo && (
+          <div className="mb-4 flex items-center gap-2 rounded-xl border border-border bg-muted/60 px-3 py-2.5 text-xs font-semibold">
+            <Sparkles className="size-3.5 shrink-0 text-brand-ink" />
+            <span className="min-w-0 flex-1">{t("bk.demo.banner")}</span>
+            <Link
+              to="/auth"
+              search={{ mode: "register", next: undefined }}
+              className="shrink-0 font-bold text-brand-ink hover:underline"
+            >
+              {t("bk.demo.cta")}
+            </Link>
+          </div>
+        )}
         {safeIdx === 0 ? (
           <div className="lg:hidden">
             <BusinessHero
