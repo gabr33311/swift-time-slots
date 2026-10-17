@@ -992,4 +992,5 @@ export const ptBR: Record<string, string> = {
   "app.prompt.body": "Feito para o celular: mais rápido, com aviso de cada novo agendamento.",
   "app.prompt.install": "Instalar o app",
   "app.prompt.browser": "Continuar no navegador",
+  "bk.map.go": "Como chegar",
 };

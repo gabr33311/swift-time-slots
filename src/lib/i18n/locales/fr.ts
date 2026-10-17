@@ -1005,4 +1005,5 @@ export const fr: Record<string, string> = {
     "Faite pour le téléphone : plus rapide, avec une alerte à chaque nouvelle réservation.",
   "app.prompt.install": "Installer l'app",
   "app.prompt.browser": "Continuer dans le navigateur",
+  "bk.map.go": "Itinéraire",
 };

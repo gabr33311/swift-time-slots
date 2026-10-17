@@ -996,4 +996,5 @@ export const it: Record<string, string> = {
     "Fatta per il telefono: più veloce, con un avviso per ogni nuova prenotazione.",
   "app.prompt.install": "Installa l'app",
   "app.prompt.browser": "Continua nel browser",
+  "bk.map.go": "Indicazioni",
 };

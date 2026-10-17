@@ -38,6 +38,7 @@ import {
   Loader2,
   Instagram,
   MapPin,
+  Navigation,
   Phone,
   Users,
 } from "lucide-react";
@@ -411,7 +412,7 @@ function BookPage() {
 
         {/* Where the client is in the flow, at a glance. */}
         <div
-          className="mt-6 flex gap-1.5 lg:mt-2"
+          className="mt-4 flex gap-1.5 lg:mt-2"
           role="progressbar"
           aria-valuemin={1}
           aria-valuemax={stepKeys.length}
@@ -957,11 +958,14 @@ function BusinessHero({
   coverClass?: string;
   onCard?: boolean;
 }) {
-  const { t } = usePrefs();
+  const { t, theme } = usePrefs();
   const place = [business.address, business.city].filter(Boolean).join(", ");
   const insta = business.instagram?.replace(/^@/, "").trim();
   const contacts = business.show_contacts;
-  const mapHref = business.show_map === false ? null : mapsUrl({ ...business, address: place });
+  const map = business.map;
+  // With the map card the separate "Map" chip is not needed.
+  const mapHref =
+    business.show_map === false || map ? null : mapsUrl({ ...business, address: place });
   return (
     <header className="animate-enter">
       {business.cover_url ? (
@@ -1002,9 +1006,34 @@ function BusinessHero({
         </div>
       )}
       {business.description && (
-        <p className="mt-4 line-clamp-3 text-[15px] leading-relaxed text-muted-foreground">
+        <p className="mt-3 line-clamp-3 text-[15px] leading-relaxed text-muted-foreground">
           {business.description}
         </p>
+      )}
+      {map && (
+        // The whole card opens the route in Google Maps (the app, on phones).
+        <a
+          href={map.directions}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`${t("bk.map.go")}: ${map.label}`}
+          className="relative mt-3 block h-32 overflow-hidden rounded-2xl border border-border bg-muted transition-transform active:scale-[0.99] sm:h-36"
+        >
+          <img
+            src={theme === "dark" ? map.dark : map.light}
+            alt=""
+            loading="lazy"
+            className="size-full object-cover"
+          />
+          <span className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-black/55 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur-sm">
+            <MapPin className="size-3 shrink-0" />
+            <span className="min-w-0 flex-1 truncate">{map.label}</span>
+            <span className="inline-flex shrink-0 items-center gap-1 font-bold">
+              {t("bk.map.go")}
+              <Navigation className="size-3" />
+            </span>
+          </span>
+        </a>
       )}
       {contacts && (business.phone || insta || mapHref) && (
         <div className="mt-4 flex flex-wrap gap-2">

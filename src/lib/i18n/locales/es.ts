@@ -990,4 +990,5 @@ export const es: Record<string, string> = {
   "app.prompt.body": "Hecha para el móvil: más rápida y con aviso de cada nueva reserva.",
   "app.prompt.install": "Instalar la app",
   "app.prompt.browser": "Continuar en el navegador",
+  "bk.map.go": "Cómo llegar",
 };

@@ -1003,4 +1003,5 @@ export const de: Record<string, string> = {
     "Fürs Handy gemacht: schneller, mit einer Benachrichtigung bei jeder neuen Buchung.",
   "app.prompt.install": "App installieren",
   "app.prompt.browser": "Im Browser fortfahren",
+  "bk.map.go": "Route",
 };
