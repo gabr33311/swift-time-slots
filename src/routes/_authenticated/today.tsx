@@ -326,33 +326,29 @@ function FocusCard({
     <button
       type="button"
       onClick={() => onOpen(row.id)}
-      // The day's hero: intense blue, white text, a soft glow of the same colour.
-      className="relative block w-full overflow-hidden rounded-[var(--radius-2xl)] bg-brand bg-[linear-gradient(140deg,var(--brand),color-mix(in_oklch,var(--brand)_70%,#38a3ff))] p-5 text-left text-brand-foreground transition-transform active:scale-[0.99]"
+      // The day's hero, compact: flat app colour, time / who / what on one line.
+      className="block w-full overflow-hidden rounded-[var(--radius-2xl)] bg-brand px-4 py-3.5 text-left text-brand-foreground transition-transform active:scale-[0.99]"
     >
-      <span
-        aria-hidden
-        className="pointer-events-none absolute -right-10 -top-12 size-44 rounded-full bg-white/10"
-      />
-      <div className="relative flex items-center justify-between gap-3">
-        <span className="text-xs font-bold uppercase tracking-[0.08em] opacity-80">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-[11px] font-bold uppercase tracking-[0.08em] opacity-80">
           {current ? t("today.now") : t("today.next")}
         </span>
-        <span className="rounded-full bg-white/20 px-2.5 py-1 text-xs font-bold backdrop-blur-sm">
-          {when}
+        <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-bold">{when}</span>
+      </div>
+      <div className="mt-2 flex items-center gap-3">
+        <span className="font-display text-[28px] font-bold tabular-nums leading-none">
+          {formatTime(row.starts_at, tz)}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-base font-bold leading-tight">
+            {displayCustomerName(row.customer_name)}
+          </span>
+          <span className="block truncate text-[13px] opacity-85">
+            {row.service_name}
+            {row.ends_at ? ` · ${formatTime(row.ends_at, tz)}` : ""}
+          </span>
         </span>
       </div>
-      <p className="relative mt-4 font-display text-4xl font-bold tabular-nums leading-none">
-        {formatTime(row.starts_at, tz)}
-        {row.ends_at && (
-          <span className="ml-2 text-lg font-semibold opacity-75">
-            – {formatTime(row.ends_at, tz)}
-          </span>
-        )}
-      </p>
-      <p className="relative mt-3 truncate text-lg font-bold">
-        {displayCustomerName(row.customer_name)}
-      </p>
-      <p className="relative truncate text-sm opacity-85">{row.service_name}</p>
     </button>
   );
 }
