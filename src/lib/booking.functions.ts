@@ -28,6 +28,11 @@ const bookingSchema = z.object({
     .transform(canonicalPhone),
   email: z.string().trim().email().max(160),
   notes: z.string().trim().max(500).optional().default(""),
+  /** The 6-digit code emailed to the client, when the business asks for it. */
+  code: z
+    .string()
+    .regex(/^d{6}$/)
+    .optional(),
 });
 
 const tokenSchema = z.object({ token: z.string().trim().length(48) });
@@ -50,6 +55,14 @@ export const getPublicBusiness = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { loadPublicBusiness } = await import("./booking.server");
     return await loadPublicBusiness(data.slug);
+  });
+
+/** Whether a missing page is only paused by its owner (not gone). */
+export const isPagePaused = createServerFn({ method: "GET" })
+  .validator((d: unknown) => slugSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { pageIsPaused } = await import("./booking.server");
+    return await pageIsPaused(data.slug.toLowerCase());
   });
 
 export const checkSlugAvailable = createServerFn({ method: "GET" })
@@ -84,8 +97,15 @@ export const getAvailableSlots = createServerFn({ method: "GET" })
 export const createPublicBooking = createServerFn({ method: "POST" })
   .validator((d: unknown) => bookingSchema.parse(d))
   .handler(async ({ data }) => {
-    const { computeSlots, makeToken, hashIp, rateLimitExceeded, logSecurityEvent } =
-      await import("./booking.server");
+    const {
+      computeSlots,
+      makeToken,
+      hashIp,
+      rateLimitExceeded,
+      logSecurityEvent,
+      issueBookingCode,
+      checkBookingCode,
+    } = await import("./booking.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const ipHash = await hashIp(clientIp());
@@ -102,11 +122,15 @@ export const createPublicBooking = createServerFn({ method: "POST" })
     // A business whose plan is locked takes no online bookings.
     const { data: owner } = await supabaseAdmin
       .from("businesses")
-      .select("created_at")
+      .select("created_at, name, verify_bookings, suspended_at")
       .eq("id", data.businessId)
       .maybeSingle();
     const { businessAllowed } = await import("@/lib/billing.server");
-    if (!owner || !(await businessAllowed(data.businessId, owner.created_at))) {
+    if (
+      !owner ||
+      owner.suspended_at ||
+      !(await businessAllowed(data.businessId, owner.created_at))
+    ) {
       return {
         ok: false as const,
         code: "unavailable",
@@ -138,15 +162,18 @@ export const createPublicBooking = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!service) return { ok: false as const, code: "invalid", message: "Serviço indisponível." };
 
-    // Find or create the customer for this business only.
-    let customerId: string | null = null;
-    const { data: existing } = await supabaseAdmin
+    // Blocked by the business: by phone or by email (another number does not get round it).
+    const { data: blockedRows } = await supabaseAdmin
       .from("customers")
-      .select("id, is_blocked")
+      .select("id")
       .eq("business_id", data.businessId)
-      .eq("phone", data.phone)
-      .maybeSingle();
-    if (existing?.is_blocked) {
+      .eq("is_blocked", true)
+      // ilike = same email whatever the capitals; % _ \ are escaped so they match literally.
+      .or(
+        `phone.eq."${data.phone}",email.ilike."${data.email.replace(/[\\%_"]/g, (m) => "\\" + m)}"`,
+      )
+      .limit(1);
+    if (blockedRows?.length) {
       await logSecurityEvent("blocked_customer", ipHash, data.phone, data.businessId);
       return {
         ok: false as const,
@@ -154,6 +181,46 @@ export const createPublicBooking = createServerFn({ method: "POST" })
         message: "Não foi possível concluir a marcação. Contacta directamente o negócio.",
       };
     }
+
+    // The business asks for a code: email it first, book once the client types it.
+    if (owner.verify_bookings) {
+      if (!data.code) {
+        const sent = await issueBookingCode(data.businessId, owner.name, data.email);
+        if (!sent) {
+          return {
+            ok: false as const,
+            code: "code_failed",
+            message: "Não foi possível enviar o código. Confirma o email e tenta novamente.",
+          };
+        }
+        return {
+          ok: false as const,
+          code: "needs_code",
+          message: `Enviámos um código para ${data.email}.`,
+        };
+      }
+      const check = await checkBookingCode(data.businessId, data.email, data.code);
+      if (check !== "ok") {
+        await logSecurityEvent("booking_code_failed", ipHash, data.phone, data.businessId);
+        return {
+          ok: false as const,
+          code: check === "wrong" ? "bad_code" : "code_expired",
+          message:
+            check === "wrong"
+              ? "Código errado. Verifica o email e tenta novamente."
+              : "O código expirou. Pede um novo.",
+        };
+      }
+    }
+
+    // Find or create the customer for this business only.
+    let customerId: string | null = null;
+    const { data: existing } = await supabaseAdmin
+      .from("customers")
+      .select("id")
+      .eq("business_id", data.businessId)
+      .eq("phone", data.phone)
+      .maybeSingle();
     if (existing) {
       // Same phone = same person: keep one record and refresh name/email.
       customerId = existing.id;

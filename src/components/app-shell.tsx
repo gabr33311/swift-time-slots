@@ -10,7 +10,8 @@ import { useLogoUrl } from "@/hooks/use-logo";
 import { usePrefs } from "@/lib/prefs";
 import { ShareSheet } from "@/components/share-sheet";
 import { NewAppointmentDialog } from "@/components/new-appointment-dialog";
-import { Paywall, SubscriptionBanner } from "@/components/subscription-alerts";
+import { Paywall, SubscriptionBanner, SuspendedBanner } from "@/components/subscription-alerts";
+import { AppPrompt } from "@/components/app-prompt";
 import { useSubscription } from "@/hooks/use-subscription";
 import { SycrasLogo } from "@/components/sycras-logo";
 import { useBrandColor } from "@/lib/brand";
@@ -244,6 +245,8 @@ export function AppShell({
 
       <div className="lg:pl-64">
         <main className="animate-enter mx-auto w-full max-w-5xl px-4 pb-[calc(5.75rem+var(--sab))] pt-6 sm:px-5 lg:pb-12">
+          <AppPrompt />
+          <SuspendedBanner />
           <SubscriptionBanner />
           {/* Trial over without a subscription: only plans and settings stay open. */}
           {locked ? <Paywall /> : children}

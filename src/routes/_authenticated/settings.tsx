@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SubPage } from "@/components/sub-page";
 import { SettingsPanel } from "@/components/panels/settings-panel";
+import { AccountPanel } from "@/components/panels/account-panel";
 import { usePrefs } from "@/lib/prefs";
 
 // Account settings and the plan, opened from the gear on Manage.
@@ -20,6 +21,7 @@ function SettingsPage() {
   return (
     <SubPage title={t("pf.s.settings")} back="/profile">
       <SettingsPanel />
+      <AccountPanel />
     </SubPage>
   );
 }

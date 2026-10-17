@@ -279,6 +279,36 @@ export type Database = {
           },
         ]
       }
+      booking_codes: {
+        Row: {
+          attempts: number
+          business_id: string
+          code_hash: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+        }
+        Insert: {
+          attempts?: number
+          business_id: string
+          code_hash: string
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+        }
+        Update: {
+          attempts?: number
+          business_id?: string
+          code_hash?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       booking_tokens: {
         Row: {
           appointment_id: string
@@ -377,6 +407,10 @@ export type Database = {
           timezone: string
           updated_at: string
           website: string | null
+          min_notice_minutes: number
+          show_map: boolean
+          suspended_at: string | null
+          verify_bookings: boolean
         }
         Insert: {
           address?: string | null
@@ -414,6 +448,10 @@ export type Database = {
           timezone?: string
           updated_at?: string
           website?: string | null
+          min_notice_minutes?: number
+          show_map?: boolean
+          suspended_at?: string | null
+          verify_bookings?: boolean
         }
         Update: {
           address?: string | null
@@ -451,6 +489,10 @@ export type Database = {
           timezone?: string
           updated_at?: string
           website?: string | null
+          min_notice_minutes?: number
+          show_map?: boolean
+          suspended_at?: string | null
+          verify_bookings?: boolean
         }
         Relationships: []
       }

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   CalendarCheck,
   Check,
@@ -22,6 +22,7 @@ import { SycrasLogo } from "@/components/sycras-logo";
 import { usePrefs } from "@/lib/prefs";
 import { cn } from "@/lib/utils";
 import { LegalLinks } from "@/components/legal-page";
+import { APP_ON_PLAY, inNativeShell, PLAY_STORE_URL } from "@/lib/app-store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -46,6 +47,24 @@ export const Route = createFileRoute("/")({
 });
 
 const REGISTER = { mode: "register", next: undefined } as const;
+/** Inside the old Android shell, "install the app" makes no sense (checked after load: SSR-safe). */
+function useInNativeShell(): boolean {
+  const [native, setNative] = useState(false);
+  useEffect(() => setNative(inNativeShell()), []);
+  return native;
+}
+
+/** The Google Play mark (the coloured triangle), drawn inline. */
+function PlayMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 26" className={className} aria-hidden>
+      <path d="M1.2.6 13.6 13 1.2 25.4A2 2 0 0 1 .5 23.9V2.1A2 2 0 0 1 1.2.6Z" fill="#00d7fe" />
+      <path d="m17.8 8.8-4.2 4.2 4.2 4.2 4.8-2.7c1.3-.8 1.3-2.2 0-3Z" fill="#ffce00" />
+      <path d="M13.6 13 1.2 25.4c.5.5 1.3.5 2.1.1l14.5-8.3Z" fill="#ff3a44" />
+      <path d="M13.6 13 17.8 8.8 3.3.5C2.5 0 1.7.1 1.2.6Z" fill="#00f076" />
+    </svg>
+  );
+}
 const SIGN_IN = { mode: undefined, next: undefined } as const;
 
 const FEATURES = [
@@ -83,6 +102,7 @@ const PLAN_FEATURES = [
 
 function Landing() {
   const { t } = usePrefs();
+  const inApp = useInNativeShell();
 
   return (
     <div className="min-h-screen">
@@ -141,18 +161,50 @@ function Landing() {
           <p className="mx-auto mt-6 max-w-xl text-base font-medium leading-relaxed text-muted-foreground sm:text-lg">
             {t("home.subtitle")}
           </p>
-          <div className="mx-auto mt-8 flex max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
-            <Button asChild size="lg" variant="brand">
-              <Link to="/auth" search={REGISTER}>
-                {t("home.cta.create")}
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link to="/auth" search={SIGN_IN}>
-                {t("home.cta.have")}
-              </Link>
-            </Button>
-          </div>
+          {/* Until the app is on Google Play, the usual "create / sign in". */}
+          {inApp || !APP_ON_PLAY ? (
+            <div className="mx-auto mt-8 flex max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
+              <Button asChild size="lg" variant="brand">
+                <Link to="/auth" search={REGISTER}>
+                  {t("home.cta.create")}
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline">
+                <Link to="/auth" search={SIGN_IN}>
+                  {t("home.cta.have")}
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            // The website points to the phone app first: it is the best experience.
+            <>
+              <div className="mx-auto mt-8 flex max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
+                <a
+                  href={PLAY_STORE_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={t("home.cta.play")}
+                  className="inline-flex h-12 items-center justify-center gap-3 rounded-xl bg-foreground px-5 text-background shadow-sm transition-transform active:scale-[0.98] sm:min-w-56"
+                >
+                  <PlayMark className="size-6" />
+                  <span className="text-left leading-tight">
+                    <span className="block text-[10px] font-semibold uppercase tracking-wider opacity-80">
+                      {t("home.cta.playSmall")}
+                    </span>
+                    <span className="block text-base font-bold">Google Play</span>
+                  </span>
+                </a>
+                <Button asChild size="lg" variant="outline" className="h-12 sm:min-w-56">
+                  <Link to="/auth" search={SIGN_IN}>
+                    {t("home.cta.online")}
+                  </Link>
+                </Button>
+              </div>
+              <p className="mt-3 text-[13px] font-medium text-muted-foreground">
+                {t("home.cta.appHint")}
+              </p>
+            </>
+          )}
           <p className="mt-5 text-[13px] font-semibold text-muted-foreground">
             {t("home.reassure")}
           </p>

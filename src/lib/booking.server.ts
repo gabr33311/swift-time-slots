@@ -32,6 +32,10 @@ export type PublicBusiness = {
   booking_horizon_months: number;
   latitude: number | null;
   longitude: number | null;
+  /** The owner can hide the map link. */
+  show_map: boolean;
+  /** Clients confirm their email with a code before the booking is made. */
+  verify_bookings: boolean;
 };
 
 export type PublicService = {
@@ -55,7 +59,7 @@ export type PublicStaff = {
 };
 
 const BUSINESS_FIELDS =
-  "id, slug, name, description, business_type, address, city, phone, email, website, instagram, logo_url, cover_url, brand_color, timezone, currency, cancellation_hours, slot_interval_minutes, seo_indexable, show_team, show_contacts, booking_horizon_months, latitude, longitude";
+  "id, slug, name, description, business_type, address, city, phone, email, website, instagram, logo_url, cover_url, brand_color, timezone, currency, cancellation_hours, slot_interval_minutes, seo_indexable, show_team, show_contacts, booking_horizon_months, latitude, longitude, show_map, verify_bookings";
 
 async function admin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -110,6 +114,8 @@ export async function loadPublicBusiness(slug: string): Promise<{
     .eq("slug", slug)
     .eq("is_published", true)
     .is("deleted_at", null)
+    // A suspended account has no public page.
+    .is("suspended_at", null)
     .maybeSingle();
   if (!business) return null;
 
@@ -217,11 +223,12 @@ export async function computeSlots(params: {
   const { data: business } = await db
     .from("businesses")
     .select(
-      "id, timezone, slot_interval_minutes, is_published, deleted_at, booking_horizon_months, created_at",
+      "id, timezone, slot_interval_minutes, is_published, deleted_at, booking_horizon_months, created_at, min_notice_minutes, suspended_at",
     )
     .eq("id", params.businessId)
     .maybeSingle();
-  if (!business || !business.is_published || business.deleted_at) return [];
+  if (!business || !business.is_published || business.deleted_at || business.suspended_at)
+    return [];
   // Trial over and no subscription: no online bookings until the owner subscribes.
   const { businessAllowed } = await import("@/lib/billing.server");
   if (!(await businessAllowed(business.id, business.created_at))) return [];
@@ -318,7 +325,8 @@ export async function computeSlots(params: {
   const step = Math.max(5, business.slot_interval_minutes || 15);
   const total = service.duration_minutes + service.buffer_minutes;
   const now = Date.now();
-  const leadMs = 30 * 60 * 1000;
+  // Minimum notice chosen by the owner (how long before a slot it can still be booked).
+  const leadMs = (business.min_notice_minutes ?? 30) * 60 * 1000;
 
   const found = new Map<string, SlotOption>();
 
@@ -405,6 +413,101 @@ export async function logSecurityEvent(
     identifier,
     business_id: businessId,
   });
+}
+
+async function hashCode(businessId: string, email: string, code: string): Promise<string> {
+  const data = new TextEncoder().encode(`code:${businessId}:${email}:${code}`);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+const CODE_TTL_MS = 10 * 60 * 1000;
+
+/**
+ * Emails a 6-digit code the client must type to finish the booking. A code
+ * sent in the last 30 seconds is reused (no flood of emails). False when the
+ * email could not be sent.
+ */
+export async function issueBookingCode(
+  businessId: string,
+  businessName: string,
+  email: string,
+): Promise<boolean> {
+  const db = await admin();
+  const to = email.trim().toLowerCase();
+  const { data: recent } = await db
+    .from("booking_codes")
+    .select("id")
+    .eq("business_id", businessId)
+    .eq("email", to)
+    .gte("created_at", new Date(Date.now() - 30_000).toISOString())
+    .limit(1);
+  if (recent?.length) return true;
+
+  const bytes = new Uint32Array(1);
+  crypto.getRandomValues(bytes);
+  const code = String(bytes[0]! % 1_000_000).padStart(6, "0");
+  // A new code replaces the old ones for this email.
+  await db.from("booking_codes").delete().eq("business_id", businessId).eq("email", to);
+  await db.from("booking_codes").insert({
+    business_id: businessId,
+    email: to,
+    code_hash: await hashCode(businessId, to, code),
+    expires_at: new Date(Date.now() + CODE_TTL_MS).toISOString(),
+  });
+  try {
+    const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+    const res = await sendTemplateEmail("booking-code", to, {
+      templateData: { code, businessName },
+    });
+    return res.sent;
+  } catch (e) {
+    console.error("[booking] code email failed", e);
+    return false;
+  }
+}
+
+/** Checks the code the client typed (5 tries per code, valid 10 minutes). */
+export async function checkBookingCode(
+  businessId: string,
+  email: string,
+  code: string,
+): Promise<"ok" | "wrong" | "expired"> {
+  const db = await admin();
+  const to = email.trim().toLowerCase();
+  const { data: row } = await db
+    .from("booking_codes")
+    .select("id, code_hash, attempts, expires_at")
+    .eq("business_id", businessId)
+    .eq("email", to)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!row || new Date(row.expires_at).getTime() < Date.now() || row.attempts >= 5) {
+    return "expired";
+  }
+  if (row.code_hash !== (await hashCode(businessId, to, code))) {
+    await db
+      .from("booking_codes")
+      .update({ attempts: row.attempts + 1 })
+      .eq("id", row.id);
+    return "wrong";
+  }
+  await db.from("booking_codes").delete().eq("id", row.id);
+  return "ok";
+}
+
+/** True when this page exists but its owner suspended the account (shown as "temporarily unavailable"). */
+export async function pageIsPaused(slug: string): Promise<boolean> {
+  const db = await admin();
+  const { data } = await db
+    .from("businesses")
+    .select("id")
+    .eq("slug", slug)
+    .is("deleted_at", null)
+    .not("suspended_at", "is", null)
+    .maybeSingle();
+  return !!data;
 }
 
 export async function slugTaken(slug: string): Promise<boolean> {

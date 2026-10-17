@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { SaveBar } from "@/components/save-bar";
 import { useMyBusiness } from "@/hooks/use-business";
+import { ProLock } from "@/components/pro-lock";
+import { useHasPro } from "@/hooks/use-subscription";
 import { usePrefs } from "@/lib/prefs";
 import { cn } from "@/lib/utils";
 import { brandColors } from "@/lib/brand";
@@ -33,6 +35,7 @@ export function RemindersPanel() {
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
   const sendTest = useServerFn(sendTestReminder);
+  const hasPro = useHasPro();
 
   // Draft values, saved together with the save bar.
   const [hours, setHours] = useState(24);
@@ -176,6 +179,8 @@ export function RemindersPanel() {
 
   return (
     <div className="space-y-4">
+      {/* Reminders only go out with paid Pro (not in the free trial). */}
+      {hasPro === false && <ProLock text={t("rm.locked")} />}
       <section className="surface divide-y divide-border">
         <div className="flex items-center justify-between gap-4 p-5">
           <div className="flex items-start gap-3">

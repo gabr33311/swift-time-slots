@@ -63,11 +63,14 @@ export function SettingsPanel() {
             ? t("sub.menu.ended")
             : "";
 
-  async function toggle(field: "is_published" | "seo_indexable", value: boolean) {
+  // Taking the page offline lives in Account → Suspend (one control, not two).
+  async function toggle(field: "seo_indexable", value: boolean) {
     if (!business) return;
     setBusy(true);
-    const patch = field === "is_published" ? { is_published: value } : { seo_indexable: value };
-    const { error } = await supabase.from("businesses").update(patch).eq("id", business.id);
+    const { error } = await supabase
+      .from("businesses")
+      .update({ [field]: value })
+      .eq("id", business.id);
     setBusy(false);
     if (error) {
       toast.error(t("pf.common.saveError"));
@@ -118,13 +121,6 @@ export function SettingsPanel() {
           <Bell /> {t("push.test")}
         </Button>
       </div>
-      <Row
-        title={t("pf.set.published")}
-        description={t("pf.set.published.desc")}
-        checked={business?.is_published ?? false}
-        disabled={busy}
-        onChange={(v) => toggle("is_published", v)}
-      />
       <Row
         title={t("pf.set.google")}
         description={t("pf.set.google.desc")}

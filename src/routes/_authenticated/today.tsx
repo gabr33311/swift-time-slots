@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   ArrowRight,
-  BarChart3,
   BellRing,
   Check,
   ChevronRight,
+  Eye,
+  EyeOff,
   Loader2,
   Sparkles,
   UserX,
@@ -17,6 +18,7 @@ import { AppShell } from "@/components/app-shell";
 import { ErrorState, LoadingRows, PageHeader, StatusBadge } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
+import { HIDDEN_MONEY, useMoneyHidden } from "@/hooks/use-money-hidden";
 import { useAppointmentSheet } from "@/lib/appointment-sheet-context";
 import { invalidateAppointmentData, setAppointmentStatus } from "@/lib/appointment-status";
 import {
@@ -27,7 +29,7 @@ import {
   greetingPt,
 } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
-import { addDays, todayIn, weekdayOf, zonedToUtc } from "@/lib/time";
+import { todayIn, zonedToUtc } from "@/lib/time";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/today")({
@@ -71,7 +73,6 @@ function TodayPage() {
     enabled: !!business,
     queryFn: async () => {
       const day = todayIn(tz);
-      const weekStart = addDays(day, -((weekdayOf(day) + 6) % 7));
       const fields =
         "id, starts_at, ends_at, customer_name, service_name, price_cents, status, staff_id";
       const results = await Promise.all([
@@ -101,21 +102,14 @@ function TodayPage() {
           .gte("starts_at", new Date(Date.now() - 30 * 86400000).toISOString())
           .order("starts_at", { ascending: false })
           .limit(20),
-        supabase
-          .from("appointments")
-          .select("price_cents, status")
-          .eq("business_id", business!.id)
-          .gte("starts_at", zonedToUtc(weekStart, 0, tz).toISOString())
-          .lt("starts_at", zonedToUtc(addDays(weekStart, 7), 0, tz).toISOString()),
       ]);
       const failed = results.find((r) => r.error);
       if (failed) throw failed.error;
-      const [day0, pending, overdue, week] = results;
+      const [day0, pending, overdue] = results;
       return {
         day: (day0.data ?? []) as Row[],
         pending: (pending.data ?? []) as Row[],
         overdue: (overdue.data ?? []) as Row[],
-        week: (week.data ?? []) as { price_cents: number | null; status: Row["status"] }[],
       };
     },
   });
@@ -139,14 +133,18 @@ function TodayPage() {
   const expected = liveDay
     .filter((r) => r.status !== "no_show")
     .reduce((s, r) => s + (r.price_cents ?? 0), 0);
-  const weekLive = (data?.week ?? []).filter(
-    (r) => r.status !== "cancelled" && r.status !== "expired" && r.status !== "no_show",
-  );
   const currency = business?.currency ?? "EUR";
 
   return (
     <AppShell>
-      <PageHeader title={greetingPt(new Date(now), lang)} />
+      <PageHeader
+        title={greetingPt(new Date(now), lang)}
+        action={
+          business && data ? (
+            <DayPill total={liveDay.length} done={doneCount} money={expected} currency={currency} />
+          ) : undefined
+        }
+      />
       <p className="-mt-2 mb-5 text-sm font-medium text-muted-foreground first-letter:uppercase">
         {formatDateLong(new Date(now).toISOString(), tz)}
       </p>
@@ -168,16 +166,6 @@ function TodayPage() {
             />
 
             <NeedsYou items={needs} tz={tz} onOpen={openAppointment} />
-
-            <DaySummary
-              total={liveDay.length}
-              done={doneCount}
-              money={expected}
-              earned={liveDay.length > 0 && doneCount === liveDay.length}
-              weekCount={weekLive.length}
-              weekMoney={weekLive.reduce((s, r) => s + (r.price_cents ?? 0), 0)}
-              currency={currency}
-            />
 
             {day.length > 0 && (
               <section className="surface p-0">
@@ -229,93 +217,66 @@ function TodayPage() {
   );
 }
 
-/** The day in numbers: money in big, a progress ring, and the week below. Opens the stats. */
-function DaySummary({
+/**
+ * The day in one small pill next to the title: money (can be hidden) and how
+ * many are done. Tapping it opens the statistics.
+ */
+function DayPill({
   total,
   done,
   money,
-  earned,
-  weekCount,
-  weekMoney,
   currency,
 }: {
   total: number;
   done: number;
   money: number;
-  earned: boolean;
-  weekCount: number;
-  weekMoney: number;
   currency: string;
 }) {
   const { t } = usePrefs();
+  const [hidden, setHidden] = useMoneyHidden();
   const pct = total ? done / total : 0;
-  const r = 26;
+  const r = 6.5;
   const len = 2 * Math.PI * r;
   return (
-    <Link
-      to="/analytics"
-      className="surface group relative block overflow-hidden p-0 transition-transform active:scale-[0.99]"
-    >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,color-mix(in_oklab,var(--brand)_16%,transparent),transparent_60%)]"
-      />
-      <div className="relative flex items-center gap-4 p-5">
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
-            {t("today.day")}
-          </p>
-          <p className="mt-1 font-display text-4xl font-bold tabular-nums tracking-tight">
-            {formatPrice(money, currency)}
-          </p>
-          <p className="mt-0.5 text-sm font-semibold text-muted-foreground">
-            {t(earned ? "today.earned" : "today.revenue")} ·{" "}
-            {t(total === 1 ? "today.apptsOne" : "today.apptsMany").replace("{n}", String(total))}
-          </p>
-        </div>
-        {/* Done of today's appointments. */}
-        <div className="relative size-[68px] shrink-0">
-          <svg viewBox="0 0 64 64" className="size-full -rotate-90">
-            <circle cx="32" cy="32" r={r} fill="none" strokeWidth="7" className="stroke-muted" />
-            <circle
-              cx="32"
-              cy="32"
-              r={r}
-              fill="none"
-              strokeWidth="7"
-              strokeLinecap="round"
-              stroke="var(--brand)"
-              strokeDasharray={len}
-              strokeDashoffset={len * (1 - pct)}
-              className="transition-[stroke-dashoffset] duration-700"
-            />
-          </svg>
-          <span className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="font-display text-base font-bold tabular-nums leading-none">
-              {done}/{total}
-            </span>
-            <span className="text-[10px] font-semibold text-muted-foreground">
-              {t("today.done")}
-            </span>
-          </span>
-        </div>
-      </div>
-      <div className="relative flex items-center gap-3 border-t border-border px-5 py-3">
-        <BarChart3 className="size-4 shrink-0 text-brand-ink" />
-        <span className="min-w-0 flex-1 truncate text-sm font-semibold">
-          {t("today.week")}:{" "}
-          <span className="text-muted-foreground">
-            {t("today.weekBody")
-              .replace("{n}", String(weekCount))
-              .replace("{revenue}", formatPrice(weekMoney, currency))}
-          </span>
+    <div className="flex h-10 items-center rounded-full border border-border bg-card pl-1 pr-1 shadow-sm">
+      <button
+        type="button"
+        onClick={() => setHidden(!hidden)}
+        aria-label={hidden ? t("money.show") : t("money.hide")}
+        title={hidden ? t("money.show") : t("money.hide")}
+        className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      >
+        {hidden ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+      </button>
+      <Link
+        to="/analytics"
+        aria-label={t("pf.s.analytics")}
+        className="flex h-8 items-center gap-2 rounded-full pl-1 pr-2.5 transition-colors hover:bg-muted"
+      >
+        <span className="font-display text-sm font-bold tabular-nums">
+          {hidden ? HIDDEN_MONEY : formatPrice(money, currency)}
         </span>
-        <ChevronRight
-          aria-label={t("pf.s.analytics")}
-          className="size-4 shrink-0 text-brand-ink transition-transform group-hover:translate-x-0.5"
-        />
-      </div>
-    </Link>
+        <span aria-hidden className="h-4 w-px bg-border" />
+        <svg viewBox="0 0 16 16" className="size-4 -rotate-90" aria-hidden>
+          <circle cx="8" cy="8" r={r} fill="none" strokeWidth="2.5" className="stroke-muted" />
+          <circle
+            cx="8"
+            cy="8"
+            r={r}
+            fill="none"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            stroke="var(--brand)"
+            strokeDasharray={len}
+            strokeDashoffset={len * (1 - pct)}
+            className="transition-[stroke-dashoffset] duration-700"
+          />
+        </svg>
+        <span className="text-xs font-bold tabular-nums text-muted-foreground">
+          {done}/{total}
+        </span>
+      </Link>
+    </div>
   );
 }
 

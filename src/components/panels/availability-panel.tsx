@@ -687,6 +687,15 @@ function ApprovalSetting() {
   );
 }
 
+/** Minimum notice choices, in minutes. */
+const NOTICE_OPTIONS = [0, 30, 60, 120, 180, 360, 720, 1440, 2880];
+
+function noticeLabel(minutes: number, none: string): string {
+  if (minutes === 0) return none;
+  if (minutes < 60) return `${minutes} min`;
+  return `${minutes / 60} h`;
+}
+
 function BookingRules() {
   const { business } = useMyBusiness();
   const { t } = usePrefs();
@@ -695,6 +704,8 @@ function BookingRules() {
   const [interval, setIntervalMin] = useState("15");
   const [horizon, setHorizon] = useState("2");
   const [autoComplete, setAutoComplete] = useState(false);
+  const [notice, setNotice] = useState(30);
+  const [verify, setVerify] = useState(false);
   const [rulesBusy, setBusy] = useState(false);
 
   function resetRules() {
@@ -703,22 +714,20 @@ function BookingRules() {
     setIntervalMin(String(business.slot_interval_minutes));
     setHorizon(String(business.booking_horizon_months ?? 2));
     setAutoComplete(business.auto_complete ?? false);
+    setNotice(business.min_notice_minutes ?? 30);
+    setVerify(business.verify_bookings ?? false);
   }
 
-  useEffect(() => {
-    if (!business) return;
-    setCancellation(String(business.cancellation_hours));
-    setIntervalMin(String(business.slot_interval_minutes));
-    setHorizon(String(business.booking_horizon_months ?? 2));
-    setAutoComplete(business.auto_complete ?? false);
-  }, [business]);
+  useEffect(resetRules, [business]);
 
   const rulesDirty =
     !!business &&
     (cancellation !== String(business.cancellation_hours) ||
       interval !== String(business.slot_interval_minutes) ||
       horizon !== String(business.booking_horizon_months ?? 2) ||
-      autoComplete !== (business.auto_complete ?? false));
+      autoComplete !== (business.auto_complete ?? false) ||
+      notice !== (business.min_notice_minutes ?? 30) ||
+      verify !== (business.verify_bookings ?? false));
 
   async function save() {
     if (!business) return;
@@ -750,6 +759,8 @@ function BookingRules() {
         ...(autoComplete !== (business.auto_complete ?? false)
           ? { auto_complete: autoComplete }
           : {}),
+        ...(notice !== (business.min_notice_minutes ?? 30) ? { min_notice_minutes: notice } : {}),
+        ...(verify !== (business.verify_bookings ?? false) ? { verify_bookings: verify } : {}),
       })
       .eq("id", business.id);
     setBusy(false);
@@ -799,6 +810,24 @@ function BookingRules() {
           />
           <p className="text-xs text-muted-foreground">{t("pf.av.horizon.hint")}</p>
         </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="avmn" className="font-semibold">
+            {t("pf.av.notice")}
+          </Label>
+          <select
+            id="avmn"
+            value={notice}
+            onChange={(e) => setNotice(Number(e.target.value))}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {NOTICE_OPTIONS.map((m) => (
+              <option key={m} value={m}>
+                {noticeLabel(m, t("pf.av.notice.none"))}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">{t("pf.av.notice.hint")}</p>
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-4 rounded-xl border border-border p-4">
@@ -811,6 +840,14 @@ function BookingRules() {
           onCheckedChange={setAutoComplete}
           aria-label={t("pf.av.autoComplete")}
         />
+      </div>
+
+      <div className="flex items-center justify-between gap-4 rounded-xl border border-border p-4">
+        <div>
+          <p className="text-sm font-bold">{t("pf.av.verify")}</p>
+          <p className="text-sm text-muted-foreground">{t("pf.av.verify.desc")}</p>
+        </div>
+        <Switch checked={verify} onCheckedChange={setVerify} aria-label={t("pf.av.verify")} />
       </div>
 
       <SaveBar

@@ -34,6 +34,8 @@ import { Route as AuthenticatedWaitlistRouteImport } from './routes/_authenticat
 import { Route as ApiSlugRouteImport } from './routes/api/slug'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as BookingTokenRouteImport } from './routes/booking.$token'
+import { Route as ApiAccountDeleteRouteImport } from './routes/api/account/delete'
+import { Route as ApiAppointmentsConfirmedRouteImport } from './routes/api/appointments/confirmed'
 import { Route as ApiAppointmentsMovedRouteImport } from './routes/api/appointments/moved'
 import { Route as ApiBillingCheckoutRouteImport } from './routes/api/billing/checkout'
 import { Route as ApiBillingReturnRouteImport } from './routes/api/billing/return'
@@ -169,6 +171,17 @@ const BookingTokenRoute = BookingTokenRouteImport.update({
   path: '/booking/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAccountDeleteRoute = ApiAccountDeleteRouteImport.update({
+  id: '/api/account/delete',
+  path: '/api/account/delete',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAppointmentsConfirmedRoute =
+  ApiAppointmentsConfirmedRouteImport.update({
+    id: '/api/appointments/confirmed',
+    path: '/api/appointments/confirmed',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAppointmentsMovedRoute = ApiAppointmentsMovedRouteImport.update({
   id: '/api/appointments/moved',
   path: '/api/appointments/moved',
@@ -235,6 +248,8 @@ export interface FileRoutesByFullPath {
   '/api/slug': typeof ApiSlugRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
+  '/api/account/delete': typeof ApiAccountDeleteRoute
+  '/api/appointments/confirmed': typeof ApiAppointmentsConfirmedRoute
   '/api/appointments/moved': typeof ApiAppointmentsMovedRoute
   '/api/billing/checkout': typeof ApiBillingCheckoutRoute
   '/api/billing/return': typeof ApiBillingReturnRoute
@@ -269,6 +284,8 @@ export interface FileRoutesByTo {
   '/api/slug': typeof ApiSlugRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
+  '/api/account/delete': typeof ApiAccountDeleteRoute
+  '/api/appointments/confirmed': typeof ApiAppointmentsConfirmedRoute
   '/api/appointments/moved': typeof ApiAppointmentsMovedRoute
   '/api/billing/checkout': typeof ApiBillingCheckoutRoute
   '/api/billing/return': typeof ApiBillingReturnRoute
@@ -305,6 +322,8 @@ export interface FileRoutesById {
   '/api/slug': typeof ApiSlugRoute
   '/book/$slug': typeof BookSlugRoute
   '/booking/$token': typeof BookingTokenRoute
+  '/api/account/delete': typeof ApiAccountDeleteRoute
+  '/api/appointments/confirmed': typeof ApiAppointmentsConfirmedRoute
   '/api/appointments/moved': typeof ApiAppointmentsMovedRoute
   '/api/billing/checkout': typeof ApiBillingCheckoutRoute
   '/api/billing/return': typeof ApiBillingReturnRoute
@@ -341,6 +360,8 @@ export interface FileRouteTypes {
     | '/api/slug'
     | '/book/$slug'
     | '/booking/$token'
+    | '/api/account/delete'
+    | '/api/appointments/confirmed'
     | '/api/appointments/moved'
     | '/api/billing/checkout'
     | '/api/billing/return'
@@ -375,6 +396,8 @@ export interface FileRouteTypes {
     | '/api/slug'
     | '/book/$slug'
     | '/booking/$token'
+    | '/api/account/delete'
+    | '/api/appointments/confirmed'
     | '/api/appointments/moved'
     | '/api/billing/checkout'
     | '/api/billing/return'
@@ -410,6 +433,8 @@ export interface FileRouteTypes {
     | '/api/slug'
     | '/book/$slug'
     | '/booking/$token'
+    | '/api/account/delete'
+    | '/api/appointments/confirmed'
     | '/api/appointments/moved'
     | '/api/billing/checkout'
     | '/api/billing/return'
@@ -431,6 +456,8 @@ export interface RootRouteChildren {
   ApiSlugRoute: typeof ApiSlugRoute
   BookSlugRoute: typeof BookSlugRoute
   BookingTokenRoute: typeof BookingTokenRoute
+  ApiAccountDeleteRoute: typeof ApiAccountDeleteRoute
+  ApiAppointmentsConfirmedRoute: typeof ApiAppointmentsConfirmedRoute
   ApiAppointmentsMovedRoute: typeof ApiAppointmentsMovedRoute
   ApiBillingCheckoutRoute: typeof ApiBillingCheckoutRoute
   ApiBillingReturnRoute: typeof ApiBillingReturnRoute
@@ -618,6 +645,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookingTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/account/delete': {
+      id: '/api/account/delete'
+      path: '/api/account/delete'
+      fullPath: '/api/account/delete'
+      preLoaderRoute: typeof ApiAccountDeleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/appointments/confirmed': {
+      id: '/api/appointments/confirmed'
+      path: '/api/appointments/confirmed'
+      fullPath: '/api/appointments/confirmed'
+      preLoaderRoute: typeof ApiAppointmentsConfirmedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/appointments/moved': {
       id: '/api/appointments/moved'
       path: '/api/appointments/moved'
@@ -727,6 +768,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSlugRoute: ApiSlugRoute,
   BookSlugRoute: BookSlugRoute,
   BookingTokenRoute: BookingTokenRoute,
+  ApiAccountDeleteRoute: ApiAccountDeleteRoute,
+  ApiAppointmentsConfirmedRoute: ApiAppointmentsConfirmedRoute,
   ApiAppointmentsMovedRoute: ApiAppointmentsMovedRoute,
   ApiBillingCheckoutRoute: ApiBillingCheckoutRoute,
   ApiBillingReturnRoute: ApiBillingReturnRoute,

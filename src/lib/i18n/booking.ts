@@ -3,6 +3,9 @@ import type { BaseLang } from "../prefs-types";
 export const bookingDict: Record<BaseLang, Record<string, string>> = {
   pt: {
     "bk.notFound.title": "Página não encontrada",
+    "bk.paused.title": "Temporariamente indisponível",
+    "bk.paused.body":
+      "Este negócio fez uma pausa nas marcações online. Tenta novamente mais tarde.",
     "bk.error.title": "Não foi possível abrir esta página",
     "bk.error.body": "Tenta novamente daqui a pouco.",
     "bk.notFound.body": "Este negócio não existe ou ainda não publicou a página de marcações.",
@@ -65,6 +68,13 @@ export const bookingDict: Record<BaseLang, Record<string, string>> = {
     "bk.field.notesOptional": "Notas (opcional)",
     "bk.booking": "A marcar…",
     "bk.confirmBooking": "Confirmar marcação",
+    "bk.code.label": "Código de confirmação",
+    "bk.code.hint":
+      "Enviámos um código de 6 dígitos para o teu email. Escreve-o aqui para concluir.",
+    "bk.code.resend": "Reenviar código",
+    "bk.code.resent": "Código reenviado.",
+    "bk.code.confirm": "Confirmar código",
+    "bk.code.invalid": "Escreve os 6 dígitos do código.",
     "bk.freeCancellation": "Cancelamento gratuito até ",
     "bk.freeCancellationAfter": "h antes.",
     "bk.createMyPage": "Criar a minha página de marcações",
@@ -139,6 +149,8 @@ export const bookingDict: Record<BaseLang, Record<string, string>> = {
   },
   en: {
     "bk.notFound.title": "Page not found",
+    "bk.paused.title": "Temporarily unavailable",
+    "bk.paused.body": "This business has paused online bookings. Please try again later.",
     "bk.error.title": "We couldn't open this page",
     "bk.error.body": "Please try again shortly.",
     "bk.notFound.body": "This business doesn't exist or hasn't published its booking page yet.",
@@ -202,6 +214,12 @@ export const bookingDict: Record<BaseLang, Record<string, string>> = {
     "bk.field.notesOptional": "Notes (optional)",
     "bk.booking": "Booking…",
     "bk.confirmBooking": "Confirm booking",
+    "bk.code.label": "Confirmation code",
+    "bk.code.hint": "We sent a 6-digit code to your email. Type it here to finish.",
+    "bk.code.resend": "Resend code",
+    "bk.code.resent": "Code sent again.",
+    "bk.code.confirm": "Confirm code",
+    "bk.code.invalid": "Type the 6 digits of the code.",
     "bk.freeCancellation": "Free cancellation up to ",
     "bk.freeCancellationAfter": "h before.",
     "bk.createMyPage": "Create my booking page",

@@ -2,6 +2,8 @@ import { useState, type ReactNode, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { onOpenAppointmentRequest } from "@/lib/native";
+import { useNavigate } from "@tanstack/react-router";
+import { useHasPro } from "@/hooks/use-subscription";
 import {
   Ban,
   BellRing,
@@ -498,6 +500,8 @@ function CustomerSheet({
   const qc = useQueryClient();
   const { business } = useMyBusiness();
   const { data, isLoading } = useCustomerCard(id);
+  const hasPro = useHasPro();
+  const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [booking, setBooking] = useState(false);
   const tz = business?.timezone ?? "Europe/Lisbon";
@@ -521,6 +525,14 @@ function CustomerSheet({
 
   async function toggleBlock() {
     if (!data) return;
+    // Blocking is a paid Pro extra (unblocking always works).
+    if (!data.customer.is_blocked && hasPro === false) {
+      toast(t("sub.locked"), {
+        description: t("sub.only.block"),
+        action: { label: t("sub.locked.cta"), onClick: () => void navigate({ to: "/plans" }) },
+      });
+      return;
+    }
     const { error } = await supabase
       .from("customers")
       .update({ is_blocked: !data.customer.is_blocked })

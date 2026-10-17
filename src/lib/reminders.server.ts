@@ -2,7 +2,7 @@
 import { brandColors } from "@/lib/brand";
 import { mapsUrl } from "@/lib/maps";
 import { renderReminderMessage } from "@/lib/reminder-message";
-import { businessAllowed } from "@/lib/billing.server";
+import { businessHasPro } from "@/lib/billing.server";
 
 type DueRow = {
   id: string;
@@ -21,6 +21,7 @@ type DueRow = {
     latitude: number | null;
     longitude: number | null;
     brand_color: string;
+    show_map: boolean;
     created_at: string;
     reminders_enabled: boolean;
     reminder_hours: number;
@@ -49,7 +50,7 @@ export async function sendDueReminders(): Promise<{ sent: number; skipped: numbe
   const { data, error } = await db
     .from("appointments")
     .select(
-      "id, business_id, customer_name, customer_email, service_name, starts_at, ends_at, created_at, businesses!inner(name, timezone, address, city, latitude, longitude, brand_color, created_at, reminders_enabled, reminder_hours, reminder_message)",
+      "id, business_id, customer_name, customer_email, service_name, starts_at, ends_at, created_at, businesses!inner(name, timezone, address, city, latitude, longitude, brand_color, show_map, created_at, reminders_enabled, reminder_hours, reminder_message)",
     )
     .eq("status", "confirmed")
     .not("customer_email", "is", null)
@@ -72,9 +73,9 @@ export async function sendDueReminders(): Promise<{ sent: number; skipped: numbe
     // Booked inside the window: the confirmation is still fresh, no reminder needed.
     if (new Date(appt.created_at).getTime() > new Date(appt.starts_at).getTime() - window) continue;
 
-    // Reminders are part of the paid plan (or the trial).
+    // Reminders are a Pro extra: paying businesses only (not the free trial).
     if (!allowed.has(appt.business_id)) {
-      allowed.set(appt.business_id, await businessAllowed(appt.business_id, biz.created_at));
+      allowed.set(appt.business_id, await businessHasPro(appt.business_id, biz.created_at));
     }
     if (!allowed.get(appt.business_id)) {
       skipped++;
@@ -128,10 +129,12 @@ export async function sendDueReminders(): Promise<{ sent: number; skipped: numbe
           }),
           address: [biz.address, biz.city].filter(Boolean).join(", ") || undefined,
           mapUrl:
-            mapsUrl({
-              ...biz,
-              address: [biz.address, biz.city].filter(Boolean).join(", "),
-            }) ?? undefined,
+            biz.show_map === false
+              ? undefined
+              : (mapsUrl({
+                  ...biz,
+                  address: [biz.address, biz.city].filter(Boolean).join(", "),
+                }) ?? undefined),
           manageUrl: origin && tokenRow ? `${origin}/booking/${tokenRow.token}` : undefined,
           brandColor: colors.brand,
           brandText: colors.foreground,

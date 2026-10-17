@@ -238,6 +238,17 @@ export async function businessAllowed(businessId: string, createdAt: string): Pr
   return computeAccess(createdAt, (data ?? null) as SubscriptionRow).allowed;
 }
 
+/** Is this business paying? The Pro-only extras (reminders, blocking) need it; the trial does not count. */
+export async function businessHasPro(businessId: string, createdAt: string): Promise<boolean> {
+  const db = await admin();
+  const { data } = await db
+    .from("subscriptions")
+    .select("*")
+    .eq("business_id", businessId)
+    .maybeSingle();
+  return computeAccess(createdAt, (data ?? null) as SubscriptionRow).pro;
+}
+
 /** The parts of a RevenueCat webhook event that matter here. */
 export type StoreEvent = {
   type: string;

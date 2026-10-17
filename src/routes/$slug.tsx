@@ -5,7 +5,12 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { usePrefs } from "@/lib/prefs";
 import { localeOf } from "@/lib/prefs-types";
-import { getPublicBusiness, getAvailableSlots, createPublicBooking } from "@/lib/booking.functions";
+import {
+  getPublicBusiness,
+  getAvailableSlots,
+  createPublicBooking,
+  isPagePaused,
+} from "@/lib/booking.functions";
 import { trackPageView } from "@/lib/analytics.functions";
 import { maskPhonePt } from "@/lib/phone";
 import { isReservedSlug } from "@/lib/reserved-slugs";
@@ -41,7 +46,11 @@ export const Route = createFileRoute("/$slug")({
   loader: async ({ params }) => {
     if (isReservedSlug(params.slug)) throw notFound();
     const data = await getPublicBusiness({ data: { slug: params.slug } });
-    if (!data) throw notFound();
+    if (!data) {
+      // Paused by the owner: say it is temporary, not that the page does not exist.
+      const paused = await isPagePaused({ data: { slug: params.slug } }).catch(() => false);
+      throw notFound(paused ? { data: { paused: true } } : undefined);
+    }
     return data;
   },
   head: ({ loaderData }) => {
@@ -75,7 +84,9 @@ export const Route = createFileRoute("/$slug")({
     };
   },
   errorComponent: () => <ErrorMessage />,
-  notFoundComponent: () => <NotFoundMessage />,
+  notFoundComponent: ({ data }) => (
+    <NotFoundMessage paused={(data as { paused?: boolean } | undefined)?.paused === true} />
+  ),
   component: BookPage,
 });
 
@@ -102,9 +113,13 @@ function ErrorMessage() {
   return <CenteredMessage title={t("bk.error.title")} body={t("bk.error.body")} />;
 }
 
-function NotFoundMessage() {
+function NotFoundMessage({ paused = false }: { paused?: boolean }) {
   const { t } = usePrefs();
-  return <CenteredMessage title={t("bk.notFound.title")} body={t("bk.notFound.body")} />;
+  return paused ? (
+    <CenteredMessage title={t("bk.paused.title")} body={t("bk.paused.body")} />
+  ) : (
+    <CenteredMessage title={t("bk.notFound.title")} body={t("bk.notFound.body")} />
+  );
 }
 
 function makeFormSchema(t: (key: string) => string) {
@@ -160,6 +175,9 @@ function BookPage() {
     Partial<Record<"name" | "phone" | "email", string | undefined>>
   >({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // The business asks for a code: true once it was emailed, then the client types it.
+  const [codeSent, setCodeSent] = useState(false);
+  const [code, setCode] = useState("");
 
   const stepKeys = useMemo<readonly string[]>(
     () =>
@@ -253,7 +271,7 @@ function BookPage() {
     void trackPageView({ data: { businessId: business.id, sessionId: sid } }).catch(() => {});
   }, [business.id]);
 
-  async function submit() {
+  async function submit(opts: { resend?: boolean } = {}) {
     const parsed = makeFormSchema(t).safeParse({ name, phone, email, notes });
     if (!parsed.success) {
       const errs: typeof fieldErrors = {};
@@ -269,6 +287,12 @@ function BookPage() {
       return;
     }
     if (!serviceId || !time) return;
+    const withCode = codeSent && !opts.resend;
+    if (withCode && !/^d{6}$/.test(code)) {
+      setSubmitError(t("bk.code.invalid"));
+      document.getElementById("code")?.focus();
+      return;
+    }
     setFieldErrors({});
     setSubmitError(null);
     setBusy(true);
@@ -284,9 +308,17 @@ function BookPage() {
           phone: parsed.data.phone,
           email: parsed.data.email,
           notes: parsed.data.notes,
+          ...(withCode ? { code } : {}),
         },
       });
       if (!res.ok) {
+        if (res.code === "needs_code") {
+          if (opts.resend) toast.success(t("bk.code.resent"));
+          setCodeSent(true);
+          setCode("");
+          setTimeout(() => document.getElementById("code")?.focus(), 50);
+          return;
+        }
         if (res.code === "slot_taken") {
           // Someone took that time meanwhile: send the client straight back to pick another.
           toast.error(t("bk.err.slotTaken"));
@@ -739,6 +771,8 @@ function BookPage() {
                       onChange={(e) => {
                         setEmail(e.target.value);
                         setFieldErrors((f) => ({ ...f, email: undefined }));
+                        // A new email needs a new code.
+                        setCodeSent(false);
                       }}
                       maxLength={160}
                       placeholder="nome@email.com"
@@ -781,6 +815,35 @@ function BookPage() {
                       maxLength={500}
                     />
                   </div>
+                  {codeSent && (
+                    <div className="animate-enter space-y-1 rounded-xl border border-border bg-muted/40 p-3">
+                      <Label htmlFor="code" className="text-xs font-bold">
+                        {t("bk.code.label")}
+                      </Label>
+                      <p className="text-xs text-muted-foreground">{t("bk.code.hint")}</p>
+                      <Input
+                        id="code"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        className="h-12 text-center font-display text-xl tracking-[0.4em]"
+                        value={code}
+                        onChange={(e) => {
+                          setCode(e.target.value.replace(/D/g, "").slice(0, 6));
+                          setSubmitError(null);
+                        }}
+                        maxLength={6}
+                        placeholder="••••••"
+                      />
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void submit({ resend: true })}
+                        className="text-xs font-bold text-brand-ink hover:underline disabled:opacity-50"
+                      >
+                        {t("bk.code.resend")}
+                      </button>
+                    </div>
+                  )}
                 </form>
               }
             </Section>
@@ -808,7 +871,7 @@ function BookPage() {
                 className="w-full"
               >
                 {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
-                {busy ? t("bk.booking") : t("bk.confirmBooking")}
+                {busy ? t("bk.booking") : codeSent ? t("bk.code.confirm") : t("bk.confirmBooking")}
               </Button>
             </div>
           </div>
@@ -898,7 +961,7 @@ function BusinessHero({
   const place = [business.address, business.city].filter(Boolean).join(", ");
   const insta = business.instagram?.replace(/^@/, "").trim();
   const contacts = business.show_contacts;
-  const mapHref = mapsUrl({ ...business, address: place });
+  const mapHref = business.show_map === false ? null : mapsUrl({ ...business, address: place });
   return (
     <header className="animate-enter">
       {business.cover_url ? (

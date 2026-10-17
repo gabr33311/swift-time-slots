@@ -38,6 +38,8 @@ export type Access = {
   periodEnd: Date | null;
   /** True when the business can use the app and take bookings. */
   allowed: boolean;
+  /** True only when paying: the Pro-only extras (not in the free trial). */
+  pro: boolean;
   /** True when a subscription exists (show "Manage" instead of "Subscribe"). */
   subscribed: boolean;
   /** Where the subscription is managed (cancel, change card). */
@@ -74,6 +76,7 @@ export function computeAccess(
     trialDaysLeft,
     periodEnd,
     allowed: state !== "blocked",
+    pro: state === "active" || state === "past_due",
     subscribed,
     store,
   };

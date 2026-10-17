@@ -11,6 +11,7 @@ import { useMyBusiness } from "@/hooks/use-business";
 import { usePrefs } from "@/lib/prefs";
 import { SaveBar } from "@/components/save-bar";
 import { LocationPicker } from "@/components/location-picker";
+import { Switch } from "@/components/ui/switch";
 
 const schema = z.object({
   name: z.string().trim().min(2, "pf.biz.err.name").max(80),
@@ -34,6 +35,7 @@ const EMPTY = {
   slotInterval: "15",
   lat: null as number | null,
   lng: null as number | null,
+  showMap: true,
 };
 
 function baseline(b: NonNullable<ReturnType<typeof useMyBusiness>["business"]>) {
@@ -48,6 +50,7 @@ function baseline(b: NonNullable<ReturnType<typeof useMyBusiness>["business"]>) 
     slotInterval: String(b.slot_interval_minutes),
     lat: b.latitude ?? null,
     lng: b.longitude ?? null,
+    showMap: b.show_map ?? true,
   };
 }
 
@@ -94,6 +97,7 @@ export function BusinessPanel() {
         ...(form.lat !== (business.latitude ?? null) || form.lng !== (business.longitude ?? null)
           ? { latitude: form.lat, longitude: form.lng }
           : {}),
+        ...(form.showMap !== (business.show_map ?? true) ? { show_map: form.showMap } : {}),
       })
       .eq("id", business.id);
     setBusy(false);
@@ -166,22 +170,35 @@ export function BusinessPanel() {
             <Input id="ba" value={form.address} onChange={set("address")} maxLength={160} />
           </div>
         </div>
-        <div className="space-y-1.5">
-          <Label className="font-semibold">{t("loc.title")}</Label>
-          <LocationPicker
-            key={mapKey}
-            value={form.lat != null && form.lng != null ? { lat: form.lat, lng: form.lng } : null}
-            onChange={(v) => setForm((f) => ({ ...f, lat: v.lat, lng: v.lng }))}
-            onAddress={(address, city) =>
-              setForm((f) => ({
-                ...f,
-                address: f.address || address || "",
-                city: f.city || city || "",
-              }))
-            }
-            initialQuery={[form.address, form.city].filter(Boolean).join(", ")}
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-border p-4">
+          <div>
+            <p className="text-sm font-bold">{t("loc.show")}</p>
+            <p className="text-sm text-muted-foreground">{t("loc.show.desc")}</p>
+          </div>
+          <Switch
+            checked={form.showMap}
+            onCheckedChange={(v) => setForm((f) => ({ ...f, showMap: v }))}
+            aria-label={t("loc.show")}
           />
         </div>
+        {form.showMap && (
+          <div className="space-y-1.5">
+            <Label className="font-semibold">{t("loc.title")}</Label>
+            <LocationPicker
+              key={mapKey}
+              value={form.lat != null && form.lng != null ? { lat: form.lat, lng: form.lng } : null}
+              onChange={(v) => setForm((f) => ({ ...f, lat: v.lat, lng: v.lng }))}
+              onAddress={(address, city) =>
+                setForm((f) => ({
+                  ...f,
+                  address: f.address || address || "",
+                  city: f.city || city || "",
+                }))
+              }
+              initialQuery={[form.address, form.city].filter(Boolean).join(", ")}
+            />
+          </div>
+        )}
       </div>
 
       <SaveBar

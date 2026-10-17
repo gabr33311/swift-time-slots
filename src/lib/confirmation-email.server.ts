@@ -16,6 +16,7 @@ type Row = {
     latitude: number | null;
     longitude: number | null;
     brand_color: string;
+    show_map: boolean;
   } | null;
 };
 
@@ -38,7 +39,7 @@ export async function sendConfirmedEmail(
     db
       .from("appointments")
       .select(
-        "id, customer_name, customer_email, service_name, starts_at, businesses(name, timezone, address, city, latitude, longitude, brand_color)",
+        "id, customer_name, customer_email, service_name, starts_at, businesses(name, timezone, address, city, latitude, longitude, brand_color, show_map)",
       )
       .eq("id", appointmentId)
       .maybeSingle(),
@@ -74,7 +75,11 @@ export async function sendConfirmedEmail(
           timeZone: tz,
         }).format(d),
         address: address || undefined,
-        mapUrl: mapsUrl({ ...biz, address, name: biz?.name ?? null }) ?? undefined,
+        // The owner can hide the map.
+        mapUrl:
+          biz?.show_map === false
+            ? undefined
+            : (mapsUrl({ ...biz, address, name: biz?.name ?? null }) ?? undefined),
         manageUrl: origin && tokenRow ? `${origin}/booking/${tokenRow.token}` : undefined,
         brandColor: colors.brand,
         brandText: colors.foreground,

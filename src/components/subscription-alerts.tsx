@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, Clock3, Lock, X } from "lucide-react";
+import { AlertTriangle, Clock3, Lock, PauseCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { usePrefs } from "@/lib/prefs";
 import { useSubscription } from "@/hooks/use-subscription";
+import { useMyBusiness } from "@/hooks/use-business";
 
 /** Shows a banner only when it matters: trial ending soon, or a failed payment. */
 export function SubscriptionBanner() {
@@ -78,6 +79,29 @@ export function Paywall() {
         <Link to="/plans">{t("sub.paywall.cta")}</Link>
       </Button>
       <p className="text-xs text-muted-foreground">{t("sub.paywall.safe")}</p>
+    </section>
+  );
+}
+
+/** The owner paused the account: say so on every screen, with the way back. */
+export function SuspendedBanner() {
+  const { t } = usePrefs();
+  const { business } = useMyBusiness();
+  if (!business?.suspended_at) return null;
+  return (
+    <section
+      role="status"
+      className="animate-enter mb-5 flex flex-col gap-3 rounded-2xl border border-border bg-muted/60 px-4 py-3.5 sm:flex-row sm:items-center"
+    >
+      <div className="flex min-w-0 flex-1 items-start gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-background text-muted-foreground">
+          <PauseCircle className="size-[18px]" />
+        </span>
+        <p className="pt-1.5 text-sm font-semibold leading-snug">{t("acc.suspended.banner")}</p>
+      </div>
+      <Button asChild size="sm" variant="default" className="w-full sm:w-auto">
+        <Link to="/settings">{t("acc.reactivate")}</Link>
+      </Button>
     </section>
   );
 }

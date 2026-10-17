@@ -1,11 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { Eye, EyeOff, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ErrorState, LoadingRows, StatCard } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useMyBusiness } from "@/hooks/use-business";
 import { currentLocale, formatPrice } from "@/lib/format";
 import { usePrefs } from "@/lib/prefs";
+import { ProLock } from "@/components/pro-lock";
+import { useHasPro } from "@/hooks/use-subscription";
+import { HIDDEN_MONEY, useMoneyHidden } from "@/hooks/use-money-hidden";
 
 const PERIODS = [
   { id: "today", days: 0 },
@@ -19,8 +23,14 @@ type PeriodId = (typeof PERIODS)[number]["id"];
 export function AnalyticsPanel() {
   const { business } = useMyBusiness();
   const { t } = usePrefs();
-  const [period, setPeriod] = useState<PeriodId>("30");
+  const [chosen, setPeriod] = useState<PeriodId>("30");
+  const hasPro = useHasPro();
+  const [moneyHidden, setMoneyHidden] = useMoneyHidden();
+  // Full statistics are a paid Pro extra: the free trial sees today only.
+  const locked = hasPro === false;
+  const period: PeriodId = locked ? "today" : chosen;
   const days = PERIODS.find((p) => p.id === period)!.days;
+  const money = (cents: number) => (moneyHidden ? HIDDEN_MONEY : formatPrice(cents, currency));
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["analytics", business?.id, period],
@@ -103,18 +113,31 @@ export function AnalyticsPanel() {
 
   return (
     <>
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         {PERIODS.map((p) => (
           <Button
             key={p.id}
             size="sm"
             variant={period === p.id ? "default" : "outline"}
+            disabled={locked && p.id !== "today"}
             onClick={() => setPeriod(p.id)}
           >
+            {locked && p.id !== "today" && <Lock className="size-3.5" />}
             {t(`pf.an.period.${p.id}`)}
           </Button>
         ))}
+        <Button
+          size="sm"
+          variant="ghost"
+          className="ml-auto"
+          onClick={() => setMoneyHidden(!moneyHidden)}
+          aria-label={moneyHidden ? t("money.show") : t("money.hide")}
+          title={moneyHidden ? t("money.show") : t("money.hide")}
+        >
+          {moneyHidden ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+        </Button>
       </div>
+      {locked && <ProLock text={t("sub.only.stats")} className="mb-4" />}
 
       {isLoading ? (
         <LoadingRows rows={3} />
@@ -154,67 +177,71 @@ export function AnalyticsPanel() {
 
           <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
             <div className="col-span-2 lg:col-span-4">
-              <StatCard label={t("pf.an.revenue")} value={formatPrice(revenue, currency)} />
+              <StatCard label={t("pf.an.revenue")} value={money(revenue)} />
             </div>
             <StatCard label={t("pf.an.completed")} value={completed} dimmed={completed === 0} />
-            <StatCard label={t("pf.an.avgTicket")} value={formatPrice(avgTicket, currency)} />
+            <StatCard label={t("pf.an.avgTicket")} value={money(avgTicket)} />
             <StatCard label={t("pf.an.cancellations")} value={cancelled} dimmed={cancelled === 0} />
             <StatCard label={t("pf.an.noShows")} value={noShow} dimmed={noShow === 0} />
           </div>
 
-          <section className="surface mt-6 p-5">
-            <h2 className="text-base font-bold">{t("pf.an.byStaff")}</h2>
-            {byStaff.length === 0 ? (
-              <p className="mt-3 text-sm text-muted-foreground">{t("pf.an.noData")}</p>
-            ) : (
-              <ul className="mt-4 space-y-3">
-                {byStaff.map(([id, v]) => (
-                  <li key={id}>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="truncate font-bold">
-                        {staffNames.get(id) ?? t("pf.an.noData")}
-                      </span>
-                      <span className="tabular-nums text-muted-foreground">
-                        {v.count} · {formatPrice(v.cents, currency)}
-                      </span>
-                    </div>
-                    <div className="mt-1.5 h-2 rounded-full bg-muted">
-                      <div
-                        className="h-2 rounded-full bg-brand"
-                        style={{ width: `${Math.max(4, (v.cents / staffMax) * 100)}%` }}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+          {!locked && (
+            <section className="surface mt-6 p-5">
+              <h2 className="text-base font-bold">{t("pf.an.byStaff")}</h2>
+              {byStaff.length === 0 ? (
+                <p className="mt-3 text-sm text-muted-foreground">{t("pf.an.noData")}</p>
+              ) : (
+                <ul className="mt-4 space-y-3">
+                  {byStaff.map(([id, v]) => (
+                    <li key={id}>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="truncate font-bold">
+                          {staffNames.get(id) ?? t("pf.an.noData")}
+                        </span>
+                        <span className="tabular-nums text-muted-foreground">
+                          {v.count} · {money(v.cents)}
+                        </span>
+                      </div>
+                      <div className="mt-1.5 h-2 rounded-full bg-muted">
+                        <div
+                          className="h-2 rounded-full bg-brand"
+                          style={{ width: `${Math.max(4, (v.cents / staffMax) * 100)}%` }}
+                        />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
 
-          <section className="surface mt-6 p-5">
-            <h2 className="text-base font-bold">{t("pf.an.topServices")}</h2>
-            {byService.length === 0 ? (
-              <p className="mt-3 text-sm text-muted-foreground">{t("pf.an.noData")}</p>
-            ) : (
-              <ul className="mt-4 space-y-3">
-                {byService.slice(0, 8).map(([name, v]) => (
-                  <li key={name}>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="truncate font-bold">{name}</span>
-                      <span className="tabular-nums text-muted-foreground">
-                        {v.count} · {formatPrice(v.cents, currency)}
-                      </span>
-                    </div>
-                    <div className="mt-1.5 h-2 rounded-full bg-muted">
-                      <div
-                        className="h-2 rounded-full bg-brand"
-                        style={{ width: `${Math.max(4, (v.cents / max) * 100)}%` }}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+          {!locked && (
+            <section className="surface mt-6 p-5">
+              <h2 className="text-base font-bold">{t("pf.an.topServices")}</h2>
+              {byService.length === 0 ? (
+                <p className="mt-3 text-sm text-muted-foreground">{t("pf.an.noData")}</p>
+              ) : (
+                <ul className="mt-4 space-y-3">
+                  {byService.slice(0, 8).map(([name, v]) => (
+                    <li key={name}>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="truncate font-bold">{name}</span>
+                        <span className="tabular-nums text-muted-foreground">
+                          {v.count} · {money(v.cents)}
+                        </span>
+                      </div>
+                      <div className="mt-1.5 h-2 rounded-full bg-muted">
+                        <div
+                          className="h-2 rounded-full bg-brand"
+                          style={{ width: `${Math.max(4, (v.cents / max) * 100)}%` }}
+                        />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
         </>
       )}
     </>

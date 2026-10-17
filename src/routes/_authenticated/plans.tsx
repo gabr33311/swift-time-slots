@@ -3,7 +3,19 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Check, Clock3, CreditCard, Loader2, Lock, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  Ban,
+  BarChart3,
+  BellRing,
+  Check,
+  Clock3,
+  CreditCard,
+  Crown,
+  Loader2,
+  Lock,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { FormError, PageHeader } from "@/components/ui-bits";
@@ -34,13 +46,19 @@ const STORE_MANAGE = {
   app_store: { name: "App Store", url: "https://apps.apple.com/account/subscriptions" },
 } as const;
 
+/** Included from day one (also in the free trial). */
 const FEATURES = [
   "sub.feature.bookingPage",
   "sub.feature.calendar",
   "sub.feature.clients",
   "sub.feature.team",
-  "sub.feature.analytics",
-  "sub.feature.reminders",
+] as const;
+
+/** Only when paying: the free trial does not have these. */
+const PRO_ONLY = [
+  { key: "sub.only.reminders", icon: BellRing },
+  { key: "sub.only.block", icon: Ban },
+  { key: "sub.only.stats", icon: BarChart3 },
 ] as const;
 
 function PlansPage() {
@@ -192,6 +210,26 @@ function PlansPage() {
                 </li>
               ))}
             </ul>
+
+            {/* What the free trial leaves out: the reason to pay. Gold only here. */}
+            <div className="rounded-xl border border-subscription-accent/45 p-4">
+              <p className="flex items-center gap-2 text-sm font-bold">
+                <Crown className="size-4 text-subscription-accent" /> {t("sub.only.title")}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {access?.pro ? t("sub.only.yours") : t("sub.only.sub")}
+              </p>
+              <ul className="mt-3 space-y-2.5">
+                {PRO_ONLY.map(({ key, icon: Icon }) => (
+                  <li key={key} className="flex items-start gap-2.5 text-sm">
+                    <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-subscription-accent/15 text-subscription-accent">
+                      <Icon className="size-3" strokeWidth={3} />
+                    </span>
+                    {t(key)}
+                  </li>
+                ))}
+              </ul>
+            </div>
 
             <FormError message={error} />
 
