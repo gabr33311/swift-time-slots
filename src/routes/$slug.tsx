@@ -1000,9 +1000,9 @@ function BusinessHero({
           <h1 className="mt-2 font-display text-[26px] font-bold leading-tight tracking-tight">
             {business.name}
           </h1>
-          {contacts && place && (
-            <p className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-muted-foreground">
-              <MapPin className="size-3.5 shrink-0" /> {place}
+          {business.description && (
+            <p className="mt-1 line-clamp-2 text-[15px] leading-snug text-muted-foreground">
+              {business.description}
             </p>
           )}
         </div>
@@ -1013,17 +1013,17 @@ function BusinessHero({
             <h1 className="font-display text-[26px] font-bold leading-tight tracking-tight">
               {business.name}
             </h1>
-            {contacts && place && (
-              <p className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-muted-foreground">
-                <MapPin className="size-3.5 shrink-0" /> {place}
+            {business.description && (
+              <p className="mt-1 line-clamp-2 text-[15px] leading-snug text-muted-foreground">
+                {business.description}
               </p>
             )}
           </div>
         </div>
       )}
-      {business.description && (
-        <p className="mt-3 line-clamp-3 text-[15px] leading-relaxed text-muted-foreground">
-          {business.description}
+      {!map && contacts && place && (
+        <p className="mt-3 flex items-center gap-1.5 truncate text-sm text-muted-foreground">
+          <MapPin className="size-3.5 shrink-0" /> {place}
         </p>
       )}
       {map && (
