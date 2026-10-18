@@ -44,6 +44,9 @@ export const commonDict: Record<BaseLang, Record<string, string>> = {
     "push.test.notConfigured": "As notificações ainda não estão configuradas no servidor.",
     "push.test.noPhone": "Nenhum telemóvel registado. Abre a app SYCRAS e aceita as notificações.",
     "push.test.failed": "Não foi possível enviar a notificação.",
+    "alerts.email.title": "Avisos por email",
+    "alerts.email.desc":
+      "Recebe um email em cada marcação nova, pedido, cancelamento ou mudança de hora.",
     "push.channel": "Marcações",
     "push.open": "Ver",
     "nav.viewPage": "Ver a minha página",
@@ -96,6 +99,9 @@ export const commonDict: Record<BaseLang, Record<string, string>> = {
     "push.test.notConfigured": "Notifications are not set up on the server yet.",
     "push.test.noPhone": "No phone registered. Open the SYCRAS app and allow notifications.",
     "push.test.failed": "Could not send the notification.",
+    "alerts.email.title": "Email alerts",
+    "alerts.email.desc":
+      "Get an email for every new booking, request, cancellation or time change.",
     "push.channel": "Bookings",
     "push.open": "View",
     "nav.viewPage": "View my page",

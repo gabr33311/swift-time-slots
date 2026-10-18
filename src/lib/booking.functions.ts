@@ -299,9 +299,9 @@ export const createPublicBooking = createServerFn({ method: "POST" })
       appointment_id: appointment.id,
     };
     await supabaseAdmin.from("notifications").insert(note);
-    // The business's phones get it as a push notification too.
-    const { pushToBusiness } = await import("@/lib/push.server");
-    await pushToBusiness(note.business_id, {
+    // The business's phones get it as a push notification, and its people an email.
+    const { alertBusiness } = await import("@/lib/owner-alerts.server");
+    await alertBusiness(note.business_id, {
       title: note.title,
       body: note.body,
       appointmentId: note.appointment_id,
@@ -419,9 +419,9 @@ export const cancelBookingByToken = createServerFn({ method: "POST" })
       appointment_id: appt.id,
     };
     await supabaseAdmin.from("notifications").insert(note);
-    // The business's phones get it as a push notification too.
-    const { pushToBusiness } = await import("@/lib/push.server");
-    await pushToBusiness(note.business_id, {
+    // The business's phones get it as a push notification, and its people an email.
+    const { alertBusiness } = await import("@/lib/owner-alerts.server");
+    await alertBusiness(note.business_id, {
       title: note.title,
       body: note.body,
       appointmentId: note.appointment_id,
@@ -536,9 +536,9 @@ export const rescheduleBookingByToken = createServerFn({ method: "POST" })
       appointment_id: appt.id,
     };
     await supabaseAdmin.from("notifications").insert(note);
-    // The business's phones get it as a push notification too.
-    const { pushToBusiness } = await import("@/lib/push.server");
-    await pushToBusiness(note.business_id, {
+    // The business's phones get it as a push notification, and its people an email.
+    const { alertBusiness } = await import("@/lib/owner-alerts.server");
+    await alertBusiness(note.business_id, {
       title: note.title,
       body: note.body,
       appointmentId: note.appointment_id,

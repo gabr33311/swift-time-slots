@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Bell, ChevronRight, Crown, LogOut } from "lucide-react";
@@ -38,6 +38,23 @@ export function SettingsPanel() {
   const { access } = useSubscription();
   const [testingPush, setTestingPush] = useState(false);
   const sendPush = useServerFn(sendTestPush);
+  // Email for each booking event (saved in the account; the server reads it). On unless turned off.
+  const [emailAlerts, setEmailAlerts] = useState(true);
+  useEffect(() => {
+    void supabase.auth.getUser().then(({ data }) => {
+      setEmailAlerts(data.user?.user_metadata?.["email_alerts"] !== false);
+    });
+  }, []);
+  async function toggleEmailAlerts(value: boolean) {
+    setEmailAlerts(value);
+    const { error } = await supabase.auth.updateUser({ data: { email_alerts: value } });
+    if (error) {
+      setEmailAlerts(!value);
+      toast.error(t("pf.common.saveError"));
+      return;
+    }
+    toast.success(t("ui.save.auto"));
+  }
   async function testPush() {
     if (!business) return;
     setTestingPush(true);
@@ -121,6 +138,13 @@ export function SettingsPanel() {
           <Bell /> {t("push.test")}
         </Button>
       </div>
+      <Row
+        title={t("alerts.email.title")}
+        description={t("alerts.email.desc")}
+        checked={emailAlerts}
+        disabled={false}
+        onChange={(v) => void toggleEmailAlerts(v)}
+      />
       <Row
         title={t("pf.set.google")}
         description={t("pf.set.google.desc")}
