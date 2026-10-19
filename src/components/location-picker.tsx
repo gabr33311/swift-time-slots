@@ -1,10 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import type { Map as MlMap, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { Loader2, LocateFixed, MapPin, Minus, Plus, Search } from "lucide-react";
+import {
+  Loader2,
+  LocateFixed,
+  Map as MapIcon,
+  MapPin,
+  Minus,
+  Plus,
+  Satellite,
+  Search,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { searchPlaces, type Place } from "@/lib/geocode";
+import { MAP_STYLE, SATELLITE_CREDIT, satelliteStyle } from "@/lib/map-style";
 import { usePrefs } from "@/lib/prefs";
 
 export type LatLng = { lat: number; lng: number };
@@ -12,15 +22,17 @@ export type LatLng = { lat: number; lng: number };
 /** Lisbon: where the map opens before a place is chosen. */
 const START: LatLng = { lat: 38.7223, lng: -9.1393 };
 
-/**
- * OpenFreeMap: vector maps from OpenStreetMap, free with no key or limits (commercial use
- * allowed). Drawn, not loaded in squares: sharp at every zoom, no white flashes,
- * and a real dark style instead of an inverted one.
- */
-const STYLE = {
-  light: "https://tiles.openfreemap.org/styles/liberty",
-  dark: "https://tiles.openfreemap.org/styles/dark",
-};
+type Mode = "satellite" | "map";
+const MODE_KEY = "sycras-map-mode";
+
+/** Satellite unless the owner chose the plain map before (it is the easiest to find the door). */
+function savedMode(): Mode {
+  try {
+    return localStorage.getItem(MODE_KEY) === "map" ? "map" : "satellite";
+  } catch {
+    return "satellite";
+  }
+}
 
 /** The pin, in the app colour (a DOM element, so it follows the theme's CSS). */
 function pinElement(): HTMLElement {
@@ -50,7 +62,7 @@ export function LocationPicker({
   onAddress?: (address?: string, city?: string) => void;
   initialQuery?: string;
 }) {
-  const { t, theme } = usePrefs();
+  const { t } = usePrefs();
   const box = useRef<HTMLDivElement>(null);
   const map = useRef<MlMap | null>(null);
   const marker = useRef<Marker | null>(null);
@@ -59,8 +71,9 @@ export function LocationPicker({
   // The latest value, read when the map finishes loading.
   const current = useRef(value);
   current.current = value;
-  const style = theme === "dark" ? STYLE.dark : STYLE.light;
-  const styleRef = useRef(style);
+  // Satellite (to see the roofs) or the plain map; the plain one is light in both themes, to read well.
+  const [mode, setMode] = useState<Mode>(savedMode);
+  const modeRef = useRef(mode);
   const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<Place[] | null>(null);
   const [busy, setBusy] = useState(false);
@@ -74,14 +87,15 @@ export function LocationPicker({
     void Promise.all([
       import("maplibre-gl"),
       import("maplibre-gl/dist/maplibre-gl-worker.mjs?url"),
-    ]).then(([{ Map, Marker, setWorkerUrl }, worker]) => {
+      modeRef.current === "satellite" ? satelliteStyle().catch(() => MAP_STYLE) : MAP_STYLE,
+    ]).then(([{ Map, Marker, setWorkerUrl }, worker, style]) => {
       if (cancelled || !box.current || map.current) return;
       setWorkerUrl(worker.default);
       const initial = current.current;
       const start = initial ?? START;
       const m = new Map({
         container: box.current,
-        style: styleRef.current,
+        style,
         center: [start.lng, start.lat],
         zoom: initial ? 16.5 : 11,
         attributionControl: false,
@@ -118,11 +132,21 @@ export function LocationPicker({
     // The map is created once; later moves go through `place`.
   }, []);
 
-  // Light / dark follows the app.
+  // Switching between satellite and map (the pin stays where it is).
   useEffect(() => {
-    styleRef.current = style;
-    map.current?.setStyle(style);
-  }, [style]);
+    if (modeRef.current === mode) return;
+    modeRef.current = mode;
+    try {
+      localStorage.setItem(MODE_KEY, mode);
+    } catch {
+      // Not remembered in private mode: fine.
+    }
+    if (mode === "map") map.current?.setStyle(MAP_STYLE);
+    else
+      void satelliteStyle()
+        .then((s) => map.current?.setStyle(s))
+        .catch(() => setMode("map"));
+  }, [mode]);
 
   // A value that arrives later (saved data loading) moves the pin too.
   useEffect(() => {
@@ -235,7 +259,7 @@ export function LocationPicker({
       )}
 
       {/* isolate: the map's own layers never cover sticky headers or bars. */}
-      <div className="relative isolate z-0 h-64 overflow-hidden rounded-xl border border-border bg-muted">
+      <div className="relative isolate z-0 h-72 overflow-hidden rounded-xl border border-border bg-muted lg:h-80">
         {/* Full size, not absolute: MapLibre makes its container position: relative. */}
         <div ref={box} className="h-full w-full" />
         {/* Zoom in the app's own style (not the map library's white squares). */}
@@ -256,6 +280,25 @@ export function LocationPicker({
           >
             <Minus className="size-4" />
           </button>
+        </div>
+        {/* Satellite (to see the roofs) or the plain map. */}
+        <div className="absolute bottom-2.5 left-2.5 flex rounded-xl border border-border bg-card/95 p-1 shadow-[var(--shadow-soft)] backdrop-blur">
+          {(
+            [
+              ["satellite", Satellite, t("loc.satellite")],
+              ["map", MapIcon, t("loc.map")],
+            ] as const
+          ).map(([m, Icon, label]) => (
+            <button
+              key={m}
+              type="button"
+              aria-pressed={mode === m}
+              onClick={() => setMode(m)}
+              className={`flex h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-colors ${mode === m ? "bg-brand text-brand-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              <Icon className="size-3.5" /> {label}
+            </button>
+          ))}
         </div>
       </div>
       <p className="text-xs text-muted-foreground">
@@ -278,6 +321,12 @@ export function LocationPicker({
         >
           © OpenStreetMap
         </a>
+        {mode === "satellite" && (
+          <span className="whitespace-nowrap opacity-70">
+            {" "}
+            · Powered by Esri · {SATELLITE_CREDIT}
+          </span>
+        )}
       </p>
     </div>
   );

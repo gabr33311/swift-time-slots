@@ -249,6 +249,8 @@ export const profileDict: Record<BaseLang, Record<string, string>> = {
     "loc.approx": "Encontrámos só a localidade. Arrasta o pino para a porta da loja.",
     "loc.zoomIn": "Aproximar",
     "loc.zoomOut": "Afastar",
+    "loc.satellite": "Satélite",
+    "loc.map": "Mapa",
     "loc.hint": "Procura a morada ou toca no mapa para marcar a tua loja.",
     "loc.set":
       "Pino colocado. Podes arrastá-lo para acertar. Os clientes abrem este ponto no Google Maps.",
@@ -680,6 +682,8 @@ export const profileDict: Record<BaseLang, Record<string, string>> = {
     "loc.approx": "We only found the town. Drag the pin to the shop door.",
     "loc.zoomIn": "Zoom in",
     "loc.zoomOut": "Zoom out",
+    "loc.satellite": "Satellite",
+    "loc.map": "Map",
     "loc.hint": "Search the address or tap the map to mark your shop.",
     "loc.set": "Pin placed. Drag it to fine-tune. Clients open this spot in Google Maps.",
     "pf.av.autoComplete": "Complete bookings automatically",
