@@ -28,7 +28,7 @@ import { addMonthsClamped, todayIn, zonedToUtc, weekdayOf } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { useBrandColor } from "@/lib/brand";
 import { mapsUrl } from "@/lib/maps";
-import { TILE_SIZE, tileGrid } from "@/lib/map-tiles";
+import { TILE_SIZE, tileGrid, SATELLITE_TILE_URL } from "@/lib/map-tiles";
 import {
   ArrowLeft,
   CalendarDays,
@@ -1045,10 +1045,6 @@ function BusinessHero({
           className="relative mt-3 block h-32 overflow-hidden rounded-2xl border border-border bg-muted transition-transform active:scale-[0.99] sm:h-36"
         >
           <ShopMapTiles lat={map.lat} lng={map.lng} dark={theme === "dark"} />
-          {/* Required by the OpenStreetMap licence. */}
-          <span className="absolute right-1.5 top-1.5 rounded bg-black/45 px-1.5 py-0.5 text-[9px] font-medium text-white/85">
-            © OpenStreetMap
-          </span>
           <span className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-black/55 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur-sm">
             <MapPin className="size-3 shrink-0" />
             <span className="min-w-0 flex-1 truncate">{map.label}</span>
@@ -1088,16 +1084,21 @@ function BusinessHero({
 }
 
 /**
- * The shop on an OpenStreetMap map: a few map tiles around the pin, no
- * library and no key. Dark theme: the same map, inverted to a night look.
+ * The shop on a small fixed map: a few tiles around the pin, no map library.
+ * Satellite photos (the street and the door at a glance); if they fail (key expired,
+ * free tier used up), the OpenStreetMap map instead, inverted to a night look in dark theme.
  */
 function ShopMapTiles({ lat, lng, dark }: { lat: number; lng: number; dark: boolean }) {
-  const grid = useMemo(() => tileGrid(lat, lng, 16), [lat, lng]);
+  const [satellite, setSatellite] = useState(true);
+  const grid = useMemo(
+    () => (satellite ? tileGrid(lat, lng, 17, 5, 3, SATELLITE_TILE_URL) : tileGrid(lat, lng, 16)),
+    [lat, lng, satellite],
+  );
   return (
     <>
       <div
         aria-hidden
-        className={cn("absolute left-1/2 top-1/2", dark && "map-dark-tiles")}
+        className={cn("absolute left-1/2 top-1/2", !satellite && dark && "map-dark-tiles")}
         style={{
           width: grid.width,
           height: grid.height,
@@ -1111,6 +1112,7 @@ function ShopMapTiles({ lat, lng, dark }: { lat: number; lng: number; dark: bool
             alt=""
             loading="lazy"
             draggable={false}
+            onError={() => setSatellite(false)}
             className="absolute max-w-none select-none"
             style={{ left: tile.left, top: tile.top, width: TILE_SIZE, height: TILE_SIZE }}
           />
@@ -1128,6 +1130,10 @@ function ShopMapTiles({ lat, lng, dark }: { lat: number; lng: number; dark: bool
         />
         <circle cx="12" cy="11.5" r="4.5" fill="#fff" />
       </svg>
+      {/* Required by the map licences. */}
+      <span className="absolute right-1.5 top-1.5 rounded bg-black/45 px-1.5 py-0.5 text-[9px] font-medium text-white/85">
+        {satellite ? "Esri, Maxar, Earthstar Geographics" : "© OpenStreetMap"}
+      </span>
     </>
   );
 }

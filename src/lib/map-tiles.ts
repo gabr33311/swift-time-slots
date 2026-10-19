@@ -3,9 +3,15 @@
  * public page): no library and no key. Respect the OSM tile policy: low,
  * human-driven traffic and the "© OpenStreetMap" credit on screen.
  */
+import { ARCGIS_KEY } from "@/lib/map-style";
+
 export const TILE_SIZE = 256;
 export const OSM_TILE_URL = (z: number, x: number, y: number) =>
   `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
+
+/** Satellite photos (Esri World Imagery), same key as the owner's map picker. */
+export const SATELLITE_TILE_URL = (z: number, x: number, y: number) =>
+  `https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}?token=${ARCGIS_KEY}`;
 
 /** A point in "world pixels" at a zoom level (Web Mercator). */
 export function worldPixel(lat: number, lng: number, zoom: number): { x: number; y: number } {
@@ -26,7 +32,14 @@ export type TileGrid = {
 };
 
 /** The tiles around a point: `cols` × `rows` of them, with the point near the middle. */
-export function tileGrid(lat: number, lng: number, zoom: number, cols = 5, rows = 3): TileGrid {
+export function tileGrid(
+  lat: number,
+  lng: number,
+  zoom: number,
+  cols = 5,
+  rows = 3,
+  url: (z: number, x: number, y: number) => string = OSM_TILE_URL,
+): TileGrid {
   const p = worldPixel(lat, lng, zoom);
   const max = 2 ** zoom;
   const firstX = Math.floor(p.x / TILE_SIZE) - Math.floor(cols / 2);
@@ -40,7 +53,7 @@ export function tileGrid(lat: number, lng: number, zoom: number, cols = 5, rows 
       const wrapped = ((tx % max) + max) % max;
       tiles.push({
         key: `${tx}:${ty}`,
-        src: OSM_TILE_URL(zoom, wrapped, ty),
+        src: url(zoom, wrapped, ty),
         left: c * TILE_SIZE,
         top: r * TILE_SIZE,
       });
