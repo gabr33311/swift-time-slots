@@ -497,6 +497,7 @@ export const es: Record<string, string> = {
   "bk.err.slots": "No se han podido cargar las horas disponibles.",
   "bk.retry": "Reintentar",
   "bk.pickOtherDay": "Elegir otro día",
+  "bk.pickDayHint": "Elige un día para ver las horas libres.",
   "bk.tk.err.generic": "Algo ha fallado. Comprueba tu conexión a internet e inténtalo de nuevo.",
   "bk.tk.bookAgain": "Hacer una nueva reserva",
   "bk.tk.pickNew": "Elige el nuevo día y hora",

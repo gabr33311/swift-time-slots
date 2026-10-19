@@ -154,18 +154,20 @@ function TodayPage() {
       ) : isError ? (
         <ErrorState onRetry={() => void refetch()} />
       ) : (
-        <div className="animate-stagger mx-auto grid max-w-3xl grid-cols-1 gap-4 [&>*]:min-w-0">
-          <div className="space-y-4">
-            <FocusCard
-              row={focus}
-              current={!!current}
-              now={now}
-              tz={tz}
-              hasDay={liveDay.length > 0}
-              onOpen={openAppointment}
-            />
+        <div className="animate-stagger mx-auto grid max-w-3xl grid-cols-1 gap-4 lg:max-w-none [&>*]:min-w-0">
+          <div className="space-y-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-5 lg:space-y-0">
+            <div className={cn("space-y-4 [&>*]:min-w-0", day.length === 0 && "lg:col-span-2")}>
+              <FocusCard
+                row={focus}
+                current={!!current}
+                now={now}
+                tz={tz}
+                hasDay={liveDay.length > 0}
+                onOpen={openAppointment}
+              />
 
-            <NeedsYou items={needs} tz={tz} onOpen={openAppointment} />
+              <NeedsYou items={needs} tz={tz} onOpen={openAppointment} />
+            </div>
 
             {day.length > 0 && (
               <section className="surface p-0">

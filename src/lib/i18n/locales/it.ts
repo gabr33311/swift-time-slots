@@ -503,6 +503,7 @@ export const it: Record<string, string> = {
   "bk.err.slots": "Impossibile caricare gli orari disponibili.",
   "bk.retry": "Riprova",
   "bk.pickOtherDay": "Scegli un altro giorno",
+  "bk.pickDayHint": "Scegli un giorno per vedere gli orari liberi.",
   "bk.tk.err.generic": "Qualcosa è andato storto. Controlla la connessione a internet e riprova.",
   "bk.tk.bookAgain": "Fai una nuova prenotazione",
   "bk.tk.pickNew": "Scegli il nuovo giorno e la nuova ora",

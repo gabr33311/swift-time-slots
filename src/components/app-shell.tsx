@@ -244,7 +244,7 @@ export function AppShell({
       </aside>
 
       <div className="lg:pl-64">
-        <main className="animate-enter mx-auto w-full max-w-5xl px-4 pb-[calc(5.75rem+var(--sab))] pt-6 sm:px-5 lg:pb-12">
+        <main className="animate-enter mx-auto w-full max-w-5xl px-4 pb-[calc(5.75rem+var(--sab))] pt-6 sm:px-5 lg:px-8 lg:pb-12 xl:max-w-6xl 2xl:max-w-7xl">
           <AppPrompt />
           <SuspendedBanner />
           <SubscriptionBanner />

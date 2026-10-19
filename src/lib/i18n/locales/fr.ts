@@ -506,6 +506,7 @@ export const fr: Record<string, string> = {
   "bk.err.slots": "Impossible de charger les créneaux disponibles.",
   "bk.retry": "Réessayer",
   "bk.pickOtherDay": "Choisir un autre jour",
+  "bk.pickDayHint": "Choisissez un jour pour voir les créneaux libres.",
   "bk.tk.err.generic": "Un problème est survenu. Vérifiez votre connexion internet et réessayez.",
   "bk.tk.bookAgain": "Prendre un nouveau rendez-vous",
   "bk.tk.pickNew": "Choisissez le nouveau jour et la nouvelle heure",

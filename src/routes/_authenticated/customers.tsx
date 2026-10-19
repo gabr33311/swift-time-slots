@@ -160,7 +160,7 @@ function CustomersPage() {
           description={term ? t("cust.empty.desc.search") : t("cust.empty.desc.default")}
         />
       ) : (
-        <ul key={tab} className="animate-stagger grid gap-2.5 lg:grid-cols-2">
+        <ul key={tab} className="animate-stagger grid gap-2.5 lg:grid-cols-2 xl:grid-cols-3">
           {rows.map((c) => (
             <li key={c.id} className="surface surface-hover flex items-center gap-2 p-2 pr-3">
               <button

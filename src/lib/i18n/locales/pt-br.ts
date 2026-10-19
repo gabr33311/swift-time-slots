@@ -498,6 +498,7 @@ export const ptBR: Record<string, string> = {
   "bk.err.slots": "Não foi possível carregar os horários.",
   "bk.retry": "Tentar novamente",
   "bk.pickOtherDay": "Escolher outro dia",
+  "bk.pickDayHint": "Escolha um dia para ver os horários livres.",
   "bk.tk.err.generic": "Algo deu errado. Verifique sua conexão com a internet e tente novamente.",
   "bk.tk.bookAgain": "Fazer novo agendamento",
   "bk.tk.pickNew": "Escolha o novo dia e horário",

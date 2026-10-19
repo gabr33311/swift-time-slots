@@ -503,6 +503,7 @@ export const de: Record<string, string> = {
   "bk.err.slots": "Die verfügbaren Zeiten konnten nicht geladen werden.",
   "bk.retry": "Erneut versuchen",
   "bk.pickOtherDay": "Anderen Tag wählen",
+  "bk.pickDayHint": "Wähle einen Tag, um die freien Zeiten zu sehen.",
   "bk.tk.err.generic":
     "Etwas ist schiefgelaufen. Prüfe deine Internetverbindung und versuche es erneut.",
   "bk.tk.bookAgain": "Neuen Termin buchen",

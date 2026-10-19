@@ -369,7 +369,7 @@ function BookPage() {
     <main
       className={cn(
         // Phones: one column. Desktop: the business stays on the left, the steps on the right.
-        "mx-auto min-h-dvh max-w-2xl px-5 pt-6 lg:grid lg:max-w-5xl lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start lg:gap-12 lg:px-8 lg:pt-12 lg:pb-12",
+        "mx-auto min-h-dvh max-w-2xl px-5 pt-6 lg:grid lg:max-w-6xl lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:items-start lg:gap-12 lg:px-8 lg:pt-12 lg:pb-12 xl:max-w-7xl xl:grid-cols-[minmax(0,27rem)_minmax(0,1fr)] xl:gap-16 xl:px-10",
         // Leave room so the fixed confirm bar never hides the last fields.
         currentStep === "account" ? "pb-48" : "pb-6",
       )}
@@ -483,7 +483,7 @@ function BookPage() {
         <div key={currentStep} className="animate-enter flex flex-col py-4">
           {currentStep === "staff" && (
             <Section step={stepNumber} total={stepKeys.length} title={t("bk.step.staff")}>
-              <div className="surface animate-stagger divide-y divide-border overflow-hidden p-0">
+              <div className="surface animate-stagger divide-y divide-border overflow-hidden p-0 lg:grid lg:grid-cols-2 lg:gap-3 lg:divide-y-0 lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none">
                 {staff.map((p) => (
                   <button
                     key={p.id}
@@ -494,7 +494,7 @@ function BookPage() {
                       goNext();
                     }}
                     className={cn(
-                      "flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50",
+                      "flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 lg:rounded-2xl lg:border lg:border-border lg:bg-card lg:px-5 lg:shadow-[var(--shadow-soft)] lg:hover:bg-muted/40 lg:min-h-20",
                       staffId === p.id && "bg-muted/70",
                     )}
                   >
@@ -519,7 +519,7 @@ function BookPage() {
                     setTime(null);
                     goNext();
                   }}
-                  className="flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
+                  className="flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 lg:rounded-2xl lg:border lg:border-border lg:bg-card lg:px-5 lg:shadow-[var(--shadow-soft)] lg:hover:bg-muted/40 lg:min-h-20"
                 >
                   <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-dashed border-border text-muted-foreground">
                     <Users className="size-4" />
@@ -549,7 +549,7 @@ function BookPage() {
                 </div>
               )}
               {visibleServices.length > 0 && (
-                <div className="surface animate-stagger divide-y divide-border overflow-hidden p-0">
+                <div className="surface animate-stagger divide-y divide-border overflow-hidden p-0 lg:grid lg:grid-cols-2 lg:gap-3 lg:divide-y-0 lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none">
                   {visibleServices.map((s) => (
                     <button
                       key={s.id}
@@ -559,7 +559,7 @@ function BookPage() {
                         goNext();
                       }}
                       className={cn(
-                        "flex min-h-[4.5rem] w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-muted/50",
+                        "flex min-h-[4.5rem] w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-muted/50 lg:rounded-2xl lg:border lg:border-border lg:bg-card lg:px-5 lg:shadow-[var(--shadow-soft)] lg:hover:bg-muted/40 lg:min-h-24 lg:py-4",
                         serviceId === s.id && "bg-muted/70",
                       )}
                     >
@@ -587,159 +587,168 @@ function BookPage() {
 
           {currentStep === "when" && (
             <Section step={stepNumber} total={stepKeys.length} title={t("bk.step.dateTime")}>
-              <div className="rounded-[12px] border border-border bg-card p-3">
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label={t("bk.prevMonth")}
-                    disabled={month <= today.slice(0, 7)}
-                    onClick={() => shiftMonth(-1)}
-                  >
-                    <ChevronLeft className="size-4" />
-                  </Button>
-                  <span className="text-sm font-bold">{monthLabel}</span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label={t("bk.nextMonth")}
-                    disabled={month >= maxDate.slice(0, 7)}
-                    onClick={() => shiftMonth(1)}
-                  >
-                    <ChevronRight className="size-4" />
-                  </Button>
-                </div>
-                <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-muted-foreground">
-                  {[
-                    t("bk.weekday.mon"),
-                    t("bk.weekday.tue"),
-                    t("bk.weekday.wed"),
-                    t("bk.weekday.thu"),
-                    t("bk.weekday.fri"),
-                    t("bk.weekday.sat"),
-                    t("bk.weekday.sun"),
-                  ].map((d) => (
-                    <span key={d}>{d}</span>
-                  ))}
-                </div>
-                <div className="mt-1 grid grid-cols-7 gap-1">
-                  {monthDays.map((d, i) => {
-                    if (!d) return <span key={`e${i}`} />;
-                    const past = d < today || d > maxDate || isClosedDay(d);
-                    return (
-                      <button
-                        key={d}
-                        type="button"
-                        disabled={past}
-                        aria-pressed={dayPicked && date === d}
-                        aria-current={d === today ? "date" : undefined}
-                        onClick={() => {
-                          setDate(d);
-                          setDayPicked(true);
-                          setTime(null);
-                          // Bring the free times for that day into view.
-                          window.requestAnimationFrame(() =>
-                            slotsRef.current?.scrollIntoView({
-                              behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
-                                .matches
-                                ? "auto"
-                                : "smooth",
-                              block: "start",
-                            }),
-                          );
-                        }}
-                        className={cn(
-                          "mx-auto flex aspect-square w-full max-w-11 items-center justify-center rounded-full text-sm font-bold tabular-nums transition-colors",
-                          past && "cursor-not-allowed font-medium text-muted-foreground/40",
-                          // Closed or gone days are struck through; today is never, it gets a dot.
-                          past && d !== today && "line-through",
-                          d === today &&
-                            "relative after:absolute after:bottom-1 after:size-1 after:rounded-full after:bg-current",
-                          !past && !(dayPicked && date === d) && "hover:bg-accent",
-                          !past &&
+              <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start lg:gap-6">
+                <div className="rounded-[12px] border border-border bg-card p-3 lg:sticky lg:top-6 lg:p-4">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={t("bk.prevMonth")}
+                      disabled={month <= today.slice(0, 7)}
+                      onClick={() => shiftMonth(-1)}
+                    >
+                      <ChevronLeft className="size-4" />
+                    </Button>
+                    <span className="text-sm font-bold">{monthLabel}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={t("bk.nextMonth")}
+                      disabled={month >= maxDate.slice(0, 7)}
+                      onClick={() => shiftMonth(1)}
+                    >
+                      <ChevronRight className="size-4" />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-muted-foreground">
+                    {[
+                      t("bk.weekday.mon"),
+                      t("bk.weekday.tue"),
+                      t("bk.weekday.wed"),
+                      t("bk.weekday.thu"),
+                      t("bk.weekday.fri"),
+                      t("bk.weekday.sat"),
+                      t("bk.weekday.sun"),
+                    ].map((d) => (
+                      <span key={d}>{d}</span>
+                    ))}
+                  </div>
+                  <div className="mt-1 grid grid-cols-7 gap-1">
+                    {monthDays.map((d, i) => {
+                      if (!d) return <span key={`e${i}`} />;
+                      const past = d < today || d > maxDate || isClosedDay(d);
+                      return (
+                        <button
+                          key={d}
+                          type="button"
+                          disabled={past}
+                          aria-pressed={dayPicked && date === d}
+                          aria-current={d === today ? "date" : undefined}
+                          onClick={() => {
+                            setDate(d);
+                            setDayPicked(true);
+                            setTime(null);
+                            // Bring the free times for that day into view (on desktop they are already beside it).
+                            if (window.matchMedia("(min-width: 1024px)").matches) return;
+                            window.requestAnimationFrame(() =>
+                              slotsRef.current?.scrollIntoView({
+                                behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+                                  .matches
+                                  ? "auto"
+                                  : "smooth",
+                                block: "start",
+                              }),
+                            );
+                          }}
+                          className={cn(
+                            "mx-auto flex aspect-square w-full max-w-11 items-center justify-center rounded-full text-sm font-bold tabular-nums transition-colors",
+                            past && "cursor-not-allowed font-medium text-muted-foreground/40",
+                            // Closed or gone days are struck through; today is never, it gets a dot.
+                            past && d !== today && "line-through",
                             d === today &&
-                            !(dayPicked && date === d) &&
-                            "ring-2 ring-inset ring-brand/60",
-                          dayPicked && date === d && "bg-brand text-brand-foreground shadow-lift",
+                              "relative after:absolute after:bottom-1 after:size-1 after:rounded-full after:bg-current",
+                            !past && !(dayPicked && date === d) && "hover:bg-accent",
+                            !past &&
+                              d === today &&
+                              !(dayPicked && date === d) &&
+                              "ring-2 ring-inset ring-brand/60",
+                            dayPicked && date === d && "bg-brand text-brand-foreground shadow-lift",
+                          )}
+                        >
+                          {Number(d.slice(-2))}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                {!dayPicked && (
+                  <div className="hidden min-h-64 flex-col items-center justify-center gap-2 rounded-[12px] border border-dashed border-border p-8 text-center text-sm text-muted-foreground lg:flex">
+                    <CalendarDays className="size-5" />
+                    {t("bk.pickDayHint")}
+                  </div>
+                )}
+                {dayPicked && (
+                  <div ref={slotsRef} className="mt-6 scroll-mt-4 lg:mt-0">
+                    <h3 className="mb-3 text-base font-bold first-letter:uppercase">
+                      {formatDateLong(`${date}T12:00:00Z`, business.timezone)}
+                    </h3>
+                    {isFetching ? (
+                      <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-4">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                          <Skeleton key={i} className="h-[46px] rounded-xl" />
+                        ))}
+                      </div>
+                    ) : slotsError ? (
+                      <div className="surface flex flex-col items-center gap-3 p-8 text-center">
+                        <p className="text-sm font-bold">{t("bk.err.slots")}</p>
+                        <button
+                          type="button"
+                          onClick={() => void refetchSlots()}
+                          className="rounded-full border border-border px-4 py-2 text-sm font-bold hover:bg-accent"
+                        >
+                          {t("bk.retry")}
+                        </button>
+                      </div>
+                    ) : (slots?.length ?? 0) === 0 ? (
+                      <div className="surface flex flex-col items-center gap-2 p-8 text-center">
+                        <CalendarDays className="size-5 text-muted-foreground" />
+                        <p className="text-sm font-bold">{t("bk.noSlots.title")}</p>
+                        <p className="text-sm text-muted-foreground">{t("bk.noSlots.body")}</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDayPicked(false);
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
+                          className="mt-1 rounded-full border border-border px-4 py-2 text-sm font-bold hover:bg-accent"
+                        >
+                          {t("bk.pickOtherDay")}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-5">
+                        {(
+                          [
+                            [
+                              t("bk.period.morning"),
+                              slots!.filter((s) => Number(s.time.slice(0, 2)) < 13),
+                            ],
+                            [
+                              t("bk.period.afternoon"),
+                              slots!.filter((s) => Number(s.time.slice(0, 2)) >= 13),
+                            ],
+                          ] as const
+                        ).map(([label, group]) =>
+                          group.length === 0 ? null : (
+                            <SlotGroup
+                              key={label}
+                              label={label}
+                              times={group.map((s) => s.time)}
+                              selected={time}
+                              onSelect={(v) => {
+                                setTime(v);
+                                goNext();
+                              }}
+                            />
+                          ),
                         )}
-                      >
-                        {Number(d.slice(-2))}
-                      </button>
-                    );
-                  })}
-                </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-              {dayPicked && (
-                <div ref={slotsRef} className="mt-6 scroll-mt-4">
-                  <h3 className="mb-3 text-base font-bold first-letter:uppercase">
-                    {formatDateLong(`${date}T12:00:00Z`, business.timezone)}
-                  </h3>
-                  {isFetching ? (
-                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-6">
-                      {Array.from({ length: 8 }).map((_, i) => (
-                        <Skeleton key={i} className="h-[46px] rounded-xl" />
-                      ))}
-                    </div>
-                  ) : slotsError ? (
-                    <div className="surface flex flex-col items-center gap-3 p-8 text-center">
-                      <p className="text-sm font-bold">{t("bk.err.slots")}</p>
-                      <button
-                        type="button"
-                        onClick={() => void refetchSlots()}
-                        className="rounded-full border border-border px-4 py-2 text-sm font-bold hover:bg-accent"
-                      >
-                        {t("bk.retry")}
-                      </button>
-                    </div>
-                  ) : (slots?.length ?? 0) === 0 ? (
-                    <div className="surface flex flex-col items-center gap-2 p-8 text-center">
-                      <CalendarDays className="size-5 text-muted-foreground" />
-                      <p className="text-sm font-bold">{t("bk.noSlots.title")}</p>
-                      <p className="text-sm text-muted-foreground">{t("bk.noSlots.body")}</p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDayPicked(false);
-                          window.scrollTo({ top: 0, behavior: "smooth" });
-                        }}
-                        className="mt-1 rounded-full border border-border px-4 py-2 text-sm font-bold hover:bg-accent"
-                      >
-                        {t("bk.pickOtherDay")}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-5">
-                      {(
-                        [
-                          [
-                            t("bk.period.morning"),
-                            slots!.filter((s) => Number(s.time.slice(0, 2)) < 13),
-                          ],
-                          [
-                            t("bk.period.afternoon"),
-                            slots!.filter((s) => Number(s.time.slice(0, 2)) >= 13),
-                          ],
-                        ] as const
-                      ).map(([label, group]) =>
-                        group.length === 0 ? null : (
-                          <SlotGroup
-                            key={label}
-                            label={label}
-                            times={group.map((s) => s.time)}
-                            selected={time}
-                            onSelect={(v) => {
-                              setTime(v);
-                              goNext();
-                            }}
-                          />
-                        ),
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
             </Section>
           )}
 
@@ -753,7 +762,7 @@ function BookPage() {
                     e.preventDefault();
                     void submit();
                   }}
-                  className="space-y-2.5"
+                  className="space-y-2.5 lg:grid lg:grid-cols-2 lg:gap-x-4 lg:gap-y-3 lg:space-y-0"
                 >
                   <div className="space-y-1">
                     <Label htmlFor="n" className="text-xs font-bold">
@@ -820,7 +829,7 @@ function BookPage() {
                     />
                     <FieldError message={fieldErrors.phone} />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1 lg:col-span-2">
                     <Label htmlFor="obs" className="text-xs font-bold">
                       {t("bk.field.notesOptional")}
                     </Label>
@@ -833,7 +842,7 @@ function BookPage() {
                     />
                   </div>
                   {codeSent && (
-                    <div className="animate-enter space-y-1 rounded-xl border border-border bg-muted/40 p-3">
+                    <div className="animate-enter space-y-1 rounded-xl border border-border bg-muted/40 p-3 lg:col-span-2">
                       <Label htmlFor="code" className="text-xs font-bold">
                         {t("bk.code.label")}
                       </Label>
@@ -869,7 +878,7 @@ function BookPage() {
 
         {currentStep === "account" && service && time && (
           <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 px-5 pt-3 pb-[calc(0.75rem+var(--sab))] backdrop-blur lg:static lg:mt-2 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
-            <div className="mx-auto flex max-w-2xl flex-col gap-2.5 lg:mx-0 lg:max-w-none">
+            <div className="mx-auto flex max-w-2xl flex-col gap-2.5 lg:mx-0 lg:max-w-none lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-4 lg:rounded-2xl lg:border lg:border-border lg:bg-card lg:p-4">
               <div className="min-w-0 text-sm">
                 <p className="truncate font-bold">
                   {service.name} · {time}
@@ -885,7 +894,7 @@ function BookPage() {
                 variant="brand"
                 disabled={busy}
                 size="lg"
-                className="w-full"
+                className="w-full lg:order-last lg:w-auto lg:min-w-64"
               >
                 {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
                 {busy ? t("bk.booking") : codeSent ? t("bk.code.confirm") : t("bk.confirmBooking")}
@@ -931,7 +940,7 @@ function Section({
       aria-label={total ? `${step}/${total}` : undefined}
       className="animate-enter mb-8"
     >
-      <h2 className="font-display text-2xl font-bold tracking-tight">{title}</h2>
+      <h2 className="font-display text-2xl font-bold tracking-tight lg:text-3xl">{title}</h2>
       {subtitle && <p className="mt-1 text-sm font-medium text-muted-foreground">{subtitle}</p>}
       <div className="mb-4" />
       {children}
@@ -1153,7 +1162,7 @@ function SlotGroup({
   return (
     <div>
       <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
-      <div className="animate-stagger mt-2 grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-6">
+      <div className="animate-stagger mt-2 grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-4">
         {times.map((t) => (
           <button
             key={t}
