@@ -67,6 +67,20 @@ if (typeof globalThis.addEventListener === "function") {
   globalThis.addEventListener("unhandledrejection", (event) =>
     record((event as PromiseRejectionEvent).reason),
   );
+  // A new version was published while this tab was open: the old files are gone, so a page
+  // not opened yet fails to load. Reload once to get the new version instead of an error screen.
+  globalThis.addEventListener("vite:preloadError", (event) => {
+    const key = "sycras-reloaded-at";
+    try {
+      const last = Number(sessionStorage.getItem(key) ?? 0);
+      if (Date.now() - last < 30_000) return; // already tried: let the error screen show
+      sessionStorage.setItem(key, String(Date.now()));
+    } catch {
+      return;
+    }
+    event.preventDefault();
+    location.reload();
+  });
 }
 
 export function consumeLastCapturedError(): unknown {
