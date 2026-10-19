@@ -74,6 +74,7 @@ export function LocationPicker({
   // Satellite (to see the roofs) or the plain map; the plain one is light in both themes, to read well.
   const [mode, setMode] = useState<Mode>(savedMode);
   const modeRef = useRef(mode);
+  const fellBack = useRef(false);
   const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<Place[] | null>(null);
   const [busy, setBusy] = useState(false);
@@ -105,6 +106,13 @@ export function LocationPicker({
         cooperativeGestures: false,
       });
       m.touchZoomRotate.disableRotation();
+      // Satellite photos failing (key expired, free tier used up, service down): back to the
+      // plain map by itself, without forgetting that the owner prefers satellite.
+      m.on("error", (e) => {
+        if ((e as { sourceId?: string }).sourceId !== "satellite") return;
+        fellBack.current = true;
+        setMode("map");
+      });
       const pin = new Marker({
         element: pinElement(),
         draggable: true,
@@ -136,11 +144,14 @@ export function LocationPicker({
   useEffect(() => {
     if (modeRef.current === mode) return;
     modeRef.current = mode;
-    try {
-      localStorage.setItem(MODE_KEY, mode);
-    } catch {
-      // Not remembered in private mode: fine.
+    if (!fellBack.current) {
+      try {
+        localStorage.setItem(MODE_KEY, mode);
+      } catch {
+        // Not remembered in private mode: fine.
+      }
     }
+    fellBack.current = false;
     if (mode === "map") map.current?.setStyle(MAP_STYLE);
     else
       void satelliteStyle()
