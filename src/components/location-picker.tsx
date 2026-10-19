@@ -1,50 +1,42 @@
 import { useEffect, useRef, useState } from "react";
-import type { Map as LeafletMap, Marker } from "leaflet";
-import "leaflet/dist/leaflet.css";
-import { Loader2, LocateFixed, MapPin, Search } from "lucide-react";
+import type { Map as MlMap, Marker } from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
+import { Loader2, LocateFixed, MapPin, Minus, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { searchPlaces, type Place } from "@/lib/geocode";
 import { usePrefs } from "@/lib/prefs";
 
 export type LatLng = { lat: number; lng: number };
-type Place = {
-  label: string;
-  lat: number;
-  lng: number;
-  address?: string | undefined;
-  city?: string | undefined;
-};
 
 /** Lisbon: where the map opens before a place is chosen. */
 const START: LatLng = { lat: 38.7223, lng: -9.1393 };
 
-/** Address search through OpenStreetMap (free, no key). */
-async function searchPlaces(q: string): Promise<Place[]> {
-  const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&q=${encodeURIComponent(q)}`;
-  const res = await fetch(url, { headers: { "Accept-Language": "pt-PT,pt,en" } });
-  if (!res.ok) return [];
-  const rows = (await res.json()) as {
-    display_name: string;
-    lat: string;
-    lon: string;
-    address?: Record<string, string>;
-  }[];
-  return rows.map((r) => {
-    const a = r.address ?? {};
-    const street = [a["road"], a["house_number"]].filter(Boolean).join(" ");
-    return {
-      label: r.display_name,
-      lat: Number(r.lat),
-      lng: Number(r.lon),
-      address: street || undefined,
-      city: a["city"] || a["town"] || a["village"] || a["municipality"] || undefined,
-    };
-  });
+/**
+ * OpenFreeMap: vector maps from OpenStreetMap, free with no key or limits (commercial use
+ * allowed). Drawn, not loaded in squares: sharp at every zoom, no white flashes,
+ * and a real dark style instead of an inverted one.
+ */
+const STYLE = {
+  light: "https://tiles.openfreemap.org/styles/liberty",
+  dark: "https://tiles.openfreemap.org/styles/dark",
+};
+
+/** The pin, in the app colour (a DOM element, so it follows the theme's CSS). */
+function pinElement(): HTMLElement {
+  const el = document.createElement("div");
+  el.style.cssText =
+    "width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--brand);border:3px solid #fff;box-shadow:0 6px 14px rgba(0,0,0,.35);cursor:grab";
+  const wrap = document.createElement("div");
+  wrap.style.cssText =
+    "width:30px;height:38px;display:flex;align-items:flex-start;justify-content:center";
+  wrap.appendChild(el);
+  return wrap;
 }
 
 /**
- * Pick the exact shop location: search an address, use the phone's location,
- * or tap / drag the pin on the map. Clients then open it in Google Maps.
+ * Pick the exact shop location: search an address or postal code, use the phone's
+ * location, or tap / drag the pin on the map. Clients then open it in Google Maps.
  */
 export function LocationPicker({
   value,
@@ -60,51 +52,60 @@ export function LocationPicker({
 }) {
   const { t, theme } = usePrefs();
   const box = useRef<HTMLDivElement>(null);
-  const map = useRef<LeafletMap | null>(null);
+  const map = useRef<MlMap | null>(null);
   const marker = useRef<Marker | null>(null);
   const change = useRef(onChange);
   change.current = onChange;
   // The latest value, read when the map finishes loading.
   const current = useRef(value);
   current.current = value;
+  const style = theme === "dark" ? STYLE.dark : STYLE.light;
+  const styleRef = useRef(style);
   const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<Place[] | null>(null);
   const [busy, setBusy] = useState(false);
+  // Only the town was found: say so, the pin needs a nudge.
+  const [approx, setApprox] = useState(false);
 
-  // Leaflet needs the browser: load it once the box is on screen.
+  // MapLibre needs the browser: load it once the box is on screen.
   useEffect(() => {
     let cancelled = false;
-    void import("leaflet").then((L) => {
+    // The worker that draws the map, bundled by Vite (MapLibre cannot find it by itself here).
+    void Promise.all([
+      import("maplibre-gl"),
+      import("maplibre-gl/dist/maplibre-gl-worker.mjs?url"),
+    ]).then(([{ Map, Marker, setWorkerUrl }, worker]) => {
       if (cancelled || !box.current || map.current) return;
+      setWorkerUrl(worker.default);
       const initial = current.current;
       const start = initial ?? START;
-      const m = L.map(box.current, { zoomControl: true, attributionControl: false }).setView(
-        [start.lat, start.lng],
-        initial ? 17 : 12,
-      );
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution: "© OpenStreetMap",
-      }).addTo(m);
-      const icon = L.divIcon({
-        className: "",
-        html: '<div style="width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--brand);border:3px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.3)"></div>',
-        iconSize: [28, 28],
-        iconAnchor: [14, 28],
+      const m = new Map({
+        container: box.current,
+        style: styleRef.current,
+        center: [start.lng, start.lat],
+        zoom: initial ? 16.5 : 11,
+        attributionControl: false,
+        dragRotate: false,
+        pitchWithRotate: false,
+        touchPitch: false,
+        cooperativeGestures: false,
       });
-      const pin = L.marker([start.lat, start.lng], {
+      m.touchZoomRotate.disableRotation();
+      const pin = new Marker({
+        element: pinElement(),
         draggable: true,
-        icon,
-        opacity: initial ? 1 : 0,
-      });
-      pin.addTo(m);
+        anchor: "bottom",
+      }).setLngLat([start.lng, start.lat]);
+      if (initial) pin.addTo(m);
       pin.on("dragend", () => {
-        const p = pin.getLatLng();
+        const p = pin.getLngLat();
+        setApprox(false);
         change.current({ lat: p.lat, lng: p.lng });
       });
       m.on("click", (e) => {
-        pin.setLatLng(e.latlng).setOpacity(1);
-        change.current({ lat: e.latlng.lat, lng: e.latlng.lng });
+        pin.setLngLat(e.lngLat).addTo(m);
+        setApprox(false);
+        change.current({ lat: e.lngLat.lat, lng: e.lngLat.lng });
       });
       map.current = m;
       marker.current = pin;
@@ -115,21 +116,30 @@ export function LocationPicker({
       map.current = null;
     };
     // The map is created once; later moves go through `place`.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Light / dark follows the app.
+  useEffect(() => {
+    styleRef.current = style;
+    map.current?.setStyle(style);
+  }, [style]);
 
   // A value that arrives later (saved data loading) moves the pin too.
   useEffect(() => {
-    if (!value || !marker.current) return;
-    const at = marker.current.getLatLng();
+    const m = map.current;
+    if (!value || !marker.current || !m) return;
+    const at = marker.current.getLngLat();
     if (at.lat === value.lat && at.lng === value.lng) return;
-    marker.current.setLatLng([value.lat, value.lng]).setOpacity(1);
-    map.current?.setView([value.lat, value.lng], 17);
+    marker.current.setLngLat([value.lng, value.lat]).addTo(m);
+    m.jumpTo({ center: [value.lng, value.lat], zoom: 16.5 });
   }, [value?.lat, value?.lng]);
 
   function place(p: LatLng, zoom = 17) {
-    marker.current?.setLatLng([p.lat, p.lng]).setOpacity(1);
-    map.current?.setView([p.lat, p.lng], zoom);
+    const m = map.current;
+    if (m && marker.current) {
+      marker.current.setLngLat([p.lng, p.lat]).addTo(m);
+      m.flyTo({ center: [p.lng, p.lat], zoom, speed: 1.6, essential: true });
+    }
     onChange(p);
   }
 
@@ -151,12 +161,16 @@ export function LocationPicker({
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setBusy(false);
+        setApprox(false);
         place({ lat: pos.coords.latitude, lng: pos.coords.longitude });
       },
       () => setBusy(false),
       { enableHighAccuracy: true, timeout: 10000 },
     );
   }
+
+  const zoomBtn =
+    "flex size-10 items-center justify-center text-foreground transition-colors hover:bg-muted active:bg-muted disabled:opacity-40";
 
   return (
     <div className="space-y-2.5">
@@ -201,12 +215,13 @@ export function LocationPicker({
             <li className="px-3 py-2.5 text-sm text-muted-foreground">{t("loc.none")}</li>
           )}
           {results.map((r) => (
-            <li key={`${r.lat},${r.lng}`}>
+            <li key={`${r.lat},${r.lng},${r.label}`}>
               <button
                 type="button"
                 className="flex w-full items-start gap-2 px-3 py-2.5 text-left text-sm hover:bg-muted"
                 onClick={() => {
-                  place({ lat: r.lat, lng: r.lng });
+                  place({ lat: r.lat, lng: r.lng }, r.approx ? 14 : 17.5);
+                  setApprox(!!r.approx);
                   onAddress?.(r.address, r.city);
                   setResults(null);
                 }}
@@ -219,21 +234,49 @@ export function LocationPicker({
         </ul>
       )}
 
-      {/* isolate: Leaflet's own layers never cover sticky headers or bars. */}
-      <div
-        ref={box}
-        className={`relative isolate z-0 h-60 overflow-hidden rounded-xl border border-border bg-muted ${theme === "dark" ? "map-dark" : ""}`}
-      />
+      {/* isolate: the map's own layers never cover sticky headers or bars. */}
+      <div className="relative isolate z-0 h-64 overflow-hidden rounded-xl border border-border bg-muted">
+        {/* Full size, not absolute: MapLibre makes its container position: relative. */}
+        <div ref={box} className="h-full w-full" />
+        {/* Zoom in the app's own style (not the map library's white squares). */}
+        <div className="absolute top-2.5 right-2.5 flex flex-col overflow-hidden rounded-xl border border-border bg-card/95 shadow-[var(--shadow-soft)] backdrop-blur divide-y divide-border">
+          <button
+            type="button"
+            className={zoomBtn}
+            aria-label={t("loc.zoomIn")}
+            onClick={() => map.current?.zoomIn()}
+          >
+            <Plus className="size-4" />
+          </button>
+          <button
+            type="button"
+            className={zoomBtn}
+            aria-label={t("loc.zoomOut")}
+            onClick={() => map.current?.zoomOut()}
+          >
+            <Minus className="size-4" />
+          </button>
+        </div>
+      </div>
       <p className="text-xs text-muted-foreground">
-        {value ? t("loc.set") : t("loc.hint")}{" "}
-        {/* Required by the OpenStreetMap licence; kept out of the map itself. */}
+        {approx ? t("loc.approx") : value ? t("loc.set") : t("loc.hint")}{" "}
+        {/* Required by the map licences; kept out of the map itself. */}
+        <a
+          href="https://openfreemap.org"
+          target="_blank"
+          rel="noreferrer"
+          className="whitespace-nowrap opacity-70 hover:underline"
+        >
+          OpenFreeMap
+        </a>
+        {" · "}
         <a
           href="https://www.openstreetmap.org/copyright"
           target="_blank"
           rel="noreferrer"
           className="whitespace-nowrap opacity-70 hover:underline"
         >
-          Mapa © OpenStreetMap
+          © OpenStreetMap
         </a>
       </p>
     </div>
