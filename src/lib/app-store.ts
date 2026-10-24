@@ -6,7 +6,7 @@
  */
 export const APP_ON_PLAY = false;
 
-export const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.sycras.mobile";
+export const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.sycras.app";
 
 /** True inside the old Android shell (Capacitor), where "install the app" makes no sense. */
 export function inNativeShell(): boolean {

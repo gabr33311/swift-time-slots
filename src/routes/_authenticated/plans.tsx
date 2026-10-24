@@ -41,7 +41,7 @@ export const Route = createFileRoute("/_authenticated/plans")({
 const STORE_MANAGE = {
   play_store: {
     name: "Google Play",
-    url: "https://play.google.com/store/account/subscriptions?package=com.sycras.mobile",
+    url: "https://play.google.com/store/account/subscriptions?package=com.sycras.app",
   },
   app_store: { name: "App Store", url: "https://apps.apple.com/account/subscriptions" },
 } as const;
